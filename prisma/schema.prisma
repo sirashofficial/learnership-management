@@ -1,0 +1,430 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("FACILITATOR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sessions  Session[]
+  students  Student[]
+  lessonPlans LessonPlan[]
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  address     String?
+  contactPerson String?
+  email       String?
+  phone       String?
+  industry    String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  groups      Group[]
+}
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  location    String?
+  address     String?
+  contactName String?
+  contactPhone String?
+  coordinator String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String @default("ACTIVE")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  companyId   String?
+
+  // Relations
+  company     Company?  @relation(fields: [companyId], references: [id])
+  students    Student[]
+  sessions    Session[]
+  lessonPlans LessonPlan[]
+  courses     GroupCourse[]
+}
+
+model Student {
+  id          String   @id @default(uuid())
+  studentId   String   @unique
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  idNumber    String?
+  progress    Int      @default(0)
+  status      String @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  groupId      String
+  facilitatorId String
+
+  // Relations
+  group        Group     @relation(fields: [groupId], references: [id])
+  facilitator  User      @relation(fields: [facilitatorId], references: [id])
+  attendance   Attendance[]
+  assessments  Assessment[]
+  poeChecklists POEChecklist[]
+  courseProgress CourseProgress[]
+  moduleProgress ModuleProgress[]
+  unitStandardProgress UnitStandardProgress[]
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  title       String
+  module      String
+  date        DateTime
+  startTime   String
+  endTime     String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  groupId      String
+  facilitatorId String
+
+  // Relations
+  group        Group     @relation(fields: [groupId], references: [id])
+  facilitator  User      @relation(fields: [facilitatorId], references: [id])
+  attendance   Attendance[]
+}
+
+model Attendance {
+  id          String   @id @default(uuid())
+  date        DateTime
+  status      String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  studentId   String
+  sessionId   String
+
+  // Relations
+  student     Student  @relation(fields: [studentId], references: [id])
+  session     Session  @relation(fields: [sessionId], references: [id])
+
+  @@unique([studentId, sessionId])
+}
+
+model Assessment {
+  id            String   @id @default(uuid())
+  unitStandard  String
+  module        String
+  
+  // Assessment Classification
+  type          String   // "FORMATIVE" | "SUMMATIVE" | "INTEGRATED"
+  method        String   // "KNOWLEDGE" | "PRACTICAL" | "OBSERVATION" | "PORTFOLIO"
+  
+  // Results
+  result        String?  // "COMPETENT" | "NOT_YET_COMPETENT" | "PENDING"
+  score         Int?
+  assessedDate  DateTime?
+  dueDate       DateTime
+  
+  // Feedback & Notes
+  notes         String?
+  feedback      String?
+  
+  // Moderation
+  moderationStatus String @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED" | "RESUBMIT"
+  moderatedBy      String?
+  moderatedDate    DateTime?
+  moderationNotes  String?
+  
+  // Attempt tracking
+  attemptNumber    Int @default(1)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Foreign Keys
+  studentId     String
+  unitStandardId String?
+
+  // Relations
+  student       Student  @relation(fields: [studentId], references: [id])
+  unitStandardRef UnitStandard? @relation(fields: [unitStandardId], references: [id])
+}
+
+model ModuleProgress {
+  id              String   @id @default(uuid())
+  status          String   @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  progress        Int      @default(0) // 0-100
+  startDate       DateTime?
+  completionDate  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  studentId       String
+  moduleId        String
+
+  // Relations
+  student         Student  @relation(fields: [studentId], references: [id])
+  module          Module   @relation(fields: [moduleId], references: [id])
+  
+  @@unique([studentId, moduleId])
+}
+
+model UnitStandardProgress {
+  id              String   @id @default(uuid())
+  status          String   @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  startDate       DateTime?
+  completionDate  DateTime?
+  formativesPassed Int     @default(0)
+  summativePassed Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  studentId       String
+  unitStandardId  String
+
+  // Relations
+  student         Student      @relation(fields: [studentId], references: [id])
+  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
+  
+  @@unique([studentId, unitStandardId])
+}
+
+model POEChecklist {
+  id                    String   @id @default(uuid())
+  
+  // Module POE Files (Physical)
+  module1POE            Boolean  @default(false)
+  module1POEDate        DateTime?
+  module2POE            Boolean  @default(false)
+  module2POEDate        DateTime?
+  module3POE            Boolean  @default(false)
+  module3POEDate        DateTime?
+  module4POE            Boolean  @default(false)
+  module4POEDate        DateTime?
+  module5POE            Boolean  @default(false)
+  module5POEDate        DateTime?
+  module6POE            Boolean  @default(false)
+  module6POEDate        DateTime?
+  
+  // Assessment Evidence
+  assessmentsSigned     Boolean  @default(false)
+  assessmentsDate       DateTime?
+  
+  // Logbook
+  logbookComplete       Boolean  @default(false)
+  logbookSigned         Boolean  @default(false)
+  logbookDate           DateTime?
+  
+  // Supporting Documents
+  idCopyPresent         Boolean  @default(false)
+  idCopyDate            DateTime?
+  contractSigned        Boolean  @default(false)
+  contractDate          DateTime?
+  inductionComplete     Boolean  @default(false)
+  inductionDate         DateTime?
+  
+  // Verification
+  verifiedBy            String?
+  verifiedDate          DateTime?
+  notes                 String?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Foreign Keys
+  studentId   String   @unique
+
+  // Relations
+  student     Student  @relation(fields: [studentId], references: [id])
+}
+
+model POEFile {
+  id          String   @id @default(uuid())
+  fileName    String
+  fileSize    Int
+  fileType    String
+  filePath    String
+  description String?
+  uploadedAt  DateTime @default(now())
+
+  // This model kept for future digital POE if needed
+  // Currently POE tracking uses POEChecklist for physical files
+}
+
+model Module {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  credits     Int
+  order       Int
+  status      String @default("NOT_STARTED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  unitStandards UnitStandard[]
+  lessonPlans   LessonPlan[]
+  documents     CurriculumDocument[]
+  embeddings    CurriculumEmbedding[]
+  progress      ModuleProgress[]
+}
+
+model CurriculumEmbedding {
+  id          String   @id @default(uuid())
+  content     String   // The text chunk
+  embedding   String   // JSON array of vector embeddings from OpenAI
+  metadata    String?  // JSON metadata (page, section, etc.)
+  createdAt   DateTime @default(now())
+
+  // Foreign Keys
+  moduleId    String
+
+  // Relations
+  module      Module @relation(fields: [moduleId], references: [id])
+}
+
+model UnitStandard {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  title       String
+  credits     Int
+  level       Int
+  content     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  moduleId    String
+
+  // Relations
+  module      Module   @relation(fields: [moduleId], references: [id])
+  activities  Activity[]
+  assessments Assessment[]
+  progress    UnitStandardProgress[]
+}
+
+model Activity {
+  id              String   @id @default(uuid())
+  description     String
+  duration        Int
+  resources       String?
+  assessmentType  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  unitStandardId  String
+
+  // Relations
+  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
+}
+
+model LessonPlan {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  startTime   String
+  endTime     String
+  venue       String?
+  objectives  String?
+  materials   String?
+  activities  String?
+  notes       String?
+  aiGenerated Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  moduleId      String
+  facilitatorId String
+  groupId       String?
+
+  // Relations
+  module        Module @relation(fields: [moduleId], references: [id])
+  facilitator   User   @relation(fields: [facilitatorId], references: [id])
+  group         Group? @relation(fields: [groupId], references: [id])
+}
+
+model CurriculumDocument {
+  id          String   @id @default(uuid())
+  title       String
+  fileName    String
+  fileSize    Int
+  fileType    String
+  filePath    String
+  description String?
+  category    String
+  version     String @default("1.0")
+  uploadedAt  DateTime @default(now())
+
+  // Foreign Keys
+  moduleId    String
+
+  // Relations
+  module      Module @relation(fields: [moduleId], references: [id])
+}
+
+model GroupCourse {
+  id          String   @id @default(uuid())
+  status      String @default("PLANNED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  groupId     String
+
+  // Relations
+  group       Group    @relation(fields: [groupId], references: [id])
+}
+
+model CourseProgress {
+  id          String   @id @default(uuid())
+  progress    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  studentId   String
+
+  // Relations
+  student     Student  @relation(fields: [studentId], references: [id])
+}
+
+// Note: SQLite does not support native enums. String types are used with application-level validation.
+// Valid values for reference:
+// - Company.status: "ACTIVE", "INACTIVE"
+// - Group.status: "ACTIVE", "INACTIVE", "PLANNING", "COMPLETED", "ON_HOLD"
+// - User.role: "ADMIN", "FACILITATOR", "COORDINATOR"
+// - Student.status: "ACTIVE", "INACTIVE", "COMPLETED", "WITHDRAWN"
+// - Attendance.status: "PRESENT", "ABSENT", "LATE", "EXCUSED"
+// - Assessment.result: "COMPETENT", "NOT_YET_COMPETENT", "PENDING"
+// - GroupCourse.status: "PLANNED", "IN_PROGRESS", "COMPLETED", "SUSPENDED", "CANCELLED"
+// - Module.status: "NOT_STARTED", "IN_PROGRESS", "COMPLETED", "SKIPPED"
+
