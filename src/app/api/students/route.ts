@@ -2,10 +2,14 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { createStudentSchema, updateStudentSchema } from '@/lib/validations';
+import { requireAuth } from '@/lib/middleware';
 
 // GET /api/students - Get all students or export CSV
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const { error, user } = requireAuth(request);
+    if (error) return error;
     const { searchParams } = new URL(request.url);
     const groupId = searchParams.get('groupId');
     const status = searchParams.get('status');
@@ -62,13 +66,17 @@ export async function GET(request: NextRequest) {
 // POST /api/students - Create a new student
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const { error, user } = requireAuth(request);
+    if (error) return error;
+    
     const body = await request.json();
     
     // Validate input
     const validatedData = createStudentSchema.parse(body);
     
-    // For now, use a default facilitator ID (you'll get this from auth later)
-    const facilitatorId = body.facilitatorId || 'default-facilitator-id';
+    // Use authenticated user as facilitator
+    const facilitatorId = body.facilitatorId || user.userId;
 
     const student = await prisma.student.create({
       data: {

@@ -195,7 +195,7 @@ export default function StudentsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header title="Learners" subtitle="Manage student records and progress" />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-gray-500">Loading students...</div>
@@ -207,7 +207,7 @@ export default function StudentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header title="Learners" subtitle="Manage student records and progress" />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Page Header */}
@@ -499,9 +499,8 @@ export default function StudentsPage() {
       {/* Add Student Modal */}
       {showAddModal && (
         <AddStudentModal
-          isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          onSubmit={(data) => {
+          onAdd={(data: any) => {
             // TODO: Implement save
             console.log('Add student:', data);
             setShowAddModal(false);

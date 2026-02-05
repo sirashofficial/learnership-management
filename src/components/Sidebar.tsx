@@ -17,12 +17,15 @@ import {
   TrendingUp,
   CheckSquare,
   FileBarChart,
-  Calendar
+  Calendar,
+  LogOut,
+  Shield
 } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navigationItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -37,12 +40,14 @@ const navigationItems = [
   { icon: FolderOpen, label: "POE Management", href: "/poe" },
   { icon: BookOpen, label: "Curriculum Library", href: "/curriculum" },
   { icon: Lightbulb, label: "Lesson Planner", href: "/lessons" },
+  { icon: Shield, label: "User Management", href: "/admin/users", adminOnly: true },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <aside 
@@ -80,41 +85,52 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {navigationItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
-                  isActive 
-                    ? "bg-secondary text-white" 
-                    : "text-white/70 hover:bg-white/10 hover:text-white",
-                  isCollapsed && "justify-center"
-                )}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && (
-                  <span className="flex-1 text-left">{item.label}</span>
-                )}
-              </Link>
-            );
-          })}
+          {navigationItems
+            .filter(item => !item.adminOnly || user?.role === 'ADMIN')
+            .map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                    isActive 
+                      ? "bg-secondary text-white" 
+                      : "text-white/70 hover:bg-white/10 hover:text-white",
+                    isCollapsed && "justify-center"
+                  )}
+                >
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  {!isCollapsed && (
+                    <span className="flex-1 text-left">{item.label}</span>
+                  )}
+                </Link>
+              );
+            })}
         </nav>
 
         {/* User Profile */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-white/10 space-y-2">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-semibold text-sm">A</span>
+                <span className="text-white font-semibold text-sm">
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </span>
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-white truncate">Ash</p>
-                <p className="text-xs text-white/60">Facilitator</p>
+                <p className="text-sm font-medium text-white truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-white/60">{user?.role || 'User'}</p>
               </div>
             </div>
+            <button
+              onClick={logout}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
           </div>
         )}
       </div>
