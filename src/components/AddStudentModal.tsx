@@ -5,41 +5,41 @@ import { X } from "lucide-react";
 import { useGroups } from "@/contexts/GroupsContext";
 
 interface AddStudentModalProps {
+  isOpen: boolean;
   onClose: () => void;
   onAdd: (student: {
-    name: string;
     studentId: string;
-    site: string;
-    group?: string;
-    phone?: string;
+    firstName: string;
+    lastName: string;
     email?: string;
-    currentModule: number;
-    moduleName: string;
-    progress: number;
+    phone?: string;
+    idNumber?: string;
+    group?: string;
+    groupId?: string;
     status: "ACTIVE" | "AT_RISK" | "COMPLETED" | "WITHDRAWN";
-    lastAttendance: string;
-    attendanceStreak: number;
-    absenceCount: number;
-    enrollmentDate?: string;
-    dailyAttendanceRate?: number;
+    progress: number;
   }) => void;
+  groupId?: string;
+  groupName?: string;
 }
 
-export default function AddStudentModal({ onClose, onAdd }: AddStudentModalProps) {
+export default function AddStudentModal({ onClose, onAdd, groupId, groupName }: AddStudentModalProps) {
   const { groups } = useGroups();
   const [formData, setFormData] = useState({
     name: "",
     studentId: "",
-    group: "",
+    group: groupId || "",
     phone: "",
     email: "",
     status: "ACTIVE" as const,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.studentId || !formData.group) {
-      alert("Please fill in required fields: Name, Student ID, and Group");
+
+    if (!formData.name || !formData.group) {
+      alert("Please fill in required fields: Name and Group");
       return;
     }
 
@@ -50,21 +50,41 @@ export default function AddStudentModal({ onClose, onAdd }: AddStudentModalProps
       return;
     }
 
-    const today = new Date().toISOString().split("T")[0];
-    onAdd({
-      ...formData,
-      site: selectedGroup.name, // Keep for backward compatibility
-      group: selectedGroup.name,
-      currentModule: 1,
-      moduleName: "Orientation & Induction",
-      progress: 0,
-      lastAttendance: today,
-      attendanceStreak: 0,
-      absenceCount: 0,
-      enrollmentDate: today,
-      dailyAttendanceRate: 0,
-    });
-    onClose();
+    setIsSubmitting(true);
+    
+    try {
+      // Split name into firstName and lastName
+      const nameParts = formData.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || formData.name;
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      const studentData = {
+        studentId: formData.studentId || undefined, // Optional - will be auto-generated if empty
+        firstName,
+        lastName,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        group: formData.group,
+        groupId: formData.group,
+        status: formData.status,
+        progress: 0,
+      };
+      
+      console.log('📝 Submitting student data:', studentData);
+      await onAdd(studentData);
+      console.log('✅ Student added successfully');
+      onClose();
+    } catch (error: any) {
+      console.error('❌ Error adding student:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response,
+        stack: error.stack
+      });
+      alert(error.message || 'Failed to add student. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -101,16 +121,16 @@ export default function AddStudentModal({ onClose, onAdd }: AddStudentModalProps
             {/* Student ID */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Student ID <span className="text-red-500">*</span>
+                Student ID (Optional)
               </label>
               <input
                 type="text"
                 value={formData.studentId}
                 onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="e.g., STU001"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50"
+                placeholder="Leave empty for auto-generation (e.g., AZ-01)"
               />
+              <p className="text-xs text-gray-500 mt-1">If left empty, will be auto-generated based on group (e.g., AZ-01, AZ-02, BE-01)</p>
             </div>
 
             {/* Group */}
@@ -118,19 +138,25 @@ export default function AddStudentModal({ onClose, onAdd }: AddStudentModalProps
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Training Group <span className="text-red-500">*</span>
               </label>
-              <select
-                value={formData.group}
-                onChange={(e) => setFormData({ ...formData, group: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                required
-              >
-                <option value="">Select group...</option>
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name} - {group.location}
-                  </option>
-                ))}
-              </select>
+              {groupId && groupName ? (
+                <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-medium">
+                  {groupName}
+                </div>
+              ) : (
+                <select
+                  value={formData.group}
+                  onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  required
+                >
+                  <option value="">Select group...</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name} - {group.location}
+                    </option>
+                  ))}
+                </select>
+              )}
               {groups.length === 0 && (
                 <p className="text-sm text-gray-500 mt-1">
                   No groups available. Create a group first in Groups & Companies.
@@ -190,15 +216,16 @@ export default function AddStudentModal({ onClose, onAdd }: AddStudentModalProps
           <div className="mt-6 flex gap-3">
             <button
               type="submit"
-              disabled={groups.length === 0}
+              disabled={groups.length === 0 || isSubmitting}
               className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add Student
+              {isSubmitting ? 'Adding...' : 'Add Student'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              disabled={isSubmitting}
+              className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50"
             >
               Cancel
             </button>

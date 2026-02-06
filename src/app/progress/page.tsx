@@ -4,9 +4,10 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import { useProgress } from "@/hooks/useProgress";
 import { useStudents } from "@/hooks/useStudents";
-import { BookOpen, CheckCircle, Clock, Calendar, TrendingUp, Award } from "lucide-react";
+import { BookOpen, CheckCircle, Clock, Calendar, TrendingUp, Award, ChevronRight, X, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
+import Link from "next/link";
 
 export default function ProgressPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
@@ -54,12 +55,42 @@ export default function ProgressPage() {
 
   return (
     <>
-      <Header
-        title="Progress Tracking"
-        subtitle="Monitor student progress through modules and unit standards"
-      />
+      <Header />
+      
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Progress Tracking</h1>
+          <p className="text-gray-600 dark:text-gray-400">Monitor student progress through modules and unit standards</p>
+        </div>
 
-      <div className="p-6 space-y-6">
+        {/* Breadcrumb when student is filtered */}
+        {selectedStudentId && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Link href="/progress" className="text-blue-600 hover:text-blue-800 hover:underline">
+                  All Students
+                </Link>
+                <ChevronRight className="w-4 h-4 text-blue-400" />
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-blue-900">
+                    {students?.find((s: any) => s.id === selectedStudentId)?.firstName}{' '}
+                    {students?.find((s: any) => s.id === selectedStudentId)?.lastName}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedStudentId("")}
+                className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                <X className="w-4 h-4" />
+                Clear Filter
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* Student Filter */}
         <div className="bg-white rounded-xl border border-background-border p-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">

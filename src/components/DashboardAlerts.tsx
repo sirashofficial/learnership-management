@@ -1,81 +1,190 @@
 'use client';
 
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { TriangleAlert, Users } from 'lucide-react';
-import Link from 'next/link';
+import { useState } from 'react';
+import { useDashboardAlerts } from '@/hooks/useDashboard';
+import { 
+  AlertTriangle, 
+  Clock, 
+  Users, 
+  FileText, 
+  CheckCircle2, 
+  X, 
+  Calendar,
+  UserX 
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardAlerts() {
-  const { stats, isLoading } = useDashboardStats();
+  const { alerts, isLoading } = useDashboardAlerts();
+  const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
+  const router = useRouter();
 
-  const atRiskStudents = stats?.atRiskStudents || [];
-  const pendingAssessments = stats?.pendingAssessments || 0;
+  const visibleAlerts = alerts.filter((alert: any) => !dismissedAlerts.includes(alert.id));
 
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-2xl border border-background-border shadow-sm p-6">
-        <h3 className="font-semibold text-text mb-4">Alerts & Notifications</h3>
-        <div className="space-y-3">
-          <div className="h-16 bg-gray-200 animate-pulse rounded-lg"></div>
-          <div className="h-16 bg-gray-200 animate-pulse rounded-lg"></div>
-        </div>
-      </div>
-    );
-  }
+  const handleDismiss = (alertId: string) => {
+    setDismissedAlerts([...dismissedAlerts, alertId]);
+  };
+
+  const handleAlertClick = (alert: any) => {
+    // Route to appropriate page based on alert type
+    switch (alert.type) {
+      case 'assessment_deadline':
+        router.push('/assessments');
+        break;
+      case 'low_attendance':
+        router.push('/attendance');
+        break;
+      case 'pending_moderation':
+        router.push('/moderation');
+        break;
+      case 'at_risk_student':
+        router.push('/students');
+        break;
+      case 'missing_documents':
+        router.push('/compliance');
+        break;
+      case 'course_ending':
+        router.push('/curriculum');
+        break;
+    }
+  };
+
+  const getAlertIcon = (type: string) => {
+    switch (type) {
+      case 'assessment_deadline':
+        return <Clock className="w-5 h-5" />;
+      case 'low_attendance':
+        return <UserX className="w-5 h-5" />;
+      case 'pending_moderation':
+        return <FileText className="w-5 h-5" />;
+      case 'at_risk_student':
+        return <AlertTriangle className="w-5 h-5" />;
+      case 'missing_documents':
+        return <FileText className="w-5 h-5" />;
+      case 'course_ending':
+        return <Calendar className="w-5 h-5" />;
+      default:
+        return <AlertTriangle className="w-5 h-5" />;
+    }
+  };
+
+  const getPriorityStyles = (priority: string) => {
+    switch (priority) {
+      case 'URGENT':
+        return {
+          bg: 'bg-red-50 dark:bg-red-900/20',
+          border: 'border-l-red-500',
+          icon: 'text-red-600 dark:text-red-400',
+          text: 'text-red-900 dark:text-red-100',
+          subtext: 'text-red-700 dark:text-red-300',
+        };
+      case 'WARNING':
+        return {
+          bg: 'bg-amber-50 dark:bg-amber-900/20',
+          border: 'border-l-amber-500',
+          icon: 'text-amber-600 dark:text-amber-400',
+          text: 'text-amber-900 dark:text-amber-100',
+          subtext: 'text-amber-700 dark:text-amber-300',
+        };
+      case 'INFO':
+        return {
+          bg: 'bg-blue-50 dark:bg-blue-900/20',
+          border: 'border-l-blue-500',
+          icon: 'text-blue-600 dark:text-blue-400',
+          text: 'text-blue-900 dark:text-blue-100',
+          subtext: 'text-blue-700 dark:text-blue-300',
+        };
+      default:
+        return {
+          bg: 'bg-gray-50 dark:bg-gray-800',
+          border: 'border-l-gray-500',
+          icon: 'text-gray-600 dark:text-gray-400',
+          text: 'text-gray-900 dark:text-gray-100',
+          subtext: 'text-gray-700 dark:text-gray-300',
+        };
+    }
+  };
+
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   return (
-    <div className="bg-white rounded-2xl border border-background-border shadow-sm p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <TriangleAlert className="w-5 h-5 text-amber-500" />
-        <h3 className="font-semibold text-text">Alerts & Notifications</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Alerts & Notifications</h3>
+        {visibleAlerts.length > 0 && (
+          <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium rounded-full">
+            {visibleAlerts.length}
+          </span>
+        )}
       </div>
-      
-      <div className="space-y-3">
-        {atRiskStudents.length > 0 && (
-          <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-red-900">At-Risk Students</p>
-                <p className="text-xs text-red-700 mt-1">
-                  {atRiskStudents.length} student{atRiskStudents.length !== 1 ? 's' : ''} need immediate attention
-                </p>
-                <div className="mt-2 space-y-1">
-                  {atRiskStudents.slice(0, 3).map((student: any) => (
-                    <p key={student.id} className="text-xs text-red-600">
-                      • {student.firstName} {student.lastName} ({student.progress}%)
-                    </p>
-                  ))}
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : visibleAlerts.length === 0 ? (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p>No alerts at the moment</p>
+          <p className="text-sm mt-1">Everything looks good!</p>
+        </div>
+      ) : (
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {visibleAlerts.slice(0, 10).map((alert: any) => {
+            const styles = getPriorityStyles(alert.priority);
+            return (
+              <div
+                key={alert.id}
+                className={`p-4 rounded-lg border-l-4 ${styles.bg} ${styles.border} hover:shadow-md transition-all cursor-pointer`}
+                onClick={() => handleAlertClick(alert)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={styles.icon}>
+                    {getAlertIcon(alert.type)}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={`text-sm font-medium ${styles.text}`}>
+                        {alert.message}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDismiss(alert.id);
+                        }}
+                        className={`flex-shrink-0 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded ${styles.icon}`}
+                        title="Dismiss"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className={`text-xs ${styles.subtext} font-medium uppercase`}>
+                        {alert.priority}
+                      </span>
+                      <span className={`text-xs ${styles.subtext}`}>
+                        {formatTimestamp(alert.timestamp)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-        
-        {pendingAssessments > 0 && (
-          <div className="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-500">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-amber-900">Pending Assessments</p>
-                <p className="text-xs text-amber-700 mt-1">
-                  {pendingAssessments} assessment{pendingAssessments !== 1 ? 's' : ''} awaiting completion
-                </p>
-              </div>
-              <Link 
-                href="/assessments"
-                className="text-xs text-amber-600 hover:text-amber-800 font-medium"
-              >
-                View
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {atRiskStudents.length === 0 && pendingAssessments === 0 && (
-          <div className="p-4 text-center text-text-light">
-            <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No alerts at the moment</p>
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

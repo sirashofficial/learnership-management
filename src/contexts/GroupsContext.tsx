@@ -46,7 +46,12 @@ interface GroupsContextType {
 
 const GroupsContext = createContext<GroupsContextType | undefined>(undefined);
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json()).then((data) => data.data || data);
+const fetcher = (url: string) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  return fetch(url, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  }).then((res) => res.json()).then((data) => data.data || data);
+};
 
 export function GroupsProvider({ children }: { children: ReactNode }) {
   const { data: groupsData, error: groupsError } = useSWR('/api/groups', fetcher);
@@ -59,9 +64,13 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const addGroup = async (groupData: Omit<Group, "id" | "createdAt">) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/groups', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify(groupData),
       });
 
@@ -76,9 +85,13 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const updateGroup = async (id: string, updates: Partial<Group>) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/groups/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify(updates),
       });
 
@@ -93,8 +106,10 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const deleteGroup = async (id: string) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/groups/${id}`, {
         method: 'DELETE',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
       if (!response.ok) {
@@ -111,9 +126,13 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const addCompany = async (companyData: Omit<Company, "id">) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/companies', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify(companyData),
       });
 
@@ -128,9 +147,13 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const updateCompany = async (id: string, updates: Partial<Company>) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/companies', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify({ id, ...updates }),
       });
 
@@ -145,8 +168,10 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const deleteCompany = async (id: string) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/companies?id=${id}`, {
         method: 'DELETE',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
       if (!response.ok) {

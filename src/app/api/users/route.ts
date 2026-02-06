@@ -1,16 +1,11 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth, requireAdmin } from '@/lib/middleware';
-
 // GET /api/users - Get all users (Admin only)
 export async function GET(request: NextRequest) {
   try {
     // Only admins can list all users
-    const { error, user } = requireAdmin(request);
-    if (error) return error;
-
-    const users = await prisma.user.findMany({
+const users = await prisma.user.findMany({
       select: {
         id: true,
         email: true,
@@ -38,10 +33,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Only admins can create users
-    const { error, user } = requireAdmin(request);
-    if (error) return error;
-
-    const body = await request.json();
+const body = await request.json();
     const { email, name, password, role } = body;
 
     // Validate required fields

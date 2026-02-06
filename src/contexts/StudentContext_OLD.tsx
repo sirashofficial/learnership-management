@@ -1,0 +1,427 @@
+"use client";
+
+import { createContext, useContext, ReactNode } from "react";
+import useSWR, { mutate } from "swr";
+
+export interface Student {
+  id: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  name?: string; // Computed field for backward compatibility
+  currentModule?: number;
+  moduleName?: string;
+  progress: number;
+  status: "ACTIVE" | "AT_RISK" | "COMPLETED" | "WITHDRAWN";
+  lastAttendance?: string;
+  attendanceStreak?: number;
+  absenceCount?: number;
+  site?: string;
+  groupId: string;
+  group?: any;
+  phone?: string;
+  email?: string;
+  avatar?: string;
+  dateOfBirth?: string;
+  idNumber?: string;
+  address?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  enrollmentDate?: string;
+  expectedGraduation?: string;
+  notes?: Note[];
+  moduleProgress?: ModuleProgress[];
+  dailyAttendanceRate?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Note {
+  id: string;
+  date: string;
+  content: string;
+  type: "GENERAL" | "CONCERN" | "ACHIEVEMENT" | "INTERVENTION";
+  author: string;
+}
+
+export interface ModuleProgress {
+  moduleId: number;
+  moduleName: string;
+  unitStandards: UnitStandardProgress[];
+  isCompleted: boolean;
+  completionDate?: string;
+  overallProgress: number;
+}
+
+export interface UnitStandardProgress {
+  id: string;
+  code: string;
+  title: string;
+  credits: number;
+  isCompleted: boolean;
+  completionDate?: string;
+  activities: ActivityProgress[];
+  progress: number;
+}
+
+export interface ActivityProgress {
+  id: string;
+  description: string;
+  isCompleted: boolean;
+  completionDate?: string;
+  notes?: string;
+}
+
+export interface AttendanceRecord {
+  date: string;
+  status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+  reason?: string;
+}
+
+interface StudentContextType {
+  students: Student[];
+  isLoading: boolean;
+  error: any;
+  addStudent: (student: any) => Promise<void>;
+  updateStudent: (id: string, updates: Partial<Student>) => Promise<void>;
+  deleteStudent: (id: string) => Promise<void>;
+  refreshStudents: () => void;
+}
+
+const StudentContext = createContext<StudentContextType | undefined>(undefined);
+
+const fetcher = (url: string) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  return fetch(url, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  }).then((res) => res.json()).then((data) => {
+    // Transform data to include computed name field
+    const students = (data.data || data || []).map((student: any) => ({
+      ...student,
+      name: student.firstName && student.lastName 
+        ? `${student.firstName} ${student.lastName}` 
+        : student.name || '',
+      site: student.group?.name || student.site || '',
+    }));
+    return students;
+  });
+};
+
+// Initial sample data
+const initialStudents: Student[] = [
+  {
+    id: "1",
+    name: "Thabo Mokwena",
+    studentId: "STU001",
+    currentModule: 3,
+    moduleName: "Market Requirements",
+    progress: 85,
+    status: "ACTIVE",
+    lastAttendance: "2026-02-04",
+    attendanceStreak: 7,
+    absenceCount: 1,
+    site: "Johannesburg CBD",
+    group: "Group A",
+    phone: "+27 11 123 4567",
+    email: "thabo.m@example.com",
+    enrollmentDate: "2026-01-15",
+    expectedGraduation: "2026-07-15",
+    notes: [
+      {
+        id: "n1",
+        date: "2026-02-01",
+        content: "Excellent participation in group discussions. Shows strong leadership potential.",
+        type: "ACHIEVEMENT",
+        author: "Facilitator"
+      }
+    ],
+    moduleProgress: [
+      {
+        moduleId: 1,
+        moduleName: "Orientation & Induction",
+        isCompleted: true,
+        completionDate: "2026-01-25",
+        overallProgress: 100,
+        unitStandards: []
+      },
+      {
+        moduleId: 2,
+        moduleName: "Communication Skills",
+        isCompleted: true,
+        completionDate: "2026-02-05",
+        overallProgress: 100,
+        unitStandards: []
+      },
+      {
+        moduleId: 3,
+        moduleName: "Market Requirements",
+        isCompleted: false,
+        overallProgress: 85,
+        unitStandards: []
+      }
+    ],
+    dailyAttendanceRate: 92
+  },
+  {
+    id: "2",
+    name: "Zanele Dlamini",
+    studentId: "STU002",
+    currentModule: 2,
+    moduleName: "Communication Skills",
+    progress: 72,
+    status: "ACTIVE",
+    lastAttendance: "2026-02-04",
+    attendanceStreak: 5,
+    absenceCount: 2,
+    site: "Pretoria Central",
+    group: "Group A",
+    phone: "+27 12 234 5678",
+    email: "zanele.d@example.com",
+    enrollmentDate: "2026-01-15",
+    expectedGraduation: "2026-07-15",
+    notes: [],
+    moduleProgress: [
+      {
+        moduleId: 1,
+        moduleName: "Orientation & Induction",
+        isCompleted: true,
+        completionDate: "2026-01-28",
+        overallProgress: 100,
+        unitStandards: []
+      },
+      {
+        moduleId: 2,
+        moduleName: "Communication Skills",
+        isCompleted: false,
+        overallProgress: 72,
+        unitStandards: []
+      }
+    ],
+    dailyAttendanceRate: 87
+  },
+  {
+    id: "3",
+    name: "Sipho Khumalo",
+    studentId: "STU003",
+    currentModule: 2,
+    moduleName: "Communication Skills",
+    progress: 45,
+    status: "AT_RISK",
+    lastAttendance: "2026-02-01",
+    attendanceStreak: 0,
+    absenceCount: 5,
+    site: "Durban Point",
+    group: "Group B",
+    phone: "+27 31 345 6789",
+    email: "sipho.k@example.com",
+    enrollmentDate: "2026-01-15",
+    expectedGraduation: "2026-07-15",
+    notes: [
+      {
+        id: "n2",
+        date: "2026-02-02",
+        content: "High absence rate. Need to contact and provide intervention support.",
+        type: "CONCERN",
+        author: "Facilitator"
+      }
+    ],
+    moduleProgress: [
+      {
+        moduleId: 1,
+        moduleName: "Orientation & Induction",
+        isCompleted: true,
+        completionDate: "2026-01-30",
+        overallProgress: 100,
+        unitStandards: []
+      },
+      {
+        moduleId: 2,
+        moduleName: "Communication Skills",
+        isCompleted: false,
+        overallProgress: 45,
+        unitStandards: []
+      }
+    ],
+    dailyAttendanceRate: 63
+  },
+  {
+    id: "4",
+    name: "Lerato Mthembu",
+    studentId: "STU004",
+    currentModule: 4,
+    moduleName: "Life Skills & Wellness",
+    progress: 90,
+    status: "ACTIVE",
+    lastAttendance: "2026-02-04",
+    attendanceStreak: 12,
+    absenceCount: 0,
+    site: "Cape Town CBD",
+    group: "Group A",
+    phone: "+27 21 456 7890",
+    email: "lerato.m@example.com",
+    enrollmentDate: "2026-01-15",
+    expectedGraduation: "2026-07-15",
+    notes: [
+      {
+        id: "n3",
+        date: "2026-02-03",
+        content: "Top performer. Helps other students. Consider for peer mentoring role.",
+        type: "ACHIEVEMENT",
+        author: "Facilitator"
+      }
+    ],
+    moduleProgress: [
+      {
+        moduleId: 1,
+        moduleName: "Orientation & Induction",
+        isCompleted: true,
+        completionDate: "2026-01-22",
+        overallProgress: 100,
+        unitStandards: []
+      },
+      {
+        moduleId: 2,
+        moduleName: "Communication Skills",
+        isCompleted: true,
+        completionDate: "2026-01-30",
+        overallProgress: 100,
+        unitStandards: []
+      },
+      {
+        moduleId: 3,
+        moduleName: "Market Requirements",
+        isCompleted: true,
+        completionDate: "2026-02-15",
+        overallProgress: 100,
+        unitStandards: []
+      },
+      {
+        moduleId: 4,
+        moduleName: "Life Skills & Wellness",
+        isCompleted: false,
+        overallProgress: 90,
+        unitStandards: []
+      }
+    ],
+    dailyAttendanceRate: 98
+  },
+};
+
+export function StudentProvider({ children }: { children: ReactNode }) {
+  const { data: studentsData, error, isLoading } = useSWR('/api/students', fetcher);
+
+  const students = studentsData || [];
+
+  const addStudent = async (studentData: any) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      // Transform the data to match API expectations
+      const apiData = {
+        studentId: studentData.studentId,
+        firstName: studentData.firstName || studentData.name?.split(' ')[0] || studentData.name || '',
+        lastName: studentData.lastName || studentData.name?.split(' ').slice(1).join(' ') || '',
+        email: studentData.email || null,
+        phone: studentData.phone || null,
+        idNumber: studentData.idNumber || null,
+        groupId: studentData.group || studentData.groupId,
+        facilitatorId: studentData.facilitatorId || null,
+        status: studentData.status || 'ACTIVE',
+        progress: studentData.progress || 0,
+      };
+
+      const response = await fetch('/api/students', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(apiData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create student');
+      }
+
+      // Refresh the student list
+      mutate('/api/students');
+      
+      // Also refresh dashboard stats
+      mutate('/api/dashboard/stats');
+    } catch (error) {
+      console.error('Error adding student:', error);
+      throw error;
+    }
+  };
+
+  const updateStudent = async (id: string, updates: Partial<Student>) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      const response = await fetch(`/api/students/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) throw new Error('Failed to update student');
+
+      mutate('/api/students');
+      mutate('/api/dashboard/stats');
+    } catch (error) {
+      console.error('Error updating student:', error);
+      throw error;
+    }
+  };
+
+  const deleteStudent = async (id: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      const response = await fetch(`/api/students/${id}`, {
+        method: 'DELETE',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) throw new Error('Failed to delete student');
+
+      mutate('/api/students');
+      mutate('/api/dashboard/stats');
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      throw error;
+    }
+  };
+
+  const refreshStudents = () => {
+    mutate('/api/students');
+  };
+
+  return (
+    <StudentContext.Provider
+      value={{
+        students,
+        isLoading,
+        error,
+        addStudent,
+        updateStudent,
+        deleteStudent,
+        refreshStudents,
+      }}
+    >
+      {children}
+    </StudentContext.Provider>
+  );
+}
+
+export function useStudents() {
+  const context = useContext(StudentContext);
+  if (context === undefined) {
+    throw new Error("useStudents must be used within a StudentProvider");
+  }
+  return context;
+}

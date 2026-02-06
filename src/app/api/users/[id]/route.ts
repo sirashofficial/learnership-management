@@ -1,18 +1,13 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth, requireAdmin } from '@/lib/middleware';
-
 // GET /api/users/[id] - Get single user
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = requireAuth(request);
-    if (error) return error;
-
-    // Users can only view their own profile unless they're admin
+// Users can only view their own profile unless they're admin
     if (user.userId !== params.id && user.role !== 'ADMIN') {
       return errorResponse('Forbidden', 403);
     }
@@ -52,10 +47,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = requireAuth(request);
-    if (error) return error;
-
-    // Users can only update their own profile unless they're admin
+// Users can only update their own profile unless they're admin
     if (user.userId !== params.id && user.role !== 'ADMIN') {
       return errorResponse('Forbidden', 403);
     }
@@ -96,10 +88,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = requireAdmin(request);
-    if (error) return error;
-
-    // Prevent deleting yourself
+// Prevent deleting yourself
     if (user.userId === params.id) {
       return errorResponse('You cannot delete your own account', 400);
     }

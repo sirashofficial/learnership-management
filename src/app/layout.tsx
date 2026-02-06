@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import { StudentProvider } from "@/contexts/StudentContextSimple";
 import { GroupsProvider } from "@/contexts/GroupsContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
 
@@ -23,11 +24,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={`${inter.variable} font-sans antialiased bg-background text-text`}>
-        <AuthProvider>
-          <GroupsProvider>
-            <StudentProvider>
-              <div className="min-h-screen bg-background">
-                <Sidebar />
+        <ErrorBoundary>
+          <AuthProvider>
+            <GroupsProvider>
+              <StudentProvider>
+                <div className="min-h-screen bg-background">
+                  <Sidebar />
                 <main className="transition-all duration-300 lg:ml-64">
                   {children}
                 </main>
@@ -35,7 +37,8 @@ export default function RootLayout({
             </StudentProvider>
           </GroupsProvider>
         </AuthProvider>
-      </body>
-    </html>
+      </ErrorBoundary>
+    </body>
+  </html>
   );
 }

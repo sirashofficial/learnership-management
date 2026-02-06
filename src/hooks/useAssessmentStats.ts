@@ -28,7 +28,7 @@ export function useAssessmentStats(studentId?: string, groupId?: string) {
   const { data, error, isLoading, mutate } = useSWR<{ data: AssessmentStats }>(
     url,
     fetcher,
-    swrConfig.default
+    swrConfig.assessments
   );
 
   return {

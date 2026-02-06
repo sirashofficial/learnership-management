@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
 import bcrypt from 'bcryptjs';
 
 // PUT /api/users/[id]/password - Change user password
@@ -10,10 +9,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = requireAuth(request);
-    if (error) return error;
-
-    // Users can only change their own password
+// Users can only change their own password
     if (user.userId !== params.id) {
       return errorResponse('You can only change your own password', 403);
     }

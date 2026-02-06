@@ -1,0 +1,10 @@
+{
+  "emailNotifications": true,
+  "pushNotifications": true,
+  "attendanceAlerts": true,
+  "assessmentReminders": true,
+  "weeklyReports": false,
+  "dailyDigest": false,
+  "moderationAlerts": true,
+  "studentProgressUpdates": true
+}

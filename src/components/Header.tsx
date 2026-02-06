@@ -1,49 +1,157 @@
-"use client";
+'use client';
 
-import { Menu, Search, Bell } from "lucide-react";
+import { Bell, Moon, Sun, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import GlobalSearch from './GlobalSearch';
+import { useState, useEffect, useRef } from 'react';
 
-interface HeaderProps {
-  title: string;
-  subtitle: string;
-}
+export default function Header() {
+  const { user } = useAuth();
+  const [darkMode, setDarkMode] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
-export default function Header({ title, subtitle }: HeaderProps) {
+  useEffect(() => {
+    // Check and apply dark mode preference on mount
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedDarkMode);
+    if (savedDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  // Close notifications on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showNotifications]);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', newDarkMode.toString());
+  };
+
+  const notifications = [
+    { id: 1, title: 'New student enrolled', message: 'John Doe has been added to Group A', time: '5 min ago' },
+    { id: 2, title: 'Assessment submitted', message: 'Module 1 assessment completed by 3 students', time: '1 hour ago' },
+    { id: 3, title: 'Low attendance alert', message: 'Group B attendance below 80%', time: '2 hours ago' },
+  ];
+
   return (
-    <header className="bg-white border-b border-background-border px-6 py-4 sticky top-0 z-40">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 z-30 shadow-sm">
       <div className="flex items-center justify-between">
+        {/* Left - Welcome Message */}
         <div className="flex items-center gap-4">
-          <button className="lg:hidden p-2 text-text hover:bg-background rounded-lg transition-colors">
-            <Menu className="w-5 h-5" />
-          </button>
           <div>
-            <h2 className="text-xl font-bold text-text">{title}</h2>
-            <p className="text-sm text-text-light mt-0.5">{subtitle}</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Dashboard
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Date Display */}
-          <div className="hidden sm:flex items-center gap-2 text-sm text-text-light bg-background px-3 py-1.5 rounded-lg">
-            <span>Monday, February 2, 2026</span>
-          </div>
+        {/* Right - Actions */}
+        <div className="flex items-center gap-3">
+          {/* Global Search */}
+          <GlobalSearch />
 
-          {/* Search Bar */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
-            <input
-              type="text"
-              placeholder="Search students, modules..."
-              className="pl-10 pr-4 py-2 w-64 text-sm bg-background border border-background-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            />
-          </div>
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title={darkMode ? 'Light Mode' : 'Dark Mode'}
+          >
+            {darkMode ? (
+              <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            ) : (
+              <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            )}
+          </button>
 
           {/* Notifications */}
-          <button className="relative p-2 text-text-light hover:bg-background rounded-lg transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-              2
-            </span>
-          </button>
+          <div ref={notificationRef} className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              {notificationCount > 0 && (
+                <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {notificationCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  {notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                    >
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">{notif.title}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{notif.message}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">{notif.time}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-3 text-center border-t border-gray-200 dark:border-gray-700">
+                  <button className="text-sm text-teal-600 dark:text-teal-400 hover:underline">
+                    View all notifications
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User Avatar */}
+          <div className="flex items-center gap-3 pl-3 border-l border-gray-200 dark:border-gray-700">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {user?.name}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                {user?.role}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+          </div>
         </div>
       </div>
     </header>

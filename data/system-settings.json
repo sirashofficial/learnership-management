@@ -1,0 +1,13 @@
+{
+  "organizationName": "YEHA - Youth Education",
+  "timezone": "Africa/Johannesburg",
+  "dateFormat": "DD/MM/YYYY",
+  "timeFormat": "24h",
+  "language": "en",
+  "currency": "ZAR",
+  "attendanceGracePeriod": 15,
+  "assessmentPassMark": 70,
+  "autoBackup": true,
+  "backupFrequency": "daily",
+  "maintenanceMode": false
+}

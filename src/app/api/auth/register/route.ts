@@ -3,14 +3,28 @@ import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth';
 import { registerSchema } from '@/lib/validations';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { rateLimit } from '@/lib/rate-limit';
+import { sanitizeEmail, sanitizeString } from '@/lib/input-sanitizer';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
+  // Apply rate limiting: 3 registration attempts per hour
+  const rateLimitResult = await rateLimit({ interval: 3600000, maxRequests: 3 })(request);
+  if (rateLimitResult) return rateLimitResult;
+
   try {
     const body = await request.json();
     
+    // Sanitize inputs before validation
+    const sanitizedBody = {
+      email: sanitizeEmail(body.email || ''),
+      name: sanitizeString(body.name || ''),
+      password: sanitizeString(body.password || ''),
+      role: body.role,
+    };
+    
     // Validate input
-    const validatedData = registerSchema.parse(body);
+    const validatedData = registerSchema.parse(sanitizedBody);
     
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({

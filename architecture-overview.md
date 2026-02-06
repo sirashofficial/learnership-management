@@ -1,0 +1,1837 @@
+# COMPLETE SYSTEM ARCHITECTURE OVERVIEW
+
+## EXECUTIVE SUMMARY
+
+**Application Type:** SSETA NVC Level 2 Learnership Management System  
+**Primary Purpose:** Training management for facilitators to track students, groups, attendance, assessments, and curriculum delivery  
+**Current State:** Phase 3 Complete - Production-ready with optimizations
+
+---
+
+## 1. PROJECT STRUCTURE
+
+```
+Learnership Management/
+│
+├── 📁 src/                          # Source code (Next.js App Router)
+│   ├── 📁 app/                      # Frontend Pages (Route-based)
+│   │   ├── page.tsx                 # Dashboard (/)
+│   │   ├── layout.tsx               # Root layout with providers
+│   │   ├── loading.tsx              # Dashboard loading skeleton
+│   │   ├── globals.css              # Global styles
+│   │   │
+│   │   ├── 📁 students/             # Student management
+│   │   │   ├── page.tsx             # Students list page
+│   │   │   └── loading.tsx          # Loading skeleton
+│   │   │
+│   │   ├── 📁 groups/               # Group management
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 attendance/           # Attendance tracking
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 assessments/          # Assessment management
+│   │   │   ├── page.tsx
+│   │   │   └── loading.tsx
+│   │   │
+│   │   ├── 📁 timetable/            # Schedule/Calendar
+│   │   │   ├── page.tsx
+│   │   │   ├── page.tsx.backup      # Backup version
+│   │   │   └── loading.tsx
+│   │   │
+│   │   ├── 📁 progress/             # Progress tracking
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 curriculum/           # Curriculum library
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 lessons/              # Lesson planner
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 poe/                  # Portfolio of Evidence
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 compliance/           # Compliance tracking
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 settings/             # User settings
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── 📁 admin/                # Admin area
+│   │   │   ├── page.tsx             # Admin dashboard
+│   │   │   └── 📁 users/
+│   │   │       └── page.tsx         # User management
+│   │   │
+│   │   └── 📁 api/                  # **BACKEND API ROUTES**
+│   │       ├── 📁 students/         # Student CRUD
+│   │       │   ├── route.ts         # GET, POST students
+│   │       │   └── [id]/route.ts    # GET, PATCH, DELETE by ID
+│   │       ├── 📁 groups/           # Group CRUD
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── 📁 attendance/       # Attendance API
+│   │       │   ├── route.ts
+│   │       │   └── history/route.ts
+│   │       ├── 📁 assessments/      # Assessment API
+│   │       │   └── route.ts
+│   │       ├── 📁 lessons/          # Lesson plans API
+│   │       │   └── route.ts
+│   │       ├── 📁 timetable/        # Schedule API
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── 📁 poe/              # POE API
+│   │       │   └── route.ts
+│   │       ├── 📁 recurring-sessions/ # Recurring schedule
+│   │       │   └── route.ts
+│   │       ├── 📁 dashboard/        # Dashboard data
+│   │       │   ├── stats/route.ts
+│   │       │   └── schedule/route.ts
+│   │       ├── 📁 settings/         # User settings
+│   │       │   ├── profile/route.ts
+│   │       │   └── security/route.ts
+│   │       └── 📁 auth/             # Authentication
+│   │           ├── login/route.ts
+│   │           └── register/route.ts
+│   │
+│   ├── 📁 components/               # **REUSABLE UI COMPONENTS**
+│   │   ├── Sidebar.tsx              # Main navigation
+│   │   ├── Header.tsx               # Page headers
+│   │   ├── DashboardStats.tsx       # Stats cards
+│   │   ├── DashboardCharts.tsx      # Charts (lazy loaded)
+│   │   ├── DashboardAlerts.tsx      # Alert system (lazy loaded)
+│   │   ├── TodaysSchedule.tsx       # Today's lessons (lazy loaded)
+│   │   ├── RecentActivity.tsx       # Activity feed (lazy loaded)
+│   │   ├── QuickActions.tsx         # Quick action buttons
+│   │   ├── AddStudentModal.tsx      # Add/edit student
+│   │   ├── StudentDetailsModal.tsx  # Student details
+│   │   ├── StudentProgressModal.tsx # Progress tracking
+│   │   ├── GroupModal.tsx           # Add/edit group
+│   │   ├── GroupsManagement.tsx     # Group management UI
+│   │   ├── ScheduleLessonModal.tsx  # Schedule lesson
+│   │   ├── MarkAttendanceModal.tsx  # Quick attendance
+│   │   ├── AttendanceCalendar.tsx   # Calendar view
+│   │   ├── LessonDetailsModal.tsx   # Lesson details
+│   │   ├── AddLessonModal.tsx       # Add/edit lesson
+│   │   ├── MonthView.tsx            # Monthly calendar
+│   │   ├── ListView.tsx             # List view
+│   │   ├── TimelineView.tsx         # Timeline view
+│   │   ├── FilterPanel.tsx          # Filter controls
+│   │   └── ErrorBoundary.tsx        # Error handling
+│   │
+│   ├── 📁 contexts/                 # **STATE MANAGEMENT**
+│   │   ├── AuthContext.tsx          # Authentication state
+│   │   ├── GroupsContext.tsx        # Groups state
+│   │   ├── StudentContext.tsx       # Student state (full)
+│   │   └── StudentContextSimple.tsx # Student state (simple)
+│   │
+│   ├── 📁 hooks/                    # **CUSTOM HOOKS**
+│   │   ├── useStudents.ts           # Fetch students data
+│   │   ├── useGroups.ts             # Fetch groups data
+│   │   ├── useAttendance.ts         # Fetch attendance
+│   │   ├── useAssessmentStats.ts    # Assessment stats
+│   │   ├── useCurriculum.ts         # Curriculum data
+│   │   ├── useProgress.ts           # Progress tracking
+│   │   └── useDashboard.ts          # Dashboard data
+│   │
+│   └── 📁 lib/                      # **UTILITIES & HELPERS**
+│       ├── prisma.ts                # Database client singleton
+│       ├── auth.ts                  # JWT authentication
+│       ├── api-utils.ts             # API response helpers
+│       ├── validations.ts           # Zod validation schemas
+│       ├── logger.ts                # Structured logging
+│       ├── rate-limiter.ts          # Rate limiting
+│       ├── sanitize.ts              # Input sanitization
+│       └── utils.ts                 # General utilities
+│
+├── 📁 prisma/                       # **DATABASE**
+│   ├── schema.prisma                # Database schema (SQLite)
+│   ├── dev.db                       # SQLite database file
+│   ├── seed.ts                      # Sample data seeder
+│   ├── add-indexes.ts               # Performance indexes script
+│   ├── migrate-data.ts              # Migration script (Site→Group)
+│   └── 📁 migrations/
+│       └── add_performance_indexes.sql
+│
+├── 📁 docs/                         # Documentation
+│   ├── GETTING_STARTED.md
+│   └── BACKEND_SETUP.md
+│
+├── 📁 public/                       # Static assets
+│
+├── 📄 Configuration Files
+│   ├── package.json                 # Dependencies
+│   ├── tsconfig.json                # TypeScript config
+│   ├── next.config.mjs              # Next.js config
+│   ├── tailwind.config.ts           # Tailwind CSS
+│   ├── postcss.config.mjs           # PostCSS
+│   ├── .eslintrc.json               # ESLint rules
+│   ├── .env.example                 # Environment template
+│   ├── .env                         # Environment variables
+│   └── .env.local                   # Local overrides
+│
+└── 📄 Utility Scripts
+    ├── check-db.js                  # Database checker
+    ├── check-status.js              # System status
+    ├── check-groups.js              # Groups checker
+    ├── make-admin.js                # Make user admin
+    └── show-data-source.js          # Data source viewer
+```
+
+---
+
+## 2. TECHNOLOGY STACK
+
+### **Frontend**
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Next.js | 14.2.23 | React framework with App Router |
+| React | 18.3.1 | UI library |
+| TypeScript | 5.4.5 | Type safety |
+| Tailwind CSS | 3.4.1 | Utility-first CSS |
+| Lucide React | 0.344.0 | Icon library |
+| SWR | 2.2.5 | Data fetching & caching |
+| date-fns | 3.3.1 | Date manipulation |
+| Recharts | 2.12.2 | Charting library |
+
+### **Backend**
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Next.js API Routes | 14.2.23 | Backend API |
+| Prisma ORM | 5.11.0 | Database ORM |
+| SQLite | - | Development database |
+| bcryptjs | 2.4.3 | Password hashing |
+| jsonwebtoken | 9.0.2 | JWT authentication |
+| Zod | 3.22.4 | Schema validation |
+
+### **State Management**
+
+- **React Context API** - Global state (Auth, Groups, Students)
+- **SWR** - Server state caching with:
+  - Stale-while-revalidate strategy
+  - Request deduplication
+  - Automatic revalidation
+  - Optimistic updates
+
+### **Routing**
+
+- **Next.js App Router** - File-based routing with:
+  - Server components
+  - Client components (`'use client'`)
+  - Dynamic routes `[id]`
+  - API routes in `/api`
+
+### **CSS Framework**
+
+- **Tailwind CSS 3.4** with:
+  - Dark mode support
+  - Custom color palette
+  - Responsive utilities
+  - Custom animations
+
+---
+
+## 3. DATABASE SCHEMA
+
+**Database Type:** SQLite (dev.db)  
+**ORM:** Prisma  
+**Location:** `prisma/dev.db`
+
+### **Tables & Relationships**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                     DATABASE SCHEMA DIAGRAM                       │
+└──────────────────────────────────────────────────────────────────┘
+
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│   Company   │◄──────│    Group    │──────►│   Student   │
+└─────────────┘       └─────────────┘       └─────────────┘
+                             │                      │
+                             │                      │
+                             ▼                      ▼
+                      ┌─────────────┐       ┌─────────────┐
+                      │   Session   │       │ Attendance  │
+                      └─────────────┘       └─────────────┘
+                             │                      │
+                             │                      │
+                             ▼                      ▼
+                      ┌─────────────┐       ┌─────────────┐
+                      │ LessonPlan  │       │ Assessment  │
+                      └─────────────┘       └─────────────┘
+                                                   │
+                                                   ▼
+                                            ┌─────────────┐
+                                            │POEChecklist │
+                                            └─────────────┘
+```
+
+### **Detailed Table Schemas**
+
+#### **1. User**
+
+```prisma
+User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          String    @default("FACILITATOR")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  students      Student[]
+  lessonPlans   LessonPlan[]
+  sessions      Session[]
+}
+```
+
+**Indexes:** email (unique)
+
+---
+
+#### **2. Company**
+
+```prisma
+Company {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+  industry      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  groups        Group[]
+}
+```
+
+**Indexes:** name (unique)
+
+---
+
+#### **3. Group**
+
+```prisma
+Group {
+  id            String    @id @default(uuid())
+  name          String
+  contactName   String?
+  contactPhone  String?
+  coordinator   String?
+  startDate     DateTime
+  endDate       DateTime
+  status        String    @default("ACTIVE")
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  companyId     String?
+  
+  // Relations
+  company       Company?  @relation(fields: [companyId], references: [id])
+  students      Student[]
+  sessions      Session[]
+  lessonPlans   LessonPlan[]
+  courses       GroupCourse[]
+}
+```
+
+**Indexes:** 
+- `companyId` (performance)
+- `status` (performance)
+
+---
+
+#### **4. Student**
+
+```prisma
+Student {
+  id            String    @id @default(uuid())
+  studentId     String    @unique
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  idNumber      String?
+  progress      Int       @default(0)
+  status        String    @default("ACTIVE")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  groupId       String
+  facilitatorId String
+  
+  // Relations
+  group         Group     @relation(fields: [groupId], references: [id])
+  facilitator   User      @relation(fields: [facilitatorId], references: [id])
+  attendance    Attendance[]
+  assessments   Assessment[]
+  poeChecklist  POEChecklist?
+  progress      CourseProgress[]
+}
+```
+
+**Indexes:**
+- `studentId` (unique)
+- `groupId` (performance)
+- `status` (performance)
+- `email` (performance)
+
+---
+
+#### **5. Session**
+
+```prisma
+Session {
+  id            String    @id @default(uuid())
+  title         String
+  date          DateTime
+  startTime     String
+  endTime       String
+  module        String
+  venue         String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  groupId       String
+  facilitatorId String
+  
+  // Relations
+  group         Group     @relation(fields: [groupId], references: [id])
+  facilitator   User      @relation(fields: [facilitatorId], references: [id])
+}
+```
+
+**Indexes:**
+- `groupId` (performance)
+- `date` (performance)
+
+---
+
+#### **6. Attendance**
+
+```prisma
+Attendance {
+  id            String    @id @default(uuid())
+  date          DateTime
+  status        String    // PRESENT, ABSENT, LATE, EXCUSED
+  reason        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  studentId     String
+  
+  // Relations
+  student       Student   @relation(fields: [studentId], references: [id])
+}
+```
+
+**Indexes:**
+- `studentId` (performance)
+- `date` (performance)
+- `status` (performance)
+- `studentId, date` (composite for unique lookup)
+
+---
+
+#### **7. Assessment**
+
+```prisma
+Assessment {
+  id            String    @id @default(uuid())
+  title         String
+  assessmentType String
+  method        String
+  date          DateTime
+  score         Int?
+  result        String?
+  feedback      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  studentId     String
+  moduleId      String?
+  
+  // Relations
+  student       Student   @relation(fields: [studentId], references: [id])
+}
+```
+
+**Indexes:**
+- `studentId` (performance)
+- `moduleId` (performance)
+- `date` (performance)
+
+---
+
+#### **8. LessonPlan**
+
+```prisma
+LessonPlan {
+  id            String    @id @default(uuid())
+  title         String
+  date          DateTime
+  startTime     String
+  endTime       String
+  venue         String?
+  objectives    String?
+  activities    String?
+  materials     String?
+  assessment    String?
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  groupId       String
+  moduleId      String
+  facilitatorId String
+  
+  // Relations
+  group         Group     @relation(fields: [groupId], references: [id])
+  module        Module    @relation(fields: [moduleId], references: [id])
+  facilitator   User      @relation(fields: [facilitatorId], references: [id])
+}
+```
+
+**Indexes:**
+- `groupId` (performance)
+- `moduleId` (performance)
+- `date` (performance)
+
+---
+
+#### **9. POEChecklist**
+
+```prisma
+POEChecklist {
+  id            String    @id @default(uuid())
+  module1POE    Boolean   @default(false)
+  module2POE    Boolean   @default(false)
+  module3POE    Boolean   @default(false)
+  module4POE    Boolean   @default(false)
+  module5POE    Boolean   @default(false)
+  module6POE    Boolean   @default(false)
+  assessmentSigned Boolean @default(false)
+  logbookComplete  Boolean @default(false)
+  status        String    @default("NOT_STARTED")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  studentId     String    @unique
+  
+  // Relations
+  student       Student   @relation(fields: [studentId], references: [id])
+}
+```
+
+**Indexes:**
+- `studentId` (unique)
+- `status` (performance)
+
+---
+
+#### **10. Module**
+
+```prisma
+Module {
+  id            String    @id @default(uuid())
+  name          String
+  code          String
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  courseId      String
+  
+  // Relations
+  course        Course    @relation(fields: [courseId], references: [id])
+  lessonPlans   LessonPlan[]
+  unitStandards UnitStandard[]
+}
+```
+
+**Indexes:**
+- `courseId` (performance)
+
+---
+
+#### **11. Course**
+
+```prisma
+Course {
+  id            String    @id @default(uuid())
+  name          String
+  modules       Json      // Flexible structure
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  modules       Module[]
+  groupCourses  GroupCourse[]
+}
+```
+
+---
+
+#### **12. GroupCourse**
+
+```prisma
+GroupCourse {
+  id                String    @id @default(uuid())
+  plannedStartDate  DateTime
+  plannedEndDate    DateTime
+  actualStartDate   DateTime?
+  actualEndDate     DateTime?
+  status            String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Foreign Keys
+  groupId           String
+  courseId          String
+  
+  // Relations
+  group             Group     @relation(fields: [groupId], references: [id])
+  course            Course    @relation(fields: [courseId], references: [id])
+  progress          CourseProgress[]
+}
+```
+
+---
+
+#### **13. CourseProgress**
+
+```prisma
+CourseProgress {
+  id            String    @id @default(uuid())
+  moduleIndex   Int
+  status        String
+  completedDate DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  studentId     String
+  groupCourseId String
+  
+  // Relations
+  student       Student   @relation(fields: [studentId], references: [id])
+  groupCourse   GroupCourse @relation(fields: [groupCourseId], references: [id])
+}
+```
+
+---
+
+### **Database Performance**
+
+**17 Performance Indexes Added:**
+- Student: 3 indexes (groupId, status, email)
+- Attendance: 4 indexes (studentId, date, status, composite)
+- Assessment: 3 indexes (studentId, moduleId, date)
+- Session: 2 indexes (groupId, date)
+- POEChecklist: 2 indexes (studentId, status)
+- Group: 2 indexes (companyId, status)
+- LessonPlan: 3 indexes (groupId, moduleId, date)
+
+---
+
+## 4. API/BACKEND ENDPOINTS
+
+### **Authentication Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| POST | `/api/auth/login` | User login | `{ email, password }` | `{ token, user }` | User |
+| POST | `/api/auth/register` | New user registration | `{ email, name, password, role }` | `{ token, user }` | User |
+
+---
+
+### **Student Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/students` | List all students | - | `{ data: Student[] }` | Student, Group, User |
+| GET | `/api/students/[id]` | Get student details | - | `{ data: Student }` | Student, Attendance, Assessment, POEChecklist |
+| POST | `/api/students` | Create new student | `{ firstName, lastName, studentId, groupId, email?, phone? }` | `{ data: Student }` | Student |
+| PATCH | `/api/students/[id]` | Update student | `{ firstName?, lastName?, email?, phone?, progress?, status? }` | `{ data: Student }` | Student |
+| DELETE | `/api/students/[id]` | Delete student | - | `{ success: true }` | Student |
+
+---
+
+### **Group Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/groups` | List all groups | - | `{ data: Group[] }` | Group, Company, Student (count) |
+| GET | `/api/groups/[id]` | Get group details | - | `{ data: Group }` | Group, Student, Session |
+| POST | `/api/groups` | Create new group | `{ name, companyId?, startDate, endDate, contactName?, coordinator? }` | `{ data: Group }` | Group |
+| PATCH | `/api/groups/[id]` | Update group | `{ name?, status?, endDate?, notes? }` | `{ data: Group }` | Group |
+| DELETE | `/api/groups/[id]` | Archive group | - | `{ success: true }` | Group |
+
+---
+
+### **Attendance Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/attendance` | Get attendance records | `?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | `{ data: Attendance[] }` | Attendance, Student |
+| GET | `/api/attendance/history` | Get historical data | `?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | `{ data: AttendanceHistory[] }` | Attendance, Student |
+| POST | `/api/attendance` | Mark attendance | `{ studentId, date, status, reason? }` | `{ data: Attendance }` | Attendance |
+
+---
+
+### **Assessment Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/assessments` | List assessments | `?studentId=uuid` | `{ data: Assessment[] }` | Assessment, Student |
+| POST | `/api/assessments` | Create assessment | `{ studentId, title, assessmentType, method, date, score?, result?, feedback? }` | `{ data: Assessment }` | Assessment |
+| PATCH | `/api/assessments/[id]` | Update assessment | `{ score?, result?, feedback? }` | `{ data: Assessment }` | Assessment |
+
+---
+
+### **Timetable/Lesson Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/timetable` | Get lessons for date range | `?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | `{ lessons: LessonPlan[] }` | LessonPlan, Group, Module, User |
+| GET | `/api/timetable/[id]` | Get lesson details | - | `{ data: LessonPlan }` | LessonPlan |
+| POST | `/api/timetable` | Create lesson | `{ title, date, startTime, endTime, groupId, moduleId, venue?, objectives? }` | `{ data: LessonPlan }` | LessonPlan |
+| PATCH | `/api/timetable/[id]` | Update lesson | `{ title?, date?, startTime?, endTime? }` | `{ data: LessonPlan }` | LessonPlan |
+| DELETE | `/api/timetable/[id]` | Delete lesson | - | `{ success: true }` | LessonPlan |
+
+---
+
+### **Session Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/recurring-sessions` | Get recurring sessions | - | `{ data: Session[] }` | Session |
+| POST | `/api/recurring-sessions` | Create recurring sessions | `{ groupId, title, module, startTime, endTime, dayOfWeek, venue? }` | `{ data: Session[] }` | Session |
+
+---
+
+### **POE Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/poe` | Get POE checklists | - | `{ data: POEChecklist[] }` | POEChecklist, Student |
+| POST | `/api/poe` | Create/Update POE | `{ studentId, module1POE?, module2POE?, ..., status? }` | `{ data: POEChecklist }` | POEChecklist |
+
+---
+
+### **Dashboard Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/dashboard/stats` | Get dashboard statistics | - | `{ totalStudents, activeGroups, pendingAssessments, averageProgress, atRiskStudents, upcomingSessions }` | Student, Group, Assessment, Attendance, Session |
+| GET | `/api/dashboard/schedule` | Get today's schedule | `?date=YYYY-MM-DD` | `{ schedule: ScheduleItem[] }` | LessonPlan, Session, Group, User |
+
+---
+
+### **Settings Endpoints**
+
+| Method | Endpoint | Purpose | Request Body | Response | Tables |
+|--------|----------|---------|--------------|----------|--------|
+| GET | `/api/settings/profile` | Get user profile | - | `{ name, email, role }` | User |
+| POST | `/api/settings/profile` | Update profile | `{ name?, email? }` | `{ data: User }` | User |
+| POST | `/api/settings/security` | Change password | `{ currentPassword, newPassword }` | `{ success: true }` | User |
+
+---
+
+### **API Response Format**
+
+**Success:**
+```json
+{
+  "success": true,
+  "data": { /* response data */ }
+}
+```
+
+**Error:**
+```json
+{
+  "success": false,
+  "error": "Error message"
+}
+```
+
+---
+
+## 5. FRONTEND PAGES/COMPONENTS
+
+### **Page Hierarchy**
+
+```
+/ (Dashboard)
+├── /students (Student Management)
+├── /groups (Group Management)
+├── /attendance (Attendance Tracking)
+├── /assessments (Assessment Management)
+├── /timetable (Schedule/Calendar)
+├── /progress (Progress Reports)
+├── /curriculum (Curriculum Library)
+├── /lessons (Lesson Planner)
+├── /poe (Portfolio of Evidence)
+├── /compliance (Compliance Tracking)
+├── /settings (User Settings)
+└── /admin
+    ├── / (Admin Dashboard)
+    └── /users (User Management)
+```
+
+---
+
+### **Component Map**
+
+#### **Layout Components**
+
+| Component | Used On | Purpose |
+|-----------|---------|---------|
+| `Sidebar.tsx` | All pages | Main navigation |
+| `Header.tsx` | All pages | Page title & breadcrumbs |
+| `ErrorBoundary.tsx` | All pages | Error handling |
+
+---
+
+#### **Dashboard Components**
+
+| Component | Used On | Purpose | Data Source |
+|-----------|---------|---------|-------------|
+| `DashboardStats.tsx` | Dashboard | Stats cards | `/api/dashboard/stats` |
+| `DashboardCharts.tsx` | Dashboard | Progress charts | `/api/dashboard/stats` |
+| `DashboardAlerts.tsx` | Dashboard | Alert system | `/api/dashboard/stats` |
+| `TodaysSchedule.tsx` | Dashboard | Today's lessons | `/api/dashboard/schedule` |
+| `RecentActivity.tsx` | Dashboard | Activity feed | `/api/dashboard/stats` |
+| `QuickActions.tsx` | Dashboard | Quick buttons | - |
+
+---
+
+#### **Modal Components**
+
+| Component | Used On | Purpose | API Calls |
+|-----------|---------|---------|-----------|
+| `AddStudentModal.tsx` | Students, Dashboard | Add/edit student | POST/PATCH `/api/students` |
+| `StudentDetailsModal.tsx` | Students | View/edit details | GET `/api/students/[id]` |
+| `StudentProgressModal.tsx` | Students | Progress tracking | GET `/api/students/[id]` |
+| `GroupModal.tsx` | Groups, Dashboard | Add/edit group | POST/PATCH `/api/groups` |
+| `ScheduleLessonModal.tsx` | Dashboard | Quick schedule | POST `/api/timetable` |
+| `MarkAttendanceModal.tsx` | Dashboard | Quick attendance | POST `/api/attendance` |
+| `LessonDetailsModal.tsx` | Timetable | View lesson | GET `/api/timetable/[id]` |
+| `AddLessonModal.tsx` | Timetable | Add/edit lesson | POST/PATCH `/api/timetable` |
+
+---
+
+#### **View Components**
+
+| Component | Used On | Purpose |
+|-----------|---------|---------|
+| `MonthView.tsx` | Timetable | Monthly calendar |
+| `ListView.tsx` | Timetable | List view |
+| `TimelineView.tsx` | Timetable | Timeline view |
+| `AttendanceCalendar.tsx` | Attendance | Calendar view |
+| `FilterPanel.tsx` | Multiple | Filter controls |
+
+---
+
+#### **Management Components**
+
+| Component | Used On | Purpose | API Calls |
+|-----------|---------|---------|-----------|
+| `GroupsManagement.tsx` | Groups | Group CRUD | GET/POST/PATCH/DELETE `/api/groups` |
+
+---
+
+### **Shared Components Pattern**
+
+**Most pages follow this structure:**
+
+```
+Page
+├── Header (page title)
+├── Stats/Summary section
+├── Action buttons (Add, Filter, Export)
+├── Data table/grid
+│   └── Individual items with actions
+└── Modals (Add/Edit/View)
+```
+
+---
+
+## 6. DATA FLOW MAP
+
+### **Student Management Flow**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                    STUDENT MANAGEMENT                       │
+└────────────────────────────────────────────────────────────┘
+
+User Action → Component → API → Database → Response → State → UI
+
+1. ADD STUDENT:
+   Students Page
+   └─► AddStudentModal
+       └─► POST /api/students
+           └─► INSERT INTO Student
+               └─► { success, data }
+                   └─► mutate('/api/students')
+                       └─► SWR cache updated
+                           └─► UI refreshes
+
+2. VIEW STUDENTS:
+   Students Page (mount)
+   └─► useStudents() hook
+       └─► SWR fetch('/api/students')
+           └─► GET /api/students
+               └─► SELECT * FROM Student JOIN Group
+                   └─► { data: Student[] }
+                       └─► Render table
+
+3. EDIT STUDENT:
+   Student Details Modal
+   └─► onSave()
+       └─► PATCH /api/students/[id]
+           └─► UPDATE Student SET ...
+               └─► { success, data }
+                   └─► mutate('/api/students')
+                       └─► Close modal + refresh
+
+4. DELETE STUDENT:
+   Student Details Modal
+   └─► onDelete()
+       └─► DELETE /api/students/[id]
+           └─► DELETE FROM Student WHERE id=...
+               └─► { success: true }
+                   └─► mutate('/api/students')
+                       └─► Remove from UI
+```
+
+---
+
+### **Group Management Flow**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                     GROUP MANAGEMENT                        │
+└────────────────────────────────────────────────────────────┘
+
+1. CREATE GROUP:
+   Groups Page
+   └─► GroupModal
+       └─► POST /api/groups
+           └─► INSERT INTO Group (companyId, name, startDate, endDate)
+               └─► { data: Group }
+                   └─► GroupsContext.addGroup()
+                       └─► UI updates
+
+2. ASSIGN STUDENTS TO GROUP:
+   Group Details
+   └─► AddStudentModal
+       └─► POST /api/students with groupId
+           └─► INSERT INTO Student (groupId, ...)
+               └─► Group student count updated
+                   └─► Refresh groups
+
+3. VIEW GROUP PROGRESS:
+   Groups Page
+   └─► useGroups() + useStudents()
+       └─► Calculate: students.filter(s => s.groupId === group.id)
+           └─► Show count + progress
+```
+
+---
+
+### **Attendance Tracking Flow**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                   ATTENDANCE TRACKING                       │
+└────────────────────────────────────────────────────────────┘
+
+1. MARK ATTENDANCE (Single):
+   Attendance Page
+   └─► Select student + status
+       └─► POST /api/attendance
+           └─► INSERT INTO Attendance (studentId, date, status, reason)
+               └─► { data: Attendance }
+                   └─► Local state updated
+                       └─► Save button → persist all
+
+2. BULK MARK:
+   Attendance Page
+   └─► Select multiple students
+       └─► Set bulk action (e.g., "PRESENT")
+           └─► Multiple POST /api/attendance calls
+               └─► Promise.all([...])
+                   └─► Show success message
+
+3. VIEW HISTORY:
+   Attendance Page → History Tab
+   └─► GET /api/attendance/history?startDate=...&endDate=...
+       └─► SELECT * FROM Attendance 
+           WHERE date BETWEEN ... 
+           JOIN Student
+           └─► { data: AttendanceRecord[] }
+               └─► Render calendar/chart
+
+4. ATTENDANCE REPORTS:
+   Dashboard / Compliance Page
+   └─► Calculate stats:
+       - Total sessions
+       - Present / Absent / Late counts
+       - Attendance rate = (present / total) * 100
+       └─► Identify at-risk students (< 80%)
+```
+
+---
+
+### **Lesson Planning & Timetable Flow**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│              LESSON PLANNING & TIMETABLE                    │
+└────────────────────────────────────────────────────────────┘
+
+1. CREATE SINGLE LESSON:
+   Lessons Page / Timetable
+   └─► AddLessonModal
+       └─► POST /api/timetable
+           └─► INSERT INTO LessonPlan
+               (title, date, startTime, endTime, groupId, moduleId)
+               └─► { data: LessonPlan }
+                   └─► mutate('/api/timetable')
+                       └─► Show on calendar
+
+2. CREATE RECURRING SESSIONS:
+   Timetable → Recurring Modal
+   └─► POST /api/recurring-sessions
+       └─► For each week (startDate → endDate):
+           INSERT INTO Session
+           (groupId, dayOfWeek, startTime, endTime)
+           └─► { data: Session[] }
+               └─► Show in schedule
+
+3. VIEW WEEKLY TIMETABLE:
+   Timetable Page
+   └─► SWR fetch('/api/timetable?startDate=...&endDate=...')
+       └─► GET LessonPlans + Sessions for week
+           └─► Merge both types
+               └─► Group by day + venue
+                   └─► Render calendar grid
+
+4. TODAY'S SCHEDULE (Dashboard):
+   Dashboard
+   └─► TodaysSchedule component
+       └─► GET /api/dashboard/schedule?date=today
+           └─► SELECT LessonPlans + Sessions
+               WHERE date = today
+               JOIN Group, User
+               └─► { schedule: ScheduleItem[] }
+                   └─► Show upcoming lessons
+```
+
+---
+
+### **Assessment Flow**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                   ASSESSMENT MANAGEMENT                     │
+└────────────────────────────────────────────────────────────┘
+
+1. CREATE ASSESSMENT:
+   Assessments Page
+   └─► Select students + assessment details
+       └─► POST /api/assessments
+           └─► INSERT INTO Assessment
+               (studentId, title, assessmentType, method, date)
+               └─► { data: Assessment }
+                   └─► Add to list
+
+2. UPDATE RESULTS:
+   Assessments Page → Edit
+   └─► Enter score, result, feedback
+       └─► PATCH /api/assessments/[id]
+           └─► UPDATE Assessment SET score=..., result=...
+               └─► { data: Assessment }
+                   └─► Update UI
+
+3. MODERATION QUEUE:
+   Assessments → Moderation Tab
+   └─► Filter assessments WHERE result = 'PENDING'
+       └─► Moderator reviews
+           └─► Update result to 'PASS' or 'FAIL'
+               └─► PATCH /api/assessments/[id]
+
+4. ASSESSMENT STATS (Dashboard):
+   Dashboard
+   └─► GET /api/dashboard/stats
+       └─► Calculate:
+           - Total assessments
+           - Pending moderation count
+           - Pass rate
+           └─► Show on dashboard
+```
+
+---
+
+### **Dashboard Data Sources**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                     DASHBOARD ASSEMBLY                      │
+└────────────────────────────────────────────────────────────┘
+
+Dashboard Page
+├─► DashboardStats
+│   └─► useDashboardStats() → GET /api/dashboard/stats
+│       └─► Parallel queries:
+│           ├─► COUNT(*) FROM Student WHERE status='ACTIVE'
+│           ├─► COUNT(*) FROM Group WHERE status='ACTIVE'
+│           ├─► COUNT(*) FROM Assessment WHERE result='PENDING'
+│           ├─► AVG(progress) FROM Student
+│           ├─► Students with attendance < 80%
+│           └─► Sessions WHERE date > today LIMIT 5
+│
+├─► DashboardCharts
+│   └─► Same data + process for charts
+│       └─► Recharts renders LineChart, BarChart
+│
+├─► TodaysSchedule
+│   └─► GET /api/dashboard/schedule?date=today
+│       └─► LessonPlans + Sessions for today
+│
+├─► RecentActivity
+│   └─► Latest records:
+│       ├─► Recent students (ORDER BY createdAt DESC)
+│       ├─► Recent attendance (ORDER BY date DESC)
+│       └─► Recent assessments (ORDER BY date DESC)
+│
+└─► QuickActions
+    └─► Open modals for quick add (no API until save)
+```
+
+---
+
+## 7. STATE MANAGEMENT
+
+### **Global State (Context API)**
+
+#### **AuthContext** (`src/contexts/AuthContext.tsx`)
+
+```tsx
+State:
+- user: User | null
+- token: string | null
+- isLoading: boolean
+
+Methods:
+- login(email, password)
+- register(email, name, password, role)
+- logout()
+
+Storage: localStorage.getItem('token')
+```
+
+---
+
+#### **GroupsContext** (`src/contexts/GroupsContext.tsx`)
+
+```tsx
+State:
+- groups: Group[]
+- companies: Company[]
+- isLoading: boolean
+
+Methods:
+- addGroup(groupData)
+- updateGroup(id, updates)
+- deleteGroup(id)
+- addCompany(companyData)
+
+Data Source: Fetches from /api/groups on mount
+```
+
+---
+
+#### **StudentContext** (`src/contexts/StudentContext.tsx`)
+
+```tsx
+State:
+- students: Student[]
+- attendanceData: { [studentId]: AttendanceRecord[] }
+
+Methods:
+- addStudent(studentData)
+- updateStudent(id, updates)
+- deleteStudent(id)
+- markAttendance(studentId, date, status, reason)
+
+Note: Has mock data fallback for offline testing
+```
+
+---
+
+### **Server State (SWR)**
+
+**Configuration:** (`src/app/layout.tsx`)
+
+```tsx
+<SWRConfig value={{
+  fetcher: (url) => fetch(url).then(res => res.json()),
+  revalidateOnFocus: true,
+  revalidateOnReconnect: true,
+  dedupingInterval: 5000,
+  errorRetryCount: 3,
+}}>
+```
+
+**Custom Hooks for Data Fetching:**
+
+| Hook | Endpoint | Returns | Used On |
+|------|----------|---------|---------|
+| `useStudents()` | `/api/students` | `{ students, isLoading, isError, mutate }` | Students, Dashboard, Groups |
+| `useGroups()` | `/api/groups` | `{ groups, isLoading, mutate }` | Groups, Students, Timetable |
+| `useAttendance()` | `/api/attendance` | `{ attendance, isLoading, mutate }` | Attendance, Compliance |
+| `useCurriculum()` | `/api/curriculum` | `{ modules, isLoading, mutate }` | Assessments, Curriculum |
+| `useProgress()` | `/api/progress` | `{ moduleProgress, isLoading }` | Progress, Compliance |
+| `useDashboard()` | `/api/dashboard/stats` | `{ stats, schedule, isLoading }` | Dashboard |
+
+**SWR Benefits:**
+- Automatic caching
+- Background revalidation
+- Optimistic updates with `mutate()`
+- Request deduplication
+- Stale-while-revalidate pattern
+
+---
+
+### **Component State Flow**
+
+```
+Global Context (Auth, Groups, Students)
+         │
+         ├─► Persistent across entire app
+         └─► localStorage sync for auth token
+
+SWR Cache (API responses)
+         │
+         ├─► Automatic background refresh
+         ├─► Shared between components
+         └─► Manual revalidation via mutate()
+
+Local Component State (useState)
+         │
+         ├─► Modal open/close
+         ├─► Form inputs
+         ├─► UI toggles (filters, views)
+         └─► Temporary selections
+```
+
+---
+
+## 8. AUTHENTICATION & USER SYSTEM
+
+### **Authentication Flow**
+
+```
+1. LOGIN:
+   Login Page
+   └─► Enter email + password
+       └─► POST /api/auth/login
+           └─► Compare bcrypt hash
+               └─► Generate JWT token
+                   └─► Return { token, user }
+                       └─► Store in localStorage
+                           └─► AuthContext.setUser()
+                               └─► Redirect to Dashboard
+
+2. REGISTRATION:
+   Register Page
+   └─► Enter details
+       └─► POST /api/auth/register
+           └─► Hash password with bcryptjs
+               └─► INSERT INTO User
+                   └─► Generate JWT token
+                       └─► Return { token, user }
+                           └─► Auto-login
+
+3. PROTECTED ROUTES:
+   Every page
+   └─► Check AuthContext.user
+       └─► If null → redirect to /login
+       └─► If present → render page
+
+4. API AUTHENTICATION:
+   Every API request
+   └─► Check Authorization header
+       └─► Extract JWT token
+           └─► Verify with jsonwebtoken
+               └─► If valid → proceed
+               └─► If invalid → 401 Unauthorized
+```
+
+---
+
+### **User Roles**
+
+| Role | Permissions | Access Level |
+|------|-------------|--------------|
+| **ADMIN** | Full system access | Can manage users, groups, all data |
+| **FACILITATOR** | Standard access | Can manage own students, groups, attendance |
+| **VIEWER** | Read-only | Can view reports, no editing |
+
+---
+
+### **Session Management**
+
+```
+Storage: localStorage
+Key: 'token'
+Value: JWT token (expires in 24h)
+
+Token Payload:
+{
+  userId: string,
+  email: string,
+  role: string,
+  iat: timestamp,
+  exp: timestamp
+}
+
+Auto-logout:
+- Token expiry (24 hours)
+- Manual logout button
+- Invalid token detection
+```
+
+---
+
+### **User Data Management**
+
+```
+User Profile:
+├─► Stored in User table
+├─► Editable via /settings/profile
+├─► Fields: name, email
+└─► Password change via /settings/security
+
+User Context:
+├─► Available globally via AuthContext
+├─► Used for:
+│   ├─► Display name in header
+│   ├─► Role-based UI rendering
+│   ├─► Filter data by facilitatorId
+│   └─► Audit trail (createdBy tracking)
+```
+
+---
+
+## 9. FILE INTERCONNECTIONS
+
+### **Critical Dependency Map**
+
+```
+prisma/schema.prisma
+└─► Defines entire database structure
+    └─► Used by:
+        ├─► All API route handlers
+        ├─► src/lib/prisma.ts (client)
+        └─► Prisma generate command
+
+src/lib/prisma.ts
+└─► Database client singleton
+    └─► Imported by:
+        └─► Every API route in src/app/api/**/route.ts
+
+src/lib/auth.ts
+└─► JWT verification & generation
+    └─► Used by:
+        ├─► /api/auth/login
+        ├─► /api/auth/register
+        └─► Middleware for protected routes
+
+src/contexts/AuthContext.tsx
+└─► Global auth state
+    └─► Wraps entire app in layout.tsx
+        └─► Used by:
+            ├─► All pages for user data
+            ├─► Header component
+            └─► Protected route checks
+
+src/app/layout.tsx
+└─► Root layout
+    ├─► Wraps with AuthProvider
+    ├─► Wraps with GroupsProvider
+    ├─► Wraps with SWRConfig
+    └─► Includes Sidebar on all pages
+
+src/components/Sidebar.tsx
+└─► Main navigation
+    └─► Used on every page via layout.tsx
+        └─► Links to all routes
+```
+
+---
+
+### **Component Dependencies**
+
+```
+Dashboard (/)
+├─► DashboardStats
+├─► DashboardCharts
+│   └─► Uses Recharts library
+├─► DashboardAlerts
+├─► TodaysSchedule
+├─► RecentActivity
+└─► QuickActions
+    ├─► Opens AddStudentModal
+    ├─► Opens GroupModal
+    ├─► Opens ScheduleLessonModal
+    └─► Opens MarkAttendanceModal
+
+Students Page
+├─► useStudents() hook
+├─► AddStudentModal
+├─► StudentDetailsModal
+│   └─► StudentProgressModal (nested)
+└─► EditStudentModal
+
+Groups Page
+├─► useGroups() hook
+├─► GroupsManagement component
+│   ├─► GroupModal
+│   └─► Confirmation dialogs
+└─► Student assignment
+
+Attendance Page
+├─► useAttendance() hook
+├─► AttendanceCalendar
+├─► MarkAttendanceModal
+└─► FilterPanel
+
+Timetable Page
+├─► MonthView
+├─► ListView
+├─► TimelineView
+├─► AddLessonModal
+├─► LessonDetailsModal
+└─► FilterPanel
+```
+
+---
+
+### **API Route Dependencies**
+
+```
+All API Routes
+└─► Import from:
+    ├─► src/lib/prisma.ts (database)
+    ├─► src/lib/auth.ts (authentication)
+    ├─► src/lib/validations.ts (Zod schemas)
+    └─► src/lib/api-utils.ts (response helpers)
+
+/api/students/route.ts
+└─► Depends on:
+    ├─► User table (facilitatorId)
+    ├─► Group table (groupId)
+    └─► Called by useStudents() hook
+
+/api/groups/route.ts
+└─► Depends on:
+    ├─► Company table (companyId)
+    ├─► Student table (count)
+    └─► Called by useGroups() hook
+
+/api/dashboard/stats/route.ts
+└─► Aggregates from:
+    ├─► Student table
+    ├─► Group table
+    ├─► Assessment table
+    ├─► Attendance table
+    └─► Session table
+```
+
+---
+
+### **Utility Dependencies**
+
+```
+src/lib/utils.ts
+└─► Common utilities
+    └─► Used by:
+        └─► Many components for formatting, calculations
+
+date-fns
+└─► Date manipulation
+    └─► Used by:
+        ├─► Timetable components
+        ├─► Attendance calendar
+        ├─► Dashboard schedule
+        └─► Date filters
+
+Tailwind CSS
+└─► Styling
+    └─► Used by:
+        └─► All components via className
+
+Lucide React
+└─► Icons
+    └─► Used by:
+        ├─► Sidebar navigation
+        ├─► Buttons
+        ├─► Status indicators
+        └─► Dashboard cards
+```
+
+---
+
+### **Circular Dependencies**
+
+**No circular dependencies detected.** The codebase follows a clean dependency hierarchy:
+
+```
+Database Layer (Prisma)
+    ↓
+API Layer (Route handlers)
+    ↓
+Data Hooks (SWR)
+    ↓
+Context Providers
+    ↓
+Components
+    ↓
+Pages
+```
+
+---
+
+## 10. EXTERNAL INTEGRATIONS
+
+### **Third-Party Libraries**
+
+| Library | Purpose | Version | Usage |
+|---------|---------|---------|-------|
+| **Next.js** | Framework | 14.2.23 | Entire application |
+| **React** | UI library | 18.3.1 | Frontend components |
+| **Prisma** | ORM | 5.11.0 | Database operations |
+| **SWR** | Data fetching | 2.2.5 | Client-side caching |
+| **Recharts** | Charts | 2.12.2 | Dashboard visualizations |
+| **date-fns** | Date utils | 3.3.1 | Date formatting |
+| **Lucide React** | Icons | 0.344.0 | UI icons |
+| **Tailwind CSS** | Styling | 3.4.1 | CSS framework |
+| **bcryptjs** | Hashing | 2.4.3 | Password security |
+| **jsonwebtoken** | Auth | 9.0.2 | JWT tokens |
+| **Zod** | Validation | 3.22.4 | Schema validation |
+
+---
+
+### **External APIs**
+
+**Currently: NONE**
+
+The system is fully self-contained with no external API dependencies. All data is:
+- Stored locally in SQLite database
+- Processed server-side
+- No third-party service calls
+
+**Potential Future Integrations:**
+- Email service (SendGrid, AWS SES) for notifications
+- SMS service (Twilio) for attendance alerts
+- Cloud storage (AWS S3, Azure) for POE documents
+- Calendar sync (Google Calendar) for timetable
+- Backup service (cloud database sync)
+
+---
+
+### **CDN Resources**
+
+**Currently: NONE**
+
+All assets are bundled locally:
+- No external CDN dependencies
+- All libraries installed via npm
+- Fonts and icons bundled with Tailwind
+
+---
+
+### **Environment Variables**
+
+```env
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Authentication
+JWT_SECRET="your-secret-key-here"
+JWT_EXPIRES_IN="24h"
+
+# Application
+NODE_ENV="development"
+NEXT_PUBLIC_API_URL="http://localhost:3000"
+
+# Future integrations
+# EMAIL_SERVICE_KEY=""
+# SMS_SERVICE_KEY=""
+# CLOUD_STORAGE_KEY=""
+```
+
+---
+
+## 11. KEY FEATURES SUMMARY
+
+### **Core Functionality**
+
+1. **Student Management**
+   - CRUD operations
+   - Group assignment
+   - Progress tracking
+   - Status management (Active/Inactive/Graduated)
+
+2. **Group Management**
+   - Create groups with company association
+   - Manage group lifecycle
+   - Track group progress
+   - Student assignment
+
+3. **Attendance Tracking**
+   - Daily attendance marking
+   - Bulk actions
+   - Historical reports
+   - Attendance rate calculations
+   - At-risk student identification
+
+4. **Assessment Management**
+   - Multiple assessment types
+   - Score recording
+   - Moderation queue
+   - Pass/fail tracking
+   - Feedback system
+
+5. **Timetable/Scheduling**
+   - Single lesson creation
+   - Recurring sessions
+   - Multiple view modes (Month/List/Timeline)
+   - Today's schedule on dashboard
+   - Conflict detection
+
+6. **Progress Tracking**
+   - Module completion
+   - Course progress
+   - Individual student progress
+   - Group progress overview
+
+7. **Portfolio of Evidence (POE)**
+   - Module checklist
+   - Completion tracking
+   - Status management
+
+8. **Compliance Reporting**
+   - Attendance compliance
+   - Assessment completion
+   - Progress metrics
+   - At-risk identification
+
+9. **Dashboard**
+   - Real-time statistics
+   - Progress charts
+   - Alerts/notifications
+   - Today's schedule
+   - Recent activity
+   - Quick actions
+
+10. **User Management** (Admin)
+    - User CRUD
+    - Role assignment
+    - Access control
+
+---
+
+## SYSTEM ARCHITECTURE DIAGRAM
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         CLIENT BROWSER                          │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │               React Components (UI Layer)                 │   │
+│  │  Dashboard | Students | Groups | Attendance | Timetable  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                               │                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │         State Management (Context + SWR)                  │   │
+│  │    AuthContext | GroupsContext | StudentContext          │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                               │                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              Custom Hooks (Data Fetching)                 │   │
+│  │  useStudents | useGroups | useAttendance | useDashboard  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                           HTTP/HTTPS
+                               │
+┌─────────────────────────────────────────────────────────────────┐
+│                     NEXT.JS SERVER (PORT 3000)                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │            API Routes (Backend Logic)                     │   │
+│  │  /api/students | /api/groups | /api/attendance           │   │
+│  │  /api/assessments | /api/timetable | /api/dashboard      │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                               │                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │         Middleware & Utilities                            │   │
+│  │  Authentication | Validation | Rate Limiting              │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                               │                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │               Prisma ORM Client                           │   │
+│  │          (Database Abstraction Layer)                     │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                          SQL Queries
+                               │
+┌─────────────────────────────────────────────────────────────────┐
+│                      SQLite DATABASE                            │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  User | Student | Group | Company | Attendance           │   │
+│  │  Assessment | LessonPlan | Session | POEChecklist        │   │
+│  │  Module | Course | GroupCourse | CourseProgress          │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                         (dev.db file)                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## PERFORMANCE OPTIMIZATIONS
+
+### **Implemented Optimizations**
+
+1. **Database Indexes** (17 total)
+   - Strategic indexes on frequently queried columns
+   - Composite indexes for common JOIN operations
+   - Improves query performance by 10-100x
+
+2. **SWR Caching**
+   - Client-side data caching
+   - Request deduplication
+   - Background revalidation
+   - Reduces unnecessary API calls
+
+3. **Lazy Loading**
+   - Dashboard charts loaded on-demand
+   - Heavy components split with `React.lazy()`
+   - Improves initial page load time
+
+4. **Optimistic Updates**
+   - Immediate UI updates before API confirmation
+   - Better perceived performance
+   - Rollback on error
+
+5. **Code Splitting**
+   - Next.js automatic route-based splitting
+   - Reduces initial bundle size
+   - Faster page transitions
+
+6. **Server Components**
+   - Next.js Server Components where possible
+   - Reduced client-side JavaScript
+   - Faster initial render
+
+---
+
+## DEPLOYMENT CONSIDERATIONS
+
+### **Development Environment**
+
+```bash
+# Install dependencies
+npm install
+
+# Run database migrations
+npx prisma migrate dev
+
+# Seed database
+npx prisma db seed
+
+# Start development server
+npm run dev
+
+# Access at http://localhost:3000
+```
+
+---
+
+### **Production Deployment**
+
+**Requirements:**
+- Node.js 18.17 or higher
+- PostgreSQL or MySQL (replace SQLite)
+- Environment variables configured
+
+**Build Process:**
+```bash
+# Install production dependencies
+npm ci --production
+
+# Generate Prisma client
+npx prisma generate
+
+# Build Next.js app
+npm run build
+
+# Start production server
+npm start
+```
+
+**Recommended Hosting:**
+- Vercel (optimized for Next.js)
+- AWS EC2 + RDS
+- Azure App Service
+- Digital Ocean Droplet
+
+---
+
+## FUTURE ENHANCEMENTS
+
+**Planned Features:**
+1. Email notifications for attendance/assessments
+2. SMS alerts for at-risk students
+3. Document upload for POE
+4. Real-time collaboration
+5. Mobile app (React Native)
+6. Reporting exports (PDF, Excel)
+7. Calendar integrations
+8. Bulk import/export
+9. Advanced analytics dashboard
+10. Multi-tenant support
+
+---
+
+## DOCUMENTATION GENERATED
+
+**Date:** February 6, 2026  
+**Version:** 1.0  
+**System Status:** Production-ready (Phase 3 Complete)  
+**Database:** SQLite (dev), PostgreSQL/MySQL recommended for production
+
+---
+
+**END OF ARCHITECTURE DOCUMENTATION**

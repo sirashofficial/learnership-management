@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, User, BookOpen, CheckCircle, Calendar, Edit2, Save, TrendingUp } from "lucide-react";
+import { X, User, BookOpen, CheckCircle, Calendar, Edit2, Save, TrendingUp, FileText, ClipboardCheck, BarChart3, CalendarCheck } from "lucide-react";
 import { useCurriculum } from "@/hooks/useCurriculum";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import AttendanceCalendar from "./AttendanceCalendar";
 
 interface StudentDetailsModalProps {
+  isOpen: boolean;
   student: any;
   onClose: () => void;
   onSave: (updatedStudent: any) => void;
@@ -15,6 +18,7 @@ interface StudentDetailsModalProps {
 export default function StudentDetailsModal({ student, onClose, onSave }: StudentDetailsModalProps) {
   const { modules } = useCurriculum();
   const [isEditing, setIsEditing] = useState(false);
+  const [showAttendanceCalendar, setShowAttendanceCalendar] = useState(false);
   const [formData, setFormData] = useState({
     firstName: student.firstName || "",
     lastName: student.lastName || "",
@@ -26,7 +30,6 @@ export default function StudentDetailsModal({ student, onClose, onSave }: Studen
     status: student.status || "ACTIVE",
   });
 
-  // Mock data for formatives - In production, this would come from API
   const [formatives, setFormatives] = useState([
     {
       id: "1",
@@ -75,7 +78,7 @@ export default function StudentDetailsModal({ student, onClose, onSave }: Studen
   ]);
 
   // Mock attendance data
-  const [attendanceHistory, setAttendanceHistory] = useState([
+  const [attendanceHistory, setAttendanceHistory] = useState<Array<{ date: string; status: 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED' }>>([
     { date: "2026-02-05", status: "PRESENT" },
     { date: "2026-02-04", status: "PRESENT" },
     { date: "2026-02-03", status: "LATE" },
@@ -109,8 +112,22 @@ export default function StudentDetailsModal({ student, onClose, onSave }: Studen
 
   const updateAttendanceStatus = (date: string, newStatus: string) => {
     setAttendanceHistory(attendanceHistory.map(record => 
-      record.date === date ? { ...record, status: newStatus } : record
+      record.date === date ? { ...record, status: newStatus as 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED' } : record
     ));
+  };
+
+  const handleMarkAttendance = (date: string, status: string, reason?: string) => {
+    const typedStatus = status as 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED';
+    const existingIndex = attendanceHistory.findIndex(r => r.date === date);
+    if (existingIndex >= 0) {
+      const updated = [...attendanceHistory];
+      updated[existingIndex] = { date, status: typedStatus };
+      setAttendanceHistory(updated);
+    } else {
+      setAttendanceHistory([...attendanceHistory, { date, status: typedStatus }]);
+    }
+    // TODO: Save to database via API
+    console.log('Marked attendance:', { date, status, reason });
   };
 
   const getStatusColor = (status: string) => {
@@ -132,8 +149,18 @@ export default function StudentDetailsModal({ student, onClose, onSave }: Studen
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+    <>
+      {showAttendanceCalendar && (
+        <AttendanceCalendar
+          studentId={student.id}
+          studentName={`${student.firstName} ${student.lastName}`}
+          attendance={attendanceHistory}
+          onMarkAttendance={handleMarkAttendance}
+          onClose={() => setShowAttendanceCalendar(false)}
+        />
+      )}
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between">
@@ -165,6 +192,45 @@ export default function StudentDetailsModal({ student, onClose, onSave }: Studen
                 <X className="w-5 h-5 text-gray-600" />
               </button>
             </div>
+          </div>
+          
+          {/* Quick Action Links */}
+          <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 flex-wrap">
+            <button
+              onClick={() => setShowAttendanceCalendar(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium"
+            >
+              <CalendarCheck className="w-4 h-4" />
+              Mark Attendance
+            </button>
+            <Link
+              href="/assessments"
+              className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+            >
+              <CheckCircle className="w-4 h-4" />
+              View Assessments
+            </Link>
+            <Link
+              href="/progress"
+              className="flex items-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Track Progress
+            </Link>
+            <Link
+              href="/poe"
+              className="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+            >
+              <FileText className="w-4 h-4" />
+              POE Checklist
+            </Link>
+            <Link
+              href="/attendance"
+              className="flex items-center gap-2 px-3 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium"
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              View History
+            </Link>
           </div>
         </div>
 
@@ -471,7 +537,8 @@ export default function StudentDetailsModal({ student, onClose, onSave }: Studen
             </button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

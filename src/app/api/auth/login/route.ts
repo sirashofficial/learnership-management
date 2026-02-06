@@ -3,14 +3,26 @@ import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth';
 import { loginSchema } from '@/lib/validations';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { rateLimit } from '@/lib/rate-limit';
+import { sanitizeEmail, sanitizeString } from '@/lib/input-sanitizer';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
+  // Apply rate limiting: 5 login attempts per minute
+  const rateLimitResult = await rateLimit({ interval: 60000, maxRequests: 5 })(request);
+  if (rateLimitResult) return rateLimitResult;
+
   try {
     const body = await request.json();
     
+    // Sanitize inputs before validation
+    const sanitizedBody = {
+      email: sanitizeEmail(body.email || ''),
+      password: sanitizeString(body.password || ''),
+    };
+    
     // Validate input
-    const validatedData = loginSchema.parse(body);
+    const validatedData = loginSchema.parse(sanitizedBody);
     
     // Find user by email
     const user = await prisma.user.findUnique({

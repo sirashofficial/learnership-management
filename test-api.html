@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Testing API</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        // Check if token exists
+        const token = localStorage.getItem('token');
+        results.innerHTML += `<p><strong>Token exists:</strong> ${!!token}</p>`;
+        
+        if (token) {
+            results.innerHTML += `<p><strong>Token:</strong> ${token.substring(0, 20)}...</p>`;
+            
+            // Test groups API
+            fetch('http://localhost:3000/api/groups', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                results.innerHTML += `<p><strong>Groups API Response:</strong></p>`;
+                results.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            })
+            .catch(err => {
+                results.innerHTML += `<p><strong>Groups API Error:</strong> ${err.message}</p>`;
+            });
+            
+            // Test companies API
+            fetch('http://localhost:3000/api/companies', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                results.innerHTML += `<p><strong>Companies API Response:</strong></p>`;
+                results.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            })
+            .catch(err => {
+                results.innerHTML += `<p><strong>Companies API Error:</strong> ${err.message}</p>`;
+            });
+        } else {
+            results.innerHTML += `<p style="color: red;">No token found! Please login first.</p>`;
+        }
+    </script>
+</body>
+</html>

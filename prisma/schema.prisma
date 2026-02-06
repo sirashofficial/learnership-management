@@ -119,18 +119,84 @@ model Attendance {
   date        DateTime
   status      String
   notes       String?
+  markedBy    String?  // User who marked the attendance
+  markedAt    DateTime?
+  qrCodeScan  Boolean  @default(false) // Marked via QR code
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Foreign Keys
   studentId   String
-  sessionId   String
+  sessionId   String?  // Optional for manual attendance
+  groupId     String?  // Direct group reference for non-session attendance
 
   // Relations
   student     Student  @relation(fields: [studentId], references: [id])
-  session     Session  @relation(fields: [sessionId], references: [id])
+  session     Session?  @relation(fields: [sessionId], references: [id])
 
-  @@unique([studentId, sessionId])
+  @@unique([studentId, date, groupId])
+  @@index([date])
+  @@index([studentId, date])
+  @@index([groupId, date])
+}
+
+model AttendancePolicy {
+  id                    String   @id @default(uuid())
+  name                  String
+  description           String?
+  
+  // Threshold settings
+  minimumPercentage     Int      @default(80) // Minimum attendance % required
+  consecutiveAbsences   Int      @default(3)  // Alert after X consecutive absences
+  warningThreshold      Int      @default(75) // Warning level %
+  criticalThreshold     Int      @default(60) // Critical level %
+  
+  // Notification settings
+  notifyOnAbsence       Boolean  @default(true)
+  notifyOnWarning       Boolean  @default(true)
+  notifyOnCritical      Boolean  @default(true)
+  
+  // Active policy
+  isActive              Boolean  @default(true)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model AttendanceAlert {
+  id                String   @id @default(uuid())
+  type              String   // "ABSENCE", "LOW_ATTENDANCE", "CONSECUTIVE_ABSENCE", "PATTERN"
+  severity          String   // "INFO", "WARNING", "CRITICAL"
+  message           String
+  details           String?
+  resolved          Boolean  @default(false)
+  resolvedAt        DateTime?
+  resolvedBy        String?
+  notificationSent  Boolean  @default(false)
+  
+  // Foreign Keys
+  studentId         String
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([studentId])
+  @@index([type])
+  @@index([resolved])
+}
+
+model AttendanceReport {
+  id              String   @id @default(uuid())
+  title           String
+  type            String   // "DAILY", "WEEKLY", "MONTHLY", "CUSTOM"
+  startDate       DateTime
+  endDate         DateTime
+  format          String   // "PDF", "CSV", "EXCEL"
+  filePath        String?
+  generatedBy     String
+  parameters      String?  // JSON with report parameters
+  
+  createdAt       DateTime @default(now())
 }
 
 model Assessment {
@@ -415,6 +481,28 @@ model CourseProgress {
 
   // Relations
   student     Student  @relation(fields: [studentId], references: [id])
+}
+
+model RecurringSessionOverride {
+  id                String   @id @default(uuid())
+  date              DateTime // Specific date this override applies to
+  groupName         String   // Name of the group from WEEKLY_SCHEDULE
+  venue             String   // "Lecture Room" or "Computer Lab"
+  
+  // Override details
+  isCancelled       Boolean  @default(false)
+  cancellationReason String?
+  notes             String?
+  
+  // Notification settings
+  notificationEnabled Boolean @default(true)
+  notificationSent    Boolean @default(false)
+  notificationTime    Int     @default(30) // Minutes before session to notify
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([date, groupName, venue]) // One override per group/venue/date
 }
 
 // Note: SQLite does not support native enums. String types are used with application-level validation.

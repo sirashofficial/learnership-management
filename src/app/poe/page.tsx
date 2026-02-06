@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import { FolderOpen, Check, X, Save } from "lucide-react";
+import { FolderOpen, Check, X, Save, Eye } from "lucide-react";
 import useSWR, { mutate } from "swr";
+import StudentDetailsModal from "@/components/StudentDetailsModal";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json()).then((data) => data.data || data);
 
@@ -12,6 +13,7 @@ export default function POEPage() {
   const { data: poeChecklists } = useSWR('/api/poe', fetcher);
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>("");
   const [saving, setSaving] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
   const studentList = students || [];
   const checklists = poeChecklists || [];
@@ -88,7 +90,7 @@ export default function POEPage() {
 
   return (
     <>
-      <Header title="POE Management" subtitle="Portfolio of Evidence physical file tracking and verification" />
+      <Header />
       
       <div className="p-6 space-y-6">
         {/* Info Banner */}
@@ -156,11 +158,23 @@ export default function POEPage() {
                     return (
                       <tr key={student.id} className={`hover:bg-gray-50 ${isSaving ? 'opacity-50' : ''}`}>
                         <td className="px-4 py-3 sticky left-0 bg-white z-10">
-                          <div>
-                            <p className="font-medium text-gray-900 text-sm">
-                              {student.firstName} {student.lastName}
-                            </p>
-                            <p className="text-xs text-gray-500">{student.studentId}</p>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <button
+                                onClick={() => setSelectedStudent(student)}
+                                className="font-medium text-gray-900 text-sm hover:text-blue-600 hover:underline text-left"
+                              >
+                                {student.firstName} {student.lastName}
+                              </button>
+                              <p className="text-xs text-gray-500">{student.studentId}</p>
+                            </div>
+                            <button
+                              onClick={() => setSelectedStudent(student)}
+                              className="p-1 hover:bg-blue-100 rounded transition-colors text-blue-600"
+                              title="View student details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
@@ -230,6 +244,17 @@ export default function POEPage() {
           </div>
         </div>
       </div>
+      
+      {selectedStudent && (
+        <StudentDetailsModal
+          isOpen={true}
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          onSave={(updated) => {
+            setSelectedStudent(null);
+          }}
+        />
+      )}
     </>
   );
 }

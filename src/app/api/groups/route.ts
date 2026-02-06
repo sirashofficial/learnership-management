@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-
 // GET /api/groups
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +13,17 @@ export async function GET(request: NextRequest) {
       },
       include: {
         company: true,
+        students: {
+          select: {
+            id: true,
+            studentId: true,
+            firstName: true,
+            lastName: true,
+            progress: true,
+            status: true,
+          },
+          orderBy: { lastName: 'asc' },
+        },
         _count: {
           select: { students: true, sessions: true },
         },

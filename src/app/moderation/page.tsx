@@ -31,12 +31,14 @@ export default function ModerationPage() {
 
   return (
     <>
-      <Header
-        title="Assessment Moderation"
-        subtitle="Review and moderate completed assessments"
-      />
+      <Header />
 
-      <div className="p-6 space-y-6">
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assessment Moderation</h1>
+          <p className="text-gray-600 dark:text-gray-400">Review and moderate completed assessments</p>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white rounded-xl border border-background-border p-5">

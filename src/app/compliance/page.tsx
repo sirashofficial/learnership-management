@@ -8,9 +8,11 @@ import { useAssessmentStats } from "@/hooks/useAssessmentStats";
 import { useProgress } from "@/hooks/useProgress";
 import { FileText, CheckCircle, AlertCircle, Clock, Download, Users, Calendar, Award, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import StudentDetailsModal from "@/components/StudentDetailsModal";
 
 export default function CompliancePage() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const { students } = useStudents();
   const { attendance } = useAttendance();
   const { stats: assessmentStats } = useAssessmentStats();
@@ -49,13 +51,27 @@ export default function CompliancePage() {
   };
 
   const handleExportReport = () => {
-    // TODO: Implement PDF/CSV export
-    alert("Export functionality will be implemented");
+    // Generate CSV data
+    const headers = ['Student', 'Status', 'Completion'];
+    const rows = students.map(s => [
+      `${s.firstName} ${s.lastName}`,
+      s.status,
+      `${s.progress}%`
+    ]);
+    
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `compliance-report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <>
-      <Header title="Compliance Reports" subtitle="SSETA compliance tracking and reporting" />
+      <Header />
       
       <div className="p-6 space-y-6">
         {/* Overall Compliance Stats */}
@@ -148,9 +164,12 @@ export default function CompliancePage() {
                       {student.firstName.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <button
+                        onClick={() => setSelectedStudent(student)}
+                        className="font-medium text-gray-900 hover:text-blue-600 hover:underline text-left"
+                      >
                         {student.firstName} {student.lastName}
-                      </p>
+                      </button>
                       <p className="text-sm text-gray-500">
                         {student.studentId} • {typeof student.group === 'string' ? student.group : student.group?.name || "No Group"}
                       </p>
@@ -367,6 +386,17 @@ export default function CompliancePage() {
           </div>
         </div>
       </div>
+      
+      {selectedStudent && (
+        <StudentDetailsModal
+          isOpen={true}
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          onSave={(updated) => {
+            setSelectedStudent(null);
+          }}
+        />
+      )}
     </>
   );
 }

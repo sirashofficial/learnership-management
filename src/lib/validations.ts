@@ -2,13 +2,25 @@ import { z } from 'zod';
 
 // Student validation
 export const createStudentSchema = z.object({
-  studentId: z.string().min(1, 'Student ID is required'),
+  studentId: z.string().min(1, 'Student ID is required').optional(),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email').optional(),
-  phone: z.string().optional(),
-  idNumber: z.string().optional(),
-  siteId: z.string().uuid('Invalid site ID'),
+  email: z.preprocess(
+    (val) => (val === '' || val === undefined ? null : val),
+    z.string().email('Invalid email').nullable().optional()
+  ),
+  phone: z.preprocess(
+    (val) => (val === '' || val === undefined ? null : val),
+    z.string().nullable().optional()
+  ),
+  idNumber: z.preprocess(
+    (val) => (val === '' || val === undefined ? null : val),
+    z.string().nullable().optional()
+  ),
+  groupId: z.string().uuid('Invalid group ID'),
+  facilitatorId: z.string().uuid('Invalid facilitator ID').optional().nullable(),
+  status: z.enum(['ACTIVE', 'AT_RISK', 'COMPLETED', 'WITHDRAWN']).optional(),
+  progress: z.number().optional(),
 });
 
 export const updateStudentSchema = createStudentSchema.partial();

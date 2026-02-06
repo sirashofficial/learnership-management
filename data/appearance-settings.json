@@ -1,0 +1,9 @@
+{
+  "theme": "dark",
+  "colorScheme": "blue",
+  "sidebarPosition": "left",
+  "compactMode": false,
+  "fontSize": "medium",
+  "showAvatars": true,
+  "animationsEnabled": true
+}
