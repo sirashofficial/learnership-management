@@ -28,40 +28,44 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       // Total students
       prisma.student.count({ where: { status: 'ACTIVE' } }),
-      prisma.student.count({ 
-        where: { 
+      prisma.student.count({
+        where: {
           status: 'ACTIVE',
           createdAt: { lte: thirtyDaysAgo }
-        } 
+        }
       }),
-      
-      // Total active groups with companies
-      prisma.group.count({ where: { status: 'ACTIVE' } }),
-      prisma.group.count({ 
-        where: { 
-          status: 'ACTIVE',
+
+      // Total active groups
+      prisma.group.count({
+        where: {
+          status: { in: ['ACTIVE', 'Active'] }
+        }
+      }),
+      prisma.group.count({
+        where: {
+          status: { in: ['ACTIVE', 'Active'] },
           createdAt: { lte: thirtyDaysAgo }
-        } 
+        }
       }),
-      
+
       // Total companies
       prisma.company.count({ where: { status: 'ACTIVE' } }),
-      prisma.company.count({ 
-        where: { 
+      prisma.company.count({
+        where: {
           status: 'ACTIVE',
           createdAt: { lte: thirtyDaysAgo }
-        } 
+        }
       }),
-      
-      // Active courses
-      prisma.module.count({ where: { status: { in: ['IN_PROGRESS', 'NOT_STARTED'] } } }),
-      prisma.module.count({ 
-        where: { 
-          status: { in: ['IN_PROGRESS', 'NOT_STARTED'] },
+
+      // Active courses (Modules with status ACTIVE)
+      prisma.module.count({ where: { status: 'ACTIVE' } }),
+      prisma.module.count({
+        where: {
+          status: 'ACTIVE',
           createdAt: { lte: thirtyDaysAgo }
-        } 
+        }
       }),
-      
+
       // Pending assessments
       prisma.assessment.count({
         where: {
@@ -75,7 +79,7 @@ export async function GET(request: NextRequest) {
           dueDate: { gte: thirtyDaysAgo, lte: now },
         },
       }),
-      
+
       // All attendance for rate calculation
       prisma.attendance.findMany({
         where: {
@@ -89,14 +93,14 @@ export async function GET(request: NextRequest) {
         },
         select: { status: true },
       }),
-      
+
       // Students with progress
       prisma.student.findMany({
         where: { status: 'ACTIVE' },
         select: { progress: true, createdAt: true },
       }),
       prisma.student.findMany({
-        where: { 
+        where: {
           status: 'ACTIVE',
           createdAt: { lte: thirtyDaysAgo }
         },
@@ -109,7 +113,7 @@ export async function GET(request: NextRequest) {
     const attendanceRate = allAttendance.length > 0
       ? Math.round((presentCount / allAttendance.length) * 100)
       : 0;
-      
+
     const presentCountLastMonth = attendanceLastMonth.filter((a: any) => a.status === 'PRESENT' || a.status === 'LATE').length;
     const attendanceRateLastMonth = attendanceLastMonth.length > 0
       ? Math.round((presentCountLastMonth / attendanceLastMonth.length) * 100)
@@ -120,7 +124,7 @@ export async function GET(request: NextRequest) {
     const completionRate = studentsWithProgress.length > 0
       ? Math.round((completedStudents / studentsWithProgress.length) * 100)
       : 0;
-      
+
     const completedStudentsLastMonth = studentsProgressLastMonth.filter((s: any) => s.progress >= 100).length;
     const completionRateLastMonth = studentsProgressLastMonth.length > 0
       ? Math.round((completedStudentsLastMonth / studentsProgressLastMonth.length) * 100)
@@ -138,8 +142,8 @@ export async function GET(request: NextRequest) {
         trend: calculateTrend(totalStudents, studentsLastMonth),
       },
       totalGroups: {
-        value: totalGroups,
-        trend: calculateTrend(totalGroups, groupsLastMonth),
+        value: totalGroups + totalCompanies, // Combined for "Groups & Companies" card
+        trend: calculateTrend(totalGroups + totalCompanies, groupsLastMonth + companiesLastMonth),
       },
       totalCompanies: {
         value: totalCompanies,

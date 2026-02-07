@@ -12,6 +12,8 @@ export interface Student {
   phone: string | null;
   idNumber: string | null;
   progress: number;
+  totalCreditsEarned: number | null;
+  currentModuleId: string | null;
   status: string;
   createdAt: string;
   group: {
@@ -28,7 +30,7 @@ export function useStudents(groupId?: string, status?: string) {
   const params = new URLSearchParams();
   if (groupId) params.append('groupId', groupId);
   if (status) params.append('status', status);
-  
+
   const url = `/api/students${params.toString() ? `?${params.toString()}` : ''}`;
 
   const { data, error, isLoading, mutate } = useSWR<{ data: Student[] }>(

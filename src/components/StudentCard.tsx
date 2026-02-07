@@ -41,7 +41,7 @@ export default function StudentCard({
     ACTIVE: "bg-green-100 text-green-800 border-green-200",
     AT_RISK: "bg-red-100 text-red-800 border-red-200",
     COMPLETED: "bg-blue-100 text-blue-800 border-blue-200",
-    WITHDRAWN: "bg-gray-100 text-gray-800 border-gray-200",
+    WITHDRAWN: "bg-slate-100 text-slate-800 border-slate-200",
   };
 
   const getInitials = (name: string) => {
@@ -61,7 +61,7 @@ export default function StudentCard({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg border border-slate-200 p-5 hover:shadow-lg transition-shadow">
       {/* Header */}
       <div className="flex items-start gap-4 mb-4">
         {/* Avatar */}
@@ -96,19 +96,19 @@ export default function StudentCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
             <div>
-              <h3 className="font-semibold text-gray-900 text-lg truncate">{student.name}</h3>
-              <p className="text-sm text-gray-500">ID: {student.studentId}</p>
+              <h3 className="font-semibold text-slate-900 text-lg truncate">{student.name}</h3>
+              <p className="text-sm text-slate-500">ID: {student.studentId}</p>
               {student.group && (
-                <p className="text-xs text-gray-400">{student.group} • {student.site}</p>
+                <p className="text-xs text-slate-400">{student.group} • {student.site}</p>
               )}
             </div>
             <div className="flex gap-1">
               <button
                 onClick={onEdit}
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Edit student"
               >
-                <Edit className="w-4 h-4 text-gray-600" />
+                <Edit className="w-4 h-4 text-slate-600" />
               </button>
               <button
                 onClick={onDelete}
@@ -148,14 +148,14 @@ export default function StudentCard({
           </div>
 
           {/* Current Module */}
-          <div className="flex items-center gap-1.5 text-sm text-gray-700 mb-1">
+          <div className="flex items-center gap-1.5 text-sm text-slate-700 mb-1">
             <TrendingUp className="w-4 h-4 text-primary" />
             <span className="font-medium">Module {student.currentModule}:</span>
             <span className="truncate">{student.moduleName}</span>
           </div>
 
           {/* Last Attendance */}
-          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+          <div className="flex items-center gap-1.5 text-sm text-slate-600">
             <Calendar className="w-4 h-4" />
             <span>Last seen: {daysAgo(student.lastAttendance)}</span>
           </div>
@@ -165,10 +165,10 @@ export default function StudentCard({
       {/* Progress Bar */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm mb-1.5">
-          <span className="text-gray-700 font-medium">Overall Progress</span>
-          <span className="text-gray-900 font-semibold">{student.progress}%</span>
+          <span className="text-slate-700 font-medium">Overall Progress</span>
+          <span className="text-slate-900 font-semibold">{student.progress}%</span>
         </div>
-        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
             style={{ width: `${student.progress}%` }}

@@ -15,10 +15,15 @@ export default function ModerationPage() {
       const response = await fetch("/api/assessments/moderate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          assessmentId, // Include the assessmentId
+          ...data,
+        }),
       });
       if (response.ok) {
         mutate();
+      } else {
+        console.error("Moderation failed:", await response.text());
       }
     } catch (error) {
       console.error("Failed to moderate assessment:", error);
@@ -35,8 +40,8 @@ export default function ModerationPage() {
 
       <div className="p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assessment Moderation</h1>
-          <p className="text-gray-600 dark:text-gray-400">Review and moderate completed assessments</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Assessment Moderation</h1>
+          <p className="text-slate-600 dark:text-slate-400">Review and moderate completed assessments</p>
         </div>
 
         {/* Stats */}
@@ -67,7 +72,7 @@ export default function ModerationPage() {
         {/* Moderation Queue */}
         {isLoading ? (
           <div className="bg-white rounded-xl border border-background-border p-12 text-center">
-            <p className="text-gray-500">Loading assessments...</p>
+            <p className="text-slate-500">Loading assessments...</p>
           </div>
         ) : (
           <ModerationQueue

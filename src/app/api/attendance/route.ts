@@ -64,17 +64,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Handle bulk attendance submission
     if (body.records && Array.isArray(body.records)) {
-      console.log('📥 Received bulk attendance records:', body.records.length);
+
       const results = [];
       const errors = [];
-      
+
       for (const record of body.records) {
         const { studentId, sessionId, groupId, date, status, notes, markedBy, qrCodeScan } = record;
 
-        console.log('🔄 Processing record:', { studentId, groupId, status, date });
+
 
         if (!studentId || !status) {
           console.warn('⚠️ Skipping invalid record - missing studentId or status:', record);
@@ -91,12 +91,6 @@ export async function POST(request: NextRequest) {
         const attendanceDate = date ? new Date(date) : new Date();
         const normalizedGroupId = groupId || null; // FIX: Use null instead of empty string
 
-        console.log('💾 Upserting attendance:', {
-          studentId,
-          date: attendanceDate.toISOString(),
-          groupId: normalizedGroupId,
-          status
-        });
 
         try {
           // Check if record exists
@@ -144,7 +138,7 @@ export async function POST(request: NextRequest) {
               },
             });
           }
-          
+
           console.log('✅ Successfully saved attendance record:', attendance.id);
           results.push(attendance);
 
@@ -179,8 +173,8 @@ export async function POST(request: NextRequest) {
           }
         } catch (recordError) {
           console.error('❌ Error saving individual record:', recordError);
-          errors.push({ 
-            record, 
+          errors.push({
+            record,
             reason: recordError instanceof Error ? recordError.message : 'Unknown error',
             error: recordError
           });
@@ -207,7 +201,7 @@ export async function POST(request: NextRequest) {
         }
       }, `Successfully marked attendance for ${results.length} student(s)${errors.length > 0 ? ` (${errors.length} failed)` : ''}`);
     }
-    
+
     // Handle single attendance record
     const { studentId, sessionId, groupId, date, status, notes, markedBy, qrCodeScan } = body;
 
@@ -221,51 +215,51 @@ export async function POST(request: NextRequest) {
 
     const attendanceDate = date ? new Date(date) : new Date();
 
-    // Use upsert to handle existing records
-    const attendance = await prisma.attendance.upsert({
+    // Use findFirst + create/update to handle existing records safely
+    const existingEntry = await prisma.attendance.findFirst({
       where: {
-        studentId_sessionId: {
-          studentId,
-          sessionId: sessionId || 'MANUAL',
-        },
-      },
-      update: {
-        status,
-        notes,
-        markedBy,
-        markedAt: new Date(),
-        qrCodeScan: qrCodeScan || false,
-        date: attendanceDate,
-      },
-      create: {
         studentId,
-        sessionId: sessionId || 'MANUAL',
-        groupId,
-        status,
         date: attendanceDate,
-        notes,
-        markedBy,
-        markedAt: new Date(),
-        qrCodeScan: qrCodeScan || false,
-      },
-      include: {
-        student: {
-          select: {
-            id: true,
-            studentId: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        session: {
-          select: {
-            id: true,
-            title: true,
-            module: true,
-          },
-        },
-      },
+        groupId: groupId || null,
+      }
     });
+
+    let attendance;
+    if (existingEntry) {
+      attendance = await prisma.attendance.update({
+        where: { id: existingEntry.id },
+        data: {
+          status,
+          notes,
+          markedBy,
+          markedAt: new Date(),
+          qrCodeScan: qrCodeScan || false,
+          sessionId: sessionId || null,
+        },
+        include: {
+          student: true,
+          session: true,
+        },
+      });
+    } else {
+      attendance = await prisma.attendance.create({
+        data: {
+          studentId,
+          sessionId: sessionId || null,
+          groupId: groupId || null,
+          status,
+          date: attendanceDate,
+          notes,
+          markedBy,
+          markedAt: new Date(),
+          qrCodeScan: qrCodeScan || false,
+        },
+        include: {
+          student: true,
+          session: true,
+        },
+      });
+    }
 
     // Check if we need to create an alert
     if (status === 'ABSENT') {

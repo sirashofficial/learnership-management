@@ -25,8 +25,11 @@ import {
   Loader2,
   CheckCircle,
   ClipboardList,
-  AlertTriangle
+
+  AlertTriangle,
+  Edit2
 } from 'lucide-react';
+import CreditAdjustmentModal from '@/components/CreditAdjustmentModal';
 import { format } from 'date-fns';
 
 // Attendance data type from the API
@@ -58,6 +61,7 @@ export default function StudentsPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedStudentForCredits, setSelectedStudentForCredits] = useState<Student | null>(null);
   const [showBulkAssessmentModal, setShowBulkAssessmentModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedModule, setSelectedModule] = useState<string>('all');
@@ -802,9 +806,20 @@ export default function StudentsPage() {
                             />
                           </div>
                           <span className="text-sm font-medium text-slate-700 dark:text-slate-300 min-w-[3rem] text-right">
-                            {student.progress}%
+                            {student.totalCreditsEarned || 0}
                           </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStudentForCredits(student);
+                            }}
+                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-500"
+                            title="Adjust Credits"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </button>
                         </div>
+
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -1022,7 +1037,16 @@ export default function StudentsPage() {
           mutate();
         }}
       />
+      <CreditAdjustmentModal
+        isOpen={!!selectedStudentForCredits}
+        onClose={() => setSelectedStudentForCredits(null)}
+        student={selectedStudentForCredits}
+        onSuccess={() => {
+          mutate();
+        }}
+      />
     </div>
   );
 }
+
 

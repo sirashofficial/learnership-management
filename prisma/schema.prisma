@@ -63,6 +63,32 @@ model Group {
   sessions    Session[]
   lessonPlans LessonPlan[]
   courses     GroupCourse[]
+  schedules   GroupSchedule[]
+  rolloutPlan GroupRolloutPlan?
+}
+
+model GroupRolloutPlan {
+  id              String   @id @default(uuid())
+  groupId         String   @unique // One plan per group
+  
+  // Per-module deadlines
+  module1StartDate    DateTime?
+  module1EndDate      DateTime?
+  module2StartDate    DateTime?
+  module2EndDate      DateTime?
+  module3StartDate    DateTime?
+  module3EndDate      DateTime?
+  module4StartDate    DateTime?
+  module4EndDate      DateTime?
+  module5StartDate    DateTime?
+  module5EndDate      DateTime?
+  module6StartDate    DateTime?
+  module6EndDate      DateTime?
+  
+  // Reference document
+  rolloutDocPath      String?  
+  
+  group           Group    @relation(fields: [groupId], references: [id])
 }
 
 model Student {
@@ -73,24 +99,83 @@ model Student {
   email       String?
   phone       String?
   idNumber    String?
-  progress    Int      @default(0)
+  
+  // Progress Tracking
+  progress    Int      @default(0) // Overall percentage (deprecated - use totalCreditsEarned)
+  totalCreditsEarned Int @default(0) // Out of 138 total credits
+  
   status      String @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Foreign Keys
-  groupId      String
-  facilitatorId String
+  groupId         String
+  facilitatorId   String
+  currentModuleId String? // Current module student is working on
 
   // Relations
   group        Group     @relation(fields: [groupId], references: [id])
   facilitator  User      @relation(fields: [facilitatorId], references: [id])
+  currentModule Module?  @relation(fields: [currentModuleId], references: [id])
   attendance   Attendance[]
   assessments  Assessment[]
   poeChecklists POEChecklist[]
   courseProgress CourseProgress[]
   moduleProgress ModuleProgress[]
   unitStandardProgress UnitStandardProgress[]
+  formativeCompletions FormativeCompletion[]
+}
+
+// Formative Assessment Documents from Curriculum
+model FormativeAssessment {
+  id              String   @id @default(uuid())
+  code            String   @unique  // "7469", "7480", "9007", etc.
+  title           String            // "Numeracy Formative Assessment 7469"
+  description     String?
+  documentPath    String?           // Relative path to PDF in docs folder
+  questions       Int?              // Number of questions in the formative
+  passingScore    Int      @default(50)
+  order           Int      @default(0) // Order within module
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Foreign Keys
+  moduleId        String
+  unitStandardId  String
+
+  // Relations
+  module          Module       @relation(fields: [moduleId], references: [id])
+  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
+  completions     FormativeCompletion[]
+}
+
+// Student Formative Completion Tracking
+model FormativeCompletion {
+  id                   String    @id @default(uuid())
+  completedDate        DateTime?
+  score                Int?
+  passed               Boolean   @default(false)
+  attempts             Int       @default(1)
+  moderationStatus     String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  moderatedBy          String?
+  moderatedDate        DateTime?
+  notes                String?
+  
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Foreign Keys
+  studentId            String
+  formativeId          String
+
+  // Relations
+  student              Student              @relation(fields: [studentId], references: [id])
+  formative            FormativeAssessment  @relation(fields: [formativeId], references: [id])
+  
+  @@unique([studentId, formativeId])
+  @@index([studentId])
+  @@index([formativeId])
 }
 
 model Session {
@@ -201,8 +286,6 @@ model AttendanceReport {
 
 model Assessment {
   id            String   @id @default(uuid())
-  unitStandard  String
-  module        String
   
   // Assessment Classification
   type          String   // "FORMATIVE" | "SUMMATIVE" | "INTEGRATED"
@@ -231,18 +314,24 @@ model Assessment {
   updatedAt     DateTime @updatedAt
 
   // Foreign Keys
-  studentId     String
-  unitStandardId String?
+  studentId      String
+  unitStandardId String  // Now required - links to specific unit standard
 
   // Relations
-  student       Student  @relation(fields: [studentId], references: [id])
-  unitStandardRef UnitStandard? @relation(fields: [unitStandardId], references: [id])
+  student        Student      @relation(fields: [studentId], references: [id])
+  unitStandard   UnitStandard @relation(fields: [unitStandardId], references: [id])
+  
+  // Indexes for performance
+  @@index([unitStandardId])
+  @@index([studentId, unitStandardId])
+  @@index([studentId, result])
 }
 
 model ModuleProgress {
   id              String   @id @default(uuid())
   status          String   @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
-  progress        Int      @default(0) // 0-100
+  progress        Int      @default(0) // 0-100 percentage
+  creditsEarned   Int      @default(0) // Credits earned in this module
   startDate       DateTime?
   completionDate  DateTime?
   createdAt       DateTime @default(now())
@@ -343,22 +432,35 @@ model POEFile {
 }
 
 model Module {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  name        String
-  description String?
-  credits     Int
-  order       Int
-  status      String @default("NOT_STARTED")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(uuid())
+  moduleNumber    Int      @unique // 1-6
+  code            String   @unique // "MODULE_1", "MODULE_2", etc.
+  name            String   // "Numeracy", "Communication Skills", etc.
+  fullName        String   // Full official name
+  purpose         String   // Purpose of the module
+  description     String?  // Additional description
+  
+  // Credits and Hours
+  credits         Int      // Total credits (16, 24, 22, 26, 23, 26)
+  notionalHours   Int      // Total notional hours
+  classroomHours  Int      // 30% classroom time
+  workplaceHours  Int      // 70% workplace time
+  
+  // Metadata
+  order           Int      // Display order
+  status          String   @default("ACTIVE") // "ACTIVE", "ARCHIVED"
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
-  unitStandards UnitStandard[]
-  lessonPlans   LessonPlan[]
-  documents     CurriculumDocument[]
-  embeddings    CurriculumEmbedding[]
-  progress      ModuleProgress[]
+  unitStandards   UnitStandard[]
+  lessonPlans     LessonPlan[]
+  documents       CurriculumDocument[]
+  embeddings      CurriculumEmbedding[]
+  progress        ModuleProgress[]
+  students        Student[] // Students currently on this module
+  formativeAssessments FormativeAssessment[]
 }
 
 model CurriculumEmbedding {
@@ -375,13 +477,29 @@ model CurriculumEmbedding {
   module      Module @relation(fields: [moduleId], references: [id])
 }
 
+model DocumentChunk {
+  id          String   @id @default(cuid())
+  content     String   // The actual text content
+  filename    String   // Source filename
+  filePath    String   // Relative path
+  category    String   // e.g., 'module-1', 'daily-report'
+  tags        String   // Comma-separated tags
+  chunkIndex  Int
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+  @@index([filename])
+}
+
 model UnitStandard {
   id          String   @id @default(uuid())
-  code        String   @unique
-  title       String
-  credits     Int
-  level       Int
-  content     String?
+  code        String   @unique // "7480", "119673", etc.
+  title       String   // Full title of the unit standard
+  credits     Int      // Credits for this unit standard
+  level       Int      // NQF Level (2 or 3)
+  type        String   // "Fundamental", "Core", "Elective"
+  content     String?  // Additional content/description
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -393,6 +511,7 @@ model UnitStandard {
   activities  Activity[]
   assessments Assessment[]
   progress    UnitStandardProgress[]
+  formativeAssessments FormativeAssessment[]
 }
 
 model Activity {
@@ -503,6 +622,43 @@ model RecurringSessionOverride {
   updatedAt         DateTime @updatedAt
   
   @@unique([date, groupName, venue]) // One override per group/venue/date
+}
+
+model ScheduleTemplate {
+  id          String   @id @default(uuid())
+  name        String   // e.g., "Standard Week A", "Exam Week"
+  description String?
+  isActive    Boolean  @default(true)
+  
+  // Schedule Definition (JSON)
+  // Structure: { "Monday": { "09:00-10:00": { "activity": "Lecture", "moduleId": "..." } } }
+  schedule    String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  groups      GroupSchedule[]
+}
+
+model GroupSchedule {
+  id          String   @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Keys
+  groupId     String
+  templateId  String
+
+  // Relations
+  group       Group            @relation(fields: [groupId], references: [id])
+  template    ScheduleTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([groupId])
+  @@index([templateId])
 }
 
 // Note: SQLite does not support native enums. String types are used with application-level validation.

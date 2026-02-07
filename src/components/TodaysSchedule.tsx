@@ -37,7 +37,7 @@ export default function TodaysSchedule() {
 
     if (compareDate.getTime() === today.getTime()) return 'Today';
     if (compareDate.getTime() === tomorrow.getTime()) return 'Tomorrow';
-    
+
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   };
 
@@ -59,12 +59,12 @@ export default function TodaysSchedule() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Schedule</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Upcoming Schedule</h3>
         <button
           onClick={() => router.push('/timetable')}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+          className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
         >
           View Calendar
           <ChevronRight className="w-4 h-4" />
@@ -73,10 +73,10 @@ export default function TodaysSchedule() {
 
       {isLoading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
         </div>
       ) : schedule.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
           <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p>No lessons scheduled for the next 7 days</p>
         </div>
@@ -88,23 +88,21 @@ export default function TodaysSchedule() {
               <div
                 key={lesson.id}
                 onClick={() => handleLessonClick(lesson)}
-                className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                  isPast
-                    ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 opacity-60'
-                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-md'
-                }`}
+                className={`p-4 rounded-lg border cursor-pointer transition-all ${isPast
+                    ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 opacity-60'
+                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:shadow-md'
+                  }`}
               >
                 {/* Date Badge */}
                 <div className="flex items-start justify-between mb-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    isPast
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${isPast
+                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                    }`}>
                     {formatDate(lesson.date)}
                   </span>
                   {isPast && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                       Completed
                     </span>
                   )}
@@ -113,19 +111,17 @@ export default function TodaysSchedule() {
                 {/* Lesson Details */}
                 <div className="space-y-2">
                   <div className="flex items-start gap-3">
-                    <BookOpen className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
-                      isPast ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400'
-                    }`} />
+                    <BookOpen className={`w-5 h-5 mt-0.5 flex-shrink-0 ${isPast ? 'text-slate-400' : 'text-emerald-600 dark:text-emerald-400'
+                      }`} />
                     <div className="flex-1 min-w-0">
-                      <h4 className={`font-medium ${
-                        isPast 
-                          ? 'text-gray-600 dark:text-gray-400' 
-                          : 'text-gray-900 dark:text-white'
-                      }`}>
+                      <h4 className={`font-medium ${isPast
+                          ? 'text-slate-600 dark:text-slate-400'
+                          : 'text-slate-900 dark:text-white'
+                        }`}>
                         {lesson.title}
                       </h4>
                       {lesson.module && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                           {lesson.module}
                         </p>
                       )}
@@ -133,14 +129,14 @@ export default function TodaysSchedule() {
                   </div>
 
                   {/* Time and Details */}
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 ml-8">
+                  <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-400 ml-8">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       <span>
                         {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
                       </span>
                     </div>
-                    
+
                     {lesson.groups && lesson.groups.length > 0 && (
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />

@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 
 // GET /api/reports/group-progress?groupId=xxx&format=csv
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);

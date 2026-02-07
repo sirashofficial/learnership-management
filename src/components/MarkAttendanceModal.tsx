@@ -132,18 +132,18 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose}></div>
 
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mark Attendance</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Mark Attendance</h2>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+              <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
             </button>
           </div>
 
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Select Group *
                 </label>
                 <select
@@ -152,7 +152,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                     setSelectedGroup(e.target.value);
                     setSelectedSession('');
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
                 >
                   <option value="">Choose a group</option>
                   {groups.map((group) => (
@@ -165,7 +165,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
 
               {selectedGroup && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Select Session *
                   </label>
                   {loading ? (
@@ -173,14 +173,14 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                       <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
                     </div>
                   ) : sessions.length === 0 ? (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 py-2">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 py-2">
                       No sessions scheduled for today
                     </p>
                   ) : (
                     <select
                       value={selectedSession}
                       onChange={(e) => setSelectedSession(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
                     >
                       <option value="">Choose a session</option>
                       {sessions.map((session) => (
@@ -211,7 +211,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                   </button>
                   <button
                     onClick={() => handleMarkAll('')}
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded-lg"
+                    className="px-3 py-1 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 rounded-lg"
                   >
                     Clear All
                   </button>
@@ -221,13 +221,13 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                   {students.map((student) => (
                     <div
                       key={student.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
                     >
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
+                        <p className="font-medium text-slate-900 dark:text-white">
                           {student.firstName} {student.lastName}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{student.studentId}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{student.studentId}</p>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -235,7 +235,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                           className={`px-4 py-2 rounded-lg transition-colors ${
                             attendance[student.id] === 'PRESENT'
                               ? 'bg-green-600 text-white'
-                              : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300 hover:bg-gray-300'
+                              : 'bg-slate-200 text-slate-700 dark:bg-slate-600 dark:text-slate-300 hover:bg-slate-300'
                           }`}
                         >
                           {attendance[student.id] === 'PRESENT' && <Check className="w-4 h-4 inline mr-1" />}
@@ -246,7 +246,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                           className={`px-4 py-2 rounded-lg transition-colors ${
                             attendance[student.id] === 'LATE'
                               ? 'bg-yellow-600 text-white'
-                              : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300 hover:bg-gray-300'
+                              : 'bg-slate-200 text-slate-700 dark:bg-slate-600 dark:text-slate-300 hover:bg-slate-300'
                           }`}
                         >
                           {attendance[student.id] === 'LATE' && <Check className="w-4 h-4 inline mr-1" />}
@@ -257,7 +257,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                           className={`px-4 py-2 rounded-lg transition-colors ${
                             attendance[student.id] === 'ABSENT'
                               ? 'bg-red-600 text-white'
-                              : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300 hover:bg-gray-300'
+                              : 'bg-slate-200 text-slate-700 dark:bg-slate-600 dark:text-slate-300 hover:bg-slate-300'
                           }`}
                         >
                           {attendance[student.id] === 'ABSENT' && <Check className="w-4 h-4 inline mr-1" />}
@@ -271,11 +271,11 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
             )}
           </div>
 
-          <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-700">
             <button
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
               Cancel
             </button>

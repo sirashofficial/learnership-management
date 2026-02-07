@@ -16,8 +16,6 @@ export default function QuickActions() {
 
   const handleAddStudent = async (studentData: any) => {
     try {
-      console.log('📝 QuickActions: Received student data:', studentData);
-      
       const response = await fetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,29 +73,29 @@ export default function QuickActions() {
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-4 mb-6">
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => setShowAddStudent(true)}
-            className="flex-1 min-w-[150px] px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="flex-1 min-w-[150px] px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors duration-200"
           >
             Add Student
           </button>
-          
+
           <button
             onClick={() => setShowCreateGroup(true)}
-            className="flex-1 min-w-[150px] px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="flex-1 min-w-[150px] px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
           >
             Create Group
           </button>
-          
+
           <button
             onClick={() => setShowScheduleLesson(true)}
             className="flex-1 min-w-[150px] px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors duration-200"
           >
             Schedule Lesson
           </button>
-          
+
           <button
             onClick={() => setShowMarkAttendance(true)}
             className="flex-1 min-w-[150px] px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors duration-200"

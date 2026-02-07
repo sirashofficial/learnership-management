@@ -96,31 +96,31 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-bold text-gray-900">Mark Attendance</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <X className="w-5 h-5 text-gray-600" />
+            <h2 className="text-2xl font-bold text-slate-900">Mark Attendance</h2>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <X className="w-5 h-5 text-slate-600" />
             </button>
           </div>
-          <p className="text-gray-600">Student: {studentName}</p>
+          <p className="text-slate-600">Student: {studentName}</p>
         </div>
 
         {/* Calendar Controls */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-slate-900">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h3>
             <button
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -138,7 +138,7 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
         <div className="p-6">
           <div className="grid grid-cols-7 gap-2 mb-2">
             {dayNames.map((day) => (
-              <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
+              <div key={day} className="text-center text-sm font-semibold text-slate-600 py-2">
                 {day}
               </div>
             ))}
@@ -157,7 +157,7 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
                     "aspect-square p-2 rounded-lg border-2 text-center font-medium transition-all hover:scale-105",
                     record
                       ? statusColors[record.status]
-                      : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                      : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                   )}
                 >
                   <div className="text-sm">{day}</div>
@@ -177,8 +177,8 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
 
         {/* Edit Attendance */}
         {selectedDate && (
-          <div className="p-6 bg-gray-50 border-t border-gray-200">
-            <h4 className="font-semibold text-gray-900 mb-3">
+          <div className="p-6 bg-slate-50 border-t border-slate-200">
+            <h4 className="font-semibold text-slate-900 mb-3">
               Mark Attendance for {new Date(selectedDate).toLocaleDateString()}
             </h4>
             <div className="grid grid-cols-2 gap-3 mb-4">
@@ -190,7 +190,7 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
                     "px-4 py-2 rounded-lg font-medium transition-all",
                     selectedStatus === status
                       ? statusColors[status as keyof typeof statusColors]
-                      : "bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50"
+                      : "bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50"
                   )}
                 >
                   {status}
@@ -199,11 +199,11 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
             </div>
             {selectedStatus !== "PRESENT" && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Reason (optional)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Reason (optional)</label>
                 <select
                   value={selectedReason}
                   onChange={(e) => setSelectedReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">Select reason...</option>
                   <option value="Sick">Sick</option>
@@ -222,7 +222,7 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
               </button>
               <button
                 onClick={() => setSelectedDate(null)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
               >
                 Cancel
               </button>
@@ -231,24 +231,24 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
         )}
 
         {/* Legend */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Legend</h4>
+        <div className="p-6 border-t border-slate-200 bg-slate-50">
+          <h4 className="text-sm font-semibold text-slate-700 mb-3">Legend</h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-300" />
-              <span className="text-sm text-gray-700">Present</span>
+              <span className="text-sm text-slate-700">Present</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-100 border-2 border-red-300" />
-              <span className="text-sm text-gray-700">Absent</span>
+              <span className="text-sm text-slate-700">Absent</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-yellow-100 border-2 border-yellow-300" />
-              <span className="text-sm text-gray-700">Late</span>
+              <span className="text-sm text-slate-700">Late</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-blue-100 border-2 border-blue-300" />
-              <span className="text-sm text-gray-700">Excused</span>
+              <span className="text-sm text-slate-700">Excused</span>
             </div>
           </div>
         </div>

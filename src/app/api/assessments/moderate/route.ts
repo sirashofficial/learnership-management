@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         student: { include: { group: true } },
-        unitStandardRef: true,
+        unitStandard: true,
       },
     });
 

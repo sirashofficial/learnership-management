@@ -17,7 +17,7 @@ interface CourseProgressChartProps {
 export default function CourseProgressChart({ data }: CourseProgressChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
         No course progress data available
       </div>
     );
@@ -32,17 +32,17 @@ export default function CourseProgressChart({ data }: CourseProgressChartProps) 
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={formattedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
         <XAxis 
           dataKey="displayName" 
-          className="text-xs text-gray-600 dark:text-gray-400"
+          className="text-xs text-slate-600 dark:text-slate-400"
           tick={{ fill: 'currentColor' }}
           angle={-45}
           textAnchor="end"
           height={80}
         />
         <YAxis 
-          className="text-sm text-gray-600 dark:text-gray-400"
+          className="text-sm text-slate-600 dark:text-slate-400"
           tick={{ fill: 'currentColor' }}
           domain={[0, 100]}
           tickFormatter={(value) => `${value}%`}

@@ -118,8 +118,8 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
     switch (result) {
       case "Competent": return "text-green-600 bg-green-50";
       case "NYC": return "text-orange-600 bg-orange-50";
-      case "Not Yet Started": return "text-gray-600 bg-gray-50";
-      default: return "text-gray-600 bg-gray-50";
+      case "Not Yet Started": return "text-slate-600 bg-slate-50";
+      default: return "text-slate-600 bg-slate-50";
     }
   };
 
@@ -127,13 +127,13 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+        <div className="p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 Edit: {student.firstName} {student.lastName}
               </h2>
-              <p className="text-gray-600">{student.studentId}</p>
+              <p className="text-slate-600">{student.studentId}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -143,8 +143,8 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                 <Save className="w-4 h-4" />
                 Save All Changes
               </button>
-              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <X className="w-5 h-5 text-gray-600" />
+              <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <X className="w-5 h-5 text-slate-600" />
               </button>
             </div>
           </div>
@@ -153,75 +153,75 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
         <div className="p-6 space-y-6">
           {/* Personal Information */}
           <section>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <User className="w-5 h-5 text-blue-500" />
               Personal Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
                 <input
                   type="text"
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
                 <input
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Student ID</label>
                 <input
                   type="text"
                   value={formData.studentId}
                   onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ID Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">ID Number</label>
                 <input
                   type="text"
                   value={formData.idNumber}
                   onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
-                <p className="text-gray-900 px-3 py-2">{student.group?.name || "No group"}</p>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Group</label>
+                <p className="text-slate-900 px-3 py-2">{student.group?.name || "No group"}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="AT_RISK">At Risk</option>
@@ -230,11 +230,11 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Working Location</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Working Location</label>
                 <select
                   value={formData.workingLocation}
                   onChange={(e) => setFormData({ ...formData, workingLocation: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="onsite">On-site</option>
                   <option value="home">Remote/Home</option>
@@ -245,23 +245,23 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
 
           {/* Overall Progress */}
           <section>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-purple-500" />
               Overall Progress
             </h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-slate-50 p-4 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Course Completion</span>
+                <span className="text-sm font-medium text-slate-700">Course Completion</span>
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={formData.progress}
                   onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                  className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="w-20 px-2 py-1 border border-slate-300 rounded text-sm"
                 />
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="w-full bg-slate-200 rounded-full h-3">
                 <div
                   className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all"
                   style={{ width: `${formData.progress}%` }}
@@ -272,14 +272,14 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
 
           {/* Formatives & Assessments - EDITABLE */}
           <section>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-blue-500" />
               Formatives & Assessments - Mark as Complete
             </h3>
-            <div className="bg-gray-50 rounded-lg overflow-hidden">
-              <div className="divide-y divide-gray-200">
+            <div className="bg-slate-50 rounded-lg overflow-hidden">
+              <div className="divide-y divide-slate-200">
                 {formatives.map((formative) => (
-                  <div key={formative.id} className="p-4 hover:bg-gray-100 transition-colors">
+                  <div key={formative.id} className="p-4 hover:bg-slate-100 transition-colors">
                     <div className="flex items-start gap-4">
                       {/* Checkbox */}
                       <div className="pt-1">
@@ -289,7 +289,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                             "w-6 h-6 rounded border-2 flex items-center justify-center transition-all",
                             formative.isCompleted 
                               ? "bg-green-500 border-green-500" 
-                              : "border-gray-300 hover:border-green-400"
+                              : "border-slate-300 hover:border-green-400"
                           )}
                         >
                           {formative.isCompleted && (
@@ -304,17 +304,17 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                           <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
                             {formative.moduleCode}
                           </span>
-                          <span className="text-xs text-gray-500">{formative.type}</span>
+                          <span className="text-xs text-slate-500">{formative.type}</span>
                         </div>
                         <h4 className={cn(
                           "font-medium mb-1",
-                          formative.isCompleted ? "text-gray-900" : "text-gray-500"
+                          formative.isCompleted ? "text-slate-900" : "text-slate-500"
                         )}>
                           {formative.unitStandard}
                         </h4>
-                        <p className="text-sm text-gray-600">{formative.moduleName}</p>
+                        <p className="text-sm text-slate-600">{formative.moduleName}</p>
                         {formative.completedDate && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-slate-500 mt-1">
                             Completed: {format(new Date(formative.completedDate), "MMM d, yyyy")}
                           </p>
                         )}
@@ -324,7 +324,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                       <div className="flex flex-col items-end gap-2">
                         <span className={cn(
                           "px-3 py-1 rounded-full text-xs font-medium",
-                          formative.isCompleted ? getResultColor(formative.result) : "bg-gray-100 text-gray-600"
+                          formative.isCompleted ? getResultColor(formative.result) : "bg-slate-100 text-slate-600"
                         )}>
                           {formative.result}
                         </span>
@@ -332,7 +332,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                           <span className={`text-xs ${
                             formative.moderationStatus === 'Approved' ? 'text-green-600' :
                             formative.moderationStatus === 'Pending' ? 'text-orange-600' :
-                            'text-gray-600'
+                            'text-slate-600'
                           }`}>
                             {formative.moderationStatus === 'Approved' ? '✓ Moderated' : '○ Pending moderation'}
                           </span>
@@ -347,15 +347,15 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
 
           {/* Attendance History - EDITABLE */}
           <section>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-orange-500" />
               Recent Attendance - Update Status
             </h3>
-            <div className="bg-gray-50 rounded-lg overflow-hidden">
-              <div className="divide-y divide-gray-200">
+            <div className="bg-slate-50 rounded-lg overflow-hidden">
+              <div className="divide-y divide-slate-200">
                 {attendanceHistory.map((record, idx) => (
                   <div key={idx} className="p-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-slate-700">
                       {format(new Date(record.date), "EEEE, MMM d, yyyy")}
                     </span>
                     <div className="flex items-center gap-2">
@@ -365,7 +365,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                           "px-3 py-1 rounded-lg text-xs font-medium transition-all",
                           record.status === 'PRESENT'
                             ? "bg-green-500 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-600"
+                            : "bg-slate-100 text-slate-600 hover:bg-green-50 hover:text-green-600"
                         )}
                       >
                         Present
@@ -376,7 +376,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                           "px-3 py-1 rounded-lg text-xs font-medium transition-all",
                           record.status === 'LATE'
                             ? "bg-orange-500 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600"
+                            : "bg-slate-100 text-slate-600 hover:bg-orange-50 hover:text-orange-600"
                         )}
                       >
                         Late
@@ -387,7 +387,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
                           "px-3 py-1 rounded-lg text-xs font-medium transition-all",
                           record.status === 'ABSENT'
                             ? "bg-red-500 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600"
+                            : "bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600"
                         )}
                       >
                         Absent
@@ -400,7 +400,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
           </section>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t border-slate-200">
             <button
               onClick={handleSave}
               className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
@@ -409,7 +409,7 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
             >
               Cancel
             </button>

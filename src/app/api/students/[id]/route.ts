@@ -56,6 +56,7 @@ export async function PUT(
         groupId: body.groupId,
         status: body.status,
         progress: body.progress,
+        totalCreditsEarned: body.totalCreditsEarned,
       },
       include: {
         group: true,

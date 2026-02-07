@@ -80,8 +80,6 @@ export async function POST(request: NextRequest) {
         prisma.assessment.create({
           data: {
             studentId,
-            unitStandard,
-            module,
             type: template.type,
             method: template.method,
             dueDate: new Date(dueDate),

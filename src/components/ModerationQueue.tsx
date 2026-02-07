@@ -4,23 +4,26 @@ import { useState } from "react";
 import { Check, X, RotateCw, MessageSquare, User, BookOpen, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Assessment, ModerationData } from "@/types";
 
 interface ModerationQueueProps {
-  assessments: any[];
-  onModerate: (assessmentId: string, data: any) => void;
+  assessments: Assessment[];
+  onModerate: (assessmentId: string, data: ModerationData) => void;
 }
 
 export default function ModerationQueue({ assessments, onModerate }: ModerationQueueProps) {
-  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
+  const { user } = useAuth();
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [moderationNotes, setModerationNotes] = useState("");
 
   const handleModerate = (status: string) => {
-    if (!selectedAssessment) return;
-    
+    if (!selectedAssessment || !user) return;
+
     onModerate(selectedAssessment.id, {
       assessmentId: selectedAssessment.id,
-      moderationStatus: status,
-      moderatorId: "current-user-id", // TODO: Replace with actual user ID
+      moderationStatus: status as 'APPROVED' | 'REJECTED' | 'RESUBMIT',
+      moderatorId: user.id,
       moderationNotes,
     });
 
@@ -36,8 +39,8 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
     return (
       <div className="bg-white rounded-xl border border-background-border p-12 text-center">
         <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium">All assessments are moderated</p>
-        <p className="text-sm text-gray-400 mt-1">No pending assessments require moderation</p>
+        <p className="text-slate-600 font-medium">All assessments are moderated</p>
+        <p className="text-sm text-slate-400 mt-1">No pending assessments require moderation</p>
       </div>
     );
   }
@@ -46,7 +49,7 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Assessment List */}
       <div className="space-y-3">
-        <h3 className="font-semibold text-gray-900 mb-4">
+        <h3 className="font-semibold text-slate-900 mb-4">
           Pending Moderation ({pendingAssessments.length})
         </h3>
         {pendingAssessments.map((assessment) => (
@@ -57,15 +60,15 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
               "p-4 border-2 rounded-lg cursor-pointer transition-colors",
               selectedAssessment?.id === assessment.id
                 ? "border-primary bg-primary/5"
-                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
             )}
           >
             <div className="flex items-start justify-between mb-2">
               <div>
-                <p className="font-medium text-gray-900">
-                  {assessment.student.firstName} {assessment.student.lastName}
+                <p className="font-medium text-slate-900">
+                  {assessment.student?.firstName} {assessment.student?.lastName}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-500">
                   {assessment.unitStandard} - {assessment.module}
                 </p>
               </div>
@@ -80,7 +83,7 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
                 {assessment.result === "COMPETENT" ? "Competent" : "NYC"}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-3 text-xs text-slate-500">
               <span>{assessment.type}</span>
               <span>•</span>
               <span>{assessment.method}</span>
@@ -100,43 +103,43 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
         {selectedAssessment ? (
           <div className="space-y-6">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Assessment Details</h3>
-              
+              <h3 className="font-semibold text-slate-900 mb-4">Assessment Details</h3>
+
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3">
-                  <User className="w-4 h-4 text-gray-400" />
+                  <User className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-sm text-gray-500">Student</p>
-                    <p className="font-medium text-gray-900">
-                      {selectedAssessment.student.firstName} {selectedAssessment.student.lastName}
+                    <p className="text-sm text-slate-500">Student</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedAssessment.student?.firstName} {selectedAssessment.student?.lastName}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <BookOpen className="w-4 h-4 text-gray-400" />
+                  <BookOpen className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-sm text-gray-500">Unit Standard & Module</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm text-slate-500">Unit Standard & Module</p>
+                    <p className="font-medium text-slate-900">
                       {selectedAssessment.unitStandard} - {selectedAssessment.module}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <Calendar className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-sm text-gray-500">Assessment Date</p>
-                    <p className="font-medium text-gray-900">
-                      {selectedAssessment.assessedDate 
+                    <p className="text-sm text-slate-500">Assessment Date</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedAssessment.assessedDate
                         ? format(new Date(selectedAssessment.assessedDate), "MMMM d, yyyy")
                         : "Not recorded"}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-gray-200">
-                  <p className="text-sm text-gray-500 mb-1">Result</p>
+                <div className="pt-3 border-t border-slate-200">
+                  <p className="text-sm text-slate-500 mb-1">Result</p>
                   <span
                     className={cn(
                       "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium",
@@ -152,16 +155,16 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
                     )}
                   </span>
                   {selectedAssessment.score && (
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-sm text-slate-600 mt-2">
                       Score: {selectedAssessment.score}%
                     </p>
                   )}
                 </div>
 
                 {selectedAssessment.feedback && (
-                  <div className="pt-3 border-t border-gray-200">
-                    <p className="text-sm text-gray-500 mb-1">Assessor Feedback</p>
-                    <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                  <div className="pt-3 border-t border-slate-200">
+                    <p className="text-sm text-slate-500 mb-1">Assessor Feedback</p>
+                    <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg">
                       {selectedAssessment.feedback}
                     </p>
                   </div>
@@ -170,7 +173,7 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Moderation Notes
               </label>
               <textarea
@@ -178,7 +181,7 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
                 value={moderationNotes}
                 onChange={(e) => setModerationNotes(e.target.value)}
                 placeholder="Add notes about your moderation decision..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
             </div>
 
@@ -209,8 +212,8 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <div className="text-center py-12 text-slate-500">
+            <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p>Select an assessment to moderate</p>
           </div>
         )}

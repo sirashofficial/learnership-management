@@ -21,6 +21,7 @@ export const createStudentSchema = z.object({
   facilitatorId: z.string().uuid('Invalid facilitator ID').optional().nullable(),
   status: z.enum(['ACTIVE', 'AT_RISK', 'COMPLETED', 'WITHDRAWN']).optional(),
   progress: z.number().optional(),
+  totalCreditsEarned: z.number().optional(),
 });
 
 export const updateStudentSchema = createStudentSchema.partial();

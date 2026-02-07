@@ -98,10 +98,10 @@ const fetcher = (url: string) => {
     // Transform data to include computed name field
     const students = (data.data || data || []).map((student: any) => ({
       ...student,
-      name: student.firstName && student.lastName 
-        ? `${student.firstName} ${student.lastName}` 
+      name: student.firstName && student.lastName
+        ? `${student.firstName} ${student.lastName}`
         : student.name || '',
-      site: student.group?.name || student.site ||'',
+      site: student.group?.name || student.site || '',
     }));
     return students;
   });
@@ -117,7 +117,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
       const currentUser = userStr ? JSON.parse(userStr) : null;
-      
+
       // Transform the data to match API expectations
       const apiData = {
         studentId: studentData.studentId,
@@ -132,32 +132,31 @@ export function StudentProvider({ children }: { children: ReactNode }) {
         progress: studentData.progress || 0,
       };
 
-      console.log('🔄 StudentContext: Sending POST request to /api/students');
-      console.log('📦 API Data:', apiData);
-      
+
+
       const response = await fetch('/api/students', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify(apiData),
       });
 
-      console.log('📡 Response status:', response.status);
-      
+
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('❌ API Error:', errorData);
         throw new Error(errorData.error || errorData.message || 'Failed to create student');
       }
-      
+
       const result = await response.json();
-      console.log('✅ API Success:', result);
+
 
       // Refresh the student list
       mutate('/api/students');
-      
+
       // Also refresh dashboard stats
       mutate('/api/dashboard/stats');
     } catch (error) {
@@ -169,10 +168,10 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   const updateStudent = async (id: string, updates: Partial<Student>) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      
+
       const response = await fetch(`/api/students/${id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
@@ -192,7 +191,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   const deleteStudent = async (id: string) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      
+
       const response = await fetch(`/api/students/${id}`, {
         method: 'DELETE',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},

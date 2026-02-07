@@ -14,16 +14,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    
+
     // Sanitize inputs before validation
     const sanitizedBody = {
       email: sanitizeEmail(body.email || ''),
       password: sanitizeString(body.password || ''),
     };
-    
+
     // Validate input
     const validatedData = loginSchema.parse(sanitizedBody);
-    
+
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: validatedData.email },
@@ -35,35 +35,55 @@ export async function POST(request: NextRequest) {
         role: true,
       },
     });
-    
+
     if (!user) {
       return errorResponse('Invalid email or password', 401);
     }
-    
+
     // Verify password
     const passwordMatch = await bcrypt.compare(validatedData.password, user.password);
-    
+
     if (!passwordMatch) {
       return errorResponse('Invalid email or password', 401);
     }
-    
+
     // Generate JWT token
     const token = generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,
     });
-    
+
     // Return user data (without password) and token
     const { password, ...userWithoutPassword } = user;
-    
-    return successResponse(
-      {
-        user: userWithoutPassword,
+
+    // Create response with token
+    const response = NextResponse.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
         token,
       },
-      'Login successful'
-    );
+    });
+
+    // Set HTTP-only cookie
+    response.cookies.set({
+      name: 'auth_token',
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
+
+    return response;
   } catch (error) {
     return handleApiError(error);
   }

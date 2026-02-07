@@ -27,6 +27,7 @@ export async function GET(
         _count: {
           select: { students: true, sessions: true },
         },
+        rolloutPlan: true,
       },
     });
 

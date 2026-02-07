@@ -22,21 +22,28 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 export function getAuthToken(request: NextRequest): string | null {
+  // First check Authorization header
   const authHeader = request.headers.get('authorization');
-  
+
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
-  
+
+  // Then check cookies
+  const token = request.cookies.get('auth_token')?.value;
+  if (token) {
+    return token;
+  }
+
   return null;
 }
 
 export function getUserFromRequest(request: NextRequest): JWTPayload | null {
   const token = getAuthToken(request);
-  
+
   if (!token) {
     return null;
   }
-  
+
   return verifyToken(token);
 }

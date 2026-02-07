@@ -124,14 +124,14 @@ export default function CourseCreationForm() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Course Basic Information */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h3 className="text-lg font-semibold mb-4">Course Information</h3>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Course Name *</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md"
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
                 placeholder="e.g., NVC Level 2 Business Administration"
@@ -140,7 +140,7 @@ export default function CourseCreationForm() {
             <div>
               <label className="block text-sm font-medium mb-1">Course Code</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md"
                 value={courseCode}
                 onChange={(e) => setCourseCode(e.target.value)}
                 placeholder="e.g., NVC-BA-L2"
@@ -150,7 +150,7 @@ export default function CourseCreationForm() {
           <div>
             <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md"
               value={courseDescription}
               onChange={(e) => setCourseDescription(e.target.value)}
               placeholder="Course description"
@@ -161,18 +161,18 @@ export default function CourseCreationForm() {
       </div>
 
       {/* AI-Assisted Curriculum Upload */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Brain className="h-5 w-5 text-blue-500" />
           AI Curriculum Analysis & Course Generation
         </h3>
-        <p className="text-gray-600 text-sm mb-4">
+        <p className="text-slate-600 text-sm mb-4">
           Upload curriculum PDFs, learning materials, or assessment documents. Our AI will analyze and create structured courses automatically.
         </p>
         
         <div className="space-y-4">
           {/* File Upload Area */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
             <input
               type="file"
               accept=".pdf,.doc,.docx,.txt"
@@ -191,15 +191,15 @@ export default function CourseCreationForm() {
               <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Brain className="h-8 w-8 text-blue-600" />
               </div>
-              <h4 className="text-lg font-medium text-gray-900 mb-2">Upload Curriculum Documents</h4>
-              <p className="text-gray-600 mb-4">
+              <h4 className="text-lg font-medium text-slate-900 mb-2">Upload Curriculum Documents</h4>
+              <p className="text-slate-600 mb-4">
                 Drop PDF files here or click to browse
               </p>
-              <div className="flex flex-wrap gap-2 justify-center text-xs text-gray-500">
-                <span className="bg-gray-100 px-2 py-1 rounded">PDF</span>
-                <span className="bg-gray-100 px-2 py-1 rounded">DOC</span>
-                <span className="bg-gray-100 px-2 py-1 rounded">DOCX</span>
-                <span className="bg-gray-100 px-2 py-1 rounded">TXT</span>
+              <div className="flex flex-wrap gap-2 justify-center text-xs text-slate-500">
+                <span className="bg-slate-100 px-2 py-1 rounded">PDF</span>
+                <span className="bg-slate-100 px-2 py-1 rounded">DOC</span>
+                <span className="bg-slate-100 px-2 py-1 rounded">DOCX</span>
+                <span className="bg-slate-100 px-2 py-1 rounded">TXT</span>
               </div>
             </label>
           </div>
@@ -230,15 +230,15 @@ export default function CourseCreationForm() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="bg-white p-3 rounded border">
                   <strong>Modules Detected:</strong>
-                  <p className="text-gray-600 mt-1">{analysisResult.keyTopics.length} learning modules</p>
+                  <p className="text-slate-600 mt-1">{analysisResult.keyTopics.length} learning modules</p>
                 </div>
                 <div className="bg-white p-3 rounded border">
                   <strong>Total Duration:</strong>
-                  <p className="text-gray-600 mt-1">{analysisResult.estimatedDuration} hours</p>
+                  <p className="text-slate-600 mt-1">{analysisResult.estimatedDuration} hours</p>
                 </div>
                 <div className="bg-white p-3 rounded border">
                   <strong>Difficulty Level:</strong>
-                  <p className="text-gray-600 mt-1 capitalize">{analysisResult.difficultyLevel}</p>
+                  <p className="text-slate-600 mt-1 capitalize">{analysisResult.difficultyLevel}</p>
                 </div>
               </div>
               
@@ -257,7 +257,7 @@ export default function CourseCreationForm() {
                 <strong>Recommended Assessments:</strong>
                 <ul className="mt-2 space-y-1">
                   {analysisResult.recommendedAssessments.map((assessment, i) => (
-                    <li key={i} className="text-sm text-gray-600">• {assessment}</li>
+                    <li key={i} className="text-sm text-slate-600">• {assessment}</li>
                   ))}
                 </ul>
               </div>
@@ -266,7 +266,7 @@ export default function CourseCreationForm() {
                 <strong>Workplace Activities:</strong>
                 <ul className="mt-2 space-y-1">
                   {analysisResult.workplaceActivities.map((activity, i) => (
-                    <li key={i} className="text-sm text-gray-600">• {activity}</li>
+                    <li key={i} className="text-sm text-slate-600">• {activity}</li>
                   ))}
                 </ul>
               </div>
@@ -297,7 +297,7 @@ export default function CourseCreationForm() {
             <div>
               <label className="block text-sm font-medium mb-1">Module Name</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md"
                 value={currentModule.name}
                 onChange={(e) => setCurrentModule(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Module name"
@@ -311,7 +311,7 @@ export default function CourseCreationForm() {
               <label className="block text-sm font-medium mb-1">Duration (hours)</label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md"
                 value={currentModule.plannedDuration}
                 onChange={(e) => setCurrentModule(prev => ({ ...prev, plannedDuration: Number(e.target.value) }))}
                 min="0"
@@ -321,7 +321,7 @@ export default function CourseCreationForm() {
             <div>
               <label className="block text-sm font-medium mb-1">Assessment</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md"
                 value={currentModule.summativeAssessment}
                 onChange={(e) => setCurrentModule(prev => ({ ...prev, summativeAssessment: e.target.value }))}
                 placeholder="Assessment type"
@@ -340,20 +340,20 @@ export default function CourseCreationForm() {
 
       {/* Modules List */}
       {modules.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h3 className="text-lg font-semibold mb-4">Modules ({modules.length})</h3>
           <div className="space-y-3">
             {modules.map((module, index) => (
               <div key={index} className="flex justify-between items-start p-3 border rounded-lg">
                 <div>
                   <h4 className="font-medium">{module.name}</h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     {module.plannedDuration} hours • {module.summativeAssessment}
                   </p>
                 </div>
                 <button
                   onClick={() => removeModule(index)}
-                  className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+                  className="px-3 py-1 text-sm border rounded hover:bg-slate-50"
                 >
                   Remove
                 </button>
@@ -368,7 +368,7 @@ export default function CourseCreationForm() {
         <button
           onClick={submitCourse}
           disabled={isSubmitting || !courseName || modules.length === 0}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-400 flex items-center gap-2"
+          className="px-6 py-2 bg-blue-600 text-white rounded-md disabled:bg-slate-400 flex items-center gap-2"
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Create Course

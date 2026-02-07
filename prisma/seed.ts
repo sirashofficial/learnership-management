@@ -56,6 +56,15 @@ async function main() {
       email: 'ash@yeha.training',
       name: 'Ash',
       password: hashedPassword,
+      role: 'ADMIN', // Make Ash an ADMIN
+    },
+  });
+
+  const facilitator2 = await prisma.user.create({
+    data: {
+      email: 'facilitator@yeha.training',
+      name: 'Facilitator User',
+      password: hashedPassword,
       role: 'FACILITATOR',
     },
   });
@@ -918,7 +927,7 @@ async function main() {
       data: {
         code: '113924',
         title: 'Apply basic business ethics in a work environment',
-        credits: 2,
+        credits: 3,
         level: 2,
         type: 'Core',
         content: 'Business ethics, integrity, ethical decision-making',

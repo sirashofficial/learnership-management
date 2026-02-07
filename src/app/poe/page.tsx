@@ -105,12 +105,12 @@ export default function POEPage() {
         </div>
 
         {/* Filter */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Group</label>
+        <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <label className="block text-sm font-medium text-slate-700 mb-2">Filter by Group</label>
           <select
             value={selectedGroupFilter}
             onChange={(e) => setSelectedGroupFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary"
           >
             <option value="">All Groups</option>
             {uniqueGroups.map((groupId: any) => {
@@ -125,27 +125,27 @@ export default function POEPage() {
         </div>
 
         {/* POE Checklist Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 sticky left-0 bg-slate-50 z-10">
                     Student
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Group</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Group</th>
                   {checklistFields.map((field) => (
-                    <th key={field.key} className="px-2 py-3 text-center text-xs font-medium text-gray-700 min-w-[100px]">
+                    <th key={field.key} className="px-2 py-3 text-center text-xs font-medium text-slate-700 min-w-[100px]">
                       {field.label}
                     </th>
                   ))}
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Complete</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-slate-900">Complete</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-200">
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={checklistFields.length + 3} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={checklistFields.length + 3} className="px-4 py-8 text-center text-slate-500">
                       No students found
                     </td>
                   </tr>
@@ -156,17 +156,17 @@ export default function POEPage() {
                     const isSaving = saving === student.id;
 
                     return (
-                      <tr key={student.id} className={`hover:bg-gray-50 ${isSaving ? 'opacity-50' : ''}`}>
+                      <tr key={student.id} className={`hover:bg-slate-50 ${isSaving ? 'opacity-50' : ''}`}>
                         <td className="px-4 py-3 sticky left-0 bg-white z-10">
                           <div className="flex items-center gap-2">
                             <div>
                               <button
                                 onClick={() => setSelectedStudent(student)}
-                                className="font-medium text-gray-900 text-sm hover:text-blue-600 hover:underline text-left"
+                                className="font-medium text-slate-900 text-sm hover:text-blue-600 hover:underline text-left"
                               >
                                 {student.firstName} {student.lastName}
                               </button>
-                              <p className="text-xs text-gray-500">{student.studentId}</p>
+                              <p className="text-xs text-slate-500">{student.studentId}</p>
                             </div>
                             <button
                               onClick={() => setSelectedStudent(student)}
@@ -177,7 +177,7 @@ export default function POEPage() {
                             </button>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-slate-600">
                           {student.group?.name || '-'}
                         </td>
                         {checklistFields.map((field) => (
@@ -188,7 +188,7 @@ export default function POEPage() {
                               className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
                                 checklist[field.key]
                                   ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
                               }`}
                             >
                               {checklist[field.key] ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
@@ -197,13 +197,13 @@ export default function POEPage() {
                         ))}
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-2">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div className="w-16 bg-slate-200 rounded-full h-2">
                               <div
                                 className="bg-primary h-2 rounded-full transition-all"
                                 style={{ width: `${completeness}%` }}
                               />
                             </div>
-                            <span className="text-sm font-medium text-gray-700">{completeness}%</span>
+                            <span className="text-sm font-medium text-slate-700">{completeness}%</span>
                           </div>
                         </td>
                       </tr>
@@ -217,9 +217,9 @@ export default function POEPage() {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Total Students</p>
-            <p className="text-2xl font-bold text-gray-900">{filteredStudents.length}</p>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-sm text-slate-600">Total Students</p>
+            <p className="text-2xl font-bold text-slate-900">{filteredStudents.length}</p>
           </div>
           <div className="bg-white rounded-lg border border-green-200 p-4">
             <p className="text-sm text-green-600">100% Complete</p>

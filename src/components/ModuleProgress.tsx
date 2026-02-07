@@ -82,7 +82,7 @@ export default function ModuleProgress({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-primary to-secondary text-white">
+        <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-primary to-secondary text-white">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold">Module Progress</h2>
@@ -135,23 +135,23 @@ export default function ModuleProgress({
               const isExpanded = expandedModules.includes(module.id);
 
               return (
-                <div key={module.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                <div key={module.id} className="border border-slate-200 rounded-lg overflow-hidden">
                   {/* Module Header */}
                   <button
                     onClick={() => toggleModule(module.id)}
-                    className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                    className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-600" /> : <ChevronRight className="w-5 h-5 text-gray-600" />}
-                      <span className="font-semibold text-gray-900">
+                      {isExpanded ? <ChevronDown className="w-5 h-5 text-slate-600" /> : <ChevronRight className="w-5 h-5 text-slate-600" />}
+                      <span className="font-semibold text-slate-900">
                         Module {module.id}: {module.name}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-slate-600">
                         {moduleEarned} / {moduleCredits} credits
                       </span>
-                      <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
                           style={{ width: `${moduleCredits > 0 ? (moduleEarned / moduleCredits) * 100 : 0}%` }}
@@ -166,7 +166,7 @@ export default function ModuleProgress({
                       {module.unitStandards.map((unit) => {
                         const isUnitExpanded = expandedUnits.includes(unit.id);
                         return (
-                          <div key={unit.id} className="border border-gray-200 rounded-lg">
+                          <div key={unit.id} className="border border-slate-200 rounded-lg">
                             {/* Unit Standard Header */}
                             <div className="flex items-center gap-3 p-3 bg-white">
                               <button
@@ -175,32 +175,32 @@ export default function ModuleProgress({
                                   "flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
                                   unit.completed
                                     ? "bg-green-500 border-green-500 text-white"
-                                    : "border-gray-300 hover:border-primary"
+                                    : "border-slate-300 hover:border-primary"
                                 )}
                               >
                                 {unit.completed && <CheckCircle className="w-4 h-4" />}
                               </button>
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900">
+                                <div className="font-medium text-slate-900">
                                   {unit.code}: {unit.title}
                                 </div>
-                                <div className="text-sm text-gray-600">{unit.credits} credits</div>
+                                <div className="text-sm text-slate-600">{unit.credits} credits</div>
                               </div>
                               <button
                                 onClick={() => toggleUnit(unit.id)}
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                className="p-1 hover:bg-slate-100 rounded transition-colors"
                               >
                                 {isUnitExpanded ? (
-                                  <ChevronDown className="w-4 h-4 text-gray-600" />
+                                  <ChevronDown className="w-4 h-4 text-slate-600" />
                                 ) : (
-                                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                                  <ChevronRight className="w-4 h-4 text-slate-600" />
                                 )}
                               </button>
                             </div>
 
                             {/* Activities */}
                             {isUnitExpanded && (
-                              <div className="px-3 pb-3 bg-gray-50">
+                              <div className="px-3 pb-3 bg-slate-50">
                                 <div className="pt-3 space-y-2">
                                   {unit.activities.map((activity) => (
                                     <div key={activity.id} className="flex items-start gap-2">
@@ -210,7 +210,7 @@ export default function ModuleProgress({
                                           "mt-0.5 flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
                                           activity.completed
                                             ? "bg-primary border-primary text-white"
-                                            : "border-gray-300 hover:border-primary"
+                                            : "border-slate-300 hover:border-primary"
                                         )}
                                       >
                                         {activity.completed && <CheckCircle className="w-3 h-3" />}
@@ -218,7 +218,7 @@ export default function ModuleProgress({
                                       <span
                                         className={cn(
                                           "text-sm flex-1",
-                                          activity.completed ? "text-gray-500 line-through" : "text-gray-700"
+                                          activity.completed ? "text-slate-500 line-through" : "text-slate-700"
                                         )}
                                       >
                                         {activity.description}
@@ -234,7 +234,7 @@ export default function ModuleProgress({
                                         value={newActivityText}
                                         onChange={(e) => setNewActivityText(e.target.value)}
                                         placeholder="Activity description..."
-                                        className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                                         autoFocus
                                         onKeyPress={(e) => {
                                           if (e.key === "Enter") handleAddActivity(module.id, unit.id);
@@ -251,7 +251,7 @@ export default function ModuleProgress({
                                           setAddingActivity(null);
                                           setNewActivityText("");
                                         }}
-                                        className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                                        className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors text-sm font-medium"
                                       >
                                         Cancel
                                       </button>

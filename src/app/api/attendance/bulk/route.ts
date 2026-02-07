@@ -20,33 +20,41 @@ export async function POST(request: NextRequest) {
 
     // Create attendance records for all students
     const attendanceRecords = await Promise.all(
-      studentIds.map((studentId: string) =>
-        prisma.attendance.upsert({
+      studentIds.map(async (studentId: string) => {
+        const existing = await prisma.attendance.findFirst({
           where: {
-            studentId_sessionId: {
-              studentId,
-              sessionId: sessionId || 'MANUAL',
-            },
-          },
-          update: {
-            status,
-            markedBy,
-            markedAt: new Date(),
-            notes,
-            date: attendanceDate,
-          },
-          create: {
             studentId,
-            sessionId: sessionId || 'MANUAL',
-            groupId,
+            date: attendanceDate,
+            groupId: groupId || null,
+          }
+        });
+
+        if (existing) {
+          return prisma.attendance.update({
+            where: { id: existing.id },
+            data: {
+              status,
+              markedBy,
+              markedAt: new Date(),
+              notes,
+              sessionId: sessionId || null,
+            },
+          });
+        }
+
+        return prisma.attendance.create({
+          data: {
+            studentId,
+            sessionId: sessionId || null,
+            groupId: groupId || null,
             status,
             date: attendanceDate,
             markedBy,
             markedAt: new Date(),
             notes,
           },
-        })
-      )
+        });
+      })
     );
 
     return successResponse(attendanceRecords, `Marked ${attendanceRecords.length} students as ${status}`);

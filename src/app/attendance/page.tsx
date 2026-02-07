@@ -3,9 +3,9 @@
 import { useState, useMemo, useEffect } from "react";
 import Header from "@/components/Header";
 import { useStudents } from "@/hooks/useStudents";
-import { 
-  Calendar, Users, TrendingUp, ChevronDown, ChevronRight, Check, X, 
-  ChevronLeft, ChevronRight as ChevronRightIcon, Clock, AlertCircle, 
+import {
+  Calendar, Users, TrendingUp, ChevronDown, ChevronRight, Check, X,
+  ChevronLeft, ChevronRight as ChevronRightIcon, Clock, AlertCircle,
   Download, Filter, BarChart3, Copy, CheckSquare, FileText, Bell, Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,20 +42,21 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedCollection, setExpandedCollection] = useState<string | null>("montazility");
-  const [attendanceData, setAttendanceData] = useState<{[key: string]: string}>({});
+  const [attendanceData, setAttendanceData] = useState<{ [key: string]: string }>({});
   const [savingAttendance, setSavingAttendance] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  
+
   // New states for enhanced features
   const [activeView, setActiveView] = useState<'mark' | 'history' | 'analytics'>('mark');
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [groupStats, setGroupStats] = useState<{[key: string]: AttendanceStats}>({});
+  const [groupStats, setGroupStats] = useState<{ [key: string]: AttendanceStats }>({});
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selectedForBulk, setSelectedForBulk] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string | null>(null);
+  const [absentReasons, setAbsentReasons] = useState<{ [key: string]: string }>({});
 
   // Group collections
   const groupCollections: GroupCollection[] = [
@@ -143,7 +144,7 @@ export default function AttendancePage() {
     const group = groupedStudents[groupId];
     if (!group) return;
 
-    const updates: {[key: string]: string} = {};
+    const updates: { [key: string]: string } = {};
     group.students.forEach((student: any) => {
       updates[getAttendanceKey(student.id)] = "PRESENT";
     });
@@ -156,7 +157,7 @@ export default function AttendancePage() {
     if (selectedForBulk.size === 0) return;
 
     const studentIds = Array.from(selectedForBulk);
-    
+
     try {
       setSavingAttendance(true);
       const response = await fetch('/api/attendance/bulk', {
@@ -174,7 +175,7 @@ export default function AttendancePage() {
       const data = await response.json();
       if (data.success) {
         // Update local state
-        const updates: {[key: string]: string} = {};
+        const updates: { [key: string]: string } = {};
         studentIds.forEach(studentId => {
           updates[getAttendanceKey(studentId)] = action;
         });
@@ -192,24 +193,15 @@ export default function AttendancePage() {
   const saveAttendance = async () => {
     try {
       setSavingAttendance(true);
-      console.log('💾 Starting attendance save...');
-      console.log('📅 Selected date:', selectedDate);
-      console.log('👥 Total students:', apiStudents.length);
-      console.log('📋 Raw attendance data:', attendanceData);
+
+
 
       const attendanceRecords = Object.entries(attendanceData)
         .filter(([key, status]) => status !== "NOT_MARKED" && key.includes(format(selectedDate, "yyyy-MM-dd")))
         .map(([key, status]) => {
           const studentId = key.split('-')[0];
           const student = apiStudents.find(s => s.id === studentId);
-          
-          console.log(`🔍 Processing student ${studentId}:`, {
-            found: !!student,
-            hasGroup: !!student?.group,
-            groupId: student?.group?.id || 'NO GROUP',
-            status
-          });
-          
+
           return {
             studentId,
             groupId: student?.group?.id || null, // FIX: Use null instead of undefined
@@ -220,7 +212,7 @@ export default function AttendancePage() {
           };
         });
 
-      console.log(`📝 Saving ${attendanceRecords.length} attendance records:`, attendanceRecords);
+
 
       // Use bulk API endpoint
       const response = await fetch('/api/attendance', {
@@ -229,8 +221,7 @@ export default function AttendancePage() {
         body: JSON.stringify({ records: attendanceRecords }),
       });
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -246,23 +237,13 @@ export default function AttendancePage() {
       }
 
       const result = await response.json();
-      console.log('✅ Attendance saved successfully:', result);
-      console.log('✅ Full response data:', result.data);
-      console.log('✅ Response structure:', {
-        hasData: !!result.data,
-        dataType: typeof result.data,
-        isArray: Array.isArray(result.data),
-        hasSuccess: !!(result.data?.success),
-        hasFailed: !!(result.data?.failed),
-        hasSummary: !!(result.data?.summary)
-      });
 
       const responseData = result.data;
-      
+
       // Handle both array response (old format) and object response (new format)
       let successCount = 0;
       let failedCount = 0;
-      
+
       if (Array.isArray(responseData)) {
         // Old format: just an array of results
         successCount = responseData.length;
@@ -271,7 +252,7 @@ export default function AttendancePage() {
         // New format: {success: [], failed: [], summary: {}}
         successCount = responseData.success?.length || 0;
         failedCount = responseData.failed?.length || 0;
-        
+
         // Log detailed failures
         if (failedCount > 0) {
           console.error('❌ Failed records:', responseData.failed);
@@ -280,15 +261,9 @@ export default function AttendancePage() {
         console.error('❌ Unexpected response format:', responseData);
         throw new Error('Invalid API response format');
       }
-      
-      console.log('📊 Summary:', {
-        total: attendanceRecords.length,
-        successful: successCount,
-        failed: failedCount
-      });
 
       setLastSaved(new Date());
-      
+
       // Show appropriate message based on results
       if (failedCount === 0 && successCount > 0) {
         alert(`✅ Successfully saved attendance for ${successCount} students!`);
@@ -297,7 +272,7 @@ export default function AttendancePage() {
       } else {
         throw new Error('All records failed to save');
       }
-      
+
       fetchAlerts(); // Refresh alerts after saving
     } catch (error: unknown) {
       console.error('❌ Error saving attendance:', error);
@@ -312,14 +287,14 @@ export default function AttendancePage() {
     try {
       const startDate = format(startOfWeek(selectedDate), 'yyyy-MM-dd');
       const endDate = format(endOfWeek(selectedDate), 'yyyy-MM-dd');
-      
+
       // Get first group for demo (in production, allow user to select)
       const firstGroupId = Object.keys(groupedStudents)[0];
-      
+
       const response = await fetch(
         `/api/attendance/export?format=${formatType}&groupId=${firstGroupId}&startDate=${startDate}&endDate=${endDate}`
       );
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -329,7 +304,7 @@ export default function AttendancePage() {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      
+
       setShowExportMenu(false);
     } catch (error) {
       console.error('Error exporting:', error);
@@ -360,7 +335,7 @@ export default function AttendancePage() {
     if (isFiltered) return null;
 
     return (
-      <div key={student.id} className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
+      <div key={student.id} className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-colors">
         <div className="flex items-center gap-3 flex-1">
           <input
             type="checkbox"
@@ -374,16 +349,16 @@ export default function AttendancePage() {
               }
               setSelectedForBulk(newSelected);
             }}
-            className="w-4 h-4 rounded border-gray-300"
+            className="w-4 h-4 rounded border-slate-300"
           />
           <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
             {student.firstName[0]}{student.lastName[0]}
           </div>
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">
+            <p className="font-medium text-slate-900 dark:text-white">
               {student.firstName} {student.lastName}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{student.studentId}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{student.studentId}</p>
           </div>
         </div>
 
@@ -394,7 +369,7 @@ export default function AttendancePage() {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               status === "PRESENT"
                 ? "bg-green-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30"
+                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-green-100 dark:hover:bg-green-900/30"
             )}
           >
             Present
@@ -405,7 +380,7 @@ export default function AttendancePage() {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               status === "LATE"
                 ? "bg-yellow-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
+                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
             )}
           >
             Late
@@ -416,11 +391,25 @@ export default function AttendancePage() {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               status === "ABSENT"
                 ? "bg-red-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-red-900/30"
+                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-red-100 dark:hover:bg-red-900/30"
             )}
           >
             Absent
           </button>
+          {status === "ABSENT" && (
+            <select
+              value={absentReasons[student.id] || ""}
+              onChange={(e) => setAbsentReasons(prev => ({ ...prev, [student.id]: e.target.value }))}
+              className="px-2 py-1 text-xs border border-red-300 rounded-lg bg-red-50 text-red-700 focus:ring-1 focus:ring-red-400"
+            >
+              <option value="">Select reason...</option>
+              <option value="SICK">Sick</option>
+              <option value="BUSINESS">Business</option>
+              <option value="NO_SHOW">No Show</option>
+              <option value="PERSONAL">Personal</option>
+              <option value="OTHER">Other</option>
+            </select>
+          )}
         </div>
       </div>
     );
@@ -436,7 +425,7 @@ export default function AttendancePage() {
 
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance History</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Attendance History</h2>
         {Object.entries(groupedByDate).map(([date, records]: [string, any]) => {
           const stats = {
             present: records.filter((r: any) => r.status === 'PRESENT').length,
@@ -445,9 +434,9 @@ export default function AttendancePage() {
           };
 
           return (
-            <div key={date} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <div key={date} className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                   {format(new Date(date), 'EEEE, MMMM d, yyyy')}
                 </h3>
                 <div className="flex gap-4 text-sm">
@@ -458,12 +447,12 @@ export default function AttendancePage() {
               </div>
               <div className="space-y-2">
                 {records.map((record: any) => (
-                  <div key={record.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <div key={record.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="font-medium text-slate-900 dark:text-white">
                         {record.student?.firstName} {record.student?.lastName}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
                         {record.student?.group?.name}
                       </p>
                     </div>
@@ -502,23 +491,23 @@ export default function AttendancePage() {
 
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Analytics</h2>
-        
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Attendance Analytics</h2>
+
         {/* Overall Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Records</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{historyData.length}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Total Records</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{historyData.length}</p>
               </div>
               <FileText className="w-8 h-8 text-blue-500" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Present</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Present</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {historyData.filter(r => r.status === 'PRESENT').length}
                 </p>
@@ -526,10 +515,10 @@ export default function AttendancePage() {
               <Check className="w-8 h-8 text-green-500" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Late</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Late</p>
                 <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {historyData.filter(r => r.status === 'LATE').length}
                 </p>
@@ -537,10 +526,10 @@ export default function AttendancePage() {
               <Clock className="w-8 h-8 text-yellow-500" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Absent</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Absent</p>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {historyData.filter(r => r.status === 'ABSENT').length}
                 </p>
@@ -551,8 +540,8 @@ export default function AttendancePage() {
         </div>
 
         {/* Attendance Trend Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Weekly Trend</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Weekly Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -569,8 +558,8 @@ export default function AttendancePage() {
 
         {/* Alerts Section */}
         {alerts.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Bell className="w-5 h-5 text-orange-500" />
               Active Alerts
             </h3>
@@ -584,12 +573,12 @@ export default function AttendancePage() {
                 )}>
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{alert.message}</p>
+                      <p className="font-medium text-slate-900 dark:text-white">{alert.message}</p>
                       {alert.details && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{alert.details}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{alert.details}</p>
                       )}
                     </div>
-                    <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -604,11 +593,11 @@ export default function AttendancePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500 dark:text-gray-400">Loading students...</div>
+            <div className="text-slate-500 dark:text-slate-400">Loading students...</div>
           </div>
         </main>
       </div>
@@ -616,26 +605,26 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                 <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                 Attendance Management
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-slate-500 dark:text-slate-400 mt-1">
                 Track and manage student attendance
               </p>
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-sm"
               >
                 <Filter className="w-4 h-4" />
                 Filters
@@ -643,22 +632,22 @@ export default function AttendancePage() {
               <div className="relative">
                 <button
                   onClick={() => setShowExportMenu(!showExportMenu)}
-                  className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-sm"
+                  className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-sm"
                 >
                   <Download className="w-4 h-4" />
                   Export
                 </button>
                 {showExportMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-10 py-2">
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg z-10 py-2">
                     <button
                       onClick={() => exportAttendance('csv')}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                     >
                       Export as CSV
                     </button>
                     <button
                       onClick={() => exportAttendance('json')}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                     >
                       Export as JSON
                     </button>
@@ -676,7 +665,7 @@ export default function AttendancePage() {
                 "px-4 py-2 rounded-lg font-medium transition-colors",
                 activeView === 'mark'
                   ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
               )}
             >
               Mark Attendance
@@ -687,7 +676,7 @@ export default function AttendancePage() {
                 "px-4 py-2 rounded-lg font-medium transition-colors",
                 activeView === 'history'
                   ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
               )}
             >
               History
@@ -698,7 +687,7 @@ export default function AttendancePage() {
                 "px-4 py-2 rounded-lg font-medium transition-colors",
                 activeView === 'analytics'
                   ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
               )}
             >
               <BarChart3 className="w-4 h-4 inline mr-2" />
@@ -708,8 +697,8 @@ export default function AttendancePage() {
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm mb-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Filter by Status</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm mb-6">
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Filter by Status</h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilterStatus(null)}
@@ -717,7 +706,7 @@ export default function AttendancePage() {
                     "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                     !filterStatus
                       ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                   )}
                 >
                   All
@@ -728,7 +717,7 @@ export default function AttendancePage() {
                     "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                     filterStatus === 'PRESENT'
                       ? "bg-green-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                   )}
                 >
                   Present
@@ -739,7 +728,7 @@ export default function AttendancePage() {
                     "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                     filterStatus === 'LATE'
                       ? "bg-yellow-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                   )}
                 >
                   Late
@@ -750,7 +739,7 @@ export default function AttendancePage() {
                     "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                     filterStatus === 'ABSENT'
                       ? "bg-red-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                   )}
                 >
                   Absent
@@ -786,7 +775,7 @@ export default function AttendancePage() {
                 </button>
                 <button
                   onClick={() => setSelectedForBulk(new Set())}
-                  className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors text-sm font-medium"
                 >
                   Clear
                 </button>
@@ -796,17 +785,17 @@ export default function AttendancePage() {
 
           {/* Date Navigation */}
           {activeView === 'mark' && (
-            <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
               <button
                 onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               </button>
 
               <div className="flex items-center gap-4">
                 <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                <span className="text-lg font-semibold text-slate-900 dark:text-white">
                   {format(selectedDate, "EEEE, MMMM d, yyyy")}
                 </span>
                 {isToday(selectedDate) && (
@@ -827,9 +816,9 @@ export default function AttendancePage() {
                 )}
                 <button
                   onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
-                  <ChevronRightIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <ChevronRightIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                 </button>
               </div>
             </div>
@@ -840,8 +829,8 @@ export default function AttendancePage() {
         {activeView === 'mark' && (
           <div className="space-y-6">
             {/* Save Button */}
-            <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 {lastSaved ? (
                   <>
                     <Check className="w-4 h-4 text-green-500" />
@@ -875,31 +864,31 @@ export default function AttendancePage() {
               const subGroups = collection.subGroupNames
                 .map(name => Object.values(groupedStudents).find(g => g.name === name))
                 .filter(Boolean);
-              
+
               const totalStudents = subGroups.reduce((sum, g) => sum + g.students.length, 0);
               const isExpanded = expandedCollection === collection.id;
 
               return (
-                <div key={collection.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                <div key={collection.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden">
                   <button
                     onClick={() => setExpandedCollection(isExpanded ? null : collection.id)}
-                    className="w-full flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="w-full flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className="w-5 h-5 text-slate-400" />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
                       )}
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                           <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div className="text-left">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                             {collection.name}
                           </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
                             {totalStudents} students across {subGroups.length} groups
                           </p>
                         </div>
@@ -908,13 +897,13 @@ export default function AttendancePage() {
                   </button>
 
                   {isExpanded && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4">
+                    <div className="border-t border-slate-200 dark:border-slate-700 p-6 space-y-4">
                       {subGroups.map((group) => {
                         const stats = calculateGroupStats(group.id);
                         const groupExpanded = expandedGroups.has(group.id);
 
                         return (
-                          <div key={group.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                          <div key={group.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                             <button
                               onClick={() => {
                                 const newExpanded = new Set(expandedGroups);
@@ -925,16 +914,16 @@ export default function AttendancePage() {
                                 }
                                 setExpandedGroups(newExpanded);
                               }}
-                              className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                              className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                             >
                               <div className="flex items-center gap-3">
                                 {groupExpanded ? (
-                                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                                  <ChevronDown className="w-4 h-4 text-slate-400" />
                                 ) : (
-                                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                                  <ChevronRight className="w-4 h-4 text-slate-400" />
                                 )}
-                                <h4 className="font-medium text-gray-900 dark:text-white">{group.name}</h4>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                <h4 className="font-medium text-slate-900 dark:text-white">{group.name}</h4>
+                                <span className="text-sm text-slate-500 dark:text-slate-400">
                                   ({group.students.length} students)
                                 </span>
                               </div>
@@ -943,12 +932,12 @@ export default function AttendancePage() {
                                 <span className="text-green-600 dark:text-green-400">✓ {stats.present}</span>
                                 <span className="text-yellow-600 dark:text-yellow-400">⏰ {stats.late}</span>
                                 <span className="text-red-600 dark:text-red-400">✗ {stats.absent}</span>
-                                <span className="text-gray-500 dark:text-gray-400">— {stats.notMarked}</span>
+                                <span className="text-slate-500 dark:text-slate-400">— {stats.notMarked}</span>
                               </div>
                             </button>
 
                             {groupExpanded && (
-                              <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-700/50">
+                              <div className="border-t border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-700/50">
                                 <div className="flex justify-end mb-3">
                                   <button
                                     onClick={() => markAllPresent(group.id)}
@@ -974,7 +963,7 @@ export default function AttendancePage() {
 
             {/* Individual Groups */}
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Other Groups</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Other Groups</h2>
               {Object.values(groupedStudents)
                 .filter(group => !groupCollections.some(c => c.subGroupNames.includes(group.name)))
                 .map((group: any) => {
@@ -982,7 +971,7 @@ export default function AttendancePage() {
                   const isExpanded = expandedGroups.has(group.id);
 
                   return (
-                    <div key={group.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                    <div key={group.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden">
                       <button
                         onClick={() => {
                           const newExpanded = new Set(expandedGroups);
@@ -993,23 +982,23 @@ export default function AttendancePage() {
                           }
                           setExpandedGroups(newExpanded);
                         }}
-                        className="w-full flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        className="w-full flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                       >
                         <div className="flex items-center gap-4">
                           {isExpanded ? (
-                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                            <ChevronDown className="w-5 h-5 text-slate-400" />
                           ) : (
-                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                            <ChevronRight className="w-5 h-5 text-slate-400" />
                           )}
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                               <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div className="text-left">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 {group.name}
                               </h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                              <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {group.students.length} students
                               </p>
                             </div>
@@ -1020,12 +1009,12 @@ export default function AttendancePage() {
                           <span className="text-green-600 dark:text-green-400">✓ {stats.present}</span>
                           <span className="text-yellow-600 dark:text-yellow-400">⏰ {stats.late}</span>
                           <span className="text-red-600 dark:text-red-400">✗ {stats.absent}</span>
-                          <span className="text-gray-500 dark:text-gray-400">— {stats.notMarked}</span>
+                          <span className="text-slate-500 dark:text-slate-400">— {stats.notMarked}</span>
                         </div>
                       </button>
 
                       {isExpanded && (
-                        <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-700/50">
+                        <div className="border-t border-slate-200 dark:border-slate-700 p-6 bg-slate-50 dark:bg-slate-700/50">
                           <div className="flex justify-end mb-3">
                             <button
                               onClick={() => markAllPresent(group.id)}

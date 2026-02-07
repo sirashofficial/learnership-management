@@ -52,21 +52,21 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
     <div className="space-y-6">
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-lg p-6 border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Groups</p>
-              <p className="text-3xl font-bold text-gray-900">{groups.length}</p>
+              <p className="text-sm font-medium text-slate-600">Total Groups</p>
+              <p className="text-3xl font-bold text-slate-900">{groups.length}</p>
             </div>
             <Users className="h-8 w-8 text-blue-500" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-lg p-6 border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Students</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-slate-600">Total Students</p>
+              <p className="text-3xl font-bold text-slate-900">
                 {groups.reduce((sum, group) => sum + group._count.students, 0)}
               </p>
             </div>
@@ -74,11 +74,11 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-lg p-6 border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Avg Progress</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-slate-600">Avg Progress</p>
+              <p className="text-3xl font-bold text-slate-900">
                 {Math.round(groups.reduce((sum, group) => sum + group.overallProgress, 0) / groups.length)}%
               </p>
             </div>
@@ -86,11 +86,11 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-lg p-6 border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Behind Schedule</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-slate-600">Behind Schedule</p>
+              <p className="text-3xl font-bold text-slate-900">
                 {groups.filter(group => calculateVariance(group).variance < -5).length}
               </p>
             </div>
@@ -106,12 +106,12 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
           const statusBadge = getStatusBadge(variance);
           
           return (
-            <div key={group.id} className="bg-white rounded-lg border border-gray-200 p-6">
+            <div key={group.id} className="bg-white rounded-lg border border-slate-200 p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
-                  <p className="text-sm text-gray-600">{group.company}</p>
+                  <h3 className="text-lg font-semibold text-slate-900">{group.name}</h3>
+                  <p className="text-sm text-slate-600">{group.company}</p>
                 </div>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge.color}`}>
                   {statusBadge.label}
@@ -125,7 +125,7 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
                     <span>Overall Progress</span>
                     <span className="font-medium">{group.overallProgress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-slate-200 rounded-full h-2">
                     <div 
                       className="bg-blue-600 h-2 rounded-full transition-all" 
                       style={{ width: `${group.overallProgress}%` }}
@@ -138,9 +138,9 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
                     <span>Time Progress</span>
                     <span className="font-medium">{Math.round(timeProgress)}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-slate-200 rounded-full h-2">
                     <div 
-                      className="bg-gray-500 h-2 rounded-full transition-all" 
+                      className="bg-slate-500 h-2 rounded-full transition-all" 
                       style={{ width: `${timeProgress}%` }}
                     ></div>
                   </div>
@@ -159,35 +159,35 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
               </div>
 
               {/* Metrics */}
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <Users className="h-4 w-4 text-gray-400" />
+                    <Users className="h-4 w-4 text-slate-400" />
                     <span className="text-sm font-medium">{group._count.students}</span>
                   </div>
-                  <p className="text-xs text-gray-500">Students</p>
+                  <p className="text-xs text-slate-500">Students</p>
                 </div>
 
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <CalendarDays className="h-4 w-4 text-gray-400" />
+                    <CalendarDays className="h-4 w-4 text-slate-400" />
                     <span className="text-sm font-medium">{group.daysElapsed}</span>
                   </div>
-                  <p className="text-xs text-gray-500">Days Elapsed</p>
+                  <p className="text-xs text-slate-500">Days Elapsed</p>
                 </div>
 
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <BookOpen className="h-4 w-4 text-gray-400" />
+                    <BookOpen className="h-4 w-4 text-slate-400" />
                     <span className="text-sm font-medium">{group.courses.length}</span>
                   </div>
-                  <p className="text-xs text-gray-500">Courses</p>
+                  <p className="text-xs text-slate-500">Courses</p>
                 </div>
               </div>
 
               {/* Timeline */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex justify-between text-xs text-gray-500">
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <div className="flex justify-between text-xs text-slate-500">
                   <span>Started: {new Date(group.startDate).toLocaleDateString()}</span>
                   <span>Ends: {new Date(group.endDate).toLocaleDateString()}</span>
                 </div>

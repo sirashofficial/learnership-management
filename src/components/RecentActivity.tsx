@@ -20,18 +20,18 @@ export default function RecentActivity() {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    
+
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Activity</h3>
           <button
             onClick={() => router.push('/students')}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
           >
             View All Students
           </button>
@@ -39,10 +39,10 @@ export default function RecentActivity() {
 
         {isLoading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
           </div>
         ) : activities.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>No recent student enrollments</p>
           </div>
@@ -52,32 +52,32 @@ export default function RecentActivity() {
               <div
                 key={activity.id}
                 onClick={() => setSelectedStudent(activity)}
-                className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                className="flex items-start gap-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
               >
                 {/* Avatar */}
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="font-medium text-slate-900 dark:text-white">
                         {activity.firstName} {activity.lastName}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
                         Enrolled as new student
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                    <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
                       <Clock className="w-3 h-3" />
                       {formatTimestamp(activity.createdAt)}
                     </div>
                   </div>
 
                   {/* Details */}
-                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-400">
                     {activity.group && (
                       <div className="flex items-center gap-1">
                         <Users className="w-3 h-3" />

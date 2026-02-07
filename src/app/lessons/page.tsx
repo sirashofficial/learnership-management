@@ -106,8 +106,8 @@ export default function LessonsPage() {
                   <Lightbulb className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Lesson Plan</h3>
-                  <p className="text-gray-600">Design comprehensive lesson plans with objectives, activities, and assessments</p>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Create Lesson Plan</h3>
+                  <p className="text-slate-600">Design comprehensive lesson plans with objectives, activities, and assessments</p>
                 </div>
               </div>
               <button 
@@ -120,21 +120,21 @@ export default function LessonsPage() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 shadow-lg">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
+          <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 shadow-lg">
+            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-green-50 to-blue-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-600 rounded-lg">
                     <BookOpen className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">New Lesson Plan</h3>
+                  <h3 className="text-xl font-bold text-slate-900">New Lesson Plan</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
                   className="p-2 hover:bg-white/50 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-600" />
+                  <X className="w-5 h-5 text-slate-600" />
                 </button>
               </div>
             </div>
@@ -142,13 +142,13 @@ export default function LessonsPage() {
             <div className="p-6 space-y-6">
               {/* Basic Information */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-green-600" />
                   Basic Information
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Lesson Title *
                     </label>
                     <input
@@ -156,19 +156,19 @@ export default function LessonsPage() {
                       required
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="e.g., Introduction to Market Requirements"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Module *
                     </label>
                     <select
                       required
                       value={formData.moduleId}
                       onChange={(e) => setFormData({...formData, moduleId: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
                       <option value="">Select a module</option>
                       {modules?.map((module: any) => (
@@ -179,14 +179,14 @@ export default function LessonsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Group *
                     </label>
                     <select
                       required
                       value={formData.groupId}
                       onChange={(e) => setFormData({...formData, groupId: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
                       <option value="">Select a group</option>
                       {groups?.map(group => (
@@ -195,7 +195,7 @@ export default function LessonsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Date *
                     </label>
                     <input
@@ -203,12 +203,12 @@ export default function LessonsPage() {
                       required
                       value={formData.date}
                       onChange={(e) => setFormData({...formData, date: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
                         Start Time *
                       </label>
                       <input
@@ -216,11 +216,11 @@ export default function LessonsPage() {
                         required
                         value={formData.startTime}
                         onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
                         End Time *
                       </label>
                       <input
@@ -228,19 +228,19 @@ export default function LessonsPage() {
                         required
                         value={formData.endTime}
                         onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Venue
                     </label>
                     <input
                       type="text"
                       value={formData.venue}
                       onChange={(e) => setFormData({...formData, venue: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="e.g., Training Room A"
                     />
                   </div>
@@ -248,8 +248,8 @@ export default function LessonsPage() {
               </div>
 
               {/* Learning Objectives */}
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+              <div className="space-y-4 pt-4 border-t border-slate-200">
+                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
                   <Target className="w-5 h-5 text-blue-600" />
                   Learning Objectives
                 </h4>
@@ -257,14 +257,14 @@ export default function LessonsPage() {
                   value={formData.objectives}
                   onChange={(e) => setFormData({...formData, objectives: e.target.value})}
                   rows={3}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="What will learners achieve by the end of this session?"
                 />
               </div>
 
               {/* Activities */}
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+              <div className="space-y-4 pt-4 border-t border-slate-200">
+                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
                   <Users className="w-5 h-5 text-purple-600" />
                   Activities & Exercises
                 </h4>
@@ -272,14 +272,14 @@ export default function LessonsPage() {
                   value={formData.activities}
                   onChange={(e) => setFormData({...formData, activities: e.target.value})}
                   rows={4}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Describe the activities, exercises, and teaching methods..."
                 />
               </div>
 
               {/* Materials */}
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+              <div className="space-y-4 pt-4 border-t border-slate-200">
+                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-orange-600" />
                   Materials & Resources
                 </h4>
@@ -287,14 +287,14 @@ export default function LessonsPage() {
                   value={formData.materials}
                   onChange={(e) => setFormData({...formData, materials: e.target.value})}
                   rows={3}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="List materials, handouts, equipment needed..."
                 />
               </div>
 
               {/* Assessment */}
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+              <div className="space-y-4 pt-4 border-t border-slate-200">
+                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   Assessment Methods
                 </h4>
@@ -302,25 +302,25 @@ export default function LessonsPage() {
                   value={formData.assessment}
                   onChange={(e) => setFormData({...formData, assessment: e.target.value})}
                   rows={3}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="How will you assess learner understanding?"
                 />
               </div>
             </div>
 
             {/* Actions */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex gap-3">
+            <div className="p-6 border-t border-slate-200 bg-slate-50 flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                className="flex-1 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Save className="w-5 h-5" />
                 {saving ? 'Creating...' : 'Create Lesson Plan'}
@@ -330,20 +330,20 @@ export default function LessonsPage() {
         )}
 
         {/* Upcoming Lessons */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+          <div className="p-6 border-b border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-blue-600" />
               Upcoming Lessons
             </h3>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-slate-200">
             {mockLessons.map((lesson) => (
-              <div key={lesson.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={lesson.id} className="p-6 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-2">{lesson.title}</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-gray-600">
+                    <h4 className="font-semibold text-slate-900 mb-2">{lesson.title}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-600">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
                         {lesson.group}

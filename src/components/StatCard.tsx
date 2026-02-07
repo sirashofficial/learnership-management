@@ -29,15 +29,15 @@ export default function StatCard({
     <div
       onClick={onClick}
       className={`
-        bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 
+        bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6 
         transition-all duration-200
         ${onClick ? 'cursor-pointer hover:shadow-lg hover:scale-105' : ''}
         ${loading ? 'animate-pulse' : ''}
       `}
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-          <Icon className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+        <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+          <Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
         </div>
         {trend !== undefined && !loading && (
           <div
@@ -45,7 +45,7 @@ export default function StatCard({
               flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full
               ${isPositiveTrend ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : ''}
               ${isNegativeTrend ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : ''}
-              ${hasNoChange ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' : ''}
+              ${hasNoChange ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : ''}
             `}
           >
             {isPositiveTrend && (
@@ -69,11 +69,11 @@ export default function StatCard({
       </div>
 
       <div className="space-y-1">
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{title}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{title}</p>
         {loading ? (
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+          <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
         ) : (
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">
+          <p className="text-3xl font-bold text-slate-900 dark:text-white">
             {value}
             {suffix && <span className="text-xl ml-1">{suffix}</span>}
           </p>
@@ -81,7 +81,7 @@ export default function StatCard({
       </div>
 
       {onClick && !loading && (
-        <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">
           Click for details
         </div>
       )}

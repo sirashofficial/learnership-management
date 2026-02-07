@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     // Export as CSV if requested
     if (format === 'csv') {
       const Papa = require('papaparse');
-      
+
       const csvData = students.map((student: any) => ({
         'Student ID': student.studentId,
         'First Name': student.firstName,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       }));
 
       const csv = Papa.unparse(csvData);
-      
+
       return new Response(csv, {
         headers: {
           'Content-Type': 'text/csv',
@@ -66,71 +66,68 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('📥 Received student creation request:', body);
-    
+
+
     // Get user from token (if available)
     const authHeader = request.headers.get('Authorization');
     let currentUserId = null;
-    
+
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       // For demo purposes, extract user from localStorage on client
       // In production, verify JWT token here
     }
-    
+
     // Validate input
-    console.log('🔍 Validating data with schema...');
     const validatedData = createStudentSchema.parse(body);
-    console.log('✅ Validation passed:', validatedData);
-    
+
     // Use facilitatorId from body, or get first user as fallback
     let facilitatorId = validatedData.facilitatorId || body.facilitatorId;
-    
+
     if (!facilitatorId) {
-      console.log('⚠️ No facilitatorId provided, looking for fallback user...');
+
       // Get first available user as facilitator
       const firstUser = await prisma.user.findFirst();
       if (!firstUser) {
-        console.error('❌ No users found in database');
         return errorResponse('No facilitator available. Please create a user first.', 400);
       }
       facilitatorId = firstUser.id;
-      console.log(`✅ Using fallback facilitator: ${firstUser.name} (${facilitatorId})`);
+
     }
 
     // Auto-generate student ID if not provided
     let studentId = validatedData.studentId;
     if (!studentId) {
-      console.log('🔢 Generating student ID...');
-      
+
+
       // Get the group to extract prefix
       const group = await prisma.group.findUnique({
         where: { id: validatedData.groupId },
       });
-      
+
       if (!group) {
         return errorResponse('Group not found', 400);
       }
-      
+
       // Generate prefix from group name (first 2 letters uppercase)
       const prefix = group.name
         .split(/[\s-]+/)[0] // Get first word
         .substring(0, 2)      // Take first 2 chars
         .toUpperCase();       // Make uppercase
-      
+
       // Count existing students in this group
       const studentCount = await prisma.student.count({
         where: { groupId: validatedData.groupId },
       });
-      
+
       // Generate ID: PREFIX-NUMBER (e.g., AZ-01, AZ-02)
       const number = String(studentCount + 1).padStart(2, '0');
       studentId = `${prefix}-${number}`;
-      
-      console.log(`✅ Generated student ID: ${studentId} (prefix: ${prefix}, count: ${studentCount + 1})`);
+
+
     }
 
-    console.log('💾 Creating student in database...');
+
     const student = await prisma.student.create({
       data: {
         studentId,
@@ -156,10 +153,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log('✅ Student created successfully:', student.id);
+
     return successResponse(student, 'Student created successfully');
   } catch (error) {
-    console.error('❌ Error creating student:', error);
     return handleApiError(error);
   }
 }

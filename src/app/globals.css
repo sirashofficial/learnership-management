@@ -2,15 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+ * Design System: Modern Slate/Emerald
+ * Following: human-optimized-frontend, frontend-design skills
+ * Typography: Plus Jakarta Sans (distinctive, not generic)
+ * Spacing: 8px base unit
+ * Motion: 180-420ms, ease-out
+ */
+
 :root {
-  --foreground-rgb: 45, 45, 45;
-  --background-start-rgb: 245, 241, 232;
-  --background-end-rgb: 245, 241, 232;
+  /* Color tokens */
+  --color-primary: #0f172a;
+  --color-secondary: #10b981;
+  --color-accent: #14b8a6;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  /* Sidebar width tokens */
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 72px;
+
+  /* Spacing (8px base) */
+  --space-1: 0.25rem;
+  /* 4px */
+  --space-2: 0.5rem;
+  /* 8px */
+  --space-3: 0.75rem;
+  /* 12px */
+  --space-4: 1rem;
+  /* 16px */
+  --space-5: 1.25rem;
+  /* 20px */
+  --space-6: 1.5rem;
+  /* 24px */
+  --space-8: 2rem;
+  /* 32px */
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Base styles */
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-start-rgb));
+  color: var(--color-text);
+  background: var(--color-background);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus states - accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-text);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
 @layer utilities {
@@ -19,21 +81,107 @@ body {
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - refined */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f5f1e8;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c17f59;
-  border-radius: 4px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9a6344;
+  background: #94a3b8;
+}
+
+/* Cards and surfaces */
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-slate-200;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:border-slate-300;
+
+    &:hover {
+      box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 4px 16px -4px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-emerald-500 text-white font-medium rounded-lg transition-all duration-200 ease-out hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-white text-slate-900 border border-slate-200 font-medium rounded-lg transition-all duration-200 ease-out hover:bg-slate-50 hover:border-slate-300 focus:ring-2 focus:ring-slate-500/30 focus:ring-offset-2;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-900 transition-all duration-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-slate-600 mb-1;
+  }
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-emerald-50 text-emerald-700;
+  }
+
+  .badge-warning {
+    @apply bg-amber-50 text-amber-700;
+  }
+
+  .badge-error {
+    @apply bg-red-50 text-red-700;
+  }
+
+  .badge-info {
+    @apply bg-blue-50 text-blue-700;
+  }
+
+  .badge-neutral {
+    @apply bg-slate-100 text-slate-600;
+  }
+}
+
+/* Page transitions */
+@layer utilities {
+  .page-enter {
+    animation: fadeIn 0.2s ease-out, slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

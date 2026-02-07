@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import { useDashboardAlerts } from '@/hooks/useDashboard';
-import { 
-  AlertTriangle, 
-  Clock, 
-  Users, 
-  FileText, 
-  CheckCircle2, 
-  X, 
+import {
+  AlertTriangle,
+  Clock,
+  Users,
+  FileText,
+  CheckCircle2,
+  X,
   Calendar,
-  UserX 
+  UserX
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -88,19 +88,19 @@ export default function DashboardAlerts() {
         };
       case 'INFO':
         return {
-          bg: 'bg-blue-50 dark:bg-blue-900/20',
-          border: 'border-l-blue-500',
-          icon: 'text-blue-600 dark:text-blue-400',
-          text: 'text-blue-900 dark:text-blue-100',
-          subtext: 'text-blue-700 dark:text-blue-300',
+          bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+          border: 'border-l-emerald-500',
+          icon: 'text-emerald-600 dark:text-emerald-400',
+          text: 'text-emerald-900 dark:text-emerald-100',
+          subtext: 'text-emerald-700 dark:text-emerald-300',
         };
       default:
         return {
-          bg: 'bg-gray-50 dark:bg-gray-800',
-          border: 'border-l-gray-500',
-          icon: 'text-gray-600 dark:text-gray-400',
-          text: 'text-gray-900 dark:text-gray-100',
-          subtext: 'text-gray-700 dark:text-gray-300',
+          bg: 'bg-slate-50 dark:bg-slate-800',
+          border: 'border-l-slate-500',
+          icon: 'text-slate-600 dark:text-slate-400',
+          text: 'text-slate-900 dark:text-slate-100',
+          subtext: 'text-slate-700 dark:text-slate-300',
         };
     }
   };
@@ -113,14 +113,14 @@ export default function DashboardAlerts() {
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    
+
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Alerts & Notifications</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Alerts & Notifications</h3>
         {visibleAlerts.length > 0 && (
           <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium rounded-full">
             {visibleAlerts.length}
@@ -130,10 +130,10 @@ export default function DashboardAlerts() {
 
       {isLoading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
         </div>
       ) : visibleAlerts.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
           <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p>No alerts at the moment</p>
           <p className="text-sm mt-1">Everything looks good!</p>
@@ -152,7 +152,7 @@ export default function DashboardAlerts() {
                   <div className={styles.icon}>
                     {getAlertIcon(alert.type)}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <p className={`text-sm font-medium ${styles.text}`}>
@@ -169,7 +169,7 @@ export default function DashboardAlerts() {
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    
+
                     <div className="flex items-center gap-3 mt-2">
                       <span className={`text-xs ${styles.subtext} font-medium uppercase`}>
                         {alert.priority}

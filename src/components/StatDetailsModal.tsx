@@ -108,18 +108,18 @@ export default function StatDetailsModal({ statType, isOpen, onClose }: StatDeta
         ></div>
 
         {/* Modal */}
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+        <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{title}</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{description}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
             </button>
           </div>
 
@@ -154,10 +154,10 @@ export default function StatDetailsModal({ statType, isOpen, onClose }: StatDeta
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-700">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
               Close
             </button>
@@ -183,22 +183,22 @@ function StudentsList({ students }: { students: any[] }) {
       {students.slice(0, 10).map((student: any) => (
         <div
           key={student.id}
-          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
         >
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">
+            <p className="font-medium text-slate-900 dark:text-white">
               {student.firstName} {student.lastName}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{student.studentId}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">{student.studentId}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{student.progress}%</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">{student.status}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{student.progress}%</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">{student.status}</p>
           </div>
         </div>
       ))}
       {students.length > 10 && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 text-center pt-2">
+        <p className="text-sm text-slate-600 dark:text-slate-400 text-center pt-2">
           And {students.length - 10} more...
         </p>
       )}
@@ -212,15 +212,15 @@ function GroupsList({ groups }: { groups: any[] }) {
       {groups.slice(0, 10).map((group: any) => (
         <div
           key={group.id}
-          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
         >
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">{group.name}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{group.company?.name || 'No Company'}</p>
+            <p className="font-medium text-slate-900 dark:text-white">{group.name}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">{group.company?.name || 'No Company'}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{group._count?.students || 0} students</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">{group.status}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{group._count?.students || 0} students</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">{group.status}</p>
           </div>
         </div>
       ))}
@@ -234,13 +234,13 @@ function AttendanceList({ attendance }: { attendance: any[] }) {
       {attendance.slice(0, 10).map((record: any, index: number) => (
         <div
           key={record.id || index}
-          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
         >
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">
+            <p className="font-medium text-slate-900 dark:text-white">
               {record.student?.firstName} {record.student?.lastName}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               {new Date(record.date).toLocaleDateString()}
             </p>
           </div>
@@ -269,15 +269,15 @@ function CoursesList({ courses }: { courses: any[] }) {
       {courses.slice(0, 10).map((course: any) => (
         <div
           key={course.id}
-          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
         >
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">{course.name}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{course.code}</p>
+            <p className="font-medium text-slate-900 dark:text-white">{course.name}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">{course.code}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{course.credits} credits</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">{course.status}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{course.credits} credits</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">{course.status}</p>
           </div>
         </div>
       ))}
@@ -291,17 +291,17 @@ function CompletionList({ students }: { students: any[] }) {
       {students.slice(0, 10).map((student: any) => (
         <div
           key={student.id}
-          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
         >
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">
+            <p className="font-medium text-slate-900 dark:text-white">
               {student.firstName} {student.lastName}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{student.group?.name || 'No Group'}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">{student.group?.name || 'No Group'}</p>
           </div>
           <div className="text-right">
             <p className="text-sm font-medium text-green-600 dark:text-green-400">{student.progress}%</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">Completed</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Completed</p>
           </div>
         </div>
       ))}
@@ -315,17 +315,17 @@ function AssessmentsList({ assessments }: { assessments: any[] }) {
       {assessments.slice(0, 10).map((assessment: any) => (
         <div
           key={assessment.id}
-          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
         >
           <div>
-            <p className="font-medium text-gray-900 dark:text-white">{assessment.module}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="font-medium text-slate-900 dark:text-white">{assessment.module}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               {assessment.student?.firstName} {assessment.student?.lastName}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{assessment.type}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{assessment.type}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               Due: {new Date(assessment.dueDate).toLocaleDateString()}
             </p>
           </div>

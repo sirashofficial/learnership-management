@@ -272,9 +272,9 @@ export default function SettingsPage() {
       
       <div className="p-6">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
             {/* Tabs */}
-            <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
               <div className="flex overflow-x-auto">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -284,8 +284,8 @@ export default function SettingsPage() {
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 whitespace-nowrap ${
                         activeTab === tab.id
-                          ? "border-blue-600 text-blue-600 bg-white dark:bg-gray-800"
-                          : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          ? "border-blue-600 text-blue-600 bg-white dark:bg-slate-800"
+                          : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -300,20 +300,20 @@ export default function SettingsPage() {
             {activeTab === "profile" && (
               <div className="p-8">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Profile Information</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Update your personal information and contact details</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Profile Information</h3>
+                  <p className="text-slate-600 dark:text-slate-400">Update your personal information and contact details</p>
                 </div>
 
                 <div className="space-y-6">
                   {/* Profile Picture Section */}
-                  <div className="flex items-center gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-6 pb-6 border-b border-slate-200 dark:border-slate-700">
                     <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                       {profileForm.name ? profileForm.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AM'}
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Profile Photo</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Upload a professional photo</p>
-                      <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                      <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Profile Photo</h4>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Upload a professional photo</p>
+                      <button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm font-medium">
                         Change Photo
                       </button>
                     </div>
@@ -322,7 +322,7 @@ export default function SettingsPage() {
                   {/* Form Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <User className="w-4 h-4 inline mr-2" />
                         Full Name *
                       </label>
@@ -330,12 +330,12 @@ export default function SettingsPage() {
                         type="text"
                         value={profileForm.name}
                         onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Mail className="w-4 h-4 inline mr-2" />
                         Email Address *
                       </label>
@@ -343,12 +343,12 @@ export default function SettingsPage() {
                         type="email"
                         value={profileForm.email}
                         onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Phone className="w-4 h-4 inline mr-2" />
                         Phone Number
                       </label>
@@ -356,12 +356,12 @@ export default function SettingsPage() {
                         type="tel"
                         value={profileForm.phone}
                         onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Building2 className="w-4 h-4 inline mr-2" />
                         Organization
                       </label>
@@ -369,38 +369,38 @@ export default function SettingsPage() {
                         type="text"
                         value={profileForm.organization}
                         onChange={(e) => setProfileForm({...profileForm, organization: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Role
                       </label>
                       <input
                         type="text"
                         value={profileData?.role || "Facilitator"}
                         disabled
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg cursor-not-allowed"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg cursor-not-allowed"
                       />
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Bio
                       </label>
                       <textarea
                         value={profileForm.bio}
                         onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
                         rows={4}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Tell us about yourself..."
                       />
                     </div>
                   </div>
 
                   {/* Save Button */}
-                  <div className="flex items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
                       <div className="flex items-center gap-2 text-green-600 font-medium">
                         <Check className="w-5 h-5" />
@@ -410,7 +410,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveProfile}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Changes'}
@@ -424,8 +424,8 @@ export default function SettingsPage() {
             {activeTab === "notifications" && (
               <div className="p-8">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Notification Preferences</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Choose how you want to receive updates and alerts</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Notification Preferences</h3>
+                  <p className="text-slate-600 dark:text-slate-400">Choose how you want to receive updates and alerts</p>
                 </div>
 
                 <div className="space-y-6">
@@ -441,12 +441,12 @@ export default function SettingsPage() {
                   ].map((setting) => {
                     const Icon = setting.icon;
                     return (
-                      <div key={setting.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div key={setting.key} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
                         <div className="flex items-center gap-3">
-                          <Icon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                          <Icon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                           <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white">{setting.label}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{setting.desc}</p>
+                            <h4 className="font-semibold text-slate-900 dark:text-white">{setting.label}</h4>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">{setting.desc}</p>
                           </div>
                         </div>
                         <button
@@ -457,7 +457,7 @@ export default function SettingsPage() {
                           className={`relative w-14 h-7 rounded-full transition-colors ${
                             notificationForm[setting.key as keyof typeof notificationForm]
                               ? 'bg-blue-600'
-                              : 'bg-gray-300 dark:bg-gray-600'
+                              : 'bg-slate-300 dark:bg-slate-600'
                           }`}
                         >
                           <span
@@ -472,7 +472,7 @@ export default function SettingsPage() {
                     );
                   })}
 
-                  <div className="flex items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
                       <div className="flex items-center gap-2 text-green-600 font-medium">
                         <Check className="w-5 h-5" />
@@ -482,7 +482,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveNotifications}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Preferences'}
@@ -496,14 +496,14 @@ export default function SettingsPage() {
             {activeTab === "system" && (
               <div className="p-8">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">System Configuration</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Manage system-wide settings and preferences</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">System Configuration</h3>
+                  <p className="text-slate-600 dark:text-slate-400">Manage system-wide settings and preferences</p>
                 </div>
 
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Building2 className="w-4 h-4 inline mr-2" />
                         Organization Name
                       </label>
@@ -511,19 +511,19 @@ export default function SettingsPage() {
                         type="text"
                         value={systemForm.organizationName}
                         onChange={(e) => setSystemForm({...systemForm, organizationName: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Globe className="w-4 h-4 inline mr-2" />
                         Timezone
                       </label>
                       <select
                         value={systemForm.timezone}
                         onChange={(e) => setSystemForm({...systemForm, timezone: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="Africa/Johannesburg">Africa/Johannesburg</option>
                         <option value="UTC">UTC</option>
@@ -533,14 +533,14 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Calendar className="w-4 h-4 inline mr-2" />
                         Date Format
                       </label>
                       <select
                         value={systemForm.dateFormat}
                         onChange={(e) => setSystemForm({...systemForm, dateFormat: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -549,14 +549,14 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Clock className="w-4 h-4 inline mr-2" />
                         Time Format
                       </label>
                       <select
                         value={systemForm.timeFormat}
                         onChange={(e) => setSystemForm({...systemForm, timeFormat: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="12h">12-hour</option>
                         <option value="24h">24-hour</option>
@@ -564,14 +564,14 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Globe className="w-4 h-4 inline mr-2" />
                         Language
                       </label>
                       <select
                         value={systemForm.language}
                         onChange={(e) => setSystemForm({...systemForm, language: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="en">English</option>
                         <option value="af">Afrikaans</option>
@@ -580,14 +580,14 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <DollarSign className="w-4 h-4 inline mr-2" />
                         Currency
                       </label>
                       <select
                         value={systemForm.currency}
                         onChange={(e) => setSystemForm({...systemForm, currency: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="ZAR">ZAR (R)</option>
                         <option value="USD">USD ($)</option>
@@ -597,7 +597,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Clock className="w-4 h-4 inline mr-2" />
                         Attendance Grace Period (minutes)
                       </label>
@@ -607,12 +607,12 @@ export default function SettingsPage() {
                         max="60"
                         value={systemForm.attendanceGracePeriod}
                         onChange={(e) => setSystemForm({...systemForm, attendanceGracePeriod: parseInt(e.target.value)})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Zap className="w-4 h-4 inline mr-2" />
                         Assessment Pass Mark (%)
                       </label>
@@ -622,28 +622,28 @@ export default function SettingsPage() {
                         max="100"
                         value={systemForm.assessmentPassMark}
                         onChange={(e) => setSystemForm({...systemForm, assessmentPassMark: parseInt(e.target.value)})}
-                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
                   {/* Backup Settings */}
-                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                       <Database className="w-5 h-5 inline mr-2" />
                       Backup Settings
                     </h4>
                     
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
                         <div>
-                          <h5 className="font-semibold text-gray-900 dark:text-white">Automatic Backups</h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Enable automatic database backups</p>
+                          <h5 className="font-semibold text-slate-900 dark:text-white">Automatic Backups</h5>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Enable automatic database backups</p>
                         </div>
                         <button
                           onClick={() => setSystemForm({...systemForm, autoBackup: !systemForm.autoBackup})}
                           className={`relative w-14 h-7 rounded-full transition-colors ${
-                            systemForm.autoBackup ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                            systemForm.autoBackup ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
                           }`}
                         >
                           <span
@@ -656,13 +656,13 @@ export default function SettingsPage() {
 
                       {systemForm.autoBackup && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             Backup Frequency
                           </label>
                           <select
                             value={systemForm.backupFrequency}
                             onChange={(e) => setSystemForm({...systemForm, backupFrequency: e.target.value})}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           >
                             <option value="hourly">Hourly</option>
                             <option value="daily">Daily</option>
@@ -675,19 +675,19 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Maintenance Mode */}
-                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
                     <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                       <div>
-                        <h5 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <h5 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                           <AlertTriangle className="w-5 h-5 text-yellow-600" />
                           Maintenance Mode
                         </h5>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Temporarily disable system access</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Temporarily disable system access</p>
                       </div>
                       <button
                         onClick={() => setSystemForm({...systemForm, maintenanceMode: !systemForm.maintenanceMode})}
                         className={`relative w-14 h-7 rounded-full transition-colors ${
-                          systemForm.maintenanceMode ? 'bg-yellow-600' : 'bg-gray-300 dark:bg-gray-600'
+                          systemForm.maintenanceMode ? 'bg-yellow-600' : 'bg-slate-300 dark:bg-slate-600'
                         }`}
                       >
                         <span
@@ -699,7 +699,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
                       <div className="flex items-center gap-2 text-green-600 font-medium">
                         <Check className="w-5 h-5" />
@@ -709,7 +709,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveSystem}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Settings'}
@@ -723,14 +723,14 @@ export default function SettingsPage() {
             {activeTab === "appearance" && (
               <div className="p-8">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Appearance Settings</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Customize the look and feel of your interface</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Appearance Settings</h3>
+                  <p className="text-slate-600 dark:text-slate-400">Customize the look and feel of your interface</p>
                 </div>
 
                 <div className="space-y-6">
                   {/* Theme Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
                       Theme
                     </label>
                     <div className="grid grid-cols-3 gap-4">
@@ -747,13 +747,13 @@ export default function SettingsPage() {
                             className={`p-4 border-2 rounded-lg transition-colors ${
                               appearanceForm.theme === theme.value
                                 ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                                : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500'
                             }`}
                           >
                             <Icon className={`w-6 h-6 mx-auto mb-2 ${
-                              appearanceForm.theme === theme.value ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'
+                              appearanceForm.theme === theme.value ? 'text-blue-600' : 'text-slate-600 dark:text-slate-400'
                             }`} />
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">{theme.label}</div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">{theme.label}</div>
                           </button>
                         );
                       })}
@@ -762,7 +762,7 @@ export default function SettingsPage() {
 
                   {/* Color Scheme */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
                       Color Scheme
                     </label>
                     <div className="flex gap-3">
@@ -778,7 +778,7 @@ export default function SettingsPage() {
                           onClick={() => setAppearanceForm({...appearanceForm, colorScheme: scheme.value})}
                           className={`w-12 h-12 rounded-lg ${scheme.color} ${
                             appearanceForm.colorScheme === scheme.value
-                              ? 'ring-4 ring-gray-300 dark:ring-gray-600'
+                              ? 'ring-4 ring-slate-300 dark:ring-slate-600'
                               : ''
                           }`}
                         />
@@ -788,13 +788,13 @@ export default function SettingsPage() {
 
                   {/* Font Size */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
                       Font Size
                     </label>
                     <select
                       value={appearanceForm.fontSize}
                       onChange={(e) => setAppearanceForm({...appearanceForm, fontSize: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="small">Small</option>
                       <option value="medium">Medium</option>
@@ -809,10 +809,10 @@ export default function SettingsPage() {
                       { key: 'showAvatars', label: 'Show Avatars', desc: 'Display user profile pictures' },
                       { key: 'animationsEnabled', label: 'Enable Animations', desc: 'Smooth transitions and effects' },
                     ].map((setting) => (
-                      <div key={setting.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div key={setting.key} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
                         <div>
-                          <h5 className="font-semibold text-gray-900 dark:text-white">{setting.label}</h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{setting.desc}</p>
+                          <h5 className="font-semibold text-slate-900 dark:text-white">{setting.label}</h5>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">{setting.desc}</p>
                         </div>
                         <button
                           onClick={() => setAppearanceForm({
@@ -822,7 +822,7 @@ export default function SettingsPage() {
                           className={`relative w-14 h-7 rounded-full transition-colors ${
                             appearanceForm[setting.key as keyof typeof appearanceForm]
                               ? 'bg-blue-600'
-                              : 'bg-gray-300 dark:bg-gray-600'
+                              : 'bg-slate-300 dark:bg-slate-600'
                           }`}
                         >
                           <span
@@ -837,7 +837,7 @@ export default function SettingsPage() {
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
                       <div className="flex items-center gap-2 text-green-600 font-medium">
                         <Check className="w-5 h-5" />
@@ -847,7 +847,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveAppearance}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Appearance'}
@@ -861,21 +861,21 @@ export default function SettingsPage() {
             {activeTab === "security" && (
               <div className="p-8">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Security Settings</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Manage your password and security preferences</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Security Settings</h3>
+                  <p className="text-slate-600 dark:text-slate-400">Manage your password and security preferences</p>
                 </div>
 
                 <div className="space-y-6">
                   {/* Change Password */}
-                  <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                       <Lock className="w-5 h-5 inline mr-2" />
                       Change Password
                     </h4>
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                           Current Password
                         </label>
                         <div className="relative">
@@ -883,12 +883,12 @@ export default function SettingsPage() {
                             type={showCurrentPassword ? "text" : "password"}
                             value={securityForm.currentPassword}
                             onChange={(e) => setSecurityForm({...securityForm, currentPassword: e.target.value})}
-                            className="w-full px-4 py-2.5 pr-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                           <button
                             type="button"
                             onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
                           >
                             {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
@@ -896,7 +896,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                           New Password
                         </label>
                         <div className="relative">
@@ -904,12 +904,12 @@ export default function SettingsPage() {
                             type={showNewPassword ? "text" : "password"}
                             value={securityForm.newPassword}
                             onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
-                            className="w-full px-4 py-2.5 pr-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                           <button
                             type="button"
                             onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
                           >
                             {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
@@ -917,21 +917,21 @@ export default function SettingsPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                           Confirm New Password
                         </label>
                         <input
                           type="password"
                           value={securityForm.confirmPassword}
                           onChange={(e) => setSecurityForm({...securityForm, confirmPassword: e.target.value})}
-                          className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
 
                       <button
                         onClick={handleChangePassword}
                         disabled={saving || !securityForm.currentPassword || !securityForm.newPassword || !securityForm.confirmPassword}
-                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed"
                       >
                         {saving ? 'Changing Password...' : 'Change Password'}
                       </button>

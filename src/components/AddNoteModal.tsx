@@ -20,9 +20,9 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
       label: "General Note",
       description: "General observation or information",
       icon: MessageSquare,
-      color: "text-gray-600",
-      bgColor: "bg-gray-100 border-gray-200",
-      selectedColor: "bg-gray-50 border-gray-400"
+      color: "text-slate-600",
+      bgColor: "bg-slate-100 border-slate-200",
+      selectedColor: "bg-slate-50 border-slate-400"
     },
     {
       id: "ACHIEVEMENT" as const,
@@ -66,19 +66,19 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 sticky top-0 bg-white rounded-t-xl">
+        <div className="p-6 border-b border-slate-200 sticky top-0 bg-white rounded-t-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Add Note</h2>
-                <p className="text-sm text-gray-600">Add a note for {studentName}</p>
+                <h2 className="text-xl font-bold text-slate-900">Add Note</h2>
+                <p className="text-sm text-slate-600">Add a note for {studentName}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <X className="w-5 h-5 text-gray-600" />
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <X className="w-5 h-5 text-slate-600" />
             </button>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
         <form onSubmit={handleSubmit} className="p-6">
           {/* Note Type Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-slate-700 mb-3">
               Note Type
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -108,8 +108,8 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
                     <div className="flex items-start gap-3">
                       <Icon className={cn("w-5 h-5 mt-0.5", noteType.color)} />
                       <div>
-                        <div className="font-medium text-gray-900">{noteType.label}</div>
-                        <div className="text-sm text-gray-600">{noteType.description}</div>
+                        <div className="font-medium text-slate-900">{noteType.label}</div>
+                        <div className="text-sm text-slate-600">{noteType.description}</div>
                       </div>
                     </div>
                   </button>
@@ -120,22 +120,22 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
 
           {/* Note Content */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Note Content
             </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder={`Enter your ${type.toLowerCase()} note about ${studentName}...`}
               required
             />
             <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 Be specific and objective in your observations.
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 {content.length}/500
               </p>
             </div>
@@ -143,8 +143,8 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
 
           {/* Preview */}
           {content.trim() && selectedNoteType && (
-            <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Preview</h4>
+            <div className="mb-6 p-4 border border-slate-200 rounded-lg bg-slate-50">
+              <h4 className="text-sm font-medium text-slate-700 mb-2">Preview</h4>
               <div className="flex items-start gap-3">
                 <div className={cn(
                   "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
@@ -161,11 +161,11 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
                     )}>
                       {selectedNoteType.label}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-slate-500">
                       {new Date().toLocaleDateString()} - Facilitator
                     </span>
                   </div>
-                  <p className="text-sm text-gray-700">{content}</p>
+                  <p className="text-sm text-slate-700">{content}</p>
                 </div>
               </div>
             </div>
@@ -183,7 +183,7 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
             >
               Cancel
             </button>

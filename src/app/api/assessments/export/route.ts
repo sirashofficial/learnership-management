@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        unitStandardRef: {
+        unitStandard: {
           select: {
             code: true,
             title: true,

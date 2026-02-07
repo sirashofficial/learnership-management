@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         _count: {
           select: { students: true, sessions: true },
         },
+        rolloutPlan: true,
       },
       orderBy: { name: 'asc' },
     });
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     const group = await prisma.group.create({
       data: {
         name: body.name,

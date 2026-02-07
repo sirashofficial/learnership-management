@@ -39,14 +39,14 @@ export default function AssessmentResultModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Record Assessment Result</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-xl font-semibold text-slate-900">Record Assessment Result</h2>
+            <p className="text-sm text-slate-500 mt-1">
               {assessment.student.firstName} {assessment.student.lastName} - {assessment.unitStandard}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -54,7 +54,7 @@ export default function AssessmentResultModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Result */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Assessment Result *
             </label>
             <div className="grid grid-cols-3 gap-3">
@@ -65,7 +65,7 @@ export default function AssessmentResultModal({
                   "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-colors",
                   formData.result === "COMPETENT"
                     ? "border-green-500 bg-green-50 text-green-700"
-                    : "border-gray-200 hover:border-gray-300"
+                    : "border-slate-200 hover:border-slate-300"
                 )}
               >
                 <Check className="w-5 h-5" />
@@ -79,7 +79,7 @@ export default function AssessmentResultModal({
                   "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-colors",
                   formData.result === "NOT_YET_COMPETENT"
                     ? "border-red-500 bg-red-50 text-red-700"
-                    : "border-gray-200 hover:border-gray-300"
+                    : "border-slate-200 hover:border-slate-300"
                 )}
               >
                 <XCircle className="w-5 h-5" />
@@ -93,7 +93,7 @@ export default function AssessmentResultModal({
                   "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-colors",
                   formData.result === "PENDING"
                     ? "border-yellow-500 bg-yellow-50 text-yellow-700"
-                    : "border-gray-200 hover:border-gray-300"
+                    : "border-slate-200 hover:border-slate-300"
                 )}
               >
                 <AlertTriangle className="w-5 h-5" />
@@ -105,7 +105,7 @@ export default function AssessmentResultModal({
           {/* Score & Date */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Score (Optional)
               </label>
               <input
@@ -115,12 +115,12 @@ export default function AssessmentResultModal({
                 value={formData.score}
                 onChange={(e) => setFormData({ ...formData, score: e.target.value })}
                 placeholder="0-100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Assessment Date *
               </label>
               <input
@@ -128,14 +128,14 @@ export default function AssessmentResultModal({
                 type="date"
                 value={formData.assessedDate}
                 onChange={(e) => setFormData({ ...formData, assessedDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
 
           {/* Feedback */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Feedback & Comments
             </label>
             <textarea
@@ -143,7 +143,7 @@ export default function AssessmentResultModal({
               value={formData.feedback}
               onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
               placeholder="Provide detailed feedback on the learner's performance..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
 
@@ -163,7 +163,7 @@ export default function AssessmentResultModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
             >
               Cancel
             </button>

@@ -56,7 +56,7 @@ export default function StudentProgressModal({
       case "IN_PROGRESS":
         return "bg-blue-100 text-blue-700 border-blue-200";
       default:
-        return "bg-gray-100 text-gray-600 border-gray-200";
+        return "bg-slate-100 text-slate-600 border-slate-200";
     }
   };
 
@@ -68,16 +68,16 @@ export default function StudentProgressModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-slate-900">
               {student.name || `${student.firstName} ${student.lastName}`}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-slate-500 mt-1">
               {student.studentId} • {student.group || student.site || "No Group"}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -85,7 +85,7 @@ export default function StudentProgressModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
-            <div className="text-center py-12 text-gray-500">Loading progress data...</div>
+            <div className="text-center py-12 text-slate-500">Loading progress data...</div>
           ) : (
             <div className="space-y-6">
               {/* Summary Stats */}
@@ -135,7 +135,7 @@ export default function StudentProgressModal({
 
               {/* Module Progress */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-primary" />
                   Module Progress
                 </h3>
@@ -144,14 +144,14 @@ export default function StudentProgressModal({
                     {moduleProgress.map((progress) => (
                       <div
                         key={progress.id}
-                        className="border border-gray-200 rounded-lg p-4"
+                        className="border border-slate-200 rounded-lg p-4"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div>
-                            <h4 className="font-medium text-gray-900">
+                            <h4 className="font-medium text-slate-900">
                               {progress.module.code} - {progress.module.name}
                             </h4>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-slate-500 mt-1">
                               {progress.module.credits} Credits
                             </p>
                           </div>
@@ -168,10 +168,10 @@ export default function StudentProgressModal({
                         {/* Progress Bar */}
                         <div className="mb-3">
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-gray-600">Progress</span>
+                            <span className="text-slate-600">Progress</span>
                             <span className="font-medium text-primary">{progress.progress}%</span>
                           </div>
-                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-primary transition-all"
                               style={{ width: `${progress.progress}%` }}
@@ -180,7 +180,7 @@ export default function StudentProgressModal({
                         </div>
 
                         {/* Timeline */}
-                        <div className="flex items-center gap-4 text-xs text-gray-600">
+                        <div className="flex items-center gap-4 text-xs text-slate-600">
                           {progress.startDate && (
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
@@ -198,8 +198,8 @@ export default function StudentProgressModal({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
-                    <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <div className="text-center py-8 text-slate-500 border border-slate-200 rounded-lg">
+                    <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm">No module progress data yet</p>
                   </div>
                 )}
@@ -207,7 +207,7 @@ export default function StudentProgressModal({
 
               {/* Unit Standards Progress */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Award className="w-5 h-5 text-primary" />
                   Unit Standards
                 </h3>
@@ -216,14 +216,14 @@ export default function StudentProgressModal({
                     {unitStandardProgress.map((progress) => (
                       <div
                         key={progress.id}
-                        className="border border-gray-200 rounded-lg p-3"
+                        className="border border-slate-200 rounded-lg p-3"
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h4 className="font-medium text-sm text-gray-900">
+                            <h4 className="font-medium text-sm text-slate-900">
                               {progress.unitStandard.code}
                             </h4>
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="text-xs text-slate-500 mt-0.5">
                               {progress.unitStandard.title}
                             </p>
                           </div>
@@ -239,17 +239,17 @@ export default function StudentProgressModal({
 
                         <div className="space-y-1 text-xs">
                           <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Formatives:</span>
+                            <span className="text-slate-600">Formatives:</span>
                             <span className="font-medium text-blue-600">
                               {progress.formativesPassed} passed
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Summative:</span>
+                            <span className="text-slate-600">Summative:</span>
                             <span
                               className={cn(
                                 "font-medium",
-                                progress.summativePassed ? "text-green-600" : "text-gray-400"
+                                progress.summativePassed ? "text-green-600" : "text-slate-400"
                               )}
                             >
                               {progress.summativePassed ? "✓ Passed" : "Pending"}
@@ -260,8 +260,8 @@ export default function StudentProgressModal({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
-                    <Award className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <div className="text-center py-8 text-slate-500 border border-slate-200 rounded-lg">
+                    <Award className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm">No unit standard progress data yet</p>
                   </div>
                 )}
@@ -269,7 +269,7 @@ export default function StudentProgressModal({
 
               {/* Recent Assessments */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-primary" />
                   Recent Assessments
                 </h3>
@@ -278,13 +278,13 @@ export default function StudentProgressModal({
                     {assessments.slice(0, 5).map((assessment) => (
                       <div
                         key={assessment.id}
-                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                        className="flex items-center justify-between p-3 border border-slate-200 rounded-lg"
                       >
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-slate-900">
                             {assessment.unitStandard} - {assessment.module}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-slate-500 mt-0.5">
                             {assessment.type} • {assessment.method}
                           </p>
                         </div>
@@ -304,8 +304,8 @@ export default function StudentProgressModal({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
-                    <CheckCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <div className="text-center py-8 text-slate-500 border border-slate-200 rounded-lg">
+                    <CheckCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm">No assessments recorded yet</p>
                   </div>
                 )}
@@ -315,10 +315,10 @@ export default function StudentProgressModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200">
+        <div className="p-6 border-t border-slate-200">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
           >
             Close
           </button>
