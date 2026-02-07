@@ -1,27 +1,53 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { calculateRolloutPlan } from '../src/lib/rollout-utils';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Clear existing data
-  await prisma.courseProgress.deleteMany();
-  await prisma.groupCourse.deleteMany();
-  await prisma.pOEChecklist.deleteMany();
+  // Clear existing data in correct order to avoid FK violations
+  console.log('🧹 Cleaning up database...');
+
+  // Progress and results first (depend on students and unit standards)
+  await prisma.formativeCompletion.deleteMany();
   await prisma.assessment.deleteMany();
-  await prisma.attendance.deleteMany();
-  await prisma.lessonPlan.deleteMany();
-  await prisma.curriculumDocument.deleteMany();
+  await prisma.unitStandardProgress.deleteMany();
+  await prisma.moduleProgress.deleteMany();
+  await prisma.courseProgress.deleteMany();
+  await prisma.pOEChecklist.deleteMany();
+
+  // Activities and content (depend on unit standards/modules)
   await prisma.activity.deleteMany();
+  await prisma.curriculumEmbedding.deleteMany();
+  await prisma.curriculumDocument.deleteMany();
+  await prisma.formativeAssessment.deleteMany();
+  await prisma.documentChunk.deleteMany();
+
+  // Scheduling and Attendance (depend on students/sessions/groups)
+  await prisma.attendance.deleteMany();
+  await prisma.attendanceAlert.deleteMany();
+  await prisma.attendanceReport.deleteMany();
+  await prisma.lessonPlan.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.recurringSessionOverride.deleteMany();
+  await prisma.groupSchedule.deleteMany();
+  await prisma.scheduleTemplate.deleteMany();
+
+  // Core Entities (depend on groups/companies/users)
+  await prisma.student.deleteMany();
+  await prisma.groupCourse.deleteMany();
+  await prisma.groupRolloutPlan.deleteMany();
+  await prisma.group.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.company.deleteMany();
+
+  // Static Data (Unit Standards and Modules)
   await prisma.unitStandard.deleteMany();
   await prisma.module.deleteMany();
-  await prisma.session.deleteMany();
-  await prisma.student.deleteMany();
-  await prisma.group.deleteMany();
-  await prisma.company.deleteMany();
-  await prisma.user.deleteMany();
+
+  await prisma.pOEFile.deleteMany();
 
   // Create facilitator user
   const hashedPassword = await bcrypt.hash('password123', 10);
@@ -497,108 +523,101 @@ async function main() {
 
   console.log('✅ Created 3 training sessions');
 
-  // Create assessments
-  const futureDates = [1, 2, 5].map(days => {
-    const date = new Date();
-    date.setDate(date.getDate() + days);
-    return date;
-  });
-
-  await Promise.all([
-    prisma.assessment.create({
-      data: {
-        unitStandard: 'US 119672',
-        module: 'Module 3',
-        type: 'FORMATIVE',
-        method: 'PRACTICAL',
-        dueDate: futureDates[0],
-        studentId: students[0].id,
-      },
-    }),
-    prisma.assessment.create({
-      data: {
-        unitStandard: 'US 8963',
-        module: 'Module 2',
-        type: 'FORMATIVE',
-        method: 'KNOWLEDGE',
-        dueDate: futureDates[1],
-        studentId: students[1].id,
-      },
-    }),
-    prisma.assessment.create({
-      data: {
-        unitStandard: 'US 119670',
-        module: 'Module 4',
-        type: 'SUMMATIVE',
-        method: 'PRACTICAL',
-        dueDate: futureDates[2],
-        result: 'COMPETENT',
-        assessedDate: new Date(),
-        studentId: students[2].id,
-      },
-    }),
-  ]);
-
-  console.log('✅ Created assessments');
 
   // Create curriculum modules for SSETA NVC Level 2 (49648)
   const modules = await Promise.all([
     prisma.module.create({
       data: {
+        moduleNumber: 1,
         code: 'NVC-M1',
-        name: 'Use basic Mathematics in order to fulfil new venture functions effectively',
-        description: 'This module equips learners with the necessary mathematical skills and knowledge to successfully run their own businesses.',
+        name: 'Use Basic Mathematics in Order to Fulfil New Venture Functions Effectively',
+        fullName: 'Module 1: Numeracy for New Ventures',
+        purpose: 'Equip learners with mathematical skills for business',
+        description: 'This learning programme aims to equip learners with the necessary mathematical skills and knowledge to successfully run their own businesses.',
         credits: 16,
+        notionalHours: 160,
+        classroomHours: 48,
+        workplaceHours: 112,
         order: 1,
         status: 'NOT_STARTED',
       },
     }),
     prisma.module.create({
       data: {
+        moduleNumber: 2,
         code: 'NVC-M2',
         name: 'Apply basic Communication skills in new venture creation context',
+        fullName: 'Module 2: Communication Skills for New Ventures',
+        purpose: 'Equip learners with communication skills for business interaction',
         description: 'This module equips learners with the necessary communication skills and knowledge to successfully interact with employees, clients and suppliers, including HIV/AIDS awareness.',
         credits: 24,
+        notionalHours: 240,
+        classroomHours: 72,
+        workplaceHours: 168,
         order: 2,
         status: 'NOT_STARTED',
       },
     }),
     prisma.module.create({
       data: {
+        moduleNumber: 3,
         code: 'NVC-M3',
         name: 'Determine market requirements and manage the relevant marketing and selling processes',
+        fullName: 'Module 3: Marketing and Selling for New Ventures',
+        purpose: 'Equip learners with knowledge of market requirements and marketing strategies',
         description: 'This module equips learners with knowledge of market requirements and how to benefit from this knowledge in the form of increased sales.',
         credits: 22,
+        notionalHours: 220,
+        classroomHours: 66,
+        workplaceHours: 154,
         order: 3,
         status: 'IN_PROGRESS',
       },
     }),
     prisma.module.create({
       data: {
+        moduleNumber: 4,
         code: 'NVC-M4',
         name: 'Demonstrate an understanding of the sector/industry in which the business operates',
+        fullName: 'Module 4: Industry Sector Understanding',
+        purpose: 'Equip learners with skills for procurement, tendering, and legal compliance',
         description: 'This module provides learners with knowledge and skills to procure raw material, tender for business, administer contracts, and comply with legal and health & safety requirements.',
         credits: 26,
+        notionalHours: 260,
+        classroomHours: 78,
+        workplaceHours: 182,
         order: 4,
         status: 'NOT_STARTED',
       },
     }),
     prisma.module.create({
       data: {
+        moduleNumber: 5,
         code: 'NVC-M5',
         name: 'Determine financial requirements and manage financial resources of a new venture',
+        fullName: 'Module 5: Financial Management for New Ventures',
+        purpose: 'Equip learners with skills for financial planning and resource management',
         description: 'This module provides learners with knowledge and skills to manage financial requirements, cash flow, pricing, costing, and financial record keeping.',
         credits: 23,
+        notionalHours: 230,
+        classroomHours: 69,
+        workplaceHours: 161,
         order: 5,
         status: 'NOT_STARTED',
       },
     }),
     prisma.module.create({
       data: {
+        moduleNumber: 6,
         code: 'NVC-M6',
         name: 'Manage business operations',
+        fullName: 'Module 6: Business Operations Management',
+        purpose: 'Equip learners with skills for overall business operations management',
         description: 'This module provides learners with knowledge and skills to manage overall business operations, coordinate business activities, and maintain professional business conduct.',
         credits: 26,
+        notionalHours: 260,
+        classroomHours: 78,
+        workplaceHours: 182,
         order: 6,
         status: 'NOT_STARTED',
       },
@@ -616,8 +635,9 @@ async function main() {
         title: 'Demonstrate understanding of rational and irrational numbers and number systems',
         credits: 3,
         level: 2,
+        type: 'Fundamental',
         content: 'Number systems, rational and irrational numbers, mathematical operations',
-        moduleId: modules[0].id,
+        moduleId: modules[0]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -626,8 +646,9 @@ async function main() {
         title: 'Identify, describe, compare, classify, explore shape and motion in 2-and 3-dimensional shapes in different contexts',
         credits: 3,
         level: 2,
+        type: 'Fundamental',
         content: 'Geometry, 2D and 3D shapes, spatial reasoning',
-        moduleId: modules[0].id,
+        moduleId: modules[0]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -636,8 +657,9 @@ async function main() {
         title: 'Work with a range of patterns and functions and solve problems',
         credits: 5,
         level: 2,
+        type: 'Fundamental',
         content: 'Patterns, functions, algebraic thinking, problem-solving',
-        moduleId: modules[0].id,
+        moduleId: modules[0]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -646,8 +668,9 @@ async function main() {
         title: 'Use mathematics to investigate and monitor the financial aspects of personal and community life',
         credits: 2,
         level: 2,
+        type: 'Fundamental',
         content: 'Financial mathematics, budgeting, personal finance',
-        moduleId: modules[0].id,
+        moduleId: modules[0]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -656,8 +679,9 @@ async function main() {
         title: 'Apply basic knowledge of statistics and probability to influence the use of data and procedures in order to investigate life related problems',
         credits: 3,
         level: 2,
+        type: 'Fundamental',
         content: 'Statistics, probability, data analysis, interpretation',
-        moduleId: modules[0].id,
+        moduleId: modules[0]!.id,
       },
     }),
 
@@ -668,8 +692,9 @@ async function main() {
         title: 'Access and use information from texts',
         credits: 5,
         level: 2,
+        type: 'Fundamental',
         content: 'Reading comprehension, information extraction, text analysis',
-        moduleId: modules[1].id,
+        moduleId: modules[1]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -678,8 +703,9 @@ async function main() {
         title: 'Write for a defined context',
         credits: 5,
         level: 2,
+        type: 'Fundamental',
         content: 'Business writing, report writing, professional correspondence',
-        moduleId: modules[1].id,
+        moduleId: modules[1]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -688,8 +714,9 @@ async function main() {
         title: 'Maintain and adapt oral communication',
         credits: 5,
         level: 2,
+        type: 'Fundamental',
         content: 'Verbal communication, presentations, interpersonal skills',
-        moduleId: modules[1].id,
+        moduleId: modules[1]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -698,8 +725,9 @@ async function main() {
         title: 'Use language in occupational learning',
         credits: 5,
         level: 2,
+        type: 'Fundamental',
         content: 'Workplace literacy, technical vocabulary, learning strategies',
-        moduleId: modules[1].id,
+        moduleId: modules[1]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -708,8 +736,9 @@ async function main() {
         title: 'Demonstrate knowledge and understanding of HIV/AIDS in a workplace and a given community',
         credits: 4,
         level: 3,
+        type: 'Core',
         content: 'HIV/AIDS awareness, workplace policies, impact on business',
-        moduleId: modules[1].id,
+        moduleId: modules[1]!.id,
       },
     }),
 
@@ -720,8 +749,9 @@ async function main() {
         title: 'Identify and demonstrate entrepreneurial ideas and opportunities',
         credits: 7,
         level: 2,
+        type: 'Core',
         content: 'Entrepreneurship, opportunity recognition, business ideas',
-        moduleId: modules[2].id,
+        moduleId: modules[2]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -730,8 +760,9 @@ async function main() {
         title: 'Match new venture opportunity to market needs',
         credits: 6,
         level: 2,
+        type: 'Core',
         content: 'Market research, customer needs, opportunity alignment',
-        moduleId: modules[2].id,
+        moduleId: modules[2]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -740,8 +771,9 @@ async function main() {
         title: 'Manage marketing and selling processes of a new venture',
         credits: 7,
         level: 2,
+        type: 'Core',
         content: 'Marketing strategies, sales processes, customer engagement',
-        moduleId: modules[2].id,
+        moduleId: modules[2]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -750,8 +782,9 @@ async function main() {
         title: 'Apply the basic skills of customer service',
         credits: 2,
         level: 2,
+        type: 'Elective',
         content: 'Customer service excellence, complaint handling, satisfaction',
-        moduleId: modules[2].id,
+        moduleId: modules[2]!.id,
       },
     }),
 
@@ -762,8 +795,9 @@ async function main() {
         title: 'Identify the composition of a selected new venture\'s industry/sector and its procurement systems',
         credits: 8,
         level: 2,
+        type: 'Core',
         content: 'Industry analysis, value chains, procurement processes',
-        moduleId: modules[3].id,
+        moduleId: modules[3]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -772,8 +806,9 @@ async function main() {
         title: 'Tender for business or work in a selected new venture',
         credits: 8,
         level: 3,
+        type: 'Core',
         content: 'Tendering processes, bid preparation, proposal writing',
-        moduleId: modules[3].id,
+        moduleId: modules[3]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -782,8 +817,9 @@ async function main() {
         title: 'Administer contracts for a selected new venture',
         credits: 10,
         level: 3,
+        type: 'Core',
         content: 'Contract management, legal requirements, administration',
-        moduleId: modules[3].id,
+        moduleId: modules[3]!.id,
       },
     }),
 
@@ -794,8 +830,9 @@ async function main() {
         title: 'Determine financial requirements of a new venture',
         credits: 8,
         level: 2,
+        type: 'Core',
         content: 'Financial planning, cash flow, start-up capital, funding',
-        moduleId: modules[4].id,
+        moduleId: modules[4]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -804,8 +841,9 @@ async function main() {
         title: 'Produce a business plan for a new venture',
         credits: 5,
         level: 3,
+        type: 'Core',
         content: 'Business planning, financial projections, strategic planning',
-        moduleId: modules[4].id,
+        moduleId: modules[4]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -814,8 +852,9 @@ async function main() {
         title: 'Manage finances for a new venture',
         credits: 10,
         level: 2,
+        type: 'Core',
         content: 'Financial management, accounting, record keeping, controls',
-        moduleId: modules[4].id,
+        moduleId: modules[4]!.id,
       },
     }),
 
@@ -826,8 +865,9 @@ async function main() {
         title: 'Manage business operations',
         credits: 8,
         level: 2,
+        type: 'Core',
         content: 'Operations management, business plans, progress monitoring',
-        moduleId: modules[5].id,
+        moduleId: modules[5]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -836,8 +876,9 @@ async function main() {
         title: 'Co-ordinate meetings, minor events and travel arrangements',
         credits: 3,
         level: 3,
+        type: 'Core',
         content: 'Event coordination, meeting management, travel logistics',
-        moduleId: modules[5].id,
+        moduleId: modules[5]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -846,8 +887,9 @@ async function main() {
         title: 'Prepare and process documents for financial and banking processes',
         credits: 5,
         level: 3,
+        type: 'Core',
         content: 'Financial documentation, banking procedures, processing',
-        moduleId: modules[5].id,
+        moduleId: modules[5]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -856,8 +898,9 @@ async function main() {
         title: 'Monitor and control the receiving and satisfaction of visitors',
         credits: 4,
         level: 3,
+        type: 'Core',
         content: 'Reception management, visitor protocols, customer experience',
-        moduleId: modules[5].id,
+        moduleId: modules[5]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -866,8 +909,9 @@ async function main() {
         title: 'Behave in a professional manner in a business environment',
         credits: 4,
         level: 2,
+        type: 'Core',
         content: 'Professional conduct, workplace behavior, business etiquette',
-        moduleId: modules[5].id,
+        moduleId: modules[5]!.id,
       },
     }),
     prisma.unitStandard.create({
@@ -876,13 +920,55 @@ async function main() {
         title: 'Apply basic business ethics in a work environment',
         credits: 2,
         level: 2,
+        type: 'Core',
         content: 'Business ethics, integrity, ethical decision-making',
-        moduleId: modules[5].id,
+        moduleId: modules[5]!.id,
       },
     }),
   ]);
 
   console.log('✅ Created 26 unit standards across all 6 modules');
+
+  // Create assessments
+  const futureDates = [1, 2, 5].map(days => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date;
+  });
+
+  await Promise.all([
+    prisma.assessment.create({
+      data: {
+        unitStandard: { connect: { code: '119672' } },
+        type: 'FORMATIVE',
+        method: 'PRACTICAL',
+        dueDate: futureDates[0],
+        student: { connect: { id: students[0].id } },
+      },
+    }),
+    prisma.assessment.create({
+      data: {
+        unitStandard: { connect: { code: '8963' } },
+        type: 'FORMATIVE',
+        method: 'KNOWLEDGE',
+        dueDate: futureDates[1],
+        student: { connect: { id: students[1].id } },
+      },
+    }),
+    prisma.assessment.create({
+      data: {
+        unitStandard: { connect: { code: '119670' } },
+        type: 'SUMMATIVE',
+        method: 'PRACTICAL',
+        dueDate: futureDates[2],
+        result: 'COMPETENT',
+        assessedDate: new Date(),
+        student: { connect: { id: students[2].id } },
+      },
+    }),
+  ]);
+
+  console.log('✅ Created assessments');
 
   // Create sample activities for some unit standards
   await Promise.all([
@@ -929,7 +1015,7 @@ async function main() {
   // Create sample lesson plans
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
-  
+
   await Promise.all([
     prisma.lessonPlan.create({
       data: {
@@ -958,7 +1044,7 @@ async function main() {
           { time: '11:45-12:00', activity: 'Q&A and closing' },
         ]),
         notes: 'Ensure all learners participate in group activities',
-        moduleId: modules[2].id,
+        moduleId: modules[2]!.id,
         facilitatorId: facilitator.id,
         groupId: groups[0].id,
       },
@@ -989,7 +1075,7 @@ async function main() {
           { time: '12:00-12:45', activity: 'Role-play assessments' },
           { time: '12:45-13:00', activity: 'Feedback and wrap-up' },
         ]),
-        moduleId: modules[1].id,
+        moduleId: modules[1]!.id,
         facilitatorId: facilitator.id,
         groupId: groups[1].id,
       },
@@ -998,15 +1084,38 @@ async function main() {
 
   console.log('✅ Created sample lesson plans');
 
-  console.log('🎉 Database seeded successfully!');
-  console.log('\n📧 Login credentials:');
-  console.log('   Email: ash@yeha.training');
-  console.log('   Password: password123');
+  // Create automated rollout plans for all groups based on their start dates
+  for (const group of groups) {
+    const rollout = calculateRolloutPlan(group.startDate);
+
+    await prisma.groupRolloutPlan.create({
+      data: {
+        groupId: group.id,
+        module1StartDate: rollout[0].startDate,
+        module1EndDate: rollout[0].endDate,
+        module2StartDate: rollout[1].startDate,
+        module2EndDate: rollout[1].endDate,
+        module3StartDate: rollout[2].startDate,
+        module3EndDate: rollout[2].endDate,
+        module4StartDate: rollout[3].startDate,
+        module4EndDate: rollout[3].endDate,
+        module5StartDate: rollout[4].startDate,
+        module5EndDate: rollout[4].endDate,
+        module6StartDate: rollout[5].startDate,
+        module6EndDate: rollout[5].endDate,
+        rolloutDocPath: 'docs/Curriculumn and data process/Roll out Plans/Generic_Rollout.pdf'
+      }
+    });
+  }
+
+  console.log('✅ Created automated rollout plans for all groups');
+
+  console.log('🌱 Seeding completed successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error seeding database:', e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {
