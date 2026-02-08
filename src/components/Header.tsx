@@ -4,6 +4,7 @@ import { Bell, Moon, Sun, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearch from './GlobalSearch';
 import { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const { user } = useAuth();
@@ -53,103 +54,119 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 rounded-xl shadow-sm">
+    <header className="sticky top-4 z-40 bg-white/70 backdrop-blur-xl border border-white/20 px-8 py-6 rounded-[2rem] shadow-premium mb-8 mx-4">
       <div className="flex items-center justify-between">
-        {/* Left - Welcome Message */}
-        <div className="flex items-center gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+        {/* Left - Contextual Info */}
+        <div className="flex items-center gap-6">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tighter font-display italic">
               Dashboard
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long',
-                year: 'numeric',
-                month: 'long',
+                month: 'short',
                 day: 'numeric'
               })}
-            </p>
+            </div>
           </div>
         </div>
 
-        {/* Right - Actions */}
-        <div className="flex items-center gap-3">
-          {/* Global Search */}
-          <GlobalSearch />
+        {/* Right - Global Actions */}
+        <div className="flex items-center gap-5">
+          {/* Global Search Interface */}
+          <div className="hidden lg:block">
+            <GlobalSearch />
+          </div>
 
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-            title={darkMode ? 'Light Mode' : 'Dark Mode'}
-          >
-            {darkMode ? (
-              <Sun className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-            ) : (
-              <Moon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-            )}
-          </button>
+          <div className="h-8 w-px bg-slate-200 mx-2"></div>
 
-          {/* Notifications */}
-          <div ref={notificationRef} className="relative">
+          {/* Theme & Utility Actions */}
+          <div className="flex items-center gap-1.5">
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              title="Notifications"
+              onClick={toggleDarkMode}
+              className="w-11 h-11 flex items-center justify-center rounded-2xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300"
+              title={darkMode ? 'Switch to Light' : 'Switch to Dark'}
             >
-              <Bell className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-              {notificationCount > 0 && (
-                <span className="absolute top-1 right-1 w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  {notificationCount}
-                </span>
+              {darkMode ? (
+                <Sun className="w-5 h-5 active:rotate-90 transition-transform" />
+              ) : (
+                <Moon className="w-5 h-5 active:-rotate-12 transition-transform" />
               )}
             </button>
 
-            {/* Notification Dropdown */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Notifications</h3>
-                  <button
-                    onClick={() => setShowNotifications(false)}
-                    className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
-                  >
-                    <X className="w-4 h-4 text-slate-500" />
-                  </button>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {notifications.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className="p-4 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
-                    >
-                      <p className="font-medium text-sm text-slate-900 dark:text-white">{notif.title}</p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{notif.message}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">{notif.time}</p>
+            {/* Notification Ecosystem */}
+            <div ref={notificationRef} className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={cn(
+                  "w-11 h-11 flex items-center justify-center rounded-2xl transition-all duration-300 relative",
+                  showNotifications ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                )}
+                title="Activity Feed"
+              >
+                <Bell className="w-5 h-5" />
+                {notificationCount > 0 && (
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-emerald-500 rounded-full ring-4 ring-white shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                )}
+              </button>
+
+              {/* Refined Dropdown Interface */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-4 w-96 bg-white rounded-[2rem] shadow-premium border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-300 ease-out origin-top-right">
+                  <div className="p-6 bg-slate-950 text-white flex items-center justify-between noise-texture">
+                    <div>
+                      <h3 className="text-lg font-bold font-display">Activity Stream</h3>
+                      <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1">3 Unread Internal Alerts</p>
                     </div>
-                  ))}
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="max-h-[32rem] overflow-y-auto py-2 custom-scrollbar">
+                    {notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className="p-6 border-b border-slate-50 hover:bg-slate-50 transition-all duration-300 cursor-pointer group"
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">{notif.title}</p>
+                          <span className="text-[10px] font-bold text-slate-300 uppercase shrink-0 ml-4">{notif.time}</span>
+                        </div>
+                        <p className="text-[13px] text-slate-500 leading-relaxed">{notif.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-6 bg-slate-50/50 border-t border-slate-100">
+                    <button className="w-full py-3 rounded-2xl bg-white border border-slate-200 text-[12px] font-black text-slate-900 uppercase tracking-widest hover:border-emerald-500 hover:text-emerald-600 transition-all duration-300 shadow-sm">
+                      Enter Notification Center
+                    </button>
+                  </div>
                 </div>
-                <div className="p-3 text-center border-t border-slate-200 dark:border-slate-700">
-                  <button className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
-                    View all notifications
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* User Avatar */}
-          <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-700">
+          {/* User Signature */}
+          <div className="flex items-center gap-4 pl-5 border-l border-slate-200">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-slate-900 dark:text-white">
-                {user?.name}
+              <p className="text-[14px] font-black text-slate-950 tracking-tight font-main">
+                {user?.name || 'Authorized Personnel'}
               </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                {user?.role}
+              <p className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em] opacity-80">
+                {user?.role || 'Guest'}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold">
-              {user?.name?.charAt(0).toUpperCase()}
+            <div className="relative group cursor-pointer">
+              <div className="w-12 h-12 rounded-2xl bg-slate-950 flex items-center justify-center text-white font-black text-lg transition-all duration-500 hover:rotate-6 hover:scale-110 shadow-xl overflow-hidden noise-texture">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-[3px] border-white shadow-lg" />
             </div>
           </div>
         </div>

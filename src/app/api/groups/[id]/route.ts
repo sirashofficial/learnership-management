@@ -28,6 +28,19 @@ export async function GET(
           select: { students: true, sessions: true },
         },
         rolloutPlan: true,
+        unitStandardRollouts: {
+          include: {
+            unitStandard: true
+          },
+          orderBy: {
+            startDate: 'asc'
+          }
+        },
+        lessonPlans: {
+          orderBy: {
+            date: 'asc'
+          }
+        }
       },
     });
 

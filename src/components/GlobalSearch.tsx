@@ -5,6 +5,7 @@ import { Search, Users, Building2, BookOpen, X, Clock } from 'lucide-react';
 import { useGlobalSearch } from '@/hooks/useDashboard';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
+import { cn } from '@/lib/utils';
 
 export default function GlobalSearch() {
   const [isOpen, setIsOpen] = useState(false);
@@ -122,89 +123,101 @@ export default function GlobalSearch() {
           setIsOpen(true);
           setTimeout(() => inputRef.current?.focus(), 100);
         }}
-        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-slate-600 dark:text-slate-300 text-sm"
+        className="group relative flex items-center gap-3 px-6 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all duration-300 text-slate-500 hover:text-slate-950 text-[13px] font-bold"
       >
-        <Search className="w-4 h-4" />
-        <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-xs font-mono">
-          Ctrl+K
+        <Search className="w-4 h-4 text-emerald-600 transition-transform group-hover:scale-110" />
+        <span className="hidden sm:inline tracking-tight">Direct Access...</span>
+        <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black font-mono shadow-sm group-hover:border-emerald-200 transition-colors">
+          ⌘K
         </kbd>
       </button>
 
-      {/* Search Modal */}
+      {/* Search Modal - Immersive Interface */}
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/50 z-40" />
+          {/* Immersive Backdrop */}
+          <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-md z-[60] animate-in fade-in duration-500" />
 
-          {/* Modal */}
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white dark:bg-slate-800 rounded-xl shadow-2xl z-50 max-h-[70vh] flex flex-col">
-            {/* Search Input */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+          {/* Luxury Modal Container */}
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 w-full max-w-3xl bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-premium z-[70] max-h-[75vh] flex flex-col border border-white/50 overflow-hidden animate-in slide-in-from-top-8 zoom-in-95 duration-500 ease-out origin-top">
+            {/* Contextual Header Interface */}
+            <div className="p-8 border-b border-slate-100/50 relative noise-texture">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-500" />
                 <input
                   ref={inputRef}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search students, groups, courses..."
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                  placeholder="Query student records, cohorts, or curriculum architecture..."
+                  className="w-full pl-10 pr-4 py-4 bg-transparent text-xl font-black text-slate-900 placeholder:text-slate-300 focus:outline-none font-main tracking-tighter"
                   autoFocus
                 />
                 {query && (
                   <button
                     onClick={() => setQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-100 rounded-xl transition-colors"
                   >
-                    <X className="w-4 h-4 text-slate-400" />
+                    <X className="w-5 h-5 text-slate-400 hover:text-slate-900" />
                   </button>
                 )}
               </div>
 
-              {/* Filter Tabs */}
-              <div className="flex gap-2 mt-3">
+              {/* Refined Filter Ecosystem */}
+              <div className="flex gap-3 mt-6">
                 {(['all', 'students', 'groups', 'courses'] as const).map((filter) => (
                   <button
                     key={filter}
                     onClick={() => setActiveFilter(filter)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${activeFilter === filter
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                      }`}
+                    className={cn(
+                      "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 border",
+                      activeFilter === filter
+                        ? 'bg-slate-950 text-white border-slate-950 shadow-lg'
+                        : 'bg-white text-slate-400 border-slate-100 hover:border-emerald-200 hover:text-emerald-600'
+                    )}
                   >
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    {filter}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Results */}
-            <div className="overflow-y-auto flex-1">
+            {/* Dimensional Results Section */}
+            <div className="overflow-y-auto flex-1 custom-scrollbar">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                    <div className="animate-spin rounded-xl h-6 w-6 border-b-2 border-emerald-500"></div>
+                  </div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Parsing Intelligence Grid...</p>
                 </div>
               ) : query && results.length > 0 ? (
-                <div className="p-2">
+                <div className="p-4 space-y-1">
+                  <div className="px-4 py-2 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em]">Synthesized matches</div>
                   {results.map((result: any) => (
                     <button
                       key={`${result.type}-${result.id}`}
                       onClick={() => handleResultClick(result)}
-                      className="w-full flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-left"
+                      className="w-full flex items-center gap-6 p-5 rounded-[1.5rem] hover:bg-slate-50 transition-all duration-300 text-left group border border-transparent hover:border-white hover:shadow-sm"
                     >
-                      {getResultIcon(result.type)}
+                      <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 group-hover:border-emerald-100 group-hover:shadow-emerald-500/10">
+                        {getResultIcon(result.type)}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-slate-900 dark:text-white truncate">
+                        <div className="flex items-center gap-3 mb-1">
+                          <p className="text-lg font-black text-slate-950 group-hover:text-emerald-700 transition-colors truncate font-display tracking-tight">
                             {result.name}
                           </p>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTypeBadge(result.type)}`}>
+                          <span className={cn(
+                            "px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                            getTypeBadge(result.type).split(' ').pop() // Simple extraction of color classes
+                          )}>
                             {result.type}
                           </span>
                         </div>
                         {result.subtitle && (
-                          <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+                          <p className="text-[13px] text-slate-400 font-medium truncate tracking-tight">
                             {result.subtitle}
                           </p>
                         )}
@@ -213,45 +226,69 @@ export default function GlobalSearch() {
                   ))}
                 </div>
               ) : query && !isLoading ? (
-                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-                  <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No results found for "{query}"</p>
+                <div className="text-center py-24 text-slate-500">
+                  <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                    <Search className="w-8 h-8 opacity-20" />
+                  </div>
+                  <p className="text-xl font-black font-display tracking-tight">No indexed records for <span className="text-emerald-500 italic">"{query}"</span></p>
+                  <p className="text-sm font-medium text-slate-400 mt-2">Adjust your query or change the filter context.</p>
                 </div>
               ) : recentSearches.length > 0 ? (
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent Searches</h4>
+                <div className="p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Recent Contexts</h4>
                     <button
                       onClick={clearRecentSearches}
-                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                      className="text-[10px] font-black text-slate-300 hover:text-red-500 transition-colors uppercase tracking-widest"
                     >
-                      Clear
+                      Purge History
                     </button>
                   </div>
-                  <div className="space-y-1">
+                  <div className="flex flex-wrap gap-3">
                     {recentSearches.map((search, index) => (
                       <button
                         key={index}
                         onClick={() => handleRecentSearchClick(search)}
-                        className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-left text-sm text-slate-600 dark:text-slate-400"
+                        className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-transparent hover:border-emerald-100 transition-all duration-300 text-sm font-bold text-slate-600 group"
                       >
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-4 h-4 opacity-30 group-hover:opacity-100" />
                         {search}
                       </button>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-                  <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Start typing to search...</p>
+                <div className="text-center py-24">
+                  <div className="relative inline-block mb-8">
+                    <div className="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mx-auto">
+                      <Search className="w-10 h-10 text-emerald-500" />
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-950 rounded-2xl flex items-center justify-center text-white text-xs font-black shadow-xl">
+                      ⌘K
+                    </div>
+                  </div>
+                  <h4 className="text-2xl font-black font-display tracking-tighter">Unified Knowledge Search</h4>
+                  <p className="text-slate-400 text-sm max-w-xs mx-auto mt-2 font-medium">Initiate query to parse the academic record system.</p>
                 </div>
               )}
             </div>
 
-            {/* Footer Hint */}
-            <div className="p-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 text-center">
-              Press <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded font-mono">ESC</kbd> to close
+            {/* Strategic Footer Hint */}
+            <div className="px-8 py-5 border-t border-slate-50 bg-slate-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <kbd className="px-2 py-1 bg-white border border-slate-200 rounded-md text-slate-900 shadow-sm">⏎</kbd>
+                  Select result
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <kbd className="px-2 py-1 bg-white border border-slate-200 rounded-md text-slate-900 shadow-sm">↑↓</kbd>
+                  Navigate
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <kbd className="px-2 py-1 bg-white border border-slate-200 rounded-md text-slate-900 shadow-sm">ESC</kbd>
+                Collapse
+              </div>
             </div>
           </div>
         </>

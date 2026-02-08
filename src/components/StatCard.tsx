@@ -1,6 +1,7 @@
 'use client';
 
 import { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface StatCardProps {
   title: string;
@@ -28,39 +29,34 @@ export default function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`
-        bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6 
-        transition-all duration-200
-        ${onClick ? 'cursor-pointer hover:shadow-lg hover:scale-105' : ''}
-        ${loading ? 'animate-pulse' : ''}
-      `}
+      className={cn(
+        "card-premium group relative p-8 noise-texture",
+        onClick ? "cursor-pointer" : "cursor-default",
+        loading && "animate-pulse"
+      )}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-          <Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+      <div className="flex items-start justify-between mb-6">
+        <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center transition-all duration-500 group-hover:bg-emerald-600 group-hover:scale-110 group-hover:rotate-3 shadow-xl">
+          <Icon className="w-6 h-6 text-white" />
         </div>
+
         {trend !== undefined && !loading && (
           <div
-            className={`
-              flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full
-              ${isPositiveTrend ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : ''}
-              ${isNegativeTrend ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : ''}
-              ${hasNoChange ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : ''}
-            `}
+            className={cn(
+              "flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border",
+              isPositiveTrend && "bg-emerald-50 text-emerald-600 border-emerald-100",
+              isNegativeTrend && "bg-red-50 text-red-600 border-red-100",
+              hasNoChange && "bg-slate-50 text-slate-400 border-slate-100"
+            )}
           >
             {isPositiveTrend && (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
             )}
             {isNegativeTrend && (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            )}
-            {hasNoChange && (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
             )}
             <span>{Math.abs(trend)}{suffix === '%' ? '' : '%'}</span>
@@ -68,23 +64,21 @@ export default function StatCard({
         )}
       </div>
 
-      <div className="space-y-1">
-        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{title}</p>
+      <div className="space-y-2">
+        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</p>
+
         {loading ? (
-          <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
+          <div className="h-10 bg-slate-100 rounded-xl w-3/4 animate-pulse"></div>
         ) : (
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="text-4xl font-black text-slate-950 font-main tracking-tighter">
             {value}
-            {suffix && <span className="text-xl ml-1">{suffix}</span>}
+            {suffix && <span className="text-xl font-bold text-slate-400 ml-1.5 italic">{suffix}</span>}
           </p>
         )}
       </div>
 
-      {onClick && !loading && (
-        <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-          Click for details
-        </div>
-      )}
+      {/* Decorative hover elements */}
+      <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-br-2xl pointer-events-none" />
     </div>
   );
 }

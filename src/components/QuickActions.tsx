@@ -6,6 +6,7 @@ import AddStudentModal from './AddStudentModal';
 import GroupModal from './GroupModal';
 import ScheduleLessonModal from './ScheduleLessonModal';
 import MarkAttendanceModal from './MarkAttendanceModal';
+import { cn } from '@/lib/utils';
 
 export default function QuickActions() {
   const router = useRouter();
@@ -73,34 +74,54 @@ export default function QuickActions() {
 
   return (
     <>
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-4 mb-6">
-        <div className="flex flex-wrap gap-3">
+      <div className="bg-white/50 backdrop-blur-xl rounded-[2rem] shadow-premium border border-white/20 p-8 mb-8 noise-texture">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+          <div className="space-y-1">
+            <h3 className="text-lg font-black font-display tracking-tight">Strategic Actions</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Accelerate your workflow with contextual directives</p>
+          </div>
+          <div className="h-px flex-1 bg-slate-100 hidden sm:block mx-8"></div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => setShowAddStudent(true)}
-            className="flex-1 min-w-[150px] px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="btn-emerald group"
           >
-            Add Student
+            <span className="flex items-center justify-center gap-2">
+              Add Student
+              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
+            </span>
           </button>
 
           <button
             onClick={() => setShowCreateGroup(true)}
-            className="flex-1 min-w-[150px] px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="btn-teal group"
           >
-            Create Group
+            <span className="flex items-center justify-center gap-2">
+              Create Group
+              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
+            </span>
           </button>
 
           <button
             onClick={() => setShowScheduleLesson(true)}
-            className="flex-1 min-w-[150px] px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="btn-cyan group"
           >
-            Schedule Lesson
+            <span className="flex items-center justify-center gap-2">
+              Schedule Lesson
+              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
+            </span>
           </button>
 
           <button
             onClick={() => setShowMarkAttendance(true)}
-            className="flex-1 min-w-[150px] px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="btn-slate group"
           >
-            Mark Attendance
+            <span className="flex items-center justify-center gap-2">
+              Mark Attendance
+              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
+            </span>
           </button>
         </div>
       </div>

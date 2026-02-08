@@ -57,11 +57,11 @@ export default function DashboardCharts() {
       </div>
 
       {/* Attendance Trend Chart */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6">
+      <div className="card-premium overflow-hidden p-8 noise-texture">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Attendance Trend</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Daily attendance rates over time</p>
+            <h3 className="text-xl font-black text-slate-900 group-hover:text-emerald-700 transition-colors font-display tracking-tight">Attendance Trend</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Daily interaction velocity across cohorts</p>
           </div>
           <button
             onClick={() => handleExport('Attendance Trend', attendanceTrend)}
@@ -82,11 +82,11 @@ export default function DashboardCharts() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Group Distribution Chart */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6">
+        <div className="card-premium p-8 noise-texture">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Group Distribution</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Students per group</p>
+              <h3 className="text-xl font-black text-slate-900 font-display tracking-tight">Group Distribution</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Student density by cohort allocation</p>
             </div>
             <button
               onClick={() => handleExport('Group Distribution', groupDistribution)}
@@ -106,11 +106,11 @@ export default function DashboardCharts() {
         </div>
 
         {/* Course Progress Chart */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6">
+        <div className="card-premium p-8 noise-texture">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Course Progress</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Completion rates by course</p>
+              <h3 className="text-xl font-black text-slate-900 font-display tracking-tight">Curriculum Velocity</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Completion trajectory across active courses</p>
             </div>
             <button
               onClick={() => handleExport('Course Progress', courseProgress)}

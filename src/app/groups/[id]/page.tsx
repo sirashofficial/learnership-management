@@ -13,11 +13,14 @@ import {
     CheckCircle2,
     AlertTriangle,
     MoreVertical,
-    Edit2
+    Edit2,
+    FileText
 } from 'lucide-react';
 import { format, isAfter, isBefore, addDays } from 'date-fns';
+import { cn } from '../../../lib/utils';
 import { calculateRolloutPlan } from '@/lib/rollout-utils';
-import { RefreshCw, Save } from 'lucide-react';
+import { RefreshCw, Save, Sparkles } from 'lucide-react';
+import GranularRolloutTable from '@/components/GranularRolloutTable';
 
 interface GroupDetailProps {
     params: {
@@ -29,6 +32,7 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
     const router = useRouter();
     const [group, setGroup] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isGeneratingLessons, setIsGeneratingLessons] = useState(false);
 
     useEffect(() => {
         const fetchGroup = async () => {
@@ -94,14 +98,46 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
         }
     };
 
+    const handleGenerateLessons = async () => {
+        if (!group?.rolloutPlan) {
+            alert('Please generate a rollout plan first.');
+            return;
+        }
+
+        if (!confirm('This will generate daily lesson plans for Module 3 based on the curriculum. Continue?')) {
+            return;
+        }
+
+        setIsGeneratingLessons(true);
+        try {
+            const response = await fetch(`/api/groups/${params.id}/lessons/generate`, {
+                method: 'POST',
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(result.message);
+                router.refresh();
+            } else {
+                const error = await response.json();
+                alert(error.error || 'Failed to generate lessons');
+            }
+        } catch (error) {
+            console.error('Error generating lessons:', error);
+            alert('An unexpected error occurred');
+        } finally {
+            setIsGeneratingLessons(false);
+        }
+    };
+
     if (isLoading) {
         return (
-            <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+            <div className="flex min-h-screen bg-[#f8fafc] noise-texture">
                 <Sidebar />
                 <div className="flex-1 flex flex-col">
                     <Header />
                     <main className="flex-1 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+                        <div className="animate-spin rounded-xl h-12 w-12 border-b-2 border-emerald-600"></div>
                     </main>
                 </div>
             </div>
@@ -110,18 +146,21 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
 
     if (!group) {
         return (
-            <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+            <div className="flex min-h-screen bg-[#f8fafc] noise-texture">
                 <Sidebar />
                 <div className="flex-1 flex flex-col">
                     <Header />
-                    <main className="flex-1 p-8 text-center">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Group not found</h2>
-                        <button
-                            onClick={() => router.back()}
-                            className="mt-4 text-teal-600 hover:underline"
-                        >
-                            Go Back
-                        </button>
+                    <main className="flex-1 p-12 text-center">
+                        <div className="max-w-md mx-auto card-premium p-12">
+                            <h2 className="text-2xl font-black text-slate-900 font-display tracking-tight mb-4">Infrastructure Error</h2>
+                            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-8">Group identifier not found in registry</p>
+                            <button
+                                onClick={() => router.back()}
+                                className="btn-slate w-full"
+                            >
+                                Revert to Previous State
+                            </button>
+                        </div>
                     </main>
                 </div>
             </div>
@@ -141,174 +180,193 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
     const today = new Date();
 
     return (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="flex min-h-screen bg-[#f8fafc] noise-texture font-main">
             <Sidebar />
             <div className="flex-1 flex flex-col">
                 <Header />
 
-                <main className="flex-1 overflow-y-auto p-6">
-                    <div className="max-w-5xl mx-auto space-y-6">
+                <main className="flex-1 overflow-y-auto p-8 lg:p-12">
+                    <div className="max-w-7xl mx-auto space-y-12">
 
-                        {/* Header */}
-                        <div className="flex items-center gap-4 mb-6">
-                            <button
-                                onClick={() => router.back()}
-                                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                            </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <Building2 className="w-6 h-6 text-teal-600" />
-                                    {group.name}
-                                </h1>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {group.company?.name || 'No Company'} • {group._count?.students || 0} Students
-                                </p>
+                        {/* Immersive Header Banner */}
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 to-slate-900 rounded-[2.5rem] shadow-premium transform group-hover:scale-[1.01] transition-transform duration-500 overflow-hidden">
+                                <div className="absolute inset-0 opacity-20 noise-texture" />
+                                <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 blur-[100px] rounded-full" />
+                            </div>
+
+                            <div className="relative p-10 lg:p-14 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                                <div className="flex items-center gap-8">
+                                    <button
+                                        onClick={() => router.back()}
+                                        className="w-14 h-14 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/10 transition-all text-white group/btn"
+                                    >
+                                        <ArrowLeft className="w-6 h-6 group-hover/btn:-translate-x-1 transition-transform" />
+                                    </button>
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="p-2 bg-emerald-500/20 rounded-lg backdrop-blur-md border border-emerald-500/20">
+                                                <Building2 className="w-5 h-5 text-emerald-400" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">Operational Unit</span>
+                                        </div>
+                                        <h1 className="text-4xl lg:text-5xl font-black text-white font-display tracking-tighter leading-none mb-3">
+                                            {group.name}
+                                        </h1>
+                                        <div className="flex items-center gap-6 text-slate-400 text-sm font-bold uppercase tracking-widest">
+                                            <span className="flex items-center gap-2">
+                                                <Users className="w-4 h-4" />
+                                                {group._count?.students || 0} Students Allocated
+                                            </span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                                            <span>{group.company?.name || 'Independent Registry'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    {group.rolloutPlan && (
+                                        <button
+                                            onClick={handleGenerateLessons}
+                                            disabled={isGeneratingLessons}
+                                            className="btn-emerald px-8 h-16 relative overflow-hidden group/sparkle"
+                                        >
+                                            <div className="relative z-10 flex items-center gap-3">
+                                                <Sparkles className={cn("w-5 h-5", isGeneratingLessons ? 'animate-spin' : 'group-hover/sparkle:rotate-12 transition-transform')} />
+                                                <span className="text-base font-black tracking-tight">Generate Smart Lessons</span>
+                                            </div>
+                                            <div className="absolute top-0 right-0 p-1">
+                                                <div className="bg-white text-emerald-950 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-sm">AI POWERED</div>
+                                            </div>
+                                        </button>
+                                    )}
+                                    <button className="w-16 h-16 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center text-white transition-all">
+                                        <MoreVertical className="w-6 h-6" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Timeline Section */}
-                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                                        <Clock className="w-5 h-5 text-indigo-500" />
-                                        Rollout Timeline
-                                    </h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Module completion roadmap
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-3">
+                        {/* Strategic Content Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+                            {/* Roadmap Section - Spans 8 cols */}
+                            <div className="lg:col-span-8 space-y-8">
+                                <div className="flex items-center justify-between px-2">
+                                    <div>
+                                        <h2 className="text-2xl font-black text-slate-900 font-display tracking-tight flex items-center gap-3">
+                                            <Calendar className="w-6 h-6 text-emerald-600" />
+                                            Curriculum Roadmap
+                                        </h2>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                            Granular unit standard execution tracking
+                                        </p>
+                                    </div>
                                     <button
                                         onClick={handleGenerateRollout}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors border border-indigo-200"
+                                        className="px-6 py-2.5 bg-white hover:bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-600 rounded-xl border border-slate-200 shadow-sm transition-all hover:border-emerald-200 hover:text-emerald-700 flex items-center gap-2"
                                     >
                                         <RefreshCw className="w-3.5 h-3.5" />
-                                        {group.rolloutPlan ? 'Recalculate Official' : 'Generate Official'}
+                                        {group.rolloutPlan ? 'Resync Architecture' : 'Initialize Roadmap'}
                                     </button>
-                                    {group.rolloutPlan && (
-                                        <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold uppercase tracking-wide">
-                                            Active Plan
-                                        </span>
+                                </div>
+
+                                <div className="min-h-[400px]">
+                                    {group.unitStandardRollouts?.length > 0 ? (
+                                        <GranularRolloutTable
+                                            rollouts={group.unitStandardRollouts}
+                                            lessons={group.lessonPlans || []}
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 shadow-sm text-center">
+                                            <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">
+                                                <Clock className="w-10 h-10 text-slate-200" />
+                                            </div>
+                                            <p className="text-slate-900 font-black font-display tracking-tight text-xl mb-2">Roadmap Pending</p>
+                                            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest max-w-[240px]">
+                                                Initialize the management grid to track unit standard delivery
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
 
-                            {!group.rolloutPlan ? (
-                                <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-dashed border-slate-300 dark:border-slate-700">
-                                    <Clock className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-                                    <p className="text-slate-500 dark:text-slate-400 font-medium">No rollout plan assigned</p>
-                                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                                        Contact coordinator to assign a rollout plan
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="relative border-l-2 border-indigo-200 dark:border-indigo-900 ml-4 space-y-8 py-2">
-                                    {modules.map((mod, index) => {
-                                        if (!mod.start || !mod.end) return null;
+                            {/* Lateral Intelligence - Spans 4 cols */}
+                            <div className="lg:col-span-4 space-y-8">
 
-                                        const startDate = new Date(mod.start);
-                                        const endDate = new Date(mod.end);
-                                        const isActive = isAfter(today, startDate) && isBefore(today, endDate);
-                                        const isCompleted = isAfter(today, endDate);
-                                        const isUpcoming = isBefore(today, startDate);
-
-                                        return (
-                                            <div key={mod.id} className="relative pl-6">
-                                                {/* Dot Indicator */}
-                                                <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 ${isCompleted ? 'bg-emerald-500 border-emerald-500' :
-                                                    isActive ? 'bg-indigo-500 border-indigo-500 animate-pulse' :
-                                                        'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600'
-                                                    }`} />
-
-                                                <div className={`p-4 rounded-lg border ${isActive ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 shadow-sm' :
-                                                    'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
-                                                    }`}>
-                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                                        <div>
-                                                            <h3 className={`font-semibold ${isActive ? 'text-indigo-700 dark:text-indigo-300' :
-                                                                isCompleted ? 'text-emerald-700 dark:text-emerald-300' :
-                                                                    'text-slate-700 dark:text-slate-300'
-                                                                }`}>
-                                                                {mod.name}
-                                                            </h3>
-                                                            <div className="flex items-center gap-4 mt-1">
-                                                                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                                                                    <Calendar className="w-3 h-3" />
-                                                                    {format(startDate, 'MMM d, yyyy')} — {format(endDate, 'MMM d, yyyy')}
-                                                                </p>
-                                                                <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded font-medium">
-                                                                    {mod.credits} Credits ({Math.ceil(mod.credits * 1.25)} Days)
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div>
-                                                            {isActive && (
-                                                                <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">In Progress</span>
-                                                            )}
-                                                            {isCompleted && (
-                                                                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium flex items-center gap-1">
-                                                                    <CheckCircle2 className="w-3 h-3" /> Completed
-                                                                </span>
-                                                            )}
-                                                            {isUpcoming && (
-                                                                <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-medium">Upcoming</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                {/* Performance Telemetry */}
+                                <div className="card-premium p-8 noise-texture">
+                                    <h3 className="text-lg font-black text-slate-900 font-display tracking-tight mb-8">Performance Telemetry</h3>
+                                    <div className="space-y-8">
+                                        <div className="relative">
+                                            <div className="flex justify-between items-end mb-3">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attendance Velocity</p>
+                                                    <p className="text-2xl font-black text-emerald-600 tracking-tighter">87.4%</p>
                                                 </div>
+                                                <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">+2.1%</span>
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Quick Stats or Students Preview */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-                                <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Group Performance</h3>
-                                <div className="space-y-4">
-                                    {/* Placeholder stats */}
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-600 dark:text-slate-400">Attendance Rate</span>
-                                        <span className="font-bold text-slate-900 dark:text-white">87%</span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
-                                        <div className="bg-teal-500 h-2 rounded-full" style={{ width: '87%' }}></div>
-                                    </div>
-
-                                    <div className="flex justify-between items-center text-sm pt-2">
-                                        <span className="text-slate-600 dark:text-slate-400">POE Submitted</span>
-                                        <span className="font-bold text-slate-900 dark:text-white">45%</span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
-                                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: '45%' }}></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-                                <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Documents</h3>
-                                {group.rolloutPlan?.rolloutDocPath ? (
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-3">
-                                        <div className="p-2 bg-red-100 text-red-600 rounded">
-                                            <Clock className="w-5 h-5" />
+                                            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden p-0.5">
+                                                <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-2 rounded-full shadow-lg shadow-emerald-500/20" style={{ width: '87%' }}></div>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                                                Associated Rollout Plan.pdf
-                                            </p>
-                                            <p className="text-xs text-slate-500">Document referenced in seed</p>
+
+                                        <div className="relative">
+                                            <div className="flex justify-between items-end mb-3">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assessment Saturation</p>
+                                                    <p className="text-2xl font-black text-blue-600 tracking-tighter">45.0%</p>
+                                                </div>
+                                                <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">Target: 60%</span>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden p-0.5">
+                                                <div className="bg-gradient-to-r from-blue-600 to-blue-400 h-2 rounded-full shadow-lg shadow-blue-500/20" style={{ width: '45%' }}></div>
+                                            </div>
                                         </div>
-                                        <button className="text-blue-600 text-xs font-medium hover:underline">View</button>
                                     </div>
-                                ) : (
-                                    <p className="text-sm text-slate-500">No documents linked.</p>
-                                )}
+
+                                    <div className="mt-10 p-5 bg-slate-900 rounded-[1.5rem] text-white">
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Group Health Index</p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center text-white">
+                                                <CheckCircle2 className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <p className="text-lg font-black tracking-tight leading-none mb-1 text-emerald-400">OPTIMAL</p>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Engagement at capacity</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Asset Registry */}
+                                <div className="card-premium p-8 noise-texture">
+                                    <h3 className="text-lg font-black text-slate-900 font-display tracking-tight mb-8">Asset Registry</h3>
+                                    {group.rolloutPlan?.rolloutDocPath ? (
+                                        <div className="group/item p-5 bg-white hover:bg-slate-50 rounded-[1.5rem] border border-slate-100 transition-all cursor-pointer">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center group-hover/item:scale-110 transition-transform">
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-black text-slate-900 truncate">
+                                                        Master Rollout Strategy
+                                                    </p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Verified PDF • 2.4MB</p>
+                                                </div>
+                                                <button className="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline">Download</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
+                                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                                <FileText className="w-6 h-6 text-slate-200" />
+                                            </div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No assets cataloged</p>
+                                        </div>
+                                    )}
+                                </div>
+
                             </div>
                         </div>
 

@@ -1,13 +1,18 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { requireAuth } from '@/lib/middleware';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { assessmentId, moderationStatus, moderatorId, moderationNotes } = body;
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
 
-    if (!assessmentId || !moderationStatus || !moderatorId) {
+    const body = await request.json();
+    const { assessmentId, moderationStatus, moderationNotes } = body;
+    const moderatorId = currentUser.userId;
+
+    if (!assessmentId || !moderationStatus) {
       return errorResponse('Missing required fields', 400);
     }
 

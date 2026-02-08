@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { requireAuth } from '@/lib/middleware';
+
 // GET /api/timetable - Get lessons with filters
 export async function GET(request: NextRequest) {
   try {
-    // Authentication temporarily disabled for timetable viewing
-    // const { error, user } = requireAuth(request);
-    // if (error) return error;
+    const { error, user } = await requireAuth(request);
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');

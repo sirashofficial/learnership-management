@@ -19,7 +19,7 @@ export const createStudentSchema = z.object({
   ),
   groupId: z.string().uuid('Invalid group ID'),
   facilitatorId: z.string().uuid('Invalid facilitator ID').optional().nullable(),
-  status: z.enum(['ACTIVE', 'AT_RISK', 'COMPLETED', 'WITHDRAWN']).optional(),
+  status: z.enum(['ACTIVE', 'AT_RISK', 'COMPLETED', 'WITHDRAWN', 'ARCHIVED']).optional(),
   progress: z.number().optional(),
   totalCreditsEarned: z.number().optional(),
 });
@@ -45,7 +45,7 @@ export const createSessionSchema = z.object({
   date: z.string().datetime('Invalid date format'),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format (HH:MM)'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format (HH:MM)'),
-  siteId: z.string().uuid('Invalid site ID'),
+  groupId: z.string().uuid('Invalid group ID'),
   notes: z.string().optional(),
 });
 

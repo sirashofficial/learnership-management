@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { z } from 'zod';
+import { requireAuth } from '@/lib/middleware';
 
 const bulkAssessmentSchema = z.object({
   studentIds: z.array(z.string()),
@@ -16,6 +17,9 @@ const bulkAssessmentSchema = z.object({
 // POST /api/assessments/bulk - Mass award credits/results
 export async function POST(request: NextRequest) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
     const validatedData = bulkAssessmentSchema.parse(body);
     const { studentIds, unitStandardId, result, type, method, assessedDate, notes } = validatedData;

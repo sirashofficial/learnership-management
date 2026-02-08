@@ -94,23 +94,22 @@ export default function Sidebar() {
         <aside
             className={cn(
                 "fixed left-0 top-0 h-full z-50",
-                "transition-all duration-300 ease-out",
-                isCollapsed ? "w-[72px]" : "w-[260px]"
+                "transition-all duration-500 ease-out",
+                isCollapsed ? "w-[var(--sidebar-collapsed)]" : "w-[var(--sidebar-width)]"
             )}
         >
-            {/* Main container with premium gradient */}
-            <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-white/5">
-
-                {/* Header - Brand */}
-                <div className="p-4 flex items-center justify-between border-b border-white/10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                            <GraduationCap className="w-5 h-5 text-white" />
+            {/* Main container with high-contrast slate and subtle noise */}
+            <div className="h-full flex flex-col bg-slate-950 border-r border-white/5 noise-texture">
+                {/* Header - Brand with refined typography */}
+                <div className="p-6 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-2xl shadow-emerald-500/30">
+                            <GraduationCap className="w-6 h-6 text-white" />
                         </div>
                         {!isCollapsed && (
-                            <div className="transition-opacity duration-200">
-                                <h1 className="font-bold text-white text-lg tracking-tight">YEHA</h1>
-                                <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Facilitator</p>
+                            <div className="transition-all duration-300">
+                                <h1 className="font-bold text-white text-xl tracking-tighter font-display">YEHA</h1>
+                                <p className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-[0.2em]">Academic Portal</p>
                             </div>
                         )}
                     </div>
@@ -127,76 +126,75 @@ export default function Sidebar() {
                 </div>
 
                 {/* Primary Navigation */}
-                <nav className="flex-1 overflow-y-auto py-4 px-3">
-                    {/* Primary Items */}
-                    <div className="space-y-1">
-                        {primaryItems.map((item) => {
+                <nav className="flex-1 overflow-y-auto py-6 px-4 custom-scrollbar">
+                    {/* Primary Items with staggered animation potential */}
+                    <div className="space-y-1.5">
+                        {primaryItems.map((item, index) => {
                             const isActive = pathname === item.href;
                             return (
                                 <Link
                                     key={item.label}
                                     href={item.href}
+                                    style={{ animationDelay: `${index * 40}ms` }}
                                     className={cn(
-                                        "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium",
-                                        "transition-all duration-200 ease-out",
+                                        "group flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[13.5px] font-medium",
+                                        "transition-all duration-300 ease-out animate-in slide-in-from-left-4 fade-in filling-mode-both",
                                         isActive
-                                            ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-emerald-400 shadow-sm"
-                                            : "text-slate-300 hover:text-white hover:bg-white/5",
-                                        isCollapsed && "justify-center px-2"
+                                            ? "bg-white/10 text-white shadow-xl shadow-black/20"
+                                            : "text-slate-400 hover:text-slate-100 hover:bg-white/5",
+                                        isCollapsed && "justify-center px-1"
                                     )}
                                 >
                                     <item.icon className={cn(
-                                        "w-5 h-5 flex-shrink-0 transition-transform duration-200",
-                                        isActive ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-200",
-                                        !isCollapsed && "group-hover:scale-110"
+                                        "w-[18px] h-[18px] flex-shrink-0 transition-all duration-300",
+                                        isActive ? "text-emerald-400" : "text-slate-500 group-hover:text-slate-300",
+                                        !isCollapsed && "group-hover:scale-110 group-hover:rotate-3"
                                     )} />
                                     {!isCollapsed && (
-                                        <span className="flex-1">{item.label}</span>
+                                        <span className="flex-1 tracking-tight">{item.label}</span>
                                     )}
                                     {isActive && !isCollapsed && (
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        <div className="w-1 h-4 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]" />
                                     )}
                                 </Link>
                             );
                         })}
                     </div>
 
-                    {/* Divider */}
-                    <div className="my-4 mx-2 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent" />
+                    {/* Refined Divider */}
+                    <div className="my-8 mx-4 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-                    {/* Secondary Groups (Collapsible) */}
+                    {/* Secondary Groups */}
                     {!isCollapsed && (
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                             {secondaryGroups.map((group) => {
                                 const isExpanded = expandedGroups.includes(group.id);
                                 const hasActiveItem = isGroupActive(group.items);
 
                                 return (
-                                    <div key={group.id} className="space-y-1">
+                                    <div key={group.id} className="space-y-2">
                                         <button
                                             onClick={() => toggleGroup(group.id)}
                                             className={cn(
-                                                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium",
-                                                "transition-all duration-200",
+                                                "w-full flex items-center gap-3 px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em]",
+                                                "transition-all duration-300",
                                                 hasActiveItem
-                                                    ? "text-slate-200"
-                                                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                                                    ? "text-emerald-400"
+                                                    : "text-slate-500 hover:text-slate-300"
                                             )}
                                         >
-                                            <group.icon className="w-4 h-4" />
-                                            <span className="flex-1 text-left text-[13px]">{group.label}</span>
+                                            <span className="flex-1 text-left">{group.label}</span>
                                             <ChevronDown className={cn(
-                                                "w-4 h-4 transition-transform duration-200",
+                                                "w-3.5 h-3.5 transition-transform duration-300",
                                                 isExpanded && "rotate-180"
                                             )} />
                                         </button>
 
-                                        {/* Expandable items with smooth animation */}
                                         <div className={cn(
-                                            "overflow-hidden transition-all duration-300 ease-out",
-                                            isExpanded ? "max-h-48 opacity-100" : "max-h-0 opacity-0"
+                                            "overflow-hidden transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1)",
+                                            isExpanded ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
                                         )}>
-                                            <div className="pl-4 space-y-0.5 py-1">
+                                            <div className="pl-2 space-y-1">
                                                 {group.items.map((item) => {
                                                     const isActive = pathname === item.href;
                                                     return (
@@ -204,14 +202,17 @@ export default function Sidebar() {
                                                             key={item.label}
                                                             href={item.href}
                                                             className={cn(
-                                                                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px]",
+                                                                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] font-medium",
                                                                 "transition-all duration-200",
                                                                 isActive
-                                                                    ? "text-emerald-400 bg-emerald-500/10"
-                                                                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                                                                    ? "text-white bg-white/5"
+                                                                    : "text-slate-500 hover:text-slate-200 hover:bg-white/5"
                                                             )}
                                                         >
-                                                            <item.icon className="w-4 h-4" />
+                                                            <item.icon className={cn(
+                                                                "w-4 h-4",
+                                                                isActive ? "text-emerald-400" : "text-slate-600"
+                                                            )} />
                                                             <span>{item.label}</span>
                                                         </Link>
                                                     );
@@ -223,93 +224,59 @@ export default function Sidebar() {
                             })}
                         </div>
                     )}
-
-                    {/* Collapsed state: Show group icons only */}
-                    {isCollapsed && (
-                        <div className="space-y-1">
-                            {secondaryGroups.map((group) => (
-                                <button
-                                    key={group.id}
-                                    onClick={() => {
-                                        setIsCollapsed(false);
-                                        setExpandedGroups(prev =>
-                                            prev.includes(group.id) ? prev : [...prev, group.id]
-                                        );
-                                    }}
-                                    className="w-full flex justify-center p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-200"
-                                    title={group.label}
-                                >
-                                    <group.icon className="w-5 h-5" />
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Admin Section */}
-                    {user?.role === 'ADMIN' && (
-                        <>
-                            <div className="my-4 mx-2 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent" />
-                            <div className="space-y-1">
-                                {adminItems.map((item) => {
-                                    const isActive = pathname === item.href;
-                                    return (
-                                        <Link
-                                            key={item.label}
-                                            href={item.href}
-                                            className={cn(
-                                                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium",
-                                                "transition-all duration-200",
-                                                isActive
-                                                    ? "bg-amber-500/10 text-amber-400"
-                                                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5",
-                                                isCollapsed && "justify-center px-2"
-                                            )}
-                                        >
-                                            <item.icon className="w-5 h-5" />
-                                            {!isCollapsed && <span>{item.label}</span>}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
                 </nav>
 
-                {/* User Profile Footer */}
-                <div className="p-3 border-t border-white/10">
+                {/* Refined User Profile Footer */}
+                <div className="p-4 bg-black/20 mt-auto border-t border-white/5">
                     {!isCollapsed ? (
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3 px-2">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center ring-2 ring-white/10">
-                                    <span className="text-white font-semibold text-sm">
-                                        {user?.name?.charAt(0).toUpperCase() || 'U'}
-                                    </span>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3.5 px-2">
+                                <div className="relative">
+                                    <div className="w-10 h-10 rounded-2xl bg-slate-800 flex items-center justify-center ring-1 ring-white/10 group-hover:ring-emerald-500/50 transition-all duration-300">
+                                        <span className="text-white font-bold text-sm font-display">
+                                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                        </span>
+                                    </div>
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-950" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-white truncate">
-                                        {user?.name || 'User'}
+                                    <p className="text-sm font-semibold text-white truncate font-main tracking-tight">
+                                        {user?.name || 'User Account'}
                                     </p>
-                                    <p className="text-[11px] text-slate-400 uppercase tracking-wider">
-                                        {user?.role || 'User'}
+                                    <p className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest">
+                                        {user?.role || 'Guest'}
                                     </p>
                                 </div>
+                                <button
+                                    onClick={() => setIsCollapsed(true)}
+                                    className="p-1.5 rounded-lg text-slate-600 hover:text-white hover:bg-white/5 transition-colors"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
                             </div>
                             <button
                                 onClick={logout}
-                                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
+                                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-300 border border-transparent hover:border-red-500/20"
                             >
                                 <LogOut className="w-4 h-4" />
-                                <span>Sign Out</span>
+                                <span>Logout</span>
                             </button>
                         </div>
                     ) : (
-                        <button
-                            onClick={logout}
-                            className="w-full flex justify-center p-2.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
-                            title="Sign Out"
-                        >
-                            <LogOut className="w-5 h-5" />
-                        </button>
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-10 h-10 rounded-2xl bg-slate-800 flex items-center justify-center ring-1 ring-white/10">
+                                <span className="text-white font-bold text-sm">
+                                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                </span>
+                            </div>
+                            <button
+                                onClick={logout}
+                                className="p-3 rounded-2xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-300"
+                                title="Sign Out"
+                            >
+                                <LogOut className="w-5 h-5" />
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

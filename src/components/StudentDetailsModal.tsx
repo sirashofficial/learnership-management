@@ -17,7 +17,8 @@ interface StudentDetailsModalProps {
   onSave: (updatedStudent: any) => void;
 }
 
-export default function StudentDetailsModal({ student, onClose, onSave }: StudentDetailsModalProps) {
+export default function StudentDetailsModal({ isOpen, student, onClose, onSave }: StudentDetailsModalProps) {
+  if (!isOpen) return null;
   const { modules } = useCurriculum();
   const [isEditing, setIsEditing] = useState(false);
   const [showAttendanceCalendar, setShowAttendanceCalendar] = useState(false);

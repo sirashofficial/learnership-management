@@ -22,7 +22,7 @@ const publicPaths = [
     '/favicon.ico',
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Check if path is public
@@ -34,6 +34,7 @@ export function middleware(request: NextRequest) {
     const token = request.cookies.get('auth_token')?.value;
 
     if (!token) {
+        console.log(`Middleware: No token found for ${pathname}`);
         // Redirect to login if accessing protected page
         if (!pathname.startsWith('/api')) {
             const url = new URL('/login', request.url);
@@ -45,9 +46,10 @@ export function middleware(request: NextRequest) {
     }
 
     // Verify token
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
 
     if (!payload) {
+        console.log(`Middleware: Invalid token for ${pathname}`);
         // Token is invalid/expired
         if (!pathname.startsWith('/api')) {
             const url = new URL('/login', request.url);
@@ -55,6 +57,8 @@ export function middleware(request: NextRequest) {
         }
         return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
     }
+
+    console.log(`Middleware: Valid token for user ${payload.userId}`);
 
     // Role-based access control for /admin
     if (pathname.startsWith('/admin') && payload.role !== 'ADMIN') {

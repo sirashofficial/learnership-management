@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { createStudentSchema, updateStudentSchema } from '@/lib/validations';
+import { requireAuth } from '@/lib/middleware';
 // GET /api/students - Get all students or export CSV
 export async function GET(request: NextRequest) {
   try {
@@ -68,15 +69,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
 
-    // Get user from token (if available)
-    const authHeader = request.headers.get('Authorization');
-    let currentUserId = null;
-
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      // For demo purposes, extract user from localStorage on client
-      // In production, verify JWT token here
-    }
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
 
     // Validate input
     const validatedData = createStudentSchema.parse(body);

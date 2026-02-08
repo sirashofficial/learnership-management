@@ -54,7 +54,7 @@ export default function TodaysSchedule() {
     }
   };
 
-  const handleLessonClick = (lesson: any) => {
+  const handleLessonClick = (lesson: Lesson) => {
     router.push('/timetable');
   };
 
@@ -89,15 +89,15 @@ export default function TodaysSchedule() {
                 key={lesson.id}
                 onClick={() => handleLessonClick(lesson)}
                 className={`p-4 rounded-lg border cursor-pointer transition-all ${isPast
-                    ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 opacity-60'
-                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:shadow-md'
+                  ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 opacity-60'
+                  : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:shadow-md'
                   }`}
               >
                 {/* Date Badge */}
                 <div className="flex items-start justify-between mb-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${isPast
-                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                    : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                     }`}>
                     {formatDate(lesson.date)}
                   </span>
@@ -115,8 +115,8 @@ export default function TodaysSchedule() {
                       }`} />
                     <div className="flex-1 min-w-0">
                       <h4 className={`font-medium ${isPast
-                          ? 'text-slate-600 dark:text-slate-400'
-                          : 'text-slate-900 dark:text-white'
+                        ? 'text-slate-600 dark:text-slate-400'
+                        : 'text-slate-900 dark:text-white'
                         }`}>
                         {lesson.title}
                       </h4>

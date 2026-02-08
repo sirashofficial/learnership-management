@@ -13,6 +13,7 @@ import {
   UserX
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export default function DashboardAlerts() {
   const { alerts, isLoading } = useDashboardAlerts();
@@ -118,44 +119,59 @@ export default function DashboardAlerts() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6 mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Alerts & Notifications</h3>
+    <div className="card-premium p-8 noise-texture mb-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h3 className="text-xl font-black text-slate-900 font-display tracking-tight">System Directives</h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Critical infrastructure alerts</p>
+        </div>
         {visibleAlerts.length > 0 && (
-          <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium rounded-full">
-            {visibleAlerts.length}
-          </span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-xl border border-red-100 animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">
+              {visibleAlerts.length} Active Directives
+            </span>
+          </div>
         )}
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="animate-spin rounded-xl h-8 w-8 border-b-2 border-emerald-500"></div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parsing notification grid...</p>
         </div>
       ) : visibleAlerts.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-          <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No alerts at the moment</p>
-          <p className="text-sm mt-1">Everything looks good!</p>
+        <div className="text-center py-20 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+          </div>
+          <p className="text-sm font-black text-slate-900 font-display tracking-tight">Status: Nominal</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">No pending interventions required</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-4 max-h-[32rem] overflow-y-auto custom-scrollbar p-1">
           {visibleAlerts.slice(0, 10).map((alert: any) => {
             const styles = getPriorityStyles(alert.priority);
             return (
               <div
                 key={alert.id}
-                className={`p-4 rounded-lg border-l-4 ${styles.bg} ${styles.border} hover:shadow-md transition-all cursor-pointer`}
+                className={cn(
+                  "group relative p-6 rounded-[1.5rem] border-l-[6px] bg-white hover:shadow-premium transition-all duration-300 cursor-pointer overflow-hidden",
+                  styles.border
+                )}
                 onClick={() => handleAlertClick(alert)}
               >
-                <div className="flex items-start gap-3">
-                  <div className={styles.icon}>
+                {/* Visual Accent Layer */}
+                <div className={cn("absolute inset-0 opacity-[0.03] transition-opacity group-hover:opacity-[0.07]", styles.bg)} />
+
+                <div className="relative flex items-center gap-6">
+                  <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500", styles.bg, styles.icon)}>
                     {getAlertIcon(alert.type)}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-medium ${styles.text}`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <p className={cn("text-base font-black font-display tracking-tight leading-tight", styles.text)}>
                         {alert.message}
                       </p>
                       <button
@@ -163,20 +179,21 @@ export default function DashboardAlerts() {
                           e.stopPropagation();
                           handleDismiss(alert.id);
                         }}
-                        className={`flex-shrink-0 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded ${styles.icon}`}
-                        title="Dismiss"
+                        className="flex-shrink-0 p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-300 hover:text-red-500"
+                        title="Dismiss Directive"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className={`text-xs ${styles.subtext} font-medium uppercase`}>
+                    <div className="flex items-center gap-4 mt-3">
+                      <div className={cn("px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border", styles.bg.replace('bg-', 'border-').replace('/20', '/50'))}>
                         {alert.priority}
-                      </span>
-                      <span className={`text-xs ${styles.subtext}`}>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                        <Clock className="w-3 h-3" />
                         {formatTimestamp(alert.timestamp)}
-                      </span>
+                      </div>
                     </div>
                   </div>
                 </div>

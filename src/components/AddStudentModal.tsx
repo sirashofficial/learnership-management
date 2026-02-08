@@ -23,7 +23,8 @@ interface AddStudentModalProps {
   groupName?: string;
 }
 
-export default function AddStudentModal({ onClose, onAdd, groupId, groupName }: AddStudentModalProps) {
+export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, groupName }: AddStudentModalProps) {
+  if (!isOpen) return null;
   const { groups } = useGroups();
   const [formData, setFormData] = useState({
     name: "",
@@ -72,9 +73,7 @@ export default function AddStudentModal({ onClose, onAdd, groupId, groupName }: 
         progress: 0,
       };
 
-      console.log('📝 Submitting student data:', studentData);
       await onAdd(studentData as any);  // Type assertion as API handles optional fields
-      console.log('✅ Student added successfully');
       onClose();
     } catch (error: any) {
       console.error('❌ Error adding student:', error);

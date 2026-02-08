@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    
+
     // Sanitize inputs before validation
     const sanitizedBody = {
       email: sanitizeEmail(body.email || ''),
@@ -22,22 +22,22 @@ export async function POST(request: NextRequest) {
       password: sanitizeString(body.password || ''),
       role: body.role,
     };
-    
+
     // Validate input
     const validatedData = registerSchema.parse(sanitizedBody);
-    
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: validatedData.email },
     });
-    
+
     if (existingUser) {
       return errorResponse('User with this email already exists', 409);
     }
-    
+
     // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
-    
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -54,14 +54,14 @@ export async function POST(request: NextRequest) {
         createdAt: true,
       },
     });
-    
+
     // Generate JWT token
-    const token = generateToken({
+    const token = await generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,
     });
-    
+
     return successResponse(
       {
         user,

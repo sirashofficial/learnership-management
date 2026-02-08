@@ -342,8 +342,10 @@ export default function StudentsPage() {
         return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
       case 'WITHDRAWN':
         return 'bg-red-500/10 text-red-600 dark:text-red-400';
-      default:
+      case 'ARCHIVED':
         return 'bg-slate-500/10 text-slate-600 dark:text-slate-400';
+      default:
+        return 'bg-slate-100 text-slate-500';
     }
   };
 

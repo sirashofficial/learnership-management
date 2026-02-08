@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { z } from 'zod';
+import { requireAuth } from '@/lib/middleware';
 
 const createAssessmentSchema = z.object({
   studentId: z.string(),
@@ -16,6 +17,9 @@ const createAssessmentSchema = z.object({
 // GET /api/assessments
 export async function GET(request: NextRequest) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
     const groupId = searchParams.get('groupId');
@@ -58,6 +62,9 @@ export async function GET(request: NextRequest) {
 // POST /api/assessments
 export async function POST(request: NextRequest) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
     const validatedData = createAssessmentSchema.parse(body);
 
@@ -96,6 +103,9 @@ export async function POST(request: NextRequest) {
 // PUT /api/assessments
 export async function PUT(request: NextRequest) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
     const { id, result, score, feedback, notes, assessedDate } = body;
 

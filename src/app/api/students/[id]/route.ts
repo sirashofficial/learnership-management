@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { updateStudentSchema } from '@/lib/validations';
+import { requireAuth } from '@/lib/middleware';
 // GET /api/students/[id] - Get single student
 export async function GET(
   request: NextRequest,
@@ -42,21 +43,25 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
+    const validatedData = updateStudentSchema.parse(body);
 
     const student = await prisma.student.update({
       where: { id: params.id },
       data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        studentId: body.studentId,
-        idNumber: body.idNumber,
-        email: body.email,
-        phone: body.phone,
-        groupId: body.groupId,
-        status: body.status,
-        progress: body.progress,
-        totalCreditsEarned: body.totalCreditsEarned,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        studentId: validatedData.studentId,
+        idNumber: validatedData.idNumber,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        groupId: validatedData.groupId,
+        status: validatedData.status,
+        progress: validatedData.progress,
+        totalCreditsEarned: validatedData.totalCreditsEarned,
       },
       include: {
         group: true,

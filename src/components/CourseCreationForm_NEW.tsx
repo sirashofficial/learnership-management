@@ -37,11 +37,11 @@ export default function CourseCreationForm() {
 
   const analyzeModuleContent = async () => {
     if (!currentModule.content.trim()) return;
-    
+
     setIsAnalyzing(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       const mockAnalysis = {
         estimatedDuration: Math.ceil(currentModule.content.split(' ').length / 200),
         difficultyLevel: 'intermediate' as const,
@@ -54,9 +54,9 @@ export default function CourseCreationForm() {
         keyTopics: ['communication', 'teamwork', 'problem-solving'],
         prerequisiteKnowledge: ['Basic computer skills']
       };
-      
+
       setAnalysisResult(mockAnalysis);
-      
+
       setCurrentModule(prev => ({
         ...prev,
         plannedDuration: mockAnalysis.estimatedDuration,
@@ -78,7 +78,7 @@ export default function CourseCreationForm() {
         workplaceActivities: currentModule.workplaceActivities.filter(a => a.trim()),
         summativeAssessment: currentModule.summativeAssessment
       }]);
-      
+
       setCurrentModule({
         name: '',
         content: '',
@@ -96,11 +96,11 @@ export default function CourseCreationForm() {
 
   const submitCourse = async () => {
     if (!courseName || modules.length === 0) return;
-    
+
     setIsSubmitting(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       setCourseName('');
       setCourseCode('');
       setCourseDescription('');
@@ -169,7 +169,7 @@ export default function CourseCreationForm() {
         <p className="text-slate-600 text-sm mb-4">
           Upload curriculum PDFs, learning materials, or assessment documents. Our AI will analyze and create structured courses automatically.
         </p>
-        
+
         <div className="space-y-4">
           {/* File Upload Area */}
           <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
@@ -182,7 +182,7 @@ export default function CourseCreationForm() {
               onChange={(e) => {
                 if (e.target.files) {
                   // Handle file upload
-                  console.log('Files uploaded:', Array.from(e.target.files).map(f => f.name));
+                  // Handle file upload
                   alert('Files uploaded! AI analysis will begin shortly.');
                 }
               }}
@@ -226,7 +226,7 @@ export default function CourseCreationForm() {
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 Curriculum Analysis Complete
               </h4>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="bg-white p-3 rounded border">
                   <strong>Modules Detected:</strong>
@@ -241,7 +241,7 @@ export default function CourseCreationForm() {
                   <p className="text-slate-600 mt-1 capitalize">{analysisResult.difficultyLevel}</p>
                 </div>
               </div>
-              
+
               <div className="bg-white p-3 rounded border">
                 <strong>Key Learning Areas:</strong>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -329,8 +329,8 @@ export default function CourseCreationForm() {
             </div>
           </div>
 
-          <button 
-            onClick={addModule} 
+          <button
+            onClick={addModule}
             className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
             Add Module

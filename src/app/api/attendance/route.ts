@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { requireAuth } from '@/lib/middleware';
 
 // GET /api/attendance
 export async function GET(request: NextRequest) {
@@ -63,6 +64,9 @@ export async function GET(request: NextRequest) {
 // POST /api/attendance
 export async function POST(request: NextRequest) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
 
     // Handle bulk attendance submission
@@ -104,7 +108,6 @@ export async function POST(request: NextRequest) {
 
           let attendance;
           if (existingRecord) {
-            console.log('📝 Updating existing record:', existingRecord.id);
             // Update existing record
             attendance = await prisma.attendance.update({
               where: { id: existingRecord.id },
@@ -118,7 +121,6 @@ export async function POST(request: NextRequest) {
               },
             });
           } else {
-            console.log('➕ Creating new record');
             // Create new record with explicit student connection
             attendance = await prisma.attendance.create({
               data: {
@@ -138,8 +140,6 @@ export async function POST(request: NextRequest) {
               },
             });
           }
-
-          console.log('✅ Successfully saved attendance record:', attendance.id);
           results.push(attendance);
 
           // Check if we need to create an alert for absences
@@ -180,13 +180,6 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-
-      console.log('📊 Bulk operation complete:', {
-        total: body.records.length,
-        successful: results.length,
-        failed: errors.length
-      });
-
       if (errors.length > 0) {
         console.warn('⚠️ Some records failed:', errors);
       }
@@ -300,6 +293,9 @@ export async function POST(request: NextRequest) {
 // PUT /api/attendance - Update existing attendance
 export async function PUT(request: NextRequest) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
     const { id, status, notes, markedBy } = body;
 
@@ -330,6 +326,9 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/attendance - Delete attendance record
 export async function DELETE(request: NextRequest) {
   try {
+    const { error, user: currentUser } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

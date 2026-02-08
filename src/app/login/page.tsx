@@ -70,11 +70,7 @@ export default function LoginPage() {
     );
   }
 
-  // Don't show login form if already authenticated
-  if (user) {
-    return null;
-  }
-
+  // Show login form (redirect is handled by useEffect)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
@@ -86,14 +82,14 @@ export default function LoginPage() {
             Learnership Management System
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               {error}
             </div>
           )}
-          
+
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">
@@ -111,7 +107,7 @@ export default function LoginPage() {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-700">
                 Password
@@ -139,7 +135,7 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
-          
+
           <div className="text-center">
             <p className="text-sm text-slate-600">
               Don't have an account?{' '}
@@ -149,7 +145,7 @@ export default function LoginPage() {
             </p>
           </div>
         </form>
-        
+
         <div className="mt-6 border-t border-slate-200 pt-6">
           <p className="text-xs text-center text-slate-500">
             Demo credentials: ash@yeha.training / password123

@@ -1,22 +1,40 @@
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify } from 'jose';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET must be set in production environment');
+  }
+}
+
+const secretKey = JWT_SECRET || 'yeha-learnership-secret-key-2026';
+const key = new TextEncoder().encode(secretKey);
 
 export interface JWTPayload {
   userId: string;
   email: string;
   role: string;
+  [key: string]: any; // Allow generic payload for jose compatibility
 }
 
-export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+export async function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(key);
 }
 
-export function verifyToken(token: string): JWTPayload | null {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const { payload } = await jwtVerify(token, key, {
+      algorithms: ['HS256'],
+    });
+    return payload as JWTPayload;
   } catch (error) {
+    // console.error('Token verification failed:', error);
     return null;
   }
 }
@@ -38,12 +56,12 @@ export function getAuthToken(request: NextRequest): string | null {
   return null;
 }
 
-export function getUserFromRequest(request: NextRequest): JWTPayload | null {
+export async function getUserFromRequest(request: NextRequest): Promise<JWTPayload | null> {
   const token = getAuthToken(request);
 
   if (!token) {
     return null;
   }
 
-  return verifyToken(token);
+  return await verifyToken(token);
 }

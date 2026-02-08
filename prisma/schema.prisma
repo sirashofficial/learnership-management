@@ -65,6 +65,7 @@ model Group {
   courses     GroupCourse[]
   schedules   GroupSchedule[]
   rolloutPlan GroupRolloutPlan?
+  unitStandardRollouts UnitStandardRollout[]
 }
 
 model GroupRolloutPlan {
@@ -89,6 +90,25 @@ model GroupRolloutPlan {
   rolloutDocPath      String?  
   
   group           Group    @relation(fields: [groupId], references: [id])
+}
+
+model UnitStandardRollout {
+  id              String   @id @default(uuid())
+  groupId         String
+  unitStandardId  String
+  
+  startDate       DateTime? // teaching start
+  endDate         DateTime? // teaching end
+  summativeDate   DateTime? // the test date
+  assessingDate   DateTime? // the moderation/marking date
+  
+  group           Group        @relation(fields: [groupId], references: [id])
+  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([groupId, unitStandardId])
 }
 
 model Student {
@@ -512,6 +532,7 @@ model UnitStandard {
   assessments Assessment[]
   progress    UnitStandardProgress[]
   formativeAssessments FormativeAssessment[]
+  unitStandardRollouts UnitStandardRollout[]
 }
 
 model Activity {
