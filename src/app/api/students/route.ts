@@ -5,7 +5,9 @@ import { createStudentSchema, updateStudentSchema } from '@/lib/validations';
 import { requireAuth } from '@/lib/middleware';
 // GET /api/students - Get all students or export CSV
 export async function GET(request: NextRequest) {
+  console.log('API HIT: /api/students');
   try {
+    console.log('GET /api/students called');
     const { searchParams } = new URL(request.url);
     const groupId = searchParams.get('groupId');
     const status = searchParams.get('status');
@@ -19,7 +21,6 @@ export async function GET(request: NextRequest) {
       include: {
         group: {
           include: {
-            company: true,
           },
         },
         facilitator: {
@@ -57,8 +58,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    console.log('GET /api/students success:', students.length, 'students');
     return successResponse(students);
   } catch (error) {
+    console.error('GET /api/students error:', error);
     return handleApiError(error);
   }
 }
@@ -138,7 +141,6 @@ export async function POST(request: NextRequest) {
       include: {
         group: {
           include: {
-            company: true,
           },
         },
         facilitator: {
@@ -147,6 +149,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Auto-create assessments for the student
+    const unitStandards = await prisma.unitStandard.findMany();
+    const dueDate = new Date();
+    dueDate.setMonth(dueDate.getMonth() + 3);
+
+    for (const unitStandard of unitStandards) {
+      await prisma.assessment.create({
+        data: {
+          type: 'FORMATIVE',
+          method: 'KNOWLEDGE',
+          result: 'PENDING',
+          dueDate,
+          studentId: student.id,
+          unitStandardId: unitStandard.id,
+          notes: `Auto-created for new student in ${validatedData.firstName} ${validatedData.lastName}`
+        }
+      }).catch(() => {
+        // Silently ignore duplicates
+      });
+    }
 
     return successResponse(student, 'Student created successfully');
   } catch (error) {

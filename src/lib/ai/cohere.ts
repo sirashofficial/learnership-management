@@ -2,7 +2,7 @@ import { CohereClient } from 'cohere-ai';
 
 // Initialize Cohere client
 const cohere = new CohereClient({
-    token: process.env.COHERE_API_KEY || '',
+    token: (process.env.COHERE_API_KEY || '').trim(),
 });
 
 export interface ChatMessage {
@@ -76,7 +76,7 @@ Guidelines:
 6. When discussing assessments, distinguish between formative and summative types`;
 
     const response = await cohere.chat({
-        model: 'command-r-plus',
+        model: 'command-r-08-2024',
         message: messages[messages.length - 1].content,
         chatHistory: messages.slice(0, -1).map((msg) => ({
             role: msg.role === 'user' ? 'USER' as const : 'CHATBOT' as const,

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { chatWithContext, ChatMessage } from '@/lib/ai/cohere';
+import { chatWithContext, ChatMessage } from '@/lib/ai/zai';
 import { searchDocuments } from '@/lib/ai/pinecone';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';

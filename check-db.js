@@ -3,21 +3,19 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
-    const groups = await prisma.group.findMany({
-      include: {
-        company: true,
-        _count: {
-          select: { students: true }
-        }
-      },
-      orderBy: { name: 'asc' }
+    const user = await prisma.user.findUnique({
+      where: { email: 'ash@yeha.training' }
     });
-    
-    console.log(`\nFound ${groups.length} groups in database:\n`);
-    groups.forEach(g => {
-      console.log(`- ${g.name} (${g._count.students} students, Company: ${g.company?.name || 'None'})`);
-    });
-    console.log('');
+
+    if (user) {
+      console.log('Test user found:', user.email, user.role);
+    } else {
+      console.log('Test user not found. Let me check all users:');
+      const allUsers = await prisma.user.findMany();
+      console.log('All users:', allUsers.map(u => ({ email: u.email, role: u.role })));
+    }
+
+    console.log('\n');
   } catch (error) {
     console.error('Error:', error.message);
   } finally {

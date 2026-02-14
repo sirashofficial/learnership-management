@@ -41,7 +41,6 @@ async function main() {
   await prisma.groupRolloutPlan.deleteMany();
   await prisma.group.deleteMany();
   await prisma.user.deleteMany();
-  await prisma.company.deleteMany();
 
   // Static Data (Unit Standards and Modules)
   await prisma.unitStandard.deleteMany();
@@ -71,98 +70,6 @@ async function main() {
 
   console.log('✅ Created facilitator user');
 
-  // Create companies
-  const azelisCompany = await prisma.company.create({
-    data: {
-      name: 'Azelis',
-      contactPerson: 'John Smith',
-      email: 'john.smith@azelis.com',
-      phone: '+27 11 234 5678',
-      address: 'Johannesburg, South Africa',
-      industry: 'Chemical Distribution',
-    },
-  });
-
-  const kelpackCompany = await prisma.company.create({
-    data: {
-      name: 'Kelpack Manufacturing',
-      contactPerson: 'Sarah Johnson',
-      email: 'sarah.j@kelpack.co.za',
-      phone: '+27 11 345 6789',
-      address: 'Johannesburg, South Africa',
-      industry: 'Manufacturing',
-    },
-  });
-
-  const cityLogisticsCompany = await prisma.company.create({
-    data: {
-      name: 'City Logistics',
-      contactPerson: 'Mike Williams',
-      email: 'mike.w@citylogistics.co.za',
-      phone: '+27 12 456 7890',
-      address: 'Pretoria, South Africa',
-      industry: 'Logistics',
-    },
-  });
-
-  // Create more companies for all the groups
-  const beyondInsightsCompany = await prisma.company.create({
-    data: {
-      name: 'Beyond Insights',
-      contactPerson: 'Linda Brown',
-      email: 'linda@beyondinsights.co.za',
-      phone: '+27 11 567 8901',
-      address: 'Sandton, South Africa',
-      industry: 'Consulting',
-    },
-  });
-
-  const monteagleCompany = await prisma.company.create({
-    data: {
-      name: 'Monteagle',
-      contactPerson: 'David Lee',
-      email: 'david@monteagle.co.za',
-      phone: '+27 11 678 9012',
-      address: 'Johannesburg, South Africa',
-      industry: 'Business Services',
-    },
-  });
-
-  const packagingWorldCompany = await prisma.company.create({
-    data: {
-      name: 'Packaging World',
-      contactPerson: 'Emma Wilson',
-      email: 'emma@packagingworld.co.za',
-      phone: '+27 11 789 0123',
-      address: 'Johannesburg, South Africa',
-      industry: 'Packaging',
-    },
-  });
-
-  const flintGroupCompany = await prisma.company.create({
-    data: {
-      name: 'Flint Group',
-      contactPerson: 'Robert Taylor',
-      email: 'robert@flintgroup.co.za',
-      phone: '+27 11 890 1234',
-      address: 'Johannesburg, South Africa',
-      industry: 'Printing Solutions',
-    },
-  });
-
-  const wahlCompany = await prisma.company.create({
-    data: {
-      name: 'Wahl',
-      contactPerson: 'Jessica Martinez',
-      email: 'jessica@wahl.co.za',
-      phone: '+27 11 901 2345',
-      address: 'Johannesburg, South Africa',
-      industry: 'Consumer Products',
-    },
-  });
-
-  console.log('✅ Created 8 companies');
-
   // Create training groups - 2026 Cohort (Montzelity 26' Collection)
   const azelis26 = await prisma.group.create({
     data: {
@@ -173,7 +80,6 @@ async function main() {
       endDate: new Date('2026-12-15'),
       status: 'Active',
       notes: 'Part of Montzelity 26\' collection - 2026 cohort',
-      companyId: azelisCompany.id,
     },
   });
 
@@ -186,7 +92,6 @@ async function main() {
       endDate: new Date('2026-12-15'),
       status: 'Active',
       notes: 'Part of Montzelity 26\' collection - 2026 cohort',
-      companyId: beyondInsightsCompany.id,
     },
   });
 
@@ -199,7 +104,6 @@ async function main() {
       endDate: new Date('2026-12-15'),
       status: 'Active',
       notes: 'Part of Montzelity 26\' collection - 2026 cohort',
-      companyId: cityLogisticsCompany.id,
     },
   });
 
@@ -212,7 +116,6 @@ async function main() {
       endDate: new Date('2026-12-15'),
       status: 'Active',
       notes: 'Part of Montzelity 26\' collection - 2026 cohort',
-      companyId: monteagleCompany.id,
     },
   });
 
@@ -226,7 +129,6 @@ async function main() {
       endDate: new Date('2025-12-15'),
       status: 'Active',
       notes: '2025 cohort - Computer Lab sessions',
-      companyId: azelisCompany.id,
     },
   });
 
@@ -239,7 +141,6 @@ async function main() {
       endDate: new Date('2025-12-15'),
       status: 'Active',
       notes: '2025 cohort - Computer Lab sessions',
-      companyId: packagingWorldCompany.id,
     },
   });
 
@@ -252,7 +153,6 @@ async function main() {
       endDate: new Date('2025-12-31'),
       status: 'Active',
       notes: '2025 cohort - Lecture Room sessions',
-      companyId: flintGroupCompany.id,
     },
   });
 
@@ -265,7 +165,6 @@ async function main() {
       endDate: new Date('2025-12-31'),
       status: 'Active',
       notes: '2025 cohort - Computer Lab sessions',
-      companyId: wahlCompany.id,
     },
   });
 
@@ -278,7 +177,6 @@ async function main() {
       endDate: new Date('2025-12-31'),
       status: 'Active',
       notes: '2025 cohort - Computer Lab sessions',
-      companyId: monteagleCompany.id,
     },
   });
 
@@ -291,7 +189,6 @@ async function main() {
       endDate: new Date('2026-02-28'),
       status: 'Active',
       notes: 'Friday sessions - Lecture Room',
-      companyId: kelpackCompany.id,
     },
   });
 
@@ -508,8 +405,8 @@ async function main() {
     }),
     prisma.session.create({
       data: {
-        title: 'Communication Skills Workshop',
-        module: 'Module 2: Communication Skills',
+        title: 'HIV/AIDS & Communications Workshop',
+        module: 'Module 2: HIV/AIDS & Communications',
         date: tomorrow,
         startTime: '09:00',
         endTime: '14:00',
@@ -555,10 +452,10 @@ async function main() {
       data: {
         moduleNumber: 2,
         code: 'NVC-M2',
-        name: 'Apply basic Communication skills in new venture creation context',
-        fullName: 'Module 2: Communication Skills for New Ventures',
-        purpose: 'Equip learners with communication skills for business interaction',
-        description: 'This module equips learners with the necessary communication skills and knowledge to successfully interact with employees, clients and suppliers, including HIV/AIDS awareness.',
+        name: 'HIV/AIDS & Communications',
+        fullName: 'Module 2: HIV/AIDS & Communications',
+        purpose: 'Equip learners with communication skills and HIV/AIDS awareness for business interaction',
+        description: 'This module equips learners with the necessary communication skills and HIV/AIDS knowledge to successfully interact with employees, clients and suppliers.',
         credits: 24,
         notionalHours: 240,
         classroomHours: 72,
@@ -588,7 +485,7 @@ async function main() {
         moduleNumber: 4,
         code: 'NVC-M4',
         name: 'Demonstrate an understanding of the sector/industry in which the business operates',
-        fullName: 'Module 4: Industry Sector Understanding',
+        fullName: 'Module 4: Business Sector & Industry',
         purpose: 'Equip learners with skills for procurement, tendering, and legal compliance',
         description: 'This module provides learners with knowledge and skills to procure raw material, tender for business, administer contracts, and comply with legal and health & safety requirements.',
         credits: 26,
@@ -604,13 +501,13 @@ async function main() {
         moduleNumber: 5,
         code: 'NVC-M5',
         name: 'Determine financial requirements and manage financial resources of a new venture',
-        fullName: 'Module 5: Financial Management for New Ventures',
+        fullName: 'Module 5: Financial Requirements',
         purpose: 'Equip learners with skills for financial planning and resource management',
         description: 'This module provides learners with knowledge and skills to manage financial requirements, cash flow, pricing, costing, and financial record keeping.',
-        credits: 23,
-        notionalHours: 230,
-        classroomHours: 69,
-        workplaceHours: 161,
+        credits: 26,
+        notionalHours: 260,
+        classroomHours: 78,
+        workplaceHours: 182,
         order: 5,
         status: 'NOT_STARTED',
       },
@@ -642,7 +539,7 @@ async function main() {
       data: {
         code: '7480',
         title: 'Demonstrate understanding of rational and irrational numbers and number systems',
-        credits: 3,
+        credits: 2,
         level: 2,
         type: 'Fundamental',
         content: 'Number systems, rational and irrational numbers, mathematical operations',
@@ -675,7 +572,7 @@ async function main() {
       data: {
         code: '7469',
         title: 'Use mathematics to investigate and monitor the financial aspects of personal and community life',
-        credits: 2,
+        credits: 3,
         level: 2,
         type: 'Fundamental',
         content: 'Financial mathematics, budgeting, personal finance',
@@ -832,7 +729,7 @@ async function main() {
       },
     }),
 
-    // Module 5: Financial Requirements (23 credits, 230 hours)
+    // Module 5: Financial Requirements (26 credits, 260 hours)
     prisma.unitStandard.create({
       data: {
         code: '119666',
@@ -848,7 +745,7 @@ async function main() {
       data: {
         code: '119670',
         title: 'Produce a business plan for a new venture',
-        credits: 5,
+        credits: 8,
         level: 3,
         type: 'Core',
         content: 'Business planning, financial projections, strategic planning',

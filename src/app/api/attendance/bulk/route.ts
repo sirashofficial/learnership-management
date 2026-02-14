@@ -12,8 +12,12 @@ export async function POST(request: NextRequest) {
       return errorResponse('Student IDs are required', 400);
     }
 
+
     if (!status || !['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'].includes(status)) {
       return errorResponse('Valid status is required', 400);
+    }
+    if (status === 'ABSENT' && (!notes || notes.trim() === '')) {
+      return errorResponse('Reason is required for absent status.', 400);
     }
 
     const attendanceDate = date ? new Date(date) : new Date();

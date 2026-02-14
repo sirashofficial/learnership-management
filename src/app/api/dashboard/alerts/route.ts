@@ -205,7 +205,6 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
-        company: true,
         _count: {
           select: { students: true },
         },

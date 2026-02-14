@@ -5,11 +5,18 @@ import { startOfDay, endOfDay } from 'date-fns';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { date, groupId, facilitator, modulesCovered, topicsCovered, activitiesCompleted, observations, challengesFaced } = body;
+        const { date, groupIds, facilitator, groupTrainingData, observations, challengesFaced } = body;
 
-        if (!date || !groupId) {
+        if (!date || !groupIds || !Array.isArray(groupIds) || groupIds.length === 0) {
             return NextResponse.json(
-                { success: false, error: 'Date and Group ID are required' },
+                { success: false, error: 'Date and Group IDs array are required' },
+                { status: 400 }
+            );
+        }
+
+        if (groupIds.length > 10) {
+            return NextResponse.json(
+                { success: false, error: 'Maximum 10 groups can be selected' },
                 { status: 400 }
             );
         }
@@ -18,9 +25,11 @@ export async function POST(request: NextRequest) {
         const start = startOfDay(reportDate);
         const end = endOfDay(reportDate);
 
-        // 1. Fetch Group and Students
-        const group = await prisma.group.findUnique({
-            where: { id: groupId },
+        // Fetch all groups and their students
+        const groupsData = await prisma.group.findMany({
+            where: {
+                id: { in: groupIds }
+            },
             include: {
                 students: {
                     where: { status: 'ACTIVE' },
@@ -29,110 +38,108 @@ export async function POST(request: NextRequest) {
             }
         });
 
-        if (!group) {
+        if (groupsData.length === 0) {
             return NextResponse.json(
-                { success: false, error: 'Group not found' },
+                { success: false, error: 'No groups found' },
                 { status: 404 }
             );
         }
 
-        // 2. Fetch Attendance for this date
-        // Assuming AttendanceRecord model exists and has date field
-        // If not, we might need to mock or adjust. 
-        // Checking schema based on previous knowledge: AttendanceRecord linked to Student.
-
-        // Let's assume a simple Attendance model for now or try to query it.
-        // If Attendance doesn't exist efficiently, we might return empty or mock.
-        // But we know there is `AttendanceReport` model mentioned in the plan.
-        // Let's try to query `AttendanceRecord` if it exists.
-
-        // Safe bet: Fetch students and see if we can find attendance. 
-        // I'll assume we can't easily query attendance by date for all students without a specific model I haven't seen fully.
-        // I'll fetch students and include their attendance records filtered by date if possible.
-
-        // Actually, looking at previous context, there's `AttendanceRecord` inside `Student`.
-        const studentsWithAttendance = await prisma.student.findMany({
-            where: {
-                groupId: groupId,
-                status: 'ACTIVE',
-            },
-            include: {
-                attendance: {
-                    where: {
-                        date: {
-                            gte: start,
-                            lte: end
+        // Process each group separately
+        const groups = await Promise.all(groupsData.map(async (group) => {
+            const studentsWithAttendance = await prisma.student.findMany({
+                where: {
+                    groupId: group.id,
+                    status: 'ACTIVE',
+                },
+                include: {
+                    attendance: {
+                        where: {
+                            date: {
+                                gte: start,
+                                lte: end
+                            }
                         }
                     }
-                }
-            },
-            orderBy: { lastName: 'asc' }
-        });
-
-        const attendanceData = {
-            present: [] as string[],
-            absent: [] as { name: string; reason: string }[],
-            late: [] as { name: string; arrivalTime: string }[],
-        };
-
-        studentsWithAttendance.forEach(student => {
-            const record = student.attendance[0];
-            const name = `${student.firstName} ${student.lastName}`;
-
-            if (!record) {
-                // No record usually means absent or not marked. We'll list as 'Not Marked' or assume absent if strict.
-                // For this report, maybe 'Absent (No Record)'
-                attendanceData.absent.push({ name, reason: 'No Record' });
-            } else if (record.status === 'PRESENT') {
-                attendanceData.present.push(name);
-            } else if (record.status === 'ABSENT') {
-                attendanceData.absent.push({ name, reason: record.notes || 'Unspecified' });
-            } else if (record.status === 'LATE') {
-                attendanceData.late.push({ name, arrivalTime: 'Unknown' }); // arrivalTime might not be in schema
-            }
-        });
-
-        // 3. Fetch Formative Completions for this date
-        // We added FormativeCompletion model.
-        const formativesCompleted = await prisma.formativeCompletion.findMany({
-            where: {
-                student: { groupId: groupId },
-                completedDate: {
-                    gte: start,
-                    lte: end
                 },
-                passed: true
-            },
-            include: {
-                student: true,
-                formative: true
-            }
-        });
+                orderBy: { lastName: 'asc' }
+            });
 
-        const formattedFormatives = formativesCompleted.map(fc => ({
-            studentName: `${fc.student.firstName} ${fc.student.lastName}`,
-            formativeCode: fc.formative.code,
-            title: fc.formative.title
+            const attendanceData = {
+                present: [] as string[],
+                absent: [] as { name: string; reason: string }[],
+                late: [] as { name: string; arrivalTime: string }[],
+            };
+
+            studentsWithAttendance.forEach(student => {
+                const name = `${student.firstName} ${student.lastName}`;
+                if (!student.attendance || student.attendance.length === 0) {
+                    attendanceData.absent.push({ name, reason: 'No Record' });
+                } else {
+                    const record = student.attendance[0];
+                    if (record.status === 'PRESENT') {
+                        attendanceData.present.push(name);
+                    } else if (record.status === 'ABSENT') {
+                        attendanceData.absent.push({ name: name, reason: record.notes || 'No Reason Provided' });
+                    } else if (record.status === 'LATE') {
+                        attendanceData.late.push({ name: name, arrivalTime: 'Unknown' });
+                    }
+                }
+            });
+
+            // Fetch Formative Completions for this group on this date
+            const formativesCompleted = await prisma.formativeCompletion.findMany({
+                where: {
+                    student: { groupId: group.id },
+                    completedDate: {
+                        gte: start,
+                        lte: end
+                    },
+                    passed: true
+                },
+                include: {
+                    student: true,
+                    formative: true
+                }
+            });
+
+            const formattedFormatives = formativesCompleted.map(fc => ({
+                studentName: `${fc.student.firstName} ${fc.student.lastName}`,
+                formativeCode: fc.formative.code,
+                title: fc.formative.title
+            }));
+
+            // Get per-group training data
+            const groupData = groupTrainingData[group.id] || {
+                modulesCovered: 'N/A',
+                topicsCovered: 'N/A',
+                activitiesCompleted: []
+            };
+
+            return {
+                groupName: group.name,
+                groupId: group.id,
+                attendance: attendanceData,
+                assessments: formattedFormatives,
+                training: {
+                    modulesCovered: groupData.modulesCovered || 'N/A',
+                    topicsCovered: groupData.topicsCovered || 'N/A',
+                    activitiesCompleted: groupData.activitiesCompleted || [],
+                },
+                notes: {
+                    observations,
+                    challengesFaced,
+                }
+            };
         }));
 
         // Construct the response data structure
         const reportData = {
             meta: {
                 date: reportDate,
-                groupName: group.name,
                 facilitator,
             },
-            training: {
-                modulesCovered,
-                topicsCovered,
-                activitiesCompleted,
-            },
-            attendance: attendanceData,
-            assessments: formattedFormatives,
-            notes: {
-                observations,
-                challengesFaced,
-            }
+            groups: groups
         };
 
         return NextResponse.json({ success: true, data: reportData });

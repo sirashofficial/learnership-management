@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
     const moduleId = searchParams.get('moduleId');
     const search = searchParams.get('search');
 
-    const lessons = await prisma.lessonPlan.findMany({
+    // Use Session instead of LessonPlan
+    const lessons = await prisma.session.findMany({
       where: {
         ...(startDate && endDate && {
           date: {
@@ -25,23 +26,15 @@ export async function GET(request: NextRequest) {
           },
         }),
         ...(groupId && { groupId }),
-        ...(moduleId && { moduleId }),
+        // Session has 'module' as string, not moduleId
         ...(search && {
           OR: [
             { title: { contains: search } },
-            { description: { contains: search } },
-            { objectives: { contains: search } },
+            { notes: { contains: search } },
           ],
         }),
       },
       include: {
-        module: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-          },
-        },
         facilitator: {
           select: {
             id: true,
@@ -53,12 +46,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            company: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
           },
         },
       },
@@ -119,12 +106,6 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            company: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
           },
         },
       },

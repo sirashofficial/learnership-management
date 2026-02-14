@@ -1,53 +1,85 @@
 "use client";
 
 import { useState } from "react";
-import { X, Save, Building2, MapPin, Calendar, Users } from "lucide-react";
+import { X, Save, Building2, MapPin, Calendar, Users, Loader2 } from "lucide-react";
+import { useGroups } from "@/contexts/GroupsContext";
+import { generateRolloutPlan } from "@/lib/rolloutPlanGenerator";
 
 interface GroupModalProps {
   group?: any;
   onClose: () => void;
-  onSave: (groupData: any) => void;
+  onSave?: (groupData: any) => void;
 }
 
 export default function GroupModal({ group, onClose, onSave }: GroupModalProps) {
+  const { addGroup, updateGroup } = useGroups();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: group?.name || "",
     location: group?.location || "",
-    startDate: group?.startDate || "",
-    endDate: group?.endDate || "",
+    coordinator: group?.coordinator || "",
+    startDate: group?.startDate ? new Date(group?.startDate).toISOString().split('T')[0] : "",
+    endDate: group?.endDate ? new Date(group?.endDate).toISOString().split('T')[0] : "",
     notes: group?.notes || "",
     status: group?.status || "ACTIVE"
   });
 
+  const handleStartDateChange = (value: string) => {
+    const updatedEndDate = value ? addMonthsToInput(value, 12) : "";
+    setFormData((prev) => ({
+      ...prev,
+      startDate: value,
+      endDate: updatedEndDate,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name) {
       alert("Please enter a group name");
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      const url = group ? `/api/groups/${group.id}` : '/api/groups';
-      const method = group ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        alert(group ? 'Group updated successfully!' : 'Group created successfully!');
-        onSave(formData);
+      if (group) {
+        await updateGroup(group.id, formData);
       } else {
-        const error = await response.json();
-        alert(`Failed to save group: ${error.error || 'Unknown error'}`);
+        const createdGroup = await addGroup(formData as any);
+        if (createdGroup?.id && formData.startDate) {
+          await generateAndSavePlan(createdGroup, formData.startDate);
+        }
       }
+
+      alert(group ? 'Group updated successfully!' : 'Group created successfully!');
+      if (onSave) onSave(formData);
+      onClose();
     } catch (error) {
       console.error('Error saving group:', error);
-      alert('Failed to save group. Please try again.');
+      alert('Failed to save group. Please check all fields and try again.');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const generateAndSavePlan = async (createdGroup: any, startDateInput: string) => {
+    const planStartDate = toPlanDate(startDateInput);
+    const rolloutPlan = generateRolloutPlan(createdGroup.name, 0, planStartDate);
+    const rolloutData = buildModuleDates(rolloutPlan);
+
+    await fetch(`/api/groups/${createdGroup.id}/rollout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rolloutPlan: rolloutData }),
+    });
+
+    const notesPayload = buildNotesPayload(createdGroup.notes, rolloutPlan);
+    await updateGroup(createdGroup.id, {
+      startDate: new Date(startDateInput).toISOString(),
+      endDate: new Date(formData.endDate).toISOString(),
+      notes: notesPayload,
+    });
   };
 
   return (
@@ -92,20 +124,37 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
             />
           </div>
 
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Location
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="e.g., Azelis Head Office, Johannesburg"
-              />
+          {/* Location & Coordinator */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Location
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g., Johannesburg"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Coordinator
+              </label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  value={formData.coordinator}
+                  onChange={(e) => setFormData({ ...formData, coordinator: e.target.value })}
+                  className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g., John Doe"
+                />
+              </div>
             </div>
           </div>
 
@@ -118,7 +167,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
               <input
                 type="date"
                 value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                onChange={(e) => handleStartDateChange(e.target.value)}
                 className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
@@ -129,7 +178,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
               <input
                 type="date"
                 value={formData.endDate}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                readOnly
                 className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
@@ -176,9 +225,10 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 transition-colors font-medium flex items-center justify-center gap-2"
             >
-              <Save className="w-4 h-4" />
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {group ? 'Save Changes' : 'Create Group'}
             </button>
           </div>
@@ -186,4 +236,57 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
       </div>
     </div>
   );
+}
+
+function addMonthsToInput(value: string, months: number): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const targetMonth = date.getMonth() + months;
+  const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12;
+  const day = date.getDate();
+  const lastDay = new Date(targetYear, normalizedMonth + 1, 0).getDate();
+  const result = new Date(targetYear, normalizedMonth, Math.min(day, lastDay));
+  return result.toISOString().split('T')[0];
+}
+
+function toPlanDate(input: string): string {
+  const date = new Date(input);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function parsePlanDate(value: string): Date {
+  const [day, month, year] = value.split('/').map((part) => Number(part));
+  return new Date(year, month - 1, day);
+}
+
+function buildModuleDates(plan: any) {
+  const rolloutData: Record<string, Date> = {};
+
+  plan.modules.forEach((module: any) => {
+    const first = module.unitStandards[0];
+    const last = module.unitStandards[module.unitStandards.length - 1];
+    rolloutData[`module${module.moduleNumber}StartDate`] = parsePlanDate(first.startDate);
+    rolloutData[`module${module.moduleNumber}EndDate`] = parsePlanDate(last.endDate);
+  });
+
+  return rolloutData;
+}
+
+function buildNotesPayload(notes: string | null | undefined, plan: any) {
+  if (!notes) {
+    return JSON.stringify({ rolloutPlan: plan });
+  }
+
+  try {
+    const parsed = JSON.parse(notes);
+    return JSON.stringify({ ...parsed, rolloutPlan: plan });
+  } catch {
+    return JSON.stringify({ notesText: notes, rolloutPlan: plan });
+  }
 }

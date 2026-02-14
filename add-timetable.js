@@ -12,10 +12,15 @@ async function addTimetable() {
 
     console.log(`Found ${groups.length} groups`);
 
-    // Create a mapping of group names to IDs
+    // Use shared normalization utility
+    const { normalizeGroupName } = require('./src/lib/groupNameUtils');
+    // Create a mapping of normalized group names to IDs
     const groupMap = {};
     groups.forEach(g => {
-      groupMap[g.name] = g.id;
+      const normalizedNames = normalizeGroupName(g.name);
+      normalizedNames.forEach(n => {
+        groupMap[n] = g.id;
+      });
     });
 
     // Get or create a default module

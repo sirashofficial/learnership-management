@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
 import { FolderOpen, Check, X, Save, Eye } from "lucide-react";
 import useSWR, { mutate } from "swr";
 import StudentDetailsModal from "@/components/StudentDetailsModal";
@@ -90,8 +89,6 @@ export default function POEPage() {
 
   return (
     <>
-      <Header />
-      
       <div className="p-6 space-y-6">
         {/* Info Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

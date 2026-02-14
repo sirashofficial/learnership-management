@@ -12,6 +12,8 @@ const createAssessmentSchema = z.object({
   dueDate: z.string().transform(str => new Date(str)),
   notes: z.string().optional(),
   result: z.string().optional(),
+  score: z.number().min(0).max(100).optional(),
+  feedback: z.string().optional(),
 });
 
 // GET /api/assessments
@@ -78,6 +80,8 @@ export async function POST(request: NextRequest) {
         dueDate: validatedData.dueDate,
         notes: validatedData.notes || null,
         result: validatedData.result || 'PENDING',
+        score: validatedData.score || null,
+        feedback: validatedData.feedback || null,
         attemptNumber: 1,
         moderationStatus: 'PENDING',
       },
@@ -100,29 +104,41 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT /api/assessments
+// PUT /api/assessments - Mark/Update Assessment
 export async function PUT(request: NextRequest) {
   try {
     const { error, user: currentUser } = await requireAuth(request);
     if (error) return error;
 
     const body = await request.json();
-    const { id, result, score, feedback, notes, assessedDate } = body;
+    const { id, result, score, feedback, notes, assessedDate, moderationStatus } = body;
 
     if (!id) {
       return errorResponse('Assessment ID required', 400);
     }
 
+    // Validate score if provided
+    if (score !== undefined && (score < 0 || score > 100)) {
+      return errorResponse('Score must be between 0 and 100', 400);
+    }
+
+    const update: any = {};
+    
+    if (result) update.result = result;
+    if (score !== undefined) update.score = score;
+    if (feedback) update.feedback = feedback;
+    if (notes) update.notes = notes;
+    if (assessedDate) update.assessedDate = new Date(assessedDate);
+    if (moderationStatus) update.moderationStatus = moderationStatus;
+    
+    // Set assessed date to now if not provided but result is being set
+    if (result && !assessedDate) {
+      update.assessedDate = new Date();
+    }
+
     const assessment = await prisma.assessment.update({
       where: { id },
-      data: {
-        result,
-        score,
-        feedback,
-        notes,
-        assessedDate: assessedDate ? new Date(assessedDate) : new Date(),
-        moderationStatus: result ? 'PENDING' : undefined,
-      },
+      data: update,
       include: {
         student: { include: { group: true } },
         unitStandard: {
@@ -133,13 +149,16 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    console.log('✅ Assessment marked:', { assessmentId: id, result, score });
+
     // Update student progress if competent and approved
     if (result === 'COMPETENT' && assessment.moderationStatus === 'APPROVED') {
       await updateStudentProgress(assessment.studentId, assessment.unitStandardId);
     }
 
-    return successResponse(assessment, 'Assessment updated successfully');
+    return successResponse(assessment, 'Assessment marked successfully');
   } catch (error) {
+    console.error('Assessment marking error:', error);
     return handleApiError(error);
   }
 }

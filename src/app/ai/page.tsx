@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Header from "@/components/Header";
 import {
   Sparkles,
   MessageCircle,
@@ -69,66 +68,51 @@ export default function AIAssistantPage() {
   // State
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   const [loading, setLoading] = useState(false);
+  const [inputMessage, setInputMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFilter, setSearchFilter] = useState<number | null>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [generateTopic, setGenerateTopic] = useState('');
+  const [generateType, setGenerateType] = useState('lesson-plan');
+  const [generatedContent, setGeneratedContent] = useState('');
+  const [unitStandards, setUnitStandards] = useState<{ id: string; title: string; code?: string; module?: { number: number } }[]>([]);
+  const [indexStats, setIndexStats] = useState<IndexStats | null>(null);
+  const [selectedUnitStandard, setSelectedUnitStandard] = useState('');
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+  const [assessmentType, setAssessmentType] = useState('formative');
+  const [questionCount, setQuestionCount] = useState(5);
+  const [indexing, setIndexing] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Hello! I\'m your AI Training Assistant for the NVC Level 2 qualification. I can help you with:\n\n• **Curriculum questions** - Ask about modules, unit standards, and learning outcomes\n• **Assessment guidance** - Understand formative and summative requirements\n• **POE requirements** - Learn about Portfolio of Evidence compilation\n• **Progress tracking** - Get insights on student performance\n\nHow can I assist you today?'
+      content: 'Hello! I\'m your AI teaching assistant. I can help you with curriculum questions, generate lesson plans, and search through course materials. How can I help you today?'
     }
   ]);
-  const [inputMessage, setInputMessage] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [searchFilter, setSearchFilter] = useState<number | null>(null);
-
-  // Assessment generation state
-  const [selectedUnitStandard, setSelectedUnitStandard] = useState('');
-  const [assessmentType, setAssessmentType] = useState<'formative' | 'summative'>('formative');
-  const [questionCount, setQuestionCount] = useState(5);
-  const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
-  const [unitStandards, setUnitStandards] = useState<Array<{
-    id: string;
-    code: string;
-    title: string;
-    module: { name: string; number: number };
-  }>>([]);
-
-  // Index stats
-  const [indexStats, setIndexStats] = useState<IndexStats | null>(null);
-  const [indexing, setIndexing] = useState(false);
-
-  // Scroll to bottom of chat
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Load unit standards on mount
-  useEffect(() => {
-    loadUnitStandards();
     loadIndexStats();
+    loadUnitStandards();
   }, []);
 
   const loadUnitStandards = async () => {
     try {
-      const response = await fetch('/api/ai/generate-assessment');
+      const response = await fetch('/api/modules');
       const data = await response.json();
-      if (data.success && data.data.modules) {
+      if (data.modules) {
         const allUS: typeof unitStandards = [];
-        for (const module of data.data.modules) {
+        for (const module of data.modules) {
           for (const us of module.unitStandards) {
             allUS.push({
               id: us.id,
-              code: us.code,
               title: us.title,
-              module: { name: module.moduleName, number: module.moduleNumber }
+              code: us.code,
+              module: { number: module.moduleNumber },
             });
           }
         }
@@ -283,7 +267,6 @@ export default function AIAssistantPage() {
 
   return (
     <>
-      <Header />
 
       <div className="p-6 space-y-6">
         {/* Hero Section */}
@@ -513,7 +496,7 @@ export default function AIAssistantPage() {
                             <p className="text-sm text-slate-600 line-clamp-2">{result.preview}</p>
                             {result.tags.length > 0 && (
                               <div className="flex gap-1 mt-2">
-                                {result.tags.slice(0, 4).map((tag, i) => (
+                                {result.tags.slice(0, 4).map((tag: string, i: number) => (
                                   <span key={i} className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded">
                                     {tag}
                                   </span>
@@ -582,7 +565,7 @@ export default function AIAssistantPage() {
                         <option value="">Select a unit standard...</option>
                         {unitStandards.map((us) => (
                           <option key={us.id} value={us.id}>
-                            {us.code} - {us.title} (Module {us.module.number})
+                            {us.code} - {us.title} {us.module ? `(Module ${us.module.number})` : ''}
                           </option>
                         ))}
                       </select>
@@ -683,7 +666,7 @@ export default function AIAssistantPage() {
                                   <p className="mt-2 text-slate-800">{q.question}</p>
                                   {q.options && (
                                     <div className="mt-2 space-y-1">
-                                      {q.options.map((opt, i) => (
+                                      {q.options.map((opt: string, i: number) => (
                                         <div
                                           key={i}
                                           className={`text-sm px-3 py-1.5 rounded ${opt === q.correctAnswer

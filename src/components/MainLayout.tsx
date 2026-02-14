@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
 import { ReactNode } from 'react';
 
 const publicPaths = ['/login', '/register'];
@@ -12,7 +13,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
     if (isPublicPage) {
         return (
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-white">
                 <main className="min-h-screen">
                     {children}
                 </main>
@@ -21,10 +22,11 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-white">
             <Sidebar />
-            <main className="transition-all duration-300 ease-out ml-[260px] min-h-screen">
-                <div className="p-6 page-enter">
+            <main className="transition-all duration-150 ml-[var(--sidebar-width)] min-h-screen">
+                <Header />
+                <div className="px-6 lg:px-8 py-6 page-enter">
                     {children}
                 </div>
             </main>

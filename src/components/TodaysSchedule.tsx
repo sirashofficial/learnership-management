@@ -59,12 +59,12 @@ export default function TodaysSchedule() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-6 mb-8">
+    <div className="bg-white rounded-lg border border-slate-200 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Upcoming Schedule</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Upcoming Schedule</h3>
         <button
           onClick={() => router.push('/timetable')}
-          className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+          className="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 transition-colors"
         >
           View Calendar
           <ChevronRight className="w-4 h-4" />

@@ -24,61 +24,45 @@ export default function StatCard({
 }: StatCardProps) {
   const isPositiveTrend = trend && trend > 0;
   const isNegativeTrend = trend && trend < 0;
-  const hasNoChange = trend === 0;
 
   return (
     <div
       onClick={onClick}
       className={cn(
-        "card-premium group relative p-8 noise-texture",
-        onClick ? "cursor-pointer" : "cursor-default",
+        "bg-white rounded-lg border border-slate-200 p-5 transition-colors duration-150",
+        onClick && "cursor-pointer hover:border-slate-300",
         loading && "animate-pulse"
       )}
     >
-      <div className="flex items-start justify-between mb-6">
-        <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center transition-all duration-500 group-hover:bg-emerald-600 group-hover:scale-110 group-hover:rotate-3 shadow-xl">
-          <Icon className="w-6 h-6 text-white" />
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+          <Icon className="w-[18px] h-[18px] text-slate-600" />
         </div>
-
-        {trend !== undefined && !loading && (
-          <div
-            className={cn(
-              "flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border",
-              isPositiveTrend && "bg-emerald-50 text-emerald-600 border-emerald-100",
-              isNegativeTrend && "bg-red-50 text-red-600 border-red-100",
-              hasNoChange && "bg-slate-50 text-slate-400 border-slate-100"
-            )}
-          >
-            {isPositiveTrend && (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-            )}
-            {isNegativeTrend && (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            )}
-            <span>{Math.abs(trend)}{suffix === '%' ? '' : '%'}</span>
-          </div>
-        )}
+        <span className="text-sm text-slate-500">{title}</span>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</p>
-
-        {loading ? (
-          <div className="h-10 bg-slate-100 rounded-xl w-3/4 animate-pulse"></div>
-        ) : (
-          <p className="text-4xl font-black text-slate-950 font-main tracking-tighter">
-            {value}
-            {suffix && <span className="text-xl font-bold text-slate-400 ml-1.5 italic">{suffix}</span>}
+      {loading ? (
+        <div className="h-8 bg-slate-100 rounded w-2/3"></div>
+      ) : (
+        <div className="flex items-end justify-between">
+          <p className="text-2xl font-semibold text-slate-900">
+            {value}{suffix && <span className="text-base text-slate-400 ml-0.5">{suffix}</span>}
           </p>
-        )}
-      </div>
 
-      {/* Decorative hover elements */}
-      <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-br-2xl pointer-events-none" />
+          {trend !== undefined && (
+            <span
+              className={cn(
+                "text-xs font-medium",
+                isPositiveTrend && "text-emerald-600",
+                isNegativeTrend && "text-red-500",
+                !isPositiveTrend && !isNegativeTrend && "text-slate-400"
+              )}
+            >
+              {isPositiveTrend && '+'}{trend}{suffix === '%' ? '' : '%'}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,19 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import Header from "@/components/Header";
+import { useState, useEffect } from "react";
 import { useStudents } from "@/hooks/useStudents";
 import { useAttendance } from "@/hooks/useAttendance";
 import { useAssessmentStats } from "@/hooks/useAssessmentStats";
 import { useProgress } from "@/hooks/useProgress";
-import { FileText, CheckCircle, AlertCircle, Clock, Download, Users, Calendar, Award, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { FileText, CheckCircle, AlertCircle, Clock, Download, Users, Calendar, Award, TrendingUp, Eye } from "lucide-react";
+import { cn, downloadExport } from "@/lib/utils";
 import StudentDetailsModal from "@/components/StudentDetailsModal";
 import { generateComplianceReportPDF, type ComplianceReportData, type ReportStudent } from "@/lib/report-generator";
 
+type ViewMode = 'student' | 'group';
+
+interface GroupCompliance {
+  id: string;
+  name: string;
+  attendanceRate: number;
+  assessmentCompletion: number;
+  status: 'COMPLIANT' | 'AT_RISK' | 'NON_COMPLIANT';
+  studentCount: number;
+}
+
 export default function CompliancePage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('student');
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [groupCompliance, setGroupCompliance] = useState<GroupCompliance[]>([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
   const { students } = useStudents();
   const { attendance } = useAttendance();
   const { stats: assessmentStats } = useAssessmentStats();
@@ -25,6 +39,101 @@ export default function CompliancePage() {
     if (studentAttendance.length === 0) return 0;
     const present = studentAttendance.filter((a: any) => a.status === "PRESENT").length;
     return Math.round((present / studentAttendance.length) * 100);
+  };
+
+  // Fetch groups and their compliance data
+  useEffect(() => {
+    if (viewMode === 'group') {
+      fetchGroupCompliance();
+    }
+  }, [viewMode]);
+
+  const fetchGroupCompliance = async () => {
+    setIsLoadingGroups(true);
+    try {
+      // Fetch groups
+      const groupsRes = await fetch('/api/groups');
+      const groupsData = await groupsRes.json();
+      const allGroups = groupsData.groups || [];
+      setGroups(allGroups);
+
+      // Fetch compliance data for each group
+      const compliancePromises = allGroups.map(async (group: any) => {
+        try {
+          // Get attendance stats for group
+          const attendanceRes = await fetch(`/api/attendance/stats?groupId=${group.id}`);
+          const attendanceData = await attendanceRes.json();
+          const attendanceRate = attendanceData.data?.attendanceRate || 0;
+
+          // Get assessment status for group
+          const assessmentRes = await fetch(`/api/groups/${group.id}/assessment-status`);
+          const assessmentData = await assessmentRes.json();
+          const assessmentCompletion = assessmentData.data?.completionPercentage || 0;
+
+          // Calculate RAG status
+          let status: 'COMPLIANT' | 'AT_RISK' | 'NON_COMPLIANT' = 'COMPLIANT';
+          if (attendanceRate >= 80 && assessmentCompletion >= 75) {
+            status = 'COMPLIANT';
+          } else if (attendanceRate >= 60 || assessmentCompletion >= 50) {
+            status = 'AT_RISK';
+          } else {
+            status = 'NON_COMPLIANT';
+          }
+
+          return {
+            id: group.id,
+            name: group.name,
+            attendanceRate,
+            assessmentCompletion,
+            status,
+            studentCount: group._count?.students || 0
+          };
+        } catch (error) {
+          console.error(`Error fetching compliance for group ${group.id}:`, error);
+          return {
+            id: group.id,
+            name: group.name,
+            attendanceRate: 0,
+            assessmentCompletion: 0,
+            status: 'NON_COMPLIANT' as const,
+            studentCount: 0
+          };
+        }
+      });
+
+      const complianceResults = await Promise.all(compliancePromises);
+      setGroupCompliance(complianceResults);
+    } catch (error) {
+      console.error('Error fetching group compliance:', error);
+    } finally {
+      setIsLoadingGroups(false);
+    }
+  };
+
+  const getRAGStatusColor = (status: string) => {
+    switch (status) {
+      case 'COMPLIANT':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'AT_RISK':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'NON_COMPLIANT':
+        return 'bg-red-100 text-red-700 border-red-200';
+      default:
+        return 'bg-slate-100 text-slate-600 border-slate-200';
+    }
+  };
+
+  const getRAGStatusLabel = (status: string) => {
+    switch (status) {
+      case 'COMPLIANT':
+        return '✓ Compliant';
+      case 'AT_RISK':
+        return '⚠ At Risk';
+      case 'NON_COMPLIANT':
+        return '✗ Non-Compliant';
+      default:
+        return 'Unknown';
+    }
   };
 
   const studentsWithCompliance = students?.map((student: any) => ({
@@ -84,12 +193,183 @@ export default function CompliancePage() {
 
   return (
     <>
-      <Header />
 
       <div className="p-6 space-y-6">
+        {/* View Mode Toggle */}
+        <div className="bg-white rounded-lg border border-background-border p-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('student')}
+              className={cn(
+                "flex-1 px-4 py-2 rounded-lg font-medium transition-colors",
+                viewMode === 'student'
+                  ? "bg-primary text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              )}
+            >
+              <Users className="w-4 h-4 inline mr-2" />
+              Student View
+            </button>
+            <button
+              onClick={() => setViewMode('group')}
+              className={cn(
+                "flex-1 px-4 py-2 rounded-lg font-medium transition-colors",
+                viewMode === 'group'
+                  ? "bg-primary text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              )}
+            >
+              <TrendingUp className="w-4 h-4 inline mr-2" />
+              Group View
+            </button>
+          </div>
+        </div>
+
+        {/* Group Compliance View */}
+        {viewMode === 'group' && (
+          <>
+            {/* Group Summary */}
+            {groupCompliance.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg border border-background-border p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <span className="text-2xl font-bold text-text">{groupCompliance.length}</span>
+                  </div>
+                  <p className="text-sm text-text-light">Total Groups</p>
+                </div>
+                <div className="bg-white rounded-lg border border-background-border p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5" />
+                    </div>
+                    <span className="text-2xl font-bold text-text">
+                      {groupCompliance.filter(g => g.status === 'COMPLIANT').length}
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-light">Compliant</p>
+                </div>
+                <div className="bg-white rounded-lg border border-background-border p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <span className="text-2xl font-bold text-text">
+                      {groupCompliance.filter(g => g.status === 'AT_RISK').length}
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-light">At Risk</p>
+                </div>
+                <div className="bg-white rounded-lg border border-background-border p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <span className="text-2xl font-bold text-text">
+                      {groupCompliance.filter(g => g.status === 'NON_COMPLIANT').length}
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-light">Non-Compliant</p>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    await downloadExport(
+                      '/api/reports/unit-standards',
+                      `unit-standards-report-${new Date().toISOString().split('T')[0]}.pdf`,
+                      {}
+                    );
+                    alert('✅ Unit Standards Report downloaded!');
+                  } catch (error) {
+                    alert('Failed to download report');
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                View Unit Standards Report
+              </button>
+            </div>
+
+            {/* Group Compliance Table */}
+            <div className="bg-white rounded-lg border border-background-border p-6">
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Group Compliance (RAG Status)
+              </h3>
+              <p className="text-sm text-slate-500 mb-4">
+                <strong>{groupCompliance.filter(g => g.status === 'COMPLIANT').length}</strong> of <strong>{groupCompliance.length}</strong> groups are compliant
+                {groupCompliance.length > 0 && (
+                  <span className="ml-2 text-primary font-medium">
+                    ({Math.round((groupCompliance.filter(g => g.status === 'COMPLIANT').length / groupCompliance.length) * 100)}%)
+                  </span>
+                )}
+              </p>
+
+              {isLoadingGroups ? (
+                <div className="text-center py-12 text-slate-500">
+                  <Clock className="w-8 h-8 animate-spin mx-auto mb-3 text-slate-300" />
+                  <p>Loading group compliance data...</p>
+                </div>
+              ) : groupCompliance.length > 0 ? (
+                <div className="space-y-3">
+                  {groupCompliance.map((group) => (
+                    <div
+                      key={group.id}
+                      className="flex items-center justify-between p-4 border-2 rounded-lg transition-colors hover:shadow-md"
+                      style={{
+                        borderColor: group.status === 'COMPLIANT' ? '#10b981' :
+                                    group.status === 'AT_RISK' ? '#f59e0b' : '#ef4444',
+                        backgroundColor: group.status === 'COMPLIANT' ? '#f0fdf4' :
+                                        group.status === 'AT_RISK' ? '#fffbeb' : '#fef2f2'
+                      }}
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900">{group.name}</h4>
+                        <p className="text-sm text-slate-500">{group.studentCount} students</p>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Attendance</p>
+                          <p className="text-lg font-bold text-slate-900">{group.attendanceRate}%</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-slate-500 mb-1">Assessment</p>
+                          <p className="text-lg font-bold text-slate-900">{group.assessmentCompletion}%</p>
+                        </div>
+                        <span className={cn(
+                          "px-4 py-2 text-sm font-medium rounded-full border-2",
+                          getRAGStatusColor(group.status)
+                        )}>
+                          {getRAGStatusLabel(group.status)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-slate-500">
+                  <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p>No group data available</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Student View (existing code) */}
+        {viewMode === 'student' && (
+          <>
         {/* Overall Compliance Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl border border-background-border p-5">
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5" />
@@ -99,7 +379,7 @@ export default function CompliancePage() {
             <p className="text-sm text-text-light">Overall Compliance</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-background-border p-5">
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5" />
@@ -109,7 +389,7 @@ export default function CompliancePage() {
             <p className="text-sm text-text-light">Compliant Students</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-background-border p-5">
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center">
                 <AlertCircle className="w-5 h-5" />
@@ -119,7 +399,7 @@ export default function CompliancePage() {
             <p className="text-sm text-text-light">Non-Compliant</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-background-border p-5">
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
                 <Award className="w-5 h-5" />
@@ -144,7 +424,7 @@ export default function CompliancePage() {
         </div>
 
         {/* SSETA Compliance Threshold (80% Attendance) */}
-        <div className="bg-white rounded-xl border border-background-border p-6">
+        <div className="bg-white rounded-lg border border-background-border p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -219,7 +499,7 @@ export default function CompliancePage() {
         </div>
 
         {/* Assessment Compliance */}
-        <div className="bg-white rounded-xl border border-background-border p-6">
+        <div className="bg-white rounded-lg border border-background-border p-6">
           <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <Award className="w-5 h-5 text-primary" />
             Assessment Compliance
@@ -287,7 +567,7 @@ export default function CompliancePage() {
         </div>
 
         {/* Module Progress Compliance */}
-        <div className="bg-white rounded-xl border border-background-border p-6">
+        <div className="bg-white rounded-lg border border-background-border p-6">
           <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-primary" />
             Module Progress Overview
@@ -398,6 +678,8 @@ export default function CompliancePage() {
             ))}
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {selectedStudent && (

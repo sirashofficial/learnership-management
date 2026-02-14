@@ -8,48 +8,58 @@ async function addMontzelityLessons() {
     // Get all groups to find Montzelity
     const groups = await prisma.group.findMany();
     
-    // Try different variations of the name
-    const montzelityGroup = groups.find(g => 
-      g.name.toLowerCase().includes('montzelity') || 
-      g.name.toLowerCase().includes('monteagle') ||
-      g.name.toLowerCase().includes('montazility')
-    );
-    
-    if (!montzelityGroup) {
-      console.log('\n⚠️  Montzelity group not found. Creating new group...');
-      
+
+    // Use shared normalization utility
+    const { normalizeGroupName } = require('./src/lib/groupNameUtils');
+
+    // Find or create groups for Montzelity 26'
+    const montzelityNames = normalizeGroupName("Montazility 26'");
+    const montzelityGroups = groups.filter(g => montzelityNames.includes(g.name));
+
+    if (montzelityGroups.length < montzelityNames.length) {
+      console.log('\n⚠️  Some Montzelity groups not found. Creating missing groups...');
       // Get a company to associate with
       const company = await prisma.company.findFirst();
-      
       if (!company) {
         console.error('No company found to associate group with');
         return;
       }
-
-      // Create the Montzelity 26' group
-      const newGroup = await prisma.group.create({
-        data: {
-          name: "Montzelity 26'",
-          location: 'Main Campus',
-          address: 'Training Center',
-          contactName: 'Coordinator',
-          contactPhone: '0123456789',
-          coordinator: 'Admin',
-          startDate: new Date('2026-01-01'),
-          endDate: new Date('2026-12-31'),
-          status: 'ACTIVE',
-          companyId: company.id,
+      for (const groupName of montzelityNames) {
+        if (!groups.find(g => g.name === groupName)) {
+          const newGroup = await prisma.group.create({
+            data: {
+              name: groupName,
+              location: 'Main Campus',
+              address: 'Training Center',
+              contactName: 'Coordinator',
+              contactPhone: '0123456789',
+              coordinator: 'Admin',
+              startDate: new Date('2026-01-01'),
+              endDate: new Date('2026-12-31'),
+              status: 'ACTIVE',
+              companyId: company.id,
+            }
+          });
+          console.log(`✓ Created group: ${newGroup.name} (ID: ${newGroup.id})`);
         }
-      });
-      
-      console.log(`✓ Created group: ${newGroup.name} (ID: ${newGroup.id})`);
-      
-      // Use the newly created group
-      await addLessonsForGroup(newGroup);
-    } else {
-      console.log(`Found group: ${montzelityGroup.name} (ID: ${montzelityGroup.id})`);
-      await addLessonsForGroup(montzelityGroup);
+      }
     }
+    // Use the constituent groups for Montzelity
+    for (const groupName of montzelityNames) {
+      const group = groups.find(g => g.name === groupName);
+      if (group) {
+        try {
+          await addLessonsForGroup(group);
+        } catch (error) {
+          console.error(`Error adding lessons for group ${group.name}:`, error.message);
+        }
+      } else {
+        console.warn(`Group not found: ${groupName}`);
+      }
+    }
+    
+      // All montzelityGroup logic replaced by normalized group handling above
+      // Use the constituent groups for Montzelity
 
   } catch (error) {
     console.error('Error:', error);

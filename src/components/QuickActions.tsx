@@ -74,54 +74,36 @@ export default function QuickActions() {
 
   return (
     <>
-      <div className="bg-white/50 backdrop-blur-xl rounded-[2rem] shadow-premium border border-white/20 p-8 mb-8 noise-texture">
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-          <div className="space-y-1">
-            <h3 className="text-lg font-black font-display tracking-tight">Strategic Actions</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Accelerate your workflow with contextual directives</p>
-          </div>
-          <div className="h-px flex-1 bg-slate-100 hidden sm:block mx-8"></div>
-        </div>
+      <div className="bg-white rounded-lg border border-slate-200 p-5">
+        <h3 className="text-sm font-semibold text-slate-900 mb-4">Quick actions</h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             onClick={() => setShowAddStudent(true)}
-            className="btn-emerald group"
+            className="btn-primary text-sm py-2.5"
           >
-            <span className="flex items-center justify-center gap-2">
-              Add Student
-              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
-            </span>
+            Add Student
           </button>
 
           <button
             onClick={() => setShowCreateGroup(true)}
-            className="btn-teal group"
+            className="btn-secondary text-sm py-2.5"
           >
-            <span className="flex items-center justify-center gap-2">
-              Create Group
-              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
-            </span>
+            Create Group
           </button>
 
           <button
             onClick={() => setShowScheduleLesson(true)}
-            className="btn-cyan group"
+            className="btn-secondary text-sm py-2.5"
           >
-            <span className="flex items-center justify-center gap-2">
-              Schedule Lesson
-              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
-            </span>
+            Schedule Lesson
           </button>
 
           <button
             onClick={() => setShowMarkAttendance(true)}
-            className="btn-slate group"
+            className="btn-secondary text-sm py-2.5"
           >
-            <span className="flex items-center justify-center gap-2">
-              Mark Attendance
-              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-20 group-hover:opacity-100 transition-opacity" />
-            </span>
+            Mark Attendance
           </button>
         </div>
       </div>

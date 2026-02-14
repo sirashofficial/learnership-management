@@ -3,27 +3,24 @@
 import { createContext, useContext, ReactNode } from "react";
 import useSWR, { mutate } from "swr";
 
-export interface Company {
-  id: string;
-  name: string;
-  contactPerson?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  industry?: string;
-}
-
 export interface Group {
   id: string;
   name: string;
-  company?: Company;
-  companyId?: string | null;
   startDate: string;
-  endDate: string;
-  status: 'Planning' | 'Active' | 'Completed' | 'On Hold';
-  location: string;
-  coordinator: string;
-  notes: string;
+  endDate?: string;
+  summativeDate?: string;
+  assessingDate?: string;
+  fisaDate?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD';
+  location?: string;
+  address?: string;
+  contactName?: string;
+  contactPhone?: string;
+  email?: string;
+  phone?: string;
+  industry?: string;
+  coordinator?: string;
+  notes?: string;
   createdAt?: string;
   _count?: {
     students: number;
@@ -33,41 +30,50 @@ export interface Group {
 
 interface GroupsContextType {
   groups: Group[];
-  companies: Company[];
   isLoading: boolean;
   error: any;
-  addGroup: (group: Omit<Group, "id" | "createdAt">) => Promise<void>;
+  addGroup: (group: Omit<Group, "id" | "createdAt">) => Promise<Group>;
   updateGroup: (id: string, updates: Partial<Group>) => Promise<void>;
   deleteGroup: (id: string) => Promise<void>;
-  addCompany: (company: Omit<Company, "id">) => Promise<void>;
-  updateCompany: (id: string, updates: Partial<Company>) => Promise<void>;
-  deleteCompany: (id: string) => Promise<void>;
 }
 
 const GroupsContext = createContext<GroupsContextType | undefined>(undefined);
 
-const fetcher = (url: string) => {
+const fetcher = async (url: string) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  return fetch(url, {
+  const res = await fetch(url, {
     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-  }).then((res) => res.json()).then((data) => data.data || data);
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || data.success === false) {
+    throw new Error(data.error || data.message || 'An error occurred while fetching data');
+  }
+
+  return data.data || data;
 };
 
 export function GroupsProvider({ children }: { children: ReactNode }) {
-  const { data: groupsData, error: groupsError } = useSWR('/api/groups', fetcher);
-  const { data: companiesData, error: companiesError } = useSWR('/api/companies', fetcher);
+  // Fetch groups data
+  const { data: groupsData, error: groupsError, isLoading: groupsLoading } = useSWR('/api/groups', fetcher, {
+    revalidateOnFocus: true,
+    revalidateIfStale: true,
+    refreshInterval: 30000,
+    shouldRetryOnError: true,
+  });
 
-  const groups = groupsData || [];
-  const companies = companiesData || [];
-  const isLoading = !groupsData || !companiesData;
-  const error = groupsError || companiesError;
+  // Ensure groups is always an array
+  const groups = Array.isArray(groupsData) ? groupsData : [];
+  const isLoading = groupsLoading;
+  const error = groupsError;
 
   const addGroup = async (groupData: Omit<Group, "id" | "createdAt">) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('/api/groups', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
@@ -76,7 +82,9 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) throw new Error('Failed to create group');
 
+      const data = await response.json();
       mutate('/api/groups');
+      return data.data || data;
     } catch (error) {
       console.error('Error adding group:', error);
       throw error;
@@ -88,7 +96,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/groups/${id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
@@ -124,81 +132,15 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addCompany = async (companyData: Omit<Company, "id">) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/companies', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
-        body: JSON.stringify(companyData),
-      });
-
-      if (!response.ok) throw new Error('Failed to create company');
-
-      mutate('/api/companies');
-    } catch (error) {
-      console.error('Error adding company:', error);
-      throw error;
-    }
-  };
-
-  const updateCompany = async (id: string, updates: Partial<Company>) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/companies', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
-        body: JSON.stringify({ id, ...updates }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update company');
-
-      mutate('/api/companies');
-    } catch (error) {
-      console.error('Error updating company:', error);
-      throw error;
-    }
-  };
-
-  const deleteCompany = async (id: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/companies?id=${id}`, {
-        method: 'DELETE',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to delete company');
-      }
-
-      mutate('/api/companies');
-    } catch (error) {
-      console.error('Error deleting company:', error);
-      throw error;
-    }
-  };
-
   return (
     <GroupsContext.Provider
       value={{
         groups,
-        companies,
         isLoading,
         error,
         addGroup,
         updateGroup,
         deleteGroup,
-        addCompany,
-        updateCompany,
-        deleteCompany,
       }}
     >
       {children}

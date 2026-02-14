@@ -9,7 +9,6 @@ const protectedPaths = [
     '/api/assessments',
     '/api/groups',
     '/api/students',
-    '/api/attendance',
 ];
 
 // Public paths that don't require authentication
@@ -24,9 +23,33 @@ const publicPaths = [
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+    console.log(`🔹 [MIDDLEWARE] Request: ${request.method} ${pathname}`);
 
     // Check if path is public
     if (publicPaths.some(path => pathname.startsWith(path))) {
+        console.log(`✅ [MIDDLEWARE] Public path allowed`);
+        return NextResponse.next();
+    }
+
+    // Allow unauthenticated GET requests to /api/groups, /api/groups/[id], /api/students, /api/students/[id]
+    if (
+        request.method === 'GET' && (
+            pathname.startsWith('/api/groups') ||
+            pathname.startsWith('/api/students')
+        )
+    ) {
+        // Allow for /api/groups, /api/groups/[id], /api/students, /api/students/[id]
+        // Only block if not GET or not these paths
+        console.log(`✅ [MIDDLEWARE] GET /api/groups or /api/students allowed`);
+        return NextResponse.next();
+    }
+
+    // Allow unauthenticated GET/POST/PUT/DELETE to /api/attendance (bulk attendance recording)
+    if (
+        (request.method === 'GET' || request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') &&
+        pathname.startsWith('/api/attendance')
+    ) {
+        console.log(`✅ [MIDDLEWARE] /api/attendance allowed for ${request.method}`);
         return NextResponse.next();
     }
 
@@ -62,7 +85,7 @@ export async function middleware(request: NextRequest) {
 
     // Role-based access control for /admin
     if (pathname.startsWith('/admin') && payload.role !== 'ADMIN') {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL('/', request.url));
     }
 
     // Add user info to headers for API routes

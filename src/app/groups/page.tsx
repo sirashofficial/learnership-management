@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+// Removed Sidebar and Header imports
 import { useGroups } from '@/contexts/GroupsContext';
 import GroupModal from '@/components/GroupModal';
+import GroupUploadModal from '@/components/GroupUploadModal';
 import AddStudentModal from '@/components/AddStudentModal';
 import {
   Building2,
@@ -24,9 +24,11 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  Download
+  Info,
+  Download,
+  Upload
 } from 'lucide-react';
-import { differenceInDays, format, isAfter, isBefore } from 'date-fns';
+import { differenceInDays, format, isAfter, isBefore, startOfMonth } from 'date-fns';
 
 // Rollout Status Helper
 const getRolloutStatus = (rolloutPlan: any) => {
@@ -50,43 +52,265 @@ const getRolloutStatus = (rolloutPlan: any) => {
   return { status: 'ON_TRACK', color: 'emerald', label: 'On Track' };
 };
 
+type PlanStatus = 'NO_PLAN' | 'NOT_STARTED' | 'ON_TRACK' | 'BEHIND' | 'COMPLETE';
+
+const extractStoredPlan = (notes: string | null | undefined) => {
+  if (!notes) return null;
+  try {
+    const parsed = JSON.parse(notes);
+    return parsed?.rolloutPlan || null;
+  } catch {
+    return null;
+  }
+};
+
+const parsePlanDate = (value: string) => {
+  const [day, month, year] = value.split('/').map((part) => Number(part));
+  return new Date(year, month - 1, day);
+};
+
+const normalizeDate = (date: Date) => {
+  const result = new Date(date.getTime());
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
+const getUnitStandards = (plan: any) => {
+  if (!plan?.modules) return [];
+  return plan.modules
+    .flatMap((module: any) =>
+      (module.unitStandards || []).map((unit: any) => ({
+        moduleNumber: module.moduleNumber ?? module.moduleIndex,
+        start: parsePlanDate(unit.startDate),
+        end: parsePlanDate(unit.endDate),
+        assessing: parsePlanDate(unit.assessingDate),
+      }))
+    )
+    .sort((a: any, b: any) => a.start.getTime() - b.start.getTime());
+};
+
+const getPlanStatus = (plan: any): PlanStatus => {
+  if (!plan) return 'NO_PLAN';
+  const standards = getUnitStandards(plan);
+  if (standards.length === 0) return 'NO_PLAN';
+
+  const today = normalizeDate(new Date());
+  const firstStart = normalizeDate(standards[0].start);
+  const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
+
+  if (today < firstStart) return 'NOT_STARTED';
+  if (today > lastAssess) return 'COMPLETE';
+
+  const active = standards.find((unit: any) => {
+    const start = normalizeDate(unit.start);
+    const end = normalizeDate(unit.end);
+    return start <= today && end >= today;
+  });
+
+  if (active) return 'ON_TRACK';
+
+  for (let i = 0; i < standards.length - 1; i += 1) {
+    const currentEnd = normalizeDate(standards[i].end);
+    const nextStart = normalizeDate(standards[i + 1].start);
+    if (today > currentEnd && today < nextStart) {
+      return 'BEHIND';
+    }
+  }
+
+  const lastEnd = normalizeDate(standards[standards.length - 1].end);
+  if (today > lastEnd && today <= lastAssess) {
+    return 'BEHIND';
+  }
+
+  return 'BEHIND';
+};
+
+const getCurrentModuleLabel = (plan: any) => {
+  if (!plan) return 'No Plan';
+  const standards = getUnitStandards(plan);
+  if (standards.length === 0) return 'No Plan';
+
+  const today = normalizeDate(new Date());
+  const firstStart = normalizeDate(standards[0].start);
+  const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
+
+  if (today < firstStart) return 'Not Started';
+  if (today > lastAssess) return 'Complete';
+
+  const active = standards.find((unit: any) => {
+    const start = normalizeDate(unit.start);
+    const end = normalizeDate(unit.end);
+    return start <= today && end >= today;
+  });
+
+  if (active) return `Module ${active.moduleNumber}`;
+
+  return 'Between Modules';
+};
+
+// Module names and credits for the NVC L2 qualification
+const MODULE_INFO = [
+  { number: 1, name: 'Numeracy', credits: 16 },
+  { number: 2, name: 'HIV/AIDS & Communications', credits: 24 },
+  { number: 3, name: 'Market Requirements', credits: 22 },
+  { number: 4, name: 'Business Sector & Industry', credits: 26 },
+  { number: 5, name: 'Financial Requirements', credits: 26 },
+  { number: 6, name: 'Business Operations', credits: 26 },
+];
+
+const TOTAL_CREDITS = 140;
+
+// Get the current module info with full name
+const getCurrentModuleInfo = (plan: any): { label: string; moduleNumber: number | null } => {
+  if (!plan?.modules || plan.modules.length === 0) {
+    return { label: '', moduleNumber: null };
+  }
+
+  const today = normalizeDate(new Date());
+  
+  // Check each module's unit standards to find the current one
+  for (const module of plan.modules) {
+    if (!module.unitStandards || module.unitStandards.length === 0) continue;
+    
+    // Check if today falls within any unit standard of this module
+    for (const unit of module.unitStandards) {
+      const start = normalizeDate(parsePlanDate(unit.startDate));
+      const end = normalizeDate(parsePlanDate(unit.endDate));
+      
+      if (today >= start && today <= end) {
+        const moduleNumber = module.moduleNumber ?? module.moduleIndex;
+        const moduleInfo = MODULE_INFO.find(m => m.number === moduleNumber);
+        return {
+          label: moduleInfo ? `Module ${moduleInfo.number} – ${moduleInfo.name}` : `Module ${moduleNumber}`,
+          moduleNumber
+        };
+      }
+    }
+  }
+
+  // Check if programme is complete (past last workplace activity)
+  const lastModule = plan.modules[plan.modules.length - 1];
+  if (lastModule?.workplaceActivityEndDate) {
+    const workplaceEnd = normalizeDate(parsePlanDate(lastModule.workplaceActivityEndDate));
+    if (today > workplaceEnd) {
+      return { label: 'Programme Complete', moduleNumber: null };
+    }
+  }
+
+  // If we're past the last unit but before workplace end, still show the last module
+  const lastUnitModule = plan.modules[plan.modules.length - 1];
+  if (lastUnitModule) {
+    const lastModuleNumber = lastUnitModule.moduleNumber ?? lastUnitModule.moduleIndex;
+    const moduleInfo = MODULE_INFO.find(m => m.number === lastModuleNumber);
+    return {
+      label: moduleInfo ? `Module ${moduleInfo.number} – ${moduleInfo.name}` : `Module ${lastModuleNumber}`,
+      moduleNumber: lastModuleNumber
+    };
+  }
+
+  return { label: '', moduleNumber: null };
+};
+
+// Calculate credit completion based on workplace activity end dates
+const getCreditCompletion = (plan: any): { completed: number; percentage: number } => {
+  if (!plan?.modules || plan.modules.length === 0) {
+    return { completed: 0, percentage: 0 };
+  }
+
+  const today = normalizeDate(new Date());
+  let completedCredits = 0;
+
+  // A module is complete when its workplace activity end date has passed
+  for (const module of plan.modules) {
+    if (module.workplaceActivityEndDate || module.workplaceActivity?.endDate) {
+      const endValue = module.workplaceActivityEndDate || module.workplaceActivity?.endDate;
+      const workplaceEnd = normalizeDate(parsePlanDate(endValue));
+      
+      if (today > workplaceEnd) {
+        // Find the module info to get its credit value
+        const moduleNumber = module.moduleNumber ?? module.moduleIndex;
+        const moduleInfo = MODULE_INFO.find(m => m.number === moduleNumber);
+        if (moduleInfo) {
+          completedCredits += moduleInfo.credits;
+        }
+      }
+    }
+  }
+
+  const percentage = Math.round((completedCredits / TOTAL_CREDITS) * 100);
+  return { completed: completedCredits, percentage };
+};
+
+const renderStatusBadge = (status: PlanStatus) => {
+  switch (status) {
+    case 'ON_TRACK':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          On Track
+        </span>
+      );
+    case 'BEHIND':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          Behind
+        </span>
+      );
+    case 'NOT_STARTED':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+          <Clock className="w-3.5 h-3.5" />
+          Not Started
+        </span>
+      );
+    case 'COMPLETE':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-teal-50 text-teal-700">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Complete
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-600">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          No Plan
+        </span>
+      );
+  }
+};
+
 export default function GroupsPage() {
   const router = useRouter();
-  const { groups, isLoading } = useGroups();
+  const { groups, isLoading, deleteGroup } = useGroups();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCompanies, setExpandedCompanies] = useState<string[]>([]);
   const [expandedCollections, setExpandedCollections] = useState<string[]>(['montazility']);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [selectedForMerge, setSelectedForMerge] = useState<string[]>([]);
+  const [attendanceByGroup, setAttendanceByGroup] = useState<Record<string, number>>({});
+  const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
 
-  // Define Montazility collection
+  // Define Collections (Dynamic)
   const montazilityCollection = {
-    name: "Montazility 26'",
+    name: "Montazility 2026",
     groups: (groups || []).filter((g: any) =>
-      !g.isArchived && g.name.includes("26'") &&
-      ['Azelis 26\'', 'Beyond Insights 26\'', 'City Logistics 26\'', 'Monteagle 26\''].includes(g.name)
+      g.status !== 'ARCHIVED' &&
+      (g.name.includes("26") || g.name.includes("2026") || g.name.includes("Montzelity") || g.name.includes("Montazility"))
     )
   };
 
-  // Get groups not in collection
-  const regularGroups = (groups || []).filter((g: any) =>
-    !g.isArchived && !montazilityCollection.groups.some((mg: any) => mg.id === g.id)
+  // All other groups displayed flat (no company grouping)
+  const allOtherGroups = (groups || []).filter((g: any) =>
+    g.status !== 'ARCHIVED' && !montazilityCollection.groups.some((mg: any) => mg.id === g.id)
   );
-
-  // Group regular groups by company
-  const groupsByCompany = regularGroups.reduce((acc: any, group: any) => {
-    const companyName = group.company?.name || 'No Company';
-    if (!acc[companyName]) {
-      acc[companyName] = [];
-    }
-    acc[companyName].push(group);
-    return acc;
-  }, {});
 
   // Filter groups by search
   const filteredCollection = {
@@ -96,20 +320,71 @@ export default function GroupsPage() {
     )
   };
 
-  const filteredCompaniesList = Object.keys(groupsByCompany).filter(companyName =>
-    companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    groupsByCompany[companyName].some((g: any) =>
-      g.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const filteredOtherGroups = allOtherGroups.filter((g: any) =>
+    g.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Calculate statistics
-  const activeGroups = (groups || []).filter((g: any) => !g.isArchived);
+  const activeGroups = (groups || []).filter((g: any) => g.status !== 'ARCHIVED');
   const totalStudents = activeGroups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0);
-  const avgAttendance = activeGroups.reduce((sum: number, g: any) => {
-    const attendance = g.attendanceRate || 0;
-    return sum + attendance;
-  }, 0) / (activeGroups.length || 1);
+  const avgAttendance = activeGroups.length > 0
+    ? activeGroups.reduce((sum: number, g: any) => sum + (attendanceByGroup[g.id] ?? 0), 0) / activeGroups.length
+    : 0;
+  const programmeRows = activeGroups.map((group: any) => {
+    const storedPlan = extractStoredPlan(group.notes);
+    const status = getPlanStatus(storedPlan);
+    return {
+      id: group.id,
+      name: group.name,
+      learners: group._count?.students || group.students?.length || 0,
+      attendance: attendanceByGroup[group.id] ?? 0,
+      currentModule: getCurrentModuleLabel(storedPlan),
+      status,
+    };
+  });
+  const onTrackCount = programmeRows.filter((row) => row.status === 'ON_TRACK').length;
+  const behindCount = programmeRows.filter((row) => row.status === 'BEHIND').length;
+  const attendanceTone = avgAttendance >= 80 ? 'emerald' : avgAttendance >= 60 ? 'amber' : 'red';
+
+  useEffect(() => {
+    if (activeGroups.length === 0) {
+      setAttendanceByGroup({});
+      return;
+    }
+
+    const fetchAttendance = async () => {
+      setIsAttendanceLoading(true);
+      try {
+        const startDate = startOfMonth(new Date()).toISOString();
+        const endDate = new Date().toISOString();
+        const responses = await Promise.all(
+          activeGroups.map((group: any) =>
+            fetch(`/api/attendance/stats?groupId=${group.id}&startDate=${startDate}&endDate=${endDate}`)
+          )
+        );
+
+        const payloads = await Promise.all(
+          responses.map(async (response) => (response.ok ? response.json() : null))
+        );
+
+        const nextMap: Record<string, number> = {};
+        payloads.forEach((payload, index) => {
+          const groupId = activeGroups[index]?.id;
+          if (!groupId) return;
+          const attendanceRate = payload?.data?.attendanceRate ?? payload?.attendanceRate ?? 0;
+          nextMap[groupId] = Number.isFinite(attendanceRate) ? Number(attendanceRate) : 0;
+        });
+
+        setAttendanceByGroup(nextMap);
+      } catch (error) {
+        console.error('Failed to fetch attendance stats:', error);
+      } finally {
+        setIsAttendanceLoading(false);
+      }
+    };
+
+    fetchAttendance();
+  }, [activeGroups.map((group: any) => group.id).join(',')]);
 
   const toggleCompany = (companyName: string) => {
     setExpandedCompanies(prev =>
@@ -141,25 +416,24 @@ export default function GroupsPage() {
   };
 
   const handleArchiveGroup = async (group: any) => {
-    if (!confirm(`Archive ${group.name}?\n\nThis group will be hidden from active views but data will be preserved.`)) {
+    // Build confirmation message
+    const studentCount = group._count?.students || 0;
+    let confirmMessage = `Are you sure you want to delete "${group.name}"? This cannot be undone.`;
+    
+    if (studentCount > 0) {
+      confirmMessage += `\n\nWarning: This group has ${studentCount} student${studentCount !== 1 ? 's' : ''}. Deleting it will unassign them from this group.`;
+    }
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/groups/${group.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isArchived: true }),
-      });
-
-      if (response.ok) {
-        router.refresh();
-      } else {
-        alert('Failed to archive group');
-      }
+      await deleteGroup(group.id);
+      // The group will be automatically removed from the list via the context's mutate
     } catch (error) {
-      console.error('Error archiving group:', error);
-      alert('Failed to archive group');
+      console.error('Failed to delete group:', error);
+      alert('Failed to delete group. Please try again.');
     }
   };
 
@@ -178,271 +452,378 @@ export default function GroupsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <main className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-          </main>
-        </div>
+      <div className="flex items-center justify-center py-24">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Header with Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Groups & Companies</h1>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">Manage training groups and student assignments</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setSelectedGroup(null);
-                    setShowGroupModal(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create Group
-                </button>
+    <div className="space-y-6">
+      {/* Top bar */}
+      <div className="bg-white rounded-lg border border-slate-200 p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+          <div />
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors shadow-sm"
+            >
+              <Upload className="w-5 h-5" />
+              Upload Plan
+            </button>
+            <button
+              onClick={() => {
+                setSelectedGroup(null);
+                setShowGroupModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              Create Group
+            </button>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-teal-600 text-white rounded-lg">
+                <Building2 className="w-6 h-6" />
               </div>
-
-              {/* Statistics Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 p-4 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-teal-600 text-white rounded-lg">
-                      <Building2 className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">Active Groups</p>
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">{activeGroups.length}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 p-4 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-emerald-600 text-white rounded-lg">
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">Total Students</p>
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalStudents}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20 p-4 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-cyan-600 text-white rounded-lg">
-                      <TrendingUp className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">Avg Attendance</p>
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">{avgAttendance.toFixed(0)}%</p>
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Active Groups</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{activeGroups.length}</p>
               </div>
-            </div>
-
-            {/* Search and View Toggle */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search groups or companies..."
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-300 dark:border-slate-600">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-teal-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                >
-                  <Grid3x3 className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-teal-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                >
-                  <List className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Groups by Company */}
-            <div className="space-y-4">
-              {/* Merge Button */}
-              {selectedForMerge.length >= 2 && (
-                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-600 text-white rounded-lg">
-                        <Users className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-slate-900 dark:text-white">
-                          {selectedForMerge.length} groups selected
-                        </h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Click merge to combine these groups into one
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setSelectedForMerge([])}
-                        className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => setShowMergeModal(true)}
-                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <Users className="w-5 h-5" />
-                        Merge Groups
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Montazility Collection */}
-              {(searchQuery === '' || filteredCollection.groups.length > 0) && (
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
-                  <div
-                    onClick={() => toggleCollection('montazility')}
-                    className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 cursor-pointer hover:from-purple-100 hover:to-indigo-100 dark:hover:from-purple-900/30 dark:hover:to-indigo-900/30 transition-colors border-b-2 border-purple-200 dark:border-purple-700"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-purple-600 text-white rounded-lg">
-                        <Grid3x3 className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-                            {filteredCollection.name}
-                          </h3>
-                          <span className="px-2 py-1 text-xs font-medium bg-purple-600 text-white rounded-full">
-                            Collection
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {filteredCollection.groups.length} group{filteredCollection.groups.length !== 1 ? 's' : ''} • {
-                            filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0)
-                          } student{filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0) !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-                    {expandedCollections.includes('montazility') ? (
-                      <ChevronUp className="w-6 h-6 text-slate-600 dark:text-slate-400" />
-                    ) : (
-                      <ChevronDown className="w-6 h-6 text-slate-600 dark:text-slate-400" />
-                    )}
-                  </div>
-
-                  {expandedCollections.includes('montazility') && (
-                    <div className={`p-4 bg-purple-50/30 dark:bg-purple-900/10 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}`}>
-                      {filteredCollection.groups.map((group: any) => (
-                        <GroupCard
-                          key={group.id}
-                          group={group}
-                          viewMode={viewMode}
-                          onEdit={() => handleEditGroup(group)}
-                          onArchive={() => handleArchiveGroup(group)}
-                          onAddStudents={() => handleAddStudentsToGroup(group)}
-                          onView={() => handleViewGroup(group)}
-                          isSelected={selectedForMerge.includes(group.id)}
-                          onSelect={() => toggleSelectForMerge(group.id)}
-                          isExpanded={expandedGroups.includes(group.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {filteredCompaniesList.map((companyName) => {
-                const companyGroups = groupsByCompany[companyName];
-                const isExpanded = expandedCompanies.includes(companyName);
-                const companyStudentCount = companyGroups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0);
-
-                return (
-                  <div key={companyName} className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
-                    {/* Company Header */}
-                    <div
-                      onClick={() => toggleCompany(companyName)}
-                      className="flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 cursor-pointer hover:from-teal-100 hover:to-emerald-100 dark:hover:from-teal-900/30 dark:hover:to-emerald-900/30 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-teal-600 text-white rounded-lg">
-                          <Building2 className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{companyName}</h3>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {companyGroups.length} group{companyGroups.length !== 1 ? 's' : ''} • {companyStudentCount} student{companyStudentCount !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      </div>
-                      {isExpanded ? (
-                        <ChevronUp className="w-6 h-6 text-slate-600 dark:text-slate-400" />
-                      ) : (
-                        <ChevronDown className="w-6 h-6 text-slate-600 dark:text-slate-400" />
-                      )}
-                    </div>
-
-                    {/* Company Groups */}
-                    {isExpanded && (
-                      <div className={`p-4 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}`}>
-                        {companyGroups.map((group: any) => (
-                          <GroupCard
-                            key={group.id}
-                            group={group}
-                            viewMode={viewMode}
-                            onEdit={() => handleEditGroup(group)}
-                            onArchive={() => handleArchiveGroup(group)}
-                            onAddStudents={() => handleAddStudentsToGroup(group)}
-                            onView={() => handleViewGroup(group)}
-                            isSelected={selectedForMerge.includes(group.id)}
-                            onSelect={() => toggleSelectForMerge(group.id)}
-                            isExpanded={expandedGroups.includes(group.id)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {filteredCompaniesList.length === 0 && (
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-12 text-center">
-                  <Building2 className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No groups found</h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {searchQuery ? 'Try a different search term' : 'Create your first group to get started'}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
-        </main>
+
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-emerald-600 text-white rounded-lg">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Total Students</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalStudents}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-cyan-600 text-white rounded-lg">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Avg Attendance</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{avgAttendance.toFixed(0)}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and View Toggle */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search groups or companies..."
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-300 dark:border-slate-600">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded ${viewMode === 'grid' ? 'bg-teal-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+          >
+            <Grid3x3 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded ${viewMode === 'list' ? 'bg-teal-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+          >
+            <List className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Groups by Company */}
+      <div className="space-y-4">
+        {/* Merge Button */}
+        {selectedForMerge.length >= 2 && (
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-600 text-white rounded-lg">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900 dark:text-white">
+                    {selectedForMerge.length} groups selected
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Click merge to combine these groups into one
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedForMerge([])}
+                  className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowMergeModal(true)}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <Users className="w-5 h-5" />
+                  Merge Groups
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Montazility Collection */}
+        {(searchQuery === '' || filteredCollection.groups.length > 0) && (
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
+            <div
+              onClick={() => toggleCollection('montazility')}
+              className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 cursor-pointer hover:from-purple-100 hover:to-indigo-100 dark:hover:from-purple-900/30 dark:hover:to-indigo-900/30 transition-colors border-b-2 border-purple-200 dark:border-purple-700"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-purple-600 text-white rounded-lg">
+                  <Grid3x3 className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                      {filteredCollection.name}
+                    </h3>
+                    <span className="px-2 py-1 text-xs font-medium bg-purple-600 text-white rounded-full">
+                      Collection
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {filteredCollection.groups.length} group{filteredCollection.groups.length !== 1 ? 's' : ''} • {
+                      filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0)
+                    } student{filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0) !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              {expandedCollections.includes('montazility') ? (
+                <ChevronUp className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+              ) : (
+                <ChevronDown className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+              )}
+            </div>
+
+            {expandedCollections.includes('montazility') && (
+              <div className={`p-4 bg-purple-50/30 dark:bg-purple-900/10 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}`}>
+                {filteredCollection.groups.map((group: any) => (
+                  <GroupCard
+                    key={group.id}
+                    group={group}
+                    viewMode={viewMode}
+                    onEdit={() => handleEditGroup(group)}
+                    onArchive={() => handleArchiveGroup(group)}
+                    onAddStudents={() => handleAddStudentsToGroup(group)}
+                    onView={() => handleViewGroup(group)}
+                    isSelected={selectedForMerge.includes(group.id)}
+                    onSelect={() => toggleSelectForMerge(group.id)}
+                    isExpanded={expandedGroups.includes(group.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Other Groups (Not organized by company) */}
+        <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}`}>
+          {filteredOtherGroups.map((group: any) => (
+            <GroupCard
+              key={group.id}
+              group={group}
+              viewMode={viewMode}
+              onEdit={() => handleEditGroup(group)}
+              onArchive={() => handleArchiveGroup(group)}
+              onAddStudents={() => handleAddStudentsToGroup(group)}
+              onView={() => handleViewGroup(group)}
+              isSelected={selectedForMerge.includes(group.id)}
+              onSelect={() => toggleSelectForMerge(group.id)}
+              isExpanded={expandedGroups.includes(group.id)}
+            />
+          ))}
+        </div>
+
+        {filteredOtherGroups.length === 0 && filteredCollection.groups.length === 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-12 text-center">
+            <Building2 className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No groups found</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              {searchQuery ? 'Try a different search term' : 'Create your first group to get started'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Programme Overview */}
+      <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Programme Overview</h3>
+          <p className="text-sm text-slate-500">Live programme health across all active groups.</p>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-blue-600 text-white">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">Total Learners</p>
+                <p className="text-2xl font-semibold text-slate-900">{totalStudents}</p>
+                <p className="text-xs text-slate-500">{activeGroups.length} active groups</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-3 rounded-lg text-white ${
+                  attendanceTone === 'emerald'
+                    ? 'bg-emerald-600'
+                    : attendanceTone === 'amber'
+                      ? 'bg-amber-500'
+                      : 'bg-red-500'
+                }`}
+              >
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">Average Attendance</p>
+                <p className="text-2xl font-semibold text-slate-900">
+                  {isAttendanceLoading ? '...' : `${avgAttendance.toFixed(0)}%`}
+                </p>
+                <p className="text-xs text-slate-500">This month</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-emerald-600 text-white">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">On Track</p>
+                <p className="text-2xl font-semibold text-slate-900">{onTrackCount}</p>
+                <p className="text-xs text-slate-500">of {activeGroups.length} total groups</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-amber-500 text-white">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600">Behind Schedule</p>
+                <p className="text-2xl font-semibold text-slate-900">{behindCount}</p>
+                <p className="text-xs text-slate-500">Need attention</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-1">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            On Track
+          </span>
+          <span>Today falls within a scheduled unit standard.</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 px-2 py-1">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Behind
+          </span>
+          <span>Past a unit end date with the next not started.</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-700 px-2 py-1">
+            <Clock className="w-3.5 h-3.5" />
+            Not Started
+          </span>
+          <span>Plan exists, first unit not started yet.</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 text-teal-700 px-2 py-1">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Complete
+          </span>
+          <span>All units past assessing date.</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 px-2 py-1">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            No Plan
+          </span>
+          <span>No rollout plan saved.</span>
+          <span className="text-slate-500">Between Modules = between unit standards (no active range).</span>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-base font-semibold text-slate-900">Group Performance</h4>
+          </div>
+          <div className="overflow-x-auto border border-slate-200 rounded-lg">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Group Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Learners</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Attendance</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <div className="flex items-center gap-1">
+                      Current Module
+                      <span className="relative group">
+                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="absolute z-10 left-1/2 -translate-x-1/2 top-6 w-56 rounded-md bg-slate-900 text-white text-xs px-2 py-1 opacity-0 pointer-events-none group-hover:opacity-100">
+                          Between Modules means today sits between unit standard date ranges.
+                        </span>
+                      </span>
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {programmeRows.map((row) => (
+                  <tr key={row.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{row.name}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{row.learners}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      {isAttendanceLoading ? '—' : `${row.attendance.toFixed(0)}%`}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{row.currentModule}</td>
+                    <td className="px-4 py-3 text-sm">{renderStatusBadge(row.status)}</td>
+                  </tr>
+                ))}
+                {programmeRows.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                      No groups available for performance reporting.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* Modals */}
@@ -460,6 +841,15 @@ export default function GroupsPage() {
           }}
         />
       )}
+
+      <GroupUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onSuccess={() => {
+          setShowUploadModal(false);
+          router.refresh();
+        }}
+      />
 
       {showAddStudentModal && selectedGroup && (
         <AddStudentModal
@@ -544,6 +934,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
   const studentCount = group._count?.students || 0;
   const attendanceRate = group.attendanceRate || 0;
   const students = group.students || [];
+  
+  // Extract rollout plan from notes
+  const rolloutPlan = extractStoredPlan(group.notes);
+  
+  // Get current module info and credit completion
+  const currentModule = getCurrentModuleInfo(rolloutPlan);
+  const creditProgress = getCreditCompletion(rolloutPlan);
 
   const handleExportReport = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -571,8 +968,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
   if (viewMode === 'list') {
     return (
       <div
-        className={`flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700'
-          }`}
+        className={`flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-slate-200'}`}
       >
         {onSelect && (
           <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
@@ -585,51 +981,77 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           </div>
         )}
         <div className="flex items-center gap-4 flex-1" onClick={onView}>
-          <div className="p-3 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg">
+          <div className="p-3 bg-teal-100 text-teal-600 rounded-lg">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900 dark:text-white">{group.name}</h4>
+            <h4 className="font-semibold text-slate-900">{group.name}</h4>
             {group.facilitator && (
-              <p className="text-sm text-slate-600 dark:text-slate-400">Facilitator: {group.facilitator.name}</p>
+              <p className="text-sm text-slate-600">Facilitator: {group.facilitator.name}</p>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-6">
           <div className="text-center">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{studentCount}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Students</p>
+            <p className="text-2xl font-bold text-slate-900">{studentCount}</p>
+            <p className="text-xs text-slate-600">Students</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{attendanceRate}%</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Attendance</p>
+            <p className="text-2xl font-bold text-slate-900">{attendanceRate}%</p>
+            <p className="text-xs text-slate-600">Attendance</p>
           </div>
+          
+          {/* Current Module and Progress Bar */}
+          {rolloutPlan && (
+            <div className="flex flex-col gap-2 flex-1 max-w-xs">
+              {/* Current Module Label */}
+              {currentModule.label && (
+                <p className="text-xs font-medium text-slate-700">
+                  {currentModule.label}
+                </p>
+              )}
+              
+              {/* Credit Progress Bar */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300"
+                    style={{ width: `${creditProgress.percentage}%` }}
+                  />
+                </div>
+                <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                  {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
+                </span>
+              </div>
+            </div>
+          )}
+          
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={onAddStudents}
-              className="p-2 hover:bg-teal-100 dark:hover:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg transition-colors"
+              className="p-2 hover:bg-teal-100 text-teal-600 rounded-lg transition-colors"
               title="Add Students"
             >
               <UserPlus className="w-5 h-5" />
             </button>
             <button
               onClick={onEdit}
-              className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
+              className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
               title="Edit Group"
             >
               <Edit2 className="w-5 h-5" />
             </button>
             <button
               onClick={onArchive}
-              className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
               title="Archive Group"
             >
               <Archive className="w-5 h-5" />
             </button>
             <button
               onClick={handleExportReport}
-              className="p-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg transition-colors"
+              className="p-2 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors"
               title="Export Progress Report"
             >
               <Download className="w-5 h-5" />
@@ -675,22 +1097,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 Started {new Date(group.startDate).toLocaleDateString()}
               </p>
               {/* Rollout Status Badge */}
-              {(() => {
-                const { status, color, label } = getRolloutStatus(group.rolloutPlan);
-                const colorClasses = {
-                  emerald: "bg-emerald-100 text-emerald-700",
-                  amber: "bg-amber-100 text-amber-700",
-                  red: "bg-red-100 text-red-700",
-                  slate: "bg-slate-100 text-slate-500",
-                }[color] || "bg-slate-100 text-slate-500";
-
-                return (
-                  <div className={`mt-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full ${colorClasses} w-fit`}>
-                    <Clock className="w-3 h-3" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
-                  </div>
-                );
-              })()}
+              {renderStatusBadge(getPlanStatus(rolloutPlan))}
             </div>
           </div>
         </div>
@@ -712,6 +1119,34 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           <p className="text-xs text-slate-600 dark:text-slate-400">Attendance</p>
         </div>
       </div>
+
+      {/* Current Module and Progress Bar */}
+      {rolloutPlan && (
+        <div className="mb-4 space-y-2">
+          {/* Current Module Label */}
+          {currentModule.label && (
+            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {currentModule.label}
+            </p>
+          )}
+          
+          {/* Credit Progress Bar */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-600 dark:text-slate-400">Credit Progress</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS} credits)
+              </span>
+            </div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300"
+                style={{ width: `${creditProgress.percentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
         <button

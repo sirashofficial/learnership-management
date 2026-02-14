@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
         include: {
           group: {
             include: {
-              company: true,
             },
           },
         },
@@ -73,7 +72,6 @@ export async function GET(request: NextRequest) {
           ],
         },
         include: {
-          company: true,
           _count: {
             select: { students: true },
           },
@@ -87,7 +85,7 @@ export async function GET(request: NextRequest) {
           type: 'GROUP',
           title: group.name,
           subtitle: `${group._count.students} student${group._count.students !== 1 ? 's' : ''}`,
-          description: group.company?.name || null,
+          description: group.location || null,
           status: group.status,
           data: {
             groupId: group.id,

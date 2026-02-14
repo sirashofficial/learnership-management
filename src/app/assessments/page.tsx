@@ -1,375 +1,1352 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useMemo } from "react";
-import Header from "@/components/Header";
-import { useCurriculum } from "@/hooks/useCurriculum";
-import { useStudents } from "@/hooks/useStudents";
-import { useAuth } from "@/contexts/AuthContext";
-import AssessmentModal from "@/components/AssessmentModal";
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useCurriculum } from '@/hooks/useCurriculum';
+import { useStudents } from '@/hooks/useStudents';
+import { useAuth } from '@/contexts/AuthContext';
+import { useGroups } from '@/contexts/GroupsContext';
 import {
-  ChevronDown, ChevronRight, Users, CheckCircle, Clock, XCircle, Calendar,
-  BookOpen, FileText, TrendingUp, Grid3x3, Plus, Download, Filter,
-  BarChart3, AlertTriangle, Award, Target, CheckSquare, FileCheck, Shield,
-  LineChart, FileBarChart, Eye, ThumbsUp, ThumbsDown, Send
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+  ChevronDown, ChevronRight, Plus, Trash2, Edit2, Check, X, Users, TrendingUp,
+  BarChart3, AlertTriangle, Download, Filter, Search, Award, Target, Loader2,
+  FileText, Clock, CheckCircle, Settings, Save, Eye, Mail
+} from 'lucide-react';
+import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-interface GroupCollection {
-  id: string;
-  name: string;
-  subGroupNames: string[];
-}
 
 interface Assessment {
   id: string;
-  type: string;
-  method: string;
-  result?: string;
-  score?: number;
+  type: 'FORMATIVE' | 'SUMMATIVE' | 'INTEGRATED';
+  result: 'COMPETENT' | 'NOT_YET_COMPETENT' | 'PENDING';
   dueDate: string;
   assessedDate?: string;
-  attemptNumber: number;
+  score?: number;
+  notes?: string;
+  student: { id: string; firstName: string; lastName: string; studentId: string };
   moderationStatus: string;
-  student: any;
-  unitStandard?: {
-    code: string;
-    title: string;
-    module?: {
-      name: string;
-    };
-  };
+  unitStandard?: { id: string; code: string; title: string; module: { id: string; name: string } };
 }
 
-interface Template {
+interface UnitStandard {
   id: string;
-  name: string;
+  code: string;
+  title: string;
   type: string;
-  method: string;
-  description: string;
+  credits: number;
+  level: number;
+  module: { id: string; name: string };
+  assessments: Assessment[];
+  _count?: { assessments: number };
 }
 
 export default function AssessmentsPage() {
-  const { modules, isLoading: isLoadingCurriculum } = useCurriculum();
-  const { students, isLoading: isLoadingStudents } = useStudents();
+  const { modules } = useCurriculum();
+  const { students } = useStudents();
+  const { groups } = useGroups();
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const filteredUnitStandardId = searchParams.get('unitStandardId');
 
-  const [activeView, setActiveView] = useState<'manage' | 'analytics' | 'templates' | 'moderation' | 'progress' | 'compliance' | 'formatives'>('manage');
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
-  const [expandedUnitStandards, setExpandedUnitStandards] = useState<Set<string>>(new Set());
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [expandedCollection, setExpandedCollection] = useState<string | null>("montazility");
-  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
-  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
-  const [selectedStudentForFormative, setSelectedStudentForFormative] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState<string | null>(null);
-  const [filterMethod, setFilterMethod] = useState<string | null>(null);
-  const [filterResult, setFilterResult] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
+  // Views
+  const [activeView, setActiveView] = useState<'manage' | 'moderation' | 'progress' | 'compliance' | 'bulk' | 'export' | 'analytics'>('manage');
+
+  // State
+  const [unitStandards, setUnitStandards] = useState<UnitStandard[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [formatives, setFormatives] = useState<any[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const [filterType, setFilterType] = useState<'FORMATIVE' | 'SUMMATIVE' | null>(null);
+  const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [editData, setEditData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Group collections
-  const groupCollections: GroupCollection[] = [
-    {
-      id: "montazility",
-      name: "Montazility 26'",
-      subGroupNames: ["Azelis 26'", "Beyond Insights 26'", "City Logistics 26'", "Monteagle 26'"]
-    }
-  ];
-
-  // Group students
-  const groupedStudents = useMemo(() => {
-    return students.reduce((acc: any, student) => {
-      const groupId = student.group?.id || 'no-group';
-      const groupName = student.group?.name || 'No Group';
-      if (!acc[groupId]) {
-        acc[groupId] = { groupId, groupName, students: [] };
-      }
-      acc[groupId].students.push(student);
-      return acc;
-    }, {});
-  }, [students]);
-
-  // Separate groups
-  const montazilityGroupIds = Object.keys(groupedStudents).filter(
-    (groupId) => groupCollections[0].subGroupNames.includes(groupedStudents[groupId].groupName)
-  );
-  const individualGroupIds = Object.keys(groupedStudents).filter(
-    (groupId) => !groupCollections[0].subGroupNames.includes(groupedStudents[groupId].groupName)
-  );
-
-  // Fetch assessments on mount
+  // Fetch unit standards and assessments
   useEffect(() => {
+    fetchUnitStandards();
     fetchAssessments();
-    fetchTemplates();
-    fetchFormatives();
   }, []);
 
-  // Fetch analytics when view changes
-  useEffect(() => {
-    if (activeView === 'analytics') {
-      fetchAnalytics();
+  const fetchUnitStandards = async () => {
+    try {
+      const res = await fetch('/api/unit-standards');
+      const data = await res.json();
+      setUnitStandards(Array.isArray(data) ? data : data.data || []);
+    } catch (error) {
+      console.error('Error fetching unit standards:', error);
     }
-  }, [activeView]);
+  };
 
   const fetchAssessments = async () => {
     try {
-      const response = await fetch('/api/assessments');
-      const data = await response.json();
-      if (data.success) {
-        setAssessments(data.data);
-      }
+      const res = await fetch('/api/assessments');
+      const data = await res.json();
+      setAssessments(Array.isArray(data) ? data : data.data || []);
     } catch (error) {
       console.error('Error fetching assessments:', error);
     }
   };
 
-  const fetchTemplates = async () => {
-    try {
-      const response = await fetch('/api/assessments/templates');
-      const data = await response.json();
-      if (data.success) {
-        setTemplates(data.data);
+  // Handle unit standard filter from URL
+  useEffect(() => {
+    if (filteredUnitStandardId && unitStandards.length > 0) {
+      const targetUnit = unitStandards.find(u => u.id === filteredUnitStandardId);
+      if (targetUnit) {
+        // Expand the module containing this unit
+        setExpandedModules(new Set([targetUnit.module.id]));
+        // Expand only the filtered unit
+        setExpandedUnits(new Set([filteredUnitStandardId]));
       }
-    } catch (error) {
-      console.error('Error fetching templates:', error);
     }
-  };
+  }, [filteredUnitStandardId, unitStandards]);
 
-  const fetchFormatives = async () => {
-    try {
-      const response = await fetch('/api/formatives');
-      const data = await response.json();
-      if (data.success) {
-        setFormatives(data.data);
+  // ====================
+  // MANAGE VIEW
+  // ====================
+  const ManageView = () => {
+    const [newUSData, setNewUSData] = useState({ code: '', title: '', moduleId: '', credits: 1, level: 2, type: 'Core' });
+    const [showNewForm, setShowNewForm] = useState(false);
+
+    const handleAddUnitStandard = async () => {
+      if (!newUSData.code || !newUSData.title || !newUSData.moduleId) {
+        alert('Please fill in all fields');
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching formatives:', error);
-    }
-  };
 
-  const fetchAnalytics = async () => {
-    try {
-      const response = await fetch('/api/assessments/analytics?period=all');
-      const data = await response.json();
-      if (data.success) {
-        setAnalytics(data.data);
+      try {
+        const res = await fetch('/api/unit-standards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newUSData)
+        });
+
+        if (res.ok) {
+          alert('Unit Standard created');
+          setNewUSData({ code: '', title: '', moduleId: '', credits: 1, level: 2, type: 'Core' });
+          setShowNewForm(false);
+          fetchUnitStandards();
+        } else {
+          const error = await res.json();
+          alert(`Error: ${error.error}`);
+        }
+      } catch (error) {
+        console.error('Error creating unit standard:', error);
       }
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-    }
-  };
+    };
 
-  const handleBulkCreate = async (templateId: string, unitStandard: string, module: string, dueDate: string) => {
-    if (selectedStudents.size === 0) {
-      alert('Please select at least one student');
-      return;
-    }
+    const handleDeleteUnitStandard = async (id: string) => {
+      if (!confirm('Delete this unit standard?')) return;
 
-    try {
-      const response = await fetch('/api/assessments/templates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          templateId,
-          studentIds: Array.from(selectedStudents),
-          unitStandard,
-          module,
-          dueDate,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        await fetchAssessments();
-        setSelectedStudents(new Set());
-        alert(`✅ Created ${data.data.length} assessments successfully!`);
-      } else {
-        throw new Error(data.error || 'Failed to create assessments');
+      try {
+        const res = await fetch(`/api/unit-standards/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          alert('Unit Standard deleted');
+          fetchUnitStandards();
+        } else {
+          const error = await res.json();
+          alert(`Error: ${error.error}`);
+        }
+      } catch (error) {
+        console.error('Error deleting unit standard:', error);
       }
-    } catch (error: any) {
-      console.error('❌ Error creating bulk assessments:', error);
-      alert(`Failed to create assessments: ${error.message}`);
-    }
-  };
+    };
 
-  const handleExport = async (exportFormat: 'csv' | 'json') => {
-    try {
-      const response = await fetch(`/api/assessments/export?format=${exportFormat}`);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `assessments-${format(new Date(), 'yyyy-MM-dd')}.${exportFormat}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      setShowExportMenu(false);
-    } catch (error) {
-      console.error('Error exporting:', error);
-    }
-  };
+    const handleUpdateUnitStandard = async (id: string) => {
+      try {
+        const res = await fetch(`/api/unit-standards/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editData)
+        });
 
-  const updateAssessmentResult = async (assessmentId: string, result: string, score?: number) => {
-    try {
-      const response = await fetch('/api/assessments', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: assessmentId,
-          result,
-          score,
-          assessedDate: new Date().toISOString(),
-        }),
-      });
-
-      if (response.ok) {
-        await fetchAssessments();
+        if (res.ok) {
+          alert('Unit Standard updated');
+          setIsEditing(null);
+          fetchUnitStandards();
+        } else {
+          const error = await res.json();
+          alert(`Error: ${error.error}`);
+        }
+      } catch (error) {
+        console.error('Error updating unit standard:', error);
       }
-    } catch (error) {
-      console.error('Error updating assessment:', error);
-    }
-  };
+    };
 
-  const updateFormativeCompletion = async (formativeId: string, passed: boolean) => {
-    if (!selectedStudentForFormative) return;
+    // Helper to mark assessment
+    const handleMarkAssessment = async (unitStandardId: string, studentId: string, type: 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE', result: string) => {
+      try {
+        // Check if assessment exists
+        const existing = assessments.find(a =>
+          a.student.id === studentId &&
+          a.unitStandard?.id === unitStandardId &&
+          a.type === type
+        );
 
-    try {
-      const response = await fetch('/api/formatives/completion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentId: selectedStudentForFormative,
-          formativeId,
-          passed,
-          completedDate: passed ? new Date().toISOString() : null,
-          moderationStatus: passed ? 'PENDING' : undefined,
-        }),
-      });
+        if (existing) {
+          // Update
+          const res = await fetch(`/api/assessments/${existing.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ result, assessedDate: new Date().toISOString() })
+          });
 
-      if (response.ok) {
-        await fetchFormatives();
+          if (res.ok) {
+            fetchAssessments();
+          }
+        } else {
+          // Create
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 7);
+
+          const res = await fetch('/api/assessments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              studentId,
+              unitStandardId,
+              type,
+              method: 'PRACTICAL',
+              result,
+              dueDate,
+              assessedDate: new Date().toISOString()
+            })
+          });
+
+          if (res.ok) {
+            fetchAssessments();
+          }
+        }
+      } catch (error) {
+        console.error('Error marking assessment:', error);
       }
-    } catch (error) {
-      console.error('Error updating formative completion:', error);
-    }
-  };
+    };
 
-  const getStatusBadge = (result?: string) => {
-    if (!result || result === 'PENDING') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-full">
-          <Clock className="w-3 h-3" />
-          Pending
-        </span>
-      );
-    }
-    if (result === 'COMPETENT') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">
-          <CheckCircle className="w-3 h-3" />
-          Competent
-        </span>
-      );
-    }
-    if (result === 'NOT_YET_COMPETENT') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium rounded-full">
-          <XCircle className="w-3 h-3" />
-          NYC
-        </span>
-      );
-    }
-    return null;
-  };
-
-  const renderAnalyticsView = () => {
-    if (!analytics) return <div>Loading analytics...</div>;
-
-    const chartData = [
-      { name: 'Formative', value: analytics.byType.formative },
-      { name: 'Summative', value: analytics.byType.summative },
-      { name: 'Integrated', value: analytics.byType.integrated },
-    ];
-
-    const methodData = Object.entries(analytics.byMethod).map(([key, value]) => ({
-      name: key,
-      value: value as number,
-    }));
-
-    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+    // Bulk mark similar students
+    const handleBulkMark = async (unitStandardId: string, assessmentType: 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE', result: string, selectedStudents: Set<string>) => {
+      setLoading(true);
+      try {
+        for (const studentId of selectedStudents) {
+          await handleMarkAssessment(unitStandardId, studentId, assessmentType, result);
+        }
+        alert(`Marked ${selectedStudents.size} students as ${result}`);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Assessment Analytics</h2>
+        {/* Add new unit standard */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Unit Standards Management</h3>
+            <button
+              onClick={() => setShowNewForm(!showNewForm)}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              <Plus size={18} /> New Unit Standard
+            </button>
+          </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total Assessments</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{analytics.summary.total}</p>
+          {showNewForm && (
+            <div className="bg-gray-50 p-4 rounded mb-4 space-y-3">
+              <input
+                type="text"
+                placeholder="Code (e.g., 119673)"
+                value={newUSData.code}
+                onChange={(e) => setNewUSData({ ...newUSData, code: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              />
+              <input
+                type="text"
+                placeholder="Title"
+                value={newUSData.title}
+                onChange={(e) => setNewUSData({ ...newUSData, title: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              />
+              <select
+                value={newUSData.moduleId}
+                onChange={(e) => setNewUSData({ ...newUSData, moduleId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              >
+                <option value="">Select Module</option>
+                {modules.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+
+              <div className="grid grid-cols-3 gap-3">
+                <input
+                  type="number"
+                  placeholder="Credits"
+                  value={newUSData.credits}
+                  onChange={(e) => setNewUSData({ ...newUSData, credits: parseInt(e.target.value) })}
+                  className="px-3 py-2 border border-gray-300 rounded"
+                />
+                <select
+                  value={newUSData.level}
+                  onChange={(e) => setNewUSData({ ...newUSData, level: parseInt(e.target.value) })}
+                  className="px-3 py-2 border border-gray-300 rounded"
+                >
+                  <option value={2}>Level 2</option>
+                  <option value={3}>Level 3</option>
+                </select>
+                <select
+                  value={newUSData.type}
+                  onChange={(e) => setNewUSData({ ...newUSData, type: e.target.value })}
+                  className="px-3 py-2 border border-gray-300 rounded"
+                >
+                  <option value="Core">Core</option>
+                  <option value="Fundamental">Fundamental</option>
+                  <option value="Elective">Elective</option>
+                </select>
               </div>
-              <FileText className="w-8 h-8 text-blue-500" />
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddUnitStandard}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                >
+                  <Check size={18} /> Add
+                </button>
+                <button
+                  onClick={() => setShowNewForm(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 flex items-center gap-2"
+                >
+                  <X size={18} /> Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Unit standards by module */}
+        {modules.map(module => {
+          const moduleUnits = unitStandards.filter(u => u.module.id === module.id);
+          if (moduleUnits.length === 0) return null;
+
+          const isModuleExpanded = expandedModules.has(module.id);
+
+          return (
+            <div key={module.id} className="bg-white border border-gray-200 rounded-lg">
+              <button
+                onClick={() => {
+                  const newSet = new Set(expandedModules);
+                  if (newSet.has(module.id)) {
+                    newSet.delete(module.id);
+                  } else {
+                    newSet.add(module.id);
+                  }
+                  setExpandedModules(newSet);
+                }}
+                className="w-full p-4 flex items-center gap-2 hover:bg-gray-50 font-semibold text-lg"
+              >
+                {isModuleExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                {module.name}
+                <span className="text-gray-500 text-sm ml-auto">({moduleUnits.length} units)</span>
+              </button>
+
+              {isModuleExpanded && (
+                <div className="border-t border-gray-200 divide-y divide-gray-200">
+                  {moduleUnits.map(unit => {
+                    const isUnitExpanded = expandedUnits.has(unit.id);
+
+                    return (
+                      <div key={unit.id}>
+                        <button
+                          onClick={() => {
+                            const newSet = new Set(expandedUnits);
+                            if (newSet.has(unit.id)) {
+                              newSet.delete(unit.id);
+                            } else {
+                              newSet.add(unit.id);
+                            }
+                            setExpandedUnits(newSet);
+                          }}
+                          className="w-full p-4 flex items-center gap-3 hover:bg-gray-50 text-left"
+                        >
+                          {isUnitExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                          <div className="flex-1">
+                            <div className="font-semibold">
+                              {unit.code} - {unit.title}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Level {unit.level} • {unit.credits} credits • {unit.type}
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsEditing(unit.id);
+                              setEditData(unit);
+                            }}
+                            className="p-2 hover:bg-blue-100 text-blue-600 rounded"
+                            title="Edit"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteUnitStandard(unit.id);
+                            }}
+                            className="p-2 hover:bg-red-100 text-red-600 rounded"
+                            title="Delete"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </button>
+
+                        {isEditing === unit.id && (
+                          <div className="bg-blue-50 p-4 space-y-3">
+                            <input
+                              type="text"
+                              value={editData?.title || ''}
+                              onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded"
+                              placeholder="Title"
+                            />
+                            <input
+                              type="text"
+                              value={editData?.code || ''}
+                              onChange={(e) => setEditData({ ...editData, code: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded"
+                              placeholder="Code"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleUpdateUnitStandard(unit.id)}
+                                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                              >
+                                <Save size={18} /> Save
+                              </button>
+                              <button
+                                onClick={() => setIsEditing(null)}
+                                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 flex items-center gap-2"
+                              >
+                                <X size={18} /> Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {isUnitExpanded && (
+                          <AssessmentTabs
+                            unitStandard={unit}
+                            students={students}
+                            assessments={assessments.filter(a => a.unitStandard?.id === unit.id)}
+                            onMarkAssessment={handleMarkAssessment}
+                            onBulkMark={handleBulkMark}
+                            loading={loading}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // ====================
+  // ASSESSMENT TABS COMPONENT
+  // ====================
+  const AssessmentTabs = ({ unitStandard, students, assessments, onMarkAssessment, onBulkMark, loading }: any) => {
+    const [activeTab, setActiveTab] = useState<'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE'>('FORMATIVE');
+    const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+
+    const formativeAssessments = assessments.filter((a: any) => a.type === 'FORMATIVE');
+    const summativeAssessments = assessments.filter((a: any) => a.type === 'SUMMATIVE');
+    const workplaceAssessments = assessments.filter((a: any) => a.type === 'WORKPLACE');
+
+    const getAssessmentStatus = (studentId: string, type: 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE') => {
+      const assessment = assessments.find((a: any) => a.student.id === studentId && a.type === type);
+      return assessment?.result || 'PENDING';
+    };
+
+    const getStatusColor = (status: string) => {
+      if (status === 'COMPETENT') return 'bg-green-100 border-green-300 text-green-700';
+      if (status === 'NOT_YET_COMPETENT') return 'bg-red-100 border-red-300 text-red-700';
+      return 'bg-gray-100 border-gray-300 text-gray-700';
+    };
+
+    const getCompletionStats = () => {
+      const types: ('FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE')[] = ['FORMATIVE', 'SUMMATIVE', 'WORKPLACE'];
+      return types.map(type => {
+        const completedCount = students.filter((student: any) => 
+          getAssessmentStatus(student.id, type) === 'COMPETENT'
+        ).length;
+        return { type, completedCount, total: students.length };
+      });
+    };
+
+    const getCompletionColor = (completed: number, total: number) => {
+      if (completed === 0) return 'text-gray-500'; // None done
+      if (completed === total) return 'text-green-600'; // All done
+      return 'text-orange-600'; // Some done
+    };
+
+    return (
+      <div className="bg-gray-50 border-t p-4">
+        {/* Tab buttons */}
+        <div className="flex gap-2 mb-4">
+          {['FORMATIVE', 'SUMMATIVE', 'WORKPLACE'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab as 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE');
+                setSelectedStudents(new Set());
+              }}
+              className={`px-4 py-2 rounded font-semibold transition ${
+                activeTab === tab
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {tab} Assessment
+            </button>
+          ))}
+        </div>
+
+        {/* Bulk actions */}
+        {selectedStudents.size > 0 && (
+          <div className="bg-blue-50 p-3 rounded mb-4 flex items-center justify-between">
+            <span className="text-sm font-semibold">
+              {selectedStudents.size} student(s) selected
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onBulkMark(unitStandard.id, activeTab, 'COMPETENT', selectedStudents)}
+                disabled={loading}
+                className="bg-green-600 text-white px-3 py-1  rounded text-sm hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+              >
+                {loading && <Loader2 size={16} className="animate-spin" />}
+                Mark Competent
+              </button>
+              <button
+                onClick={() => onBulkMark(unitStandard.id, activeTab, 'NOT_YET_COMPETENT', selectedStudents)}
+                disabled={loading}
+                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 disabled:opacity-50"
+              >
+                Mark Not Yet
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Completion Summary */}
+        <div className="bg-white p-4 rounded border border-gray-200 mb-4">
+          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Assessment Progress</div>
+          <div className="flex gap-6">
+            {getCompletionStats().map(stat => (
+              <div key={stat.type} className="flex items-center gap-2">
+                <span className={`text-sm font-semibold ${getCompletionColor(stat.completedCount, stat.total)}`}>
+                  {stat.type}: {stat.completedCount}/{stat.total}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Students grid */}
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {students.map((student: any) => {
+            const status = getAssessmentStatus(student.id, activeTab);
+            const isSelected = selectedStudents.has(student.id);
+
+            return (
+              <div
+                key={student.id}
+                className="bg-white p-3 rounded border border-gray-200 flex items-center justify-between hover:shadow-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    const newSet = new Set(selectedStudents);
+                    if (e.target.checked) {
+                      newSet.add(student.id);
+                    } else {
+                      newSet.delete(student.id);
+                    }
+                    setSelectedStudents(newSet);
+                  }}
+                  className="mr-3 w-4 h-4"
+                />
+
+                <div className="flex-1">
+                  <div className="font-semibold text-sm">
+                    {student.firstName} {student.lastName}
+                  </div>
+                  <div className="text-xs text-gray-500">{student.studentId}</div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onMarkAssessment(
+                      unitStandard.id, 
+                      student.id, 
+                      activeTab, 
+                      status === 'COMPETENT' ? 'PENDING' : 'COMPETENT'
+                    )}
+                    className={`px-3 py-1 rounded text-sm font-semibold border transition ${
+                      status === 'COMPETENT'
+                        ? 'bg-green-600 text-white border-green-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-green-300'
+                    }`}
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={() => onMarkAssessment(
+                      unitStandard.id, 
+                      student.id, 
+                      activeTab, 
+                      status === 'NOT_YET_COMPETENT' ? 'PENDING' : 'NOT_YET_COMPETENT'
+                    )}
+                    className={`px-3 py-1 rounded text-sm font-semibold border transition ${
+                      status === 'NOT_YET_COMPETENT'
+                        ? 'bg-red-600 text-white border-red-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
+                    }`}
+                  >
+                    ✗
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // ====================
+  // MODERATION VIEW
+  // ====================
+  const ModerationView = () => {
+    const [unreviewed, setUnreviewed] = useState<Assessment[]>([]);
+    const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+    const [moderationNotes, setModerationNotes] = useState('');
+
+    useEffect(() => {
+      setUnreviewed(assessments.filter(a => a.moderationStatus === 'PENDING'));
+    }, [assessments]);
+
+    const handleApprove = async (assessmentId: string) => {
+      try {
+        const res = await fetch(`/api/assessments/${assessmentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            moderationStatus: 'APPROVED',
+            moderationNotes
+          })
+        });
+
+        if (res.ok) {
+          setSelectedAssessment(null);
+          setModerationNotes('');
+          fetchAssessments();
+        }
+      } catch (error) {
+        console.error('Error approving assessment:', error);
+      }
+    };
+
+    const handleReject = async (assessmentId: string) => {
+      try {
+        const res = await fetch(`/api/assessments/${assessmentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            moderationStatus: 'REJECTED',
+            moderationNotes
+          })
+        });
+
+        if (res.ok) {
+          setSelectedAssessment(null);
+          setModerationNotes('');
+          fetchAssessments();
+        }
+      } catch (error) {
+        console.error('Error rejecting assessment:', error);
+      }
+    };
+
+    const handleRequestRevision = async (assessmentId: string) => {
+      try {
+        const res = await fetch(`/api/assessments/${assessmentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            moderationStatus: 'RESUBMIT',
+            moderationNotes
+          })
+        });
+
+        if (res.ok) {
+          setSelectedAssessment(null);
+          setModerationNotes('');
+          fetchAssessments();
+        }
+      } catch (error) {
+        console.error('Error requesting revision:', error);
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <h3 className="font-semibold mb-2">Pending Assessments for Moderation</h3>
+          <div className="text-sm text-gray-500 mb-4">
+            {unreviewed.length} assessment(s) waiting for review
+          </div>
+
+          {unreviewed.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              ✅ All assessments have been reviewed!
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {unreviewed.map(assessment => (
+                <button
+                  key={assessment.id}
+                  onClick={() => setSelectedAssessment(assessment)}
+                  className={`w-full p-3 rounded border text-left transition ${
+                    selectedAssessment?.id === assessment.id
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'bg-white border-gray-200 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="font-semibold text-sm">
+                    {assessment.student.firstName} {assessment.student.lastName} - {assessment.type}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Submitted: {assessment.assessedDate ? format(new Date(assessment.assessedDate), 'MMM dd, yyyy') : 'Pending'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {selectedAssessment && (
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h3 className="font-semibold mb-4">
+              Review: {selectedAssessment.student.firstName} {selectedAssessment.student.lastName}
+            </h3>
+
+            <div className="space-y-3 mb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-600">Assessment Type</label>
+                  <div className="font-semibold">{selectedAssessment.type}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">Current Result</label>
+                  <div className="font-semibold">{selectedAssessment.result}</div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-600">Moderator Notes</label>
+                <textarea
+                  value={moderationNotes}
+                  onChange={(e) => setModerationNotes(e.target.value)}
+                  placeholder="Add your feedback and comments..."
+                  className="w-full p-2 border border-gray-300 rounded"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleApprove(selectedAssessment.id)}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+              >
+                <Check size={18} /> Approve
+              </button>
+              <button
+                onClick={() => handleRequestRevision(selectedAssessment.id)}
+                className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 flex items-center gap-2"
+              >
+                <AlertTriangle size={18} /> Request Revision
+              </button>
+              <button
+                onClick={() => handleReject(selectedAssessment.id)}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center gap-2"
+              >
+                <X size={18} /> Reject
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ====================
+  // PROGRESS VIEW
+  // ====================
+  const ProgressView = () => {
+    const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+
+    const getStudentProgress = (studentId: string) => {
+      const studentAssessments = assessments.filter(a => a.student.id === studentId);
+      const totalUnits = unitStandards.length;
+
+      let competentUnits = 0;
+      unitStandards.forEach(unit => {
+        const hasFormative = studentAssessments.some(a => a.unitStandard?.id === unit.id && a.type === 'FORMATIVE' && a.result === 'COMPETENT');
+        const hasSummative = studentAssessments.some(a => a.unitStandard?.id === unit.id && a.type === 'SUMMATIVE' && a.result === 'COMPETENT');
+
+        if (hasFormative && hasSummative) {
+          competentUnits++;
+        }
+      });
+
+      return {
+        competent: competentUnits,
+        total: totalUnits,
+        percentage: totalUnits > 0 ? Math.round((competentUnits / totalUnits) * 100) : 0
+      };
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <h3 className="font-semibold mb-4">Module Progress</h3>
+
+          <div className="space-y-3">
+            {modules.map(module => {
+              const moduleUnits = unitStandards.filter(u => u.module.id === module.id);
+              const moduleProgress = modules.map(m => {
+                const units = unitStandards.filter(u => u.module.id === m.id);
+                let competentCount = 0;
+                units.forEach(unit => {
+                  const hasCompleteAssessments = students.filter(s => {
+                    const formative = assessments.find(a => a.student.id === s.id && a.unitStandard?.id === unit.id && a.type === 'FORMATIVE' && a.result === 'COMPETENT');
+                    const summative = assessments.find(a => a.student.id === s.id && a.unitStandard?.id === unit.id && a.type === 'SUMMATIVE' && a.result === 'COMPETENT');
+                    return formative && summative;
+                  });
+                  competentCount += hasCompleteAssessments.length;
+                });
+                return { moduleId: m.id, moduleName: m.name, competent: competentCount, total: units.length * students.length, percentage: units.length * students.length > 0 ? Math.round((competentCount / (units.length * students.length)) * 100) : 0 };
+              });
+
+              const modProg = moduleProgress.find(mp => mp.moduleId === module.id);
+              if (!modProg) return null;
+
+              return (
+                <div key={module.id} className="bg-gray-50 p-3 rounded">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-sm">{module.name}</span>
+                    <span className="text-sm text-gray-600">{modProg.percentage}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-600 h-2 rounded-full transition"
+                      style={{ width: `${modProg.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <h3 className="font-semibold mb-4">Student Progress</h3>
+
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {students.map(student => {
+              const progress = getStudentProgress(student.id);
+              return (
+                <button
+                  key={student.id}
+                  onClick={() => setSelectedStudent(selectedStudent === student.id ? null : student.id)}
+                  className="w-full p-3 rounded border border-gray-200 hover:border-blue-300 text-left transition"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="font-semibold text-sm">
+                        {student.firstName} {student.lastName}
+                      </div>
+                      <div className="text-xs text-gray-500">{student.studentId}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-sm">
+                        {progress.competent}/{progress.total}
+                      </div>
+                      <div className="text-xs text-gray-500">{progress.percentage}%</div>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-600 h-2 rounded-full transition"
+                      style={{ width: `${progress.percentage}%` }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ====================
+  // COMPLIANCE VIEW
+  // ====================
+  const ComplianceView = () => {
+    const getComplianceStatus = (studentId: string) => {
+      const studentAssessments = assessments.filter(a => a.student.id === studentId);
+      const allAssessmentsMade = unitStandards.every(unit => {
+        const hasFormative = studentAssessments.some(a => a.unitStandard?.id === unit.id && a.type === 'FORMATIVE');
+        const hasSummative = studentAssessments.some(a => a.unitStandard?.id === unit.id && a.type === 'SUMMATIVE');
+        return hasFormative && hasSummative;
+      });
+
+      return allAssessmentsMade;
+    };
+
+    const getCompliancePercentage = () => {
+      const compliantStudents = students.filter(s => getComplianceStatus(s.id)).length;
+      return students.length > 0 ? Math.round((compliantStudents / students.length) * 100) : 0;
+    };
+
+    const getNonCompliantStudents = () => {
+      return students.filter(s => !getComplianceStatus(s.id));
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <h3 className="font-semibold mb-4">Compliance Status</h3>
+
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-semibold">Overall Compliance</span>
+              <span className="text-2xl font-bold text-green-600">{getCompliancePercentage()}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-4">
+              <div
+                className="bg-green-600 h-4 rounded-full transition"
+                style={{ width: `${getCompliancePercentage()}%` }}
+              />
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Competent</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{analytics.summary.competent}</p>
+          {getNonCompliantStudents().length > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+              <h4 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                <AlertTriangle size={18} /> Students Missing Required Assessments
+              </h4>
+
+              <div className="space-y-2">
+                {getNonCompliantStudents().map(student => {
+                  const missing = unitStandards.filter(unit => {
+                    const studentAssessments = assessments.filter(a => a.student.id === student.id && a.unitStandard?.id === unit.id);
+                    const hasFormative = studentAssessments.some(a => a.type === 'FORMATIVE');
+                    const hasSummative = studentAssessments.some(a => a.type === 'SUMMATIVE');
+                    return !hasFormative || !hasSummative;
+                  });
+
+                  return (
+                    <div key={student.id} className="bg-white p-2 rounded text-sm">
+                      <div className="font-semibold">
+                        {student.firstName} {student.lastName}
+                      </div>
+                      <div className="text-gray-600">
+                        Missing assessments for {missing.length} unit(s)
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <Award className="w-8 h-8 text-green-500" />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ====================
+  // BULK ACTIONS VIEW
+  // ====================
+  const BulkActionsView = () => {
+    const [selectedUnits, setSelectedUnits] = useState<Set<string>>(new Set());
+    const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+    const [assessmentType, setAssessmentType] = useState<'FORMATIVE' | 'SUMMATIVE'>('FORMATIVE');
+    const [markAs, setMarkAs] = useState<'COMPETENT' | 'NOT_YET_COMPETENT'>('COMPETENT');
+
+    const handleBulkMark = async () => {
+      if (selectedUnits.size === 0 || selectedStudents.size === 0) {
+        alert('Select at least one unit and one student');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        for (const unitId of selectedUnits) {
+          for (const studentId of selectedStudents) {
+            await fetch('/api/assessments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                studentId,
+                unitStandardId: unitId,
+                type: assessmentType,
+                method: 'PRACTICAL',
+                result: markAs,
+                dueDate: new Date(),
+                assessedDate: new Date().toISOString()
+              })
+            });
+          }
+        }
+
+        alert(`Marked ${selectedUnits.size * selectedStudents.size} assessment(s)`);
+        setSelectedUnits(new Set());
+        setSelectedStudents(new Set());
+        fetchAssessments();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h3 className="font-semibold mb-4">Select Unit Standards</h3>
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {unitStandards.map(unit => (
+                <label key={unit.id} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedUnits.has(unit.id)}
+                    onChange={(e) => {
+                      const newSet = new Set(selectedUnits);
+                      if (e.target.checked) {
+                        newSet.add(unit.id);
+                      } else {
+                        newSet.delete(unit.id);
+                      }
+                      setSelectedUnits(newSet);
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <div className="text-sm">
+                    <div className="font-semibold">{unit.code} - {unit.title}</div>
+                    <div className="text-gray-500 text-xs">{unit.module.name}</div>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Pass Rate</p>
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{analytics.summary.passRate}%</p>
-              </div>
-              <Target className="w-8 h-8 text-indigo-500" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Overdue</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{analytics.summary.overdue}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h3 className="font-semibold mb-4">Select Students</h3>
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {students.map(student => (
+                <label key={student.id} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedStudents.has(student.id)}
+                    onChange={(e) => {
+                      const newSet = new Set(selectedStudents);
+                      if (e.target.checked) {
+                        newSet.add(student.id);
+                      } else {
+                        newSet.delete(student.id);
+                      }
+                      setSelectedStudents(newSet);
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <div className="text-sm">
+                    <div className="font-semibold">{student.firstName} {student.lastName}</div>
+                    <div className="text-gray-500 text-xs">{student.studentId}</div>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
         </div>
 
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <h3 className="font-semibold mb-4">Mark As</h3>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-semibold">Assessment Type</label>
+              <select
+                value={assessmentType}
+                onChange={(e) => setAssessmentType(e.target.value as 'FORMATIVE' | 'SUMMATIVE')}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              >
+                <option value="FORMATIVE">Formative</option>
+                <option value="SUMMATIVE">Summative</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Result</label>
+              <select
+                value={markAs}
+                onChange={(e) => setMarkAs(e.target.value as 'COMPETENT' | 'NOT_YET_COMPETENT')}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              >
+                <option value="COMPETENT">Competent</option>
+                <option value="NOT_YET_COMPETENT">Not Yet Competent</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleBulkMark}
+              disabled={loading || selectedUnits.size === 0 || selectedStudents.size === 0}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
+            >
+              {loading && <Loader2 size={18} className="animate-spin" />}
+              Mark {selectedUnits.size * selectedStudents.size} Assessment(s)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ====================
+  // EXPORT VIEW
+  // ====================
+  const ExportView = () => {
+    const [exportFormat, setExportFormat] = useState<'PDF' | 'CSV'>('PDF');
+    const [exportScope, setExportScope] = useState<'all' | 'group' | 'student'>('all');
+    const [selectedStudentForExport, setSelectedStudentForExport] = useState<string>('');
+    const [selectedGroupForExport, setSelectedGroupForExport] = useState<string>('');
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+      setIsExporting(true);
+      try {
+        // Build query params
+        const params = new URLSearchParams({
+          format: exportFormat,
+          scope: exportScope,
+          ...(exportScope === 'student' && { studentId: selectedStudentForExport }),
+          ...(exportScope === 'group' && { groupId: selectedGroupForExport })
+        });
+
+        const response = await fetch(`/api/assessments/export?${params.toString()}`);
+
+        if (response.ok) {
+          // Handle file download
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `assessments-export.${exportFormat.toLowerCase()}`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } else {
+          alert('Export failed');
+        }
+      } catch (error) {
+        console.error('Export error:', error);
+      } finally {
+        setIsExporting(false);
+      }
+    };
+
+    return (
+      <div className="bg-white p-6 rounded border border-gray-200 max-w-md mx-auto">
+        <h3 className="font-semibold text-lg mb-6">Export Assessments</h3>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-semibold">Format</label>
+            <select
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value as 'PDF' | 'CSV')}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            >
+              <option value="PDF">PDF Report</option>
+              <option value="CSV">CSV Spreadsheet</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm font-semibold">Scope</label>
+            <select
+              value={exportScope}
+              onChange={(e) => setExportScope(e.target.value as 'all' | 'group' | 'student')}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            >
+              <option value="all">All Data</option>
+              <option value="group">By Group</option>
+              <option value="student">By Student</option>
+            </select>
+          </div>
+
+          {exportScope === 'student' && (
+            <div>
+              <label className="text-sm font-semibold">Student</label>
+              <select
+                value={selectedStudentForExport}
+                onChange={(e) => setSelectedStudentForExport(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              >
+                <option value="">Select student</option>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.firstName} {s.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {exportScope === 'group' && (
+            <div>
+              <label className="text-sm font-semibold">Group</label>
+              <select
+                value={selectedGroupForExport}
+                onChange={(e) => setSelectedGroupForExport(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+              >
+                <option value="">Select group</option>
+                {groups.map(g => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            onClick={handleExport}
+            disabled={isExporting || (exportScope === 'student' && !selectedStudentForExport) || (exportScope === 'group' && !selectedGroupForExport)}
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download size={18} />
+                Export
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ====================
+  // ANALYTICS VIEW
+  // ====================
+  const AnalyticsView = () => {
+    // Calculate statistics
+    const totalAssessments = assessments.length;
+    const competentCount = assessments.filter(a => a.result === 'COMPETENT').length;
+    const notYetCount = assessments.filter(a => a.result === 'NOT_YET_COMPETENT').length;
+    const competencyRate = totalAssessments > 0 ? Math.round((competentCount / totalAssessments) * 100) : 0;
+
+    // Per-unit-standard data
+    const unitStandardStats = unitStandards.map(unit => {
+      const unitAssessments = assessments.filter(a => a.unitStandard?.id === unit.id);
+      const competent = unitAssessments.filter(a => a.result === 'COMPETENT').length;
+      return {
+        unit: `${unit.code}`,
+        competent,
+        total: unitAssessments.length,
+        rate: unitAssessments.length > 0 ? Math.round((competent / unitAssessments.length) * 100) : 0
+      };
+    }).sort((a, b) => b.rate - a.rate);
+
+    // Per-assessment-type data
+    const formativeStats = assessments.filter(a => a.type === 'FORMATIVE');
+    const summativeStats = assessments.filter(a => a.type === 'SUMMATIVE');
+
+    const typeData = [
+      {
+        name: 'Formative',
+        competent: formativeStats.filter(a => a.result === 'COMPETENT').length,
+        notYet: formativeStats.filter(a => a.result === 'NOT_YET_COMPETENT').length,
+        pending: formativeStats.filter(a => a.result === 'PENDING').length
+      },
+      {
+        name: 'Summative',
+        competent: summativeStats.filter(a => a.result === 'COMPETENT').length,
+        notYet: summativeStats.filter(a => a.result === 'NOT_YET_COMPETENT').length,
+        pending: summativeStats.filter(a => a.result === 'PENDING').length
+      }
+    ];
+
+    const pieData = [
+      { name: 'Competent', value: competentCount },
+      { name: 'Not Yet', value: notYetCount },
+      { name: 'Pending', value: totalAssessments - competentCount - notYetCount }
+    ];
+
+    const COLORS = ['#10b981', '#ef4444', '#9ca3af'];
+
+    return (
+      <div className="space-y-6">
+        {/* Summary cards */}
+        <div className="grid grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+            <div className="text-3xl font-bold text-blue-600">{totalAssessments}</div>
+            <div className="text-sm text-gray-600">Total Assessments</div>
+          </div>
+          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+            <div className="text-3xl font-bold text-green-600">{competentCount}</div>
+            <div className="text-sm text-gray-600">Competent</div>
+          </div>
+          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+            <div className="text-3xl font-bold text-red-600">{notYetCount}</div>
+            <div className="text-sm text-gray-600">Not Yet</div>
+          </div>
+          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+            <div className="text-3xl font-bold text-purple-600">{competencyRate}%</div>
+            <div className="text-sm text-gray-600">Pass Rate</div>
+          </div>
+        </div>
+
         {/* Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Assessment Types</h3>
-            <ResponsiveContainer width="100%" height={300}>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h3 className="font-semibold mb-4">Overall Results</h3>
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
-                  data={chartData}
+                  data={pieData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                  label={({ name, value }) => `${name}: ${value}`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {chartData.map((entry, index) => (
+                  {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -378,580 +1355,38 @@ export default function AssessmentsPage() {
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Assessment Methods</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={methodData}>
+          <div className="bg-white p-4 rounded border border-gray-200">
+            <h3 className="font-semibold mb-4">By Assessment Type</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={typeData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#3b82f6" />
+                <Legend />
+                <Bar dataKey="competent" stackId="a" fill="#10b981" name="Competent" />
+                <Bar dataKey="notYet" stackId="a" fill="#ef4444" name="Not Yet" />
+                <Bar dataKey="pending" stackId="a" fill="#9ca3af" name="Pending" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Top Performers */}
-        {analytics.topPerformers && analytics.topPerformers.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Top Performers</h3>
-            <div className="space-y-3">
-              {analytics.topPerformers.slice(0, 10).map((performer: any, index: number) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="font-medium text-slate-900 dark:text-white">
-                        {performer.student.firstName} {performer.student.lastName}
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {performer.competent}/{performer.total} assessments
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                      {performer.passRate.toFixed(1)}%
-                    </p>
-                  </div>
+        {/* Unit standard breakdown */}
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <h3 className="font-semibold mb-4">Unit Standard Pass Rates</h3>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {unitStandardStats.map(stat => (
+              <div key={stat.unit} className="bg-gray-50 p-3 rounded">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-sm">{stat.unit}</span>
+                  <span className="text-sm">{stat.competent}/{stat.total} ({stat.rate}%)</span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderTemplatesView = () => {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Assessment Templates</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Select students and use templates for bulk assessment creation
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((template) => (
-            <div key={template.id} className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-              <div className="flex items-start justify-between mb-3">
-                <FileCheck className="w-6 h-6 text-indigo-500" />
-                <span className={cn(
-                  "px-2 py-1 text-xs font-medium rounded-full",
-                  template.type === 'FORMATIVE' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                  template.type === 'SUMMATIVE' && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-                  template.type === 'INTEGRATED' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                )}>
-                  {template.type}
-                </span>
-              </div>
-              <h3 className="font-semibold text-slate-900 dark:text-white mb-2">{template.name}</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{template.description}</p>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Method: {template.method}</span>
-                <button
-                  onClick={() => {
-                    // Logic to use template would go here
-                    alert(`Using template: ${template.name}\nSelect students from the Manage tab first.`);
-                  }}
-                  className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-                >
-                  Use Template
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderFormativesView = () => {
-    // Group formatives by module
-    const groupedFormatives = formatives.reduce((acc: any, formative) => {
-      const moduleName = formative.module?.name || 'Unknown Module';
-      if (!acc[moduleName]) {
-        acc[moduleName] = [];
-      }
-      acc[moduleName].push(formative);
-      return acc;
-    }, {});
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Curriculum Formative Assessments</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Official formative assessments from the curriculum
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Select Student:</span>
-            <select
-              value={selectedStudentForFormative || ''}
-              onChange={(e) => setSelectedStudentForFormative(e.target.value || null)}
-              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white min-w-[200px]"
-            >
-              <option value="">Select a student...</option>
-              {students.map(student => (
-                <option key={student.id} value={student.id}>
-                  {student.firstName} {student.lastName} ({student.studentId})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {selectedStudentForFormative && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <div>
-                <p className="font-medium text-blue-900 dark:text-blue-100">
-                  Tracking for: {students.find(s => s.id === selectedStudentForFormative)?.firstName} {students.find(s => s.id === selectedStudentForFormative)?.lastName}
-                </p>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Click 'Mark Complete' to update progress for this student
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {Object.entries(groupedFormatives).map(([moduleName, moduleFormatives]: [string, any]) => (
-          <div key={moduleName} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden">
-            <div className="p-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-semibold text-slate-900 dark:text-white">{moduleName}</h3>
-            </div>
-            <div className="divide-y divide-slate-200 dark:divide-slate-700">
-              {moduleFormatives.map((formative: any) => {
-                const completion = formative.completions?.find(
-                  (c: any) => c.studentId === selectedStudentForFormative
-                );
-                const isCompleted = completion?.passed;
-
-                return (
-                  <div key={formative.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">
-                            {formative.code}
-                          </span>
-                          <h4 className="font-medium text-slate-900 dark:text-white">
-                            {formative.title}
-                          </h4>
-                          {selectedStudentForFormative && isCompleted && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">
-                              <CheckCircle className="w-3 h-3" />
-                              Completed
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                          {formative.description} • Unit Standard: {formative.unitStandard?.code}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <FileText className="w-3 h-3" />
-                            {formative.questions || 0} Questions
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Target className="w-3 h-3" />
-                            Pass: {formative.passingScore}%
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {selectedStudentForFormative ? (
-                          <button
-                            onClick={() => updateFormativeCompletion(formative.id, !isCompleted)}
-                            className={cn(
-                              "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
-                              isCompleted
-                                ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
-                                : "bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40"
-                            )}
-                          >
-                            {isCompleted ? (
-                              <>
-                                <XCircle className="w-4 h-4" />
-                                Mark Incomplete
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="w-4 h-4" />
-                                Mark Complete
-                              </>
-                            )}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => alert(`Opening document: docs/Curriculumn and data process/${formative.documentPath}`)}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
-                          >
-                            <Download className="w-4 h-4" />
-                            View PDF
-                          </button>
-                        )}
-
-                        {selectedStudentForFormative && (
-                          <button
-                            onClick={() => alert(`Opening document: docs/Curriculumn and data process/${formative.documentPath}`)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 transition-colors"
-                            title="View PDF"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderModerationView = () => {
-    // Get assessments that need moderation
-    const pendingModeration = assessments.filter(a =>
-      a.result === 'COMPETENT' && a.moderationStatus === 'PENDING'
-    );
-    const inReview = assessments.filter(a => a.moderationStatus === 'IN_REVIEW');
-    const moderated = assessments.filter(a => ['APPROVED', 'REJECTED'].includes(a.moderationStatus));
-
-    const handleModerate = async (assessmentId: string, status: 'APPROVED' | 'REJECTED', feedback?: string) => {
-      try {
-        const response = await fetch(`/api/assessments/moderate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            assessmentId,
-            moderationStatus: status,
-            moderatorId: user?.id,
-            moderationNotes: feedback
-          }),
-        });
-        if (response.ok) {
-          await fetchAssessments();
-        } else {
-          console.error('Failed to moderate assessment:', await response.text());
-        }
-      } catch (error) {
-        console.error('Error moderating assessment:', error);
-      }
-    };
-
-    return (
-      <div className="space-y-6">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Assessment Moderation</h2>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 border border-yellow-200 dark:border-yellow-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">Pending Moderation</p>
-                <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-100">{pendingModeration.length}</p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
-            </div>
-          </div>
-
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-700 dark:text-blue-300">In Review</p>
-                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{inReview.length}</p>
-              </div>
-              <Eye className="w-8 h-8 text-blue-600" />
-            </div>
-          </div>
-
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-700 dark:text-green-300">Moderated</p>
-                <p className="text-3xl font-bold text-green-900 dark:text-green-100">{moderated.length}</p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Assessments */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Assessments Requiring Moderation</h3>
-          </div>
-          <div className="divide-y divide-slate-200 dark:divide-slate-700">
-            {pendingModeration.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-                <CheckSquare className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-                <p>No assessments pending moderation</p>
-              </div>
-            ) : (
-              pendingModeration.map((assessment) => (
-                <div key={assessment.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold">
-                          {assessment.student?.firstName?.[0]}{assessment.student?.lastName?.[0]}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-slate-900 dark:text-white">
-                            {assessment.student?.firstName} {assessment.student?.lastName}
-                          </h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">{assessment.student?.studentId}</p>
-                        </div>
-                      </div>
-                      <div className="ml-13 space-y-1">
-                        <p className="text-sm text-slate-700 dark:text-slate-300">
-                          <span className="font-medium">Unit Standard:</span> {assessment.unitStandard?.code} - {assessment.unitStandard?.title}
-                        </p>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">
-                          <span className="font-medium">Type:</span> {assessment.type} | <span className="font-medium">Method:</span> {assessment.method}
-                        </p>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">
-                          <span className="font-medium">Score:</span> {assessment.score || 'N/A'} | <span className="font-medium">Assessed:</span> {assessment.assessedDate ? format(new Date(assessment.assessedDate), 'dd MMM yyyy') : 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleModerate(assessment.id, 'APPROVED')}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                      >
-                        <ThumbsUp className="w-4 h-4" />
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => {
-                          const feedback = prompt('Please provide feedback for rejection:');
-                          if (feedback) handleModerate(assessment.id, 'REJECTED', feedback);
-                        }}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-                      >
-                        <ThumbsDown className="w-4 h-4" />
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Recently Moderated */}
-        {moderated.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recently Moderated</h3>
-            </div>
-            <div className="divide-y divide-slate-200 dark:divide-slate-700">
-              {moderated.slice(0, 10).map((assessment) => (
-                <div key={assessment.id} className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 text-sm font-semibold">
-                          {assessment.student?.firstName?.[0]}{assessment.student?.lastName?.[0]}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-white">
-                            {assessment.student?.firstName} {assessment.student?.lastName}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{assessment.unitStandard?.code}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-sm font-medium",
-                      assessment.moderationStatus === 'APPROVED' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                      assessment.moderationStatus === 'REJECTED' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                    )}>
-                      {assessment.moderationStatus}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderProgressView = () => {
-    // Calculate student progress
-    const studentProgress = students.map(student => {
-      const studentAssessments = assessments.filter(a => a.student?.id === student.id);
-      const competent = studentAssessments.filter(a => a.result === 'COMPETENT').length;
-      const total = studentAssessments.length;
-      const progressPercentage = total > 0 ? (competent / total) * 100 : 0;
-
-      // Calculate module progress
-      const moduleProgress = modules.map(module => {
-        const moduleAssessments = studentAssessments.filter(a => a.unitStandard?.module?.name === module.name);
-        const moduleCompetent = moduleAssessments.filter(a => a.result === 'COMPETENT').length;
-        const moduleTotal = module.unitStandards?.length || 0;
-        return {
-          moduleName: module.name,
-          completed: moduleCompetent,
-          total: moduleTotal,
-          percentage: moduleTotal > 0 ? (moduleCompetent / moduleTotal) * 100 : 0
-        };
-      });
-
-      return {
-        student,
-        competent,
-        total,
-        progressPercentage,
-        moduleProgress
-      };
-    }).sort((a, b) => b.progressPercentage - a.progressPercentage);
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Student Progress Tracking</h2>
-          <button
-            onClick={() => alert('Export progress reports functionality')}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export Report
-          </button>
-        </div>
-
-        {/* Overall Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total Students</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{students.length}</p>
-              </div>
-              <Users className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Avg. Progress</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {studentProgress.length > 0
-                    ? Math.round(studentProgress.reduce((sum, s) => sum + s.progressPercentage, 0) / studentProgress.length)
-                    : 0}%
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">On Track</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {studentProgress.filter(s => s.progressPercentage >= 70).length}
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">At Risk</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {studentProgress.filter(s => s.progressPercentage < 50).length}
-                </p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-500" />
-            </div>
-          </div>
-        </div>
-
-        {/* Student Progress List */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Individual Student Progress</h3>
-          </div>
-          <div className="divide-y divide-slate-200 dark:divide-slate-700">
-            {studentProgress.map(({ student, competent, total, progressPercentage, moduleProgress }) => (
-              <div key={student.id} className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
-                      {student.firstName[0]}{student.lastName[0]}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-white">
-                        {student.firstName} {student.lastName}
-                      </h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {student.studentId} • {student.group?.name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                      {Math.round(progressPercentage)}%
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {competent}/{total} completed
-                    </p>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="mb-4">
-                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
-                    <div
-                      className={cn(
-                        "h-3 rounded-full transition-all",
-                        progressPercentage >= 70 && "bg-green-500",
-                        progressPercentage >= 50 && progressPercentage < 70 && "bg-yellow-500",
-                        progressPercentage < 50 && "bg-red-500"
-                      )}
-                      style={{ width: `${progressPercentage}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Module Progress */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {moduleProgress.map((mp) => (
-                    <div key={mp.moduleName} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">{mp.moduleName}</p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-slate-200 dark:bg-slate-600 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full bg-indigo-600"
-                            style={{ width: `${mp.percentage}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-slate-600 dark:text-slate-400">{Math.round(mp.percentage)}%</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: `${stat.rate}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -961,633 +1396,78 @@ export default function AssessmentsPage() {
     );
   };
 
-  const renderComplianceView = () => {
-    const currentYear = new Date().getFullYear();
-    const reportTypes = [
-      {
-        id: 'quarterly',
-        name: 'Quarterly Assessment Report',
-        description: 'Summary of all assessments completed in the quarter',
-        icon: FileBarChart,
-        frequency: 'Quarterly'
-      },
-      {
-        id: 'seta',
-        name: 'SETA Submission Report',
-        description: 'Compliance report for SETA submissions',
-        icon: Send,
-        frequency: 'As Required'
-      },
-      {
-        id: 'moderation',
-        name: 'Moderation Summary',
-        description: 'Overview of assessment moderation activities',
-        icon: Shield,
-        frequency: 'Monthly'
-      },
-      {
-        id: 'achievement',
-        name: 'Student Achievement Report',
-        description: 'Individual student progress and achievement rates',
-        icon: Award,
-        frequency: 'Monthly'
-      },
-      {
-        id: 'completion',
-        name: 'Programme Completion Report',
-        description: 'Learnership completion status and statistics',
-        icon: Target,
-        frequency: 'Annually'
-      }
-    ];
-
-    const handleGenerateReport = (reportType: string, format: 'pdf' | 'excel') => {
-      alert(`Generating ${reportType} report in ${format.toUpperCase()} format...`);
-      // API call would go here
-    };
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Compliance Reports</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Generate reports for SETA and compliance requirements</p>
-          </div>
+  // ====================
+  // MAIN RENDER
+  // ====================
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Assessment Management</h1>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Reports Generated</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">24</p>
-            <p className="text-xs text-green-600 dark:text-green-400 mt-1">This year</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Completion Rate</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">87%</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Above target</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Active Learners</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{students.length}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Currently enrolled</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Compliance Status</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              <CheckCircle className="w-8 h-8 inline" />
-            </p>
-            <p className="text-xs text-green-600 dark:text-green-400 mt-1">Up to date</p>
-          </div>
-        </div>
-
-        {/* Report Generation */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Generate Reports</h3>
-          </div>
-          <div className="p-6 space-y-4">
-            {reportTypes.map((report) => {
-              const Icon = report.icon;
+        {/* View tabs */}
+        <div className="bg-white border-b border-gray-200 rounded-t-lg overflow-x-auto">
+          <div className="flex gap-0">
+            {[
+              { id: 'manage', label: 'Manage', icon: CheckCircle },
+              { id: 'moderation', label: 'Moderation', icon: Eye },
+              { id: 'progress', label: 'Progress' , icon: TrendingUp },
+              { id: 'compliance', label: 'Compliance', icon: AlertTriangle },
+              { id: 'bulk', label: 'Bulk Actions', icon: Users },
+              { id: 'export', label: 'Export', icon: Download },
+              { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+            ].map(tab => {
+              const Icon = tab.icon;
               return (
-                <div key={report.id} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-900 dark:text-white mb-1">{report.name}</h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">{report.description}</p>
-                        <span className="inline-flex items-center px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs rounded-full">
-                          {report.frequency}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleGenerateReport(report.id, 'pdf')}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-                      >
-                        Generate PDF
-                      </button>
-                      <button
-                        onClick={() => handleGenerateReport(report.id, 'excel')}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                      >
-                        Generate Excel
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveView(tab.id as any)}
+                  className={`px-4 py-3 font-semibold flex items-center gap-2 whitespace-nowrap transition ${
+                    activeView === tab.id
+                      ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon size={18} />
+                  {tab.label}
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* Recent Reports */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Reports</h3>
-          </div>
-          <div className="divide-y divide-slate-200 dark:divide-slate-700">
-            {[
-              { name: 'Q4 2025 Assessment Report', date: '2026-01-15', type: 'Quarterly', format: 'PDF' },
-              { name: 'SETA Submission - December', date: '2025-12-31', type: 'SETA', format: 'Excel' },
-              { name: 'November Moderation Summary', date: '2025-12-01', type: 'Moderation', format: 'PDF' },
-            ].map((report, index) => (
-              <div key={index} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white">{report.name}</h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      Generated on {format(new Date(report.date), 'dd MMM yyyy')} • {report.type} • {report.format}
-                    </p>
-                  </div>
-                  <button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    Download
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  if (isLoadingCurriculum || isLoadingStudents) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500 dark:text-slate-400">Loading...</div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                <FileText className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                Assessment Management
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">
-                Track and manage learner assessments across all modules
-              </p>
+        {/* View content */}
+        {activeView === 'manage' && filteredUnitStandardId && (
+          <div className="bg-blue-50 border border-blue-200 rounded-b-lg border-t-0 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-blue-900">
+                Showing results for Unit Standard {unitStandards.find(u => u.id === filteredUnitStandardId)?.code}
+              </span>
             </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <Filter className="w-4 h-4" />
-                Filters
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-sm"
-                >
-                  <Download className="w-4 h-4" />
-                  Export
-                </button>
-                {showExportMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg z-10 py-2">
-                    <button
-                      onClick={() => handleExport('csv')}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
-                    >
-                      Export as CSV
-                    </button>
-                    <button
-                      onClick={() => handleExport('json')}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
-                    >
-                      Export as JSON
-                    </button>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => setIsAssessmentModalOpen(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <Plus className="w-4 h-4" />
-                New Assessment
-              </button>
-            </div>
-          </div>
-
-          {/* View Tabs */}
-          <div className="flex gap-2 mb-6 overflow-x-auto">
             <button
-              onClick={() => setActiveView('manage')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap",
-                activeView === 'manage'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
+              onClick={() => {
+                router.push('/assessments');
+                setExpandedModules(new Set());
+                setExpandedUnits(new Set());
+              }}
+              className="text-blue-600 hover:text-blue-800 font-medium text-sm underline"
             >
-              Manage Assessments
+              View all
             </button>
-            <button
-              onClick={() => setActiveView('analytics')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap",
-                activeView === 'analytics'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              <BarChart3 className="w-4 h-4" />
-              Analytics
-            </button>
-            <button
-              onClick={() => setActiveView('templates')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap",
-                activeView === 'templates'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              <FileCheck className="w-4 h-4" />
-              Templates
-            </button>
-            <button
-              onClick={() => setActiveView('moderation')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap",
-                activeView === 'moderation'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              <Shield className="w-4 h-4" />
-              Moderation
-            </button>
-            <button
-              onClick={() => setActiveView('progress')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap",
-                activeView === 'progress'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              <LineChart className="w-4 h-4" />
-              Progress Tracking
-            </button>
-            <button
-              onClick={() => setActiveView('compliance')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap",
-                activeView === 'compliance'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              <FileBarChart className="w-4 h-4" />
-              Compliance Reports
-            </button>
-            <button
-              onClick={() => setActiveView('formatives')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap",
-                activeView === 'formatives'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              <FileText className="w-4 h-4" />
-              Formatives
-            </button>
-          </div>
-
-          {/* Filters Panel */}
-          {showFilters && activeView === 'manage' && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm mb-6">
-              <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Filters</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type</label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFilterType(null)}
-                      className={cn(
-                        "px-3 py-1 rounded text-sm font-medium transition-colors",
-                        !filterType ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                      )}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setFilterType('FORMATIVE')}
-                      className={cn(
-                        "px-3 py-1 rounded text-sm font-medium transition-colors",
-                        filterType === 'FORMATIVE' ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                      )}
-                    >
-                      Formative
-                    </button>
-                    <button
-                      onClick={() => setFilterType('SUMMATIVE')}
-                      className={cn(
-                        "px-3 py-1 rounded text-sm font-medium transition-colors",
-                        filterType === 'SUMMATIVE' ? "bg-purple-600 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                      )}
-                    >
-                      Summative
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Method</label>
-                  <select
-                    value={filterMethod || ''}
-                    onChange={(e) => setFilterMethod(e.target.value || null)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                  >
-                    <option value="">All Methods</option>
-                    <option value="KNOWLEDGE">Knowledge</option>
-                    <option value="PRACTICAL">Practical</option>
-                    <option value="OBSERVATION">Observation</option>
-                    <option value="PORTFOLIO">Portfolio</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Result</label>
-                  <select
-                    value={filterResult || ''}
-                    onChange={(e) => setFilterResult(e.target.value || null)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                  >
-                    <option value="">All Results</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="COMPETENT">Competent</option>
-                    <option value="NOT_YET_COMPETENT">Not Yet Competent</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Bulk Selection Actions */}
-          {selectedStudents.size > 0 && activeView === 'manage' && (
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 mb-6 flex items-center justify-between">
-              <p className="text-indigo-900 dark:text-indigo-300 font-medium">
-                {selectedStudents.size} student{selectedStudents.size !== 1 ? 's' : ''} selected
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowBulkActions(!showBulkActions)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                >
-                  Bulk Create Assessments
-                </button>
-                <button
-                  onClick={() => setSelectedStudents(new Set())}
-                  className="px-4 py-2 bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors text-sm font-medium"
-                >
-                  Clear Selection
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Stats Cards */}
-          {activeView === 'manage' && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Total Modules</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{modules.length}</p>
-                  </div>
-                  <BookOpen className="w-8 h-8 text-blue-500" />
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Unit Standards</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                      {modules.reduce((sum, m) => sum + (m.unitStandards?.length || 0), 0)}
-                    </p>
-                  </div>
-                  <FileText className="w-8 h-8 text-purple-500" />
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Total Learners</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{students.length}</p>
-                  </div>
-                  <Users className="w-8 h-8 text-green-500" />
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Assessments</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{assessments.length}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-orange-500" />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Main Content */}
-        {activeView === 'manage' && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Expand modules and unit standards to view and manage student assessments
-              </p>
-            </div>
-            <div className="space-y-1">
-              {modules.map((module) => {
-                const moduleUnitStandards = module.unitStandards || [];
-                const isModuleExpanded = expandedModules.has(module.id);
-
-                return (
-                  <div key={module.id} className="border-b dark:border-slate-700 last:border-b-0">
-                    {/* Module Header */}
-                    <button
-                      onClick={() => {
-                        const newExpanded = new Set(expandedModules);
-                        if (newExpanded.has(module.id)) {
-                          newExpanded.delete(module.id);
-                        } else {
-                          newExpanded.add(module.id);
-                        }
-                        setExpandedModules(newExpanded);
-                      }}
-                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        {isModuleExpanded ? (
-                          <ChevronDown className="w-5 h-5 text-slate-400" />
-                        ) : (
-                          <ChevronRight className="w-5 h-5 text-slate-400" />
-                        )}
-                        <BookOpen className="w-5 h-5 text-blue-500" />
-                        <div className="text-left">
-                          <h3 className="font-semibold text-slate-900 dark:text-white">{module.code}</h3>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">{module.name}</p>
-                        </div>
-                      </div>
-                      <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {module.credits} Credits • {moduleUnitStandards.length} Unit Standards
-                      </span>
-                    </button>
-
-                    {/* Unit Standards */}
-                    {isModuleExpanded && (
-                      <div className="bg-slate-50 dark:bg-slate-900">
-                        {moduleUnitStandards.map((unitStandard: any) => {
-                          const isUSExpanded = expandedUnitStandards.has(unitStandard.id);
-
-                          return (
-                            <div key={unitStandard.id} className="border-t border-slate-200 dark:border-slate-700">
-                              <button
-                                onClick={() => {
-                                  const newExpanded = new Set(expandedUnitStandards);
-                                  if (newExpanded.has(unitStandard.id)) {
-                                    newExpanded.delete(unitStandard.id);
-                                  } else {
-                                    newExpanded.add(unitStandard.id);
-                                  }
-                                  setExpandedUnitStandards(newExpanded);
-                                }}
-                                className="w-full px-6 py-3 pl-16 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                              >
-                                <div className="flex items-center gap-3">
-                                  {isUSExpanded ? (
-                                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                                  )}
-                                  <FileText className="w-4 h-4 text-purple-500" />
-                                  <div className="text-left">
-                                    <h4 className="font-medium text-slate-900 dark:text-white">{unitStandard.code}</h4>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">{unitStandard.title}</p>
-                                  </div>
-                                </div>
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  {unitStandard.credits} Credits • NQF Level {unitStandard.level}
-                                </span>
-                              </button>
-
-                              {/* Student Lists */}
-                              {isUSExpanded && (
-                                <div className="bg-white dark:bg-slate-800 p-4">
-                                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                    Select students and manage their assessments for this unit standard
-                                  </p>
-                                  {/* Students would be listed here with checkboxes and assessment status */}
-                                  <div className="space-y-2">
-                                    {students.slice(0, 5).map((student) => {
-                                      const isSelected = selectedStudents.has(student.id);
-                                      return (
-                                        <div key={student.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                          <div className="flex items-center gap-3">
-                                            <input
-                                              type="checkbox"
-                                              checked={isSelected}
-                                              onChange={(e) => {
-                                                const newSelected = new Set(selectedStudents);
-                                                if (e.target.checked) {
-                                                  newSelected.add(student.id);
-                                                } else {
-                                                  newSelected.delete(student.id);
-                                                }
-                                                setSelectedStudents(newSelected);
-                                              }}
-                                              className="w-4 h-4 rounded border-slate-300"
-                                            />
-                                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
-                                              {student.firstName[0]}{student.lastName[0]}
-                                            </div>
-                                            <div>
-                                              <p className="font-medium text-slate-900 dark:text-white">
-                                                {student.firstName} {student.lastName}
-                                              </p>
-                                              <p className="text-sm text-slate-500 dark:text-slate-400">{student.studentId}</p>
-                                            </div>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            {getStatusBadge()}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         )}
-
-        {activeView === 'analytics' && renderAnalyticsView()}
-        {activeView === 'templates' && renderTemplatesView()}
-        {activeView === 'moderation' && renderModerationView()}
-        {activeView === 'progress' && renderProgressView()}
-        {activeView === 'compliance' && renderComplianceView()}
-        {activeView === 'formatives' && renderFormativesView()}
-      </main>
-
-      <AssessmentModal
-        isOpen={isAssessmentModalOpen}
-        onClose={() => setIsAssessmentModalOpen(false)}
-        onSubmit={async (data) => {
-          try {
-            await fetch('/api/assessments', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data),
-            });
-            await fetchAssessments();
-            setIsAssessmentModalOpen(false);
-          } catch (error) {
-            console.error('Error creating assessment:', error);
-          }
-        }}
-        students={students}
-        modules={modules}
-      />
+        <div className="bg-white rounded-b-lg p-6 border border-t-0 border-gray-200">
+          {activeView === 'manage' && <ManageView />}
+          {activeView === 'moderation' && <ModerationView />}
+          {activeView === 'progress' && <ProgressView />}
+          {activeView === 'compliance' && <ComplianceView />}
+          {activeView === 'bulk' && <BulkActionsView />}
+          {activeView === 'export' && <ExportView />}
+          {activeView === 'analytics' && <AnalyticsView />}
+        </div>
+      </div>
     </div>
   );
 }

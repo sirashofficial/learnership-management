@@ -1,4 +1,3 @@
-// This is your Prisma schema file
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,235 +8,183 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      String   @default("FACILITATOR")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  sessions  Session[]
-  students  Student[]
-  lessonPlans LessonPlan[]
-}
-
-model Company {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
+  email       String       @unique
   name        String
-  address     String?
-  contactPerson String?
-  email       String?
-  phone       String?
-  industry    String?
-  status      String   @default("ACTIVE")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  groups      Group[]
+  password    String
+  role        String       @default("FACILITATOR")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  lessonPlans LessonPlan[]
+  sessions    Session[]
+  students    Student[]
+  plans       Plan[]       @relation("PlanFacilitator")
+  reminderPreference ReminderPreference?
 }
 
 model Group {
-  id          String   @id @default(uuid())
-  name        String
-  location    String?
-  address     String?
-  contactName String?
-  contactPhone String?
-  coordinator String?
-  startDate   DateTime
-  endDate     DateTime
-  status      String @default("ACTIVE")
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  companyId   String?
-
-  // Relations
-  company     Company?  @relation(fields: [companyId], references: [id])
-  students    Student[]
-  sessions    Session[]
-  lessonPlans LessonPlan[]
-  courses     GroupCourse[]
-  schedules   GroupSchedule[]
-  rolloutPlan GroupRolloutPlan?
+  id                   String                @id @default(uuid())
+  name                 String
+  location             String?
+  address              String?
+  contactName          String?
+  contactPhone         String?
+  coordinator          String?
+  startDate            DateTime
+  endDate              DateTime
+  status               String                @default("ACTIVE")
+  notes                String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  companyId            String?
+  Company              Company?              @relation(fields: [companyId], references: [id])
+  courses              GroupCourse[]
+  rolloutPlan          GroupRolloutPlan?
+  schedules            GroupSchedule[]
+  lessonPlans          LessonPlan[]
+  sessions             Session[]
+  students             Student[]
   unitStandardRollouts UnitStandardRollout[]
+  
+  // Calendar feature relations
+  plans                Plan[]     // Lesson plans for calendar
 }
 
 model GroupRolloutPlan {
-  id              String   @id @default(uuid())
-  groupId         String   @unique // One plan per group
-  
-  // Per-module deadlines
-  module1StartDate    DateTime?
-  module1EndDate      DateTime?
-  module2StartDate    DateTime?
-  module2EndDate      DateTime?
-  module3StartDate    DateTime?
-  module3EndDate      DateTime?
-  module4StartDate    DateTime?
-  module4EndDate      DateTime?
-  module5StartDate    DateTime?
-  module5EndDate      DateTime?
-  module6StartDate    DateTime?
-  module6EndDate      DateTime?
-  
-  // Reference document
-  rolloutDocPath      String?  
-  
-  group           Group    @relation(fields: [groupId], references: [id])
+  id               String    @id @default(uuid())
+  groupId          String    @unique
+  module1StartDate DateTime?
+  module1EndDate   DateTime?
+  module2StartDate DateTime?
+  module2EndDate   DateTime?
+  module3StartDate DateTime?
+  module3EndDate   DateTime?
+  module4StartDate DateTime?
+  module4EndDate   DateTime?
+  module5StartDate DateTime?
+  module5EndDate   DateTime?
+  module6StartDate DateTime?
+  module6EndDate   DateTime?
+  rolloutDocPath   String?
+  group            Group     @relation(fields: [groupId], references: [id])
 }
 
 model UnitStandardRollout {
-  id              String   @id @default(uuid())
-  groupId         String
-  unitStandardId  String
-  
-  startDate       DateTime? // teaching start
-  endDate         DateTime? // teaching end
-  summativeDate   DateTime? // the test date
-  assessingDate   DateTime? // the moderation/marking date
-  
-  group           Group        @relation(fields: [groupId], references: [id])
-  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
-  
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id             String       @id @default(uuid())
+  groupId        String
+  unitStandardId String
+  startDate      DateTime?
+  endDate        DateTime?
+  summativeDate  DateTime?
+  assessingDate  DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  unitStandard   UnitStandard @relation(fields: [unitStandardId], references: [id])
+  group          Group        @relation(fields: [groupId], references: [id])
 
   @@unique([groupId, unitStandardId])
 }
 
 model Student {
-  id          String   @id @default(uuid())
-  studentId   String   @unique
-  firstName   String
-  lastName    String
-  email       String?
-  phone       String?
-  idNumber    String?
-  
-  // Progress Tracking
-  progress    Int      @default(0) // Overall percentage (deprecated - use totalCreditsEarned)
-  totalCreditsEarned Int @default(0) // Out of 138 total credits
-  
-  status      String @default("ACTIVE")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  groupId         String
-  facilitatorId   String
-  currentModuleId String? // Current module student is working on
-
-  // Relations
-  group        Group     @relation(fields: [groupId], references: [id])
-  facilitator  User      @relation(fields: [facilitatorId], references: [id])
-  currentModule Module?  @relation(fields: [currentModuleId], references: [id])
-  attendance   Attendance[]
-  assessments  Assessment[]
-  poeChecklists POEChecklist[]
-  courseProgress CourseProgress[]
-  moduleProgress ModuleProgress[]
-  unitStandardProgress UnitStandardProgress[]
+  id                   String                 @id @default(uuid())
+  studentId            String                 @unique
+  firstName            String
+  lastName             String
+  email                String?
+  phone                String?
+  idNumber             String?
+  progress             Int                    @default(0)
+  totalCreditsEarned   Int                    @default(0)
+  status               String                 @default("ACTIVE")
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  groupId              String
+  facilitatorId        String
+  currentModuleId      String?
+  assessments          Assessment[]
+  attendance           Attendance[]
+  courseProgress       CourseProgress[]
   formativeCompletions FormativeCompletion[]
+  moduleProgress       ModuleProgress[]
+  poeChecklists        POEChecklist?
+  currentModule        Module?                @relation(fields: [currentModuleId], references: [id])
+  facilitator          User                   @relation(fields: [facilitatorId], references: [id])
+  group                Group                  @relation(fields: [groupId], references: [id])
+  unitStandardProgress UnitStandardProgress[]
 }
 
-// Formative Assessment Documents from Curriculum
 model FormativeAssessment {
-  id              String   @id @default(uuid())
-  code            String   @unique  // "7469", "7480", "9007", etc.
-  title           String            // "Numeracy Formative Assessment 7469"
-  description     String?
-  documentPath    String?           // Relative path to PDF in docs folder
-  questions       Int?              // Number of questions in the formative
-  passingScore    Int      @default(50)
-  order           Int      @default(0) // Order within module
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Foreign Keys
-  moduleId        String
-  unitStandardId  String
-
-  // Relations
-  module          Module       @relation(fields: [moduleId], references: [id])
-  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
-  completions     FormativeCompletion[]
+  id             String                @id @default(uuid())
+  code           String                @unique
+  title          String
+  description    String?
+  documentPath   String?
+  questions      Int?
+  passingScore   Int                   @default(50)
+  order          Int                   @default(0)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  moduleId       String
+  unitStandardId String
+  unitStandard   UnitStandard          @relation(fields: [unitStandardId], references: [id])
+  module         Module                @relation(fields: [moduleId], references: [id])
+  completions    FormativeCompletion[]
 }
 
-// Student Formative Completion Tracking
 model FormativeCompletion {
-  id                   String    @id @default(uuid())
-  completedDate        DateTime?
-  score                Int?
-  passed               Boolean   @default(false)
-  attempts             Int       @default(1)
-  moderationStatus     String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
-  moderatedBy          String?
-  moderatedDate        DateTime?
-  notes                String?
-  
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id               String              @id @default(uuid())
+  completedDate    DateTime?
+  score            Int?
+  passed           Boolean             @default(false)
+  attempts         Int                 @default(1)
+  moderationStatus String              @default("PENDING")
+  moderatedBy      String?
+  moderatedDate    DateTime?
+  notes            String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  studentId        String
+  formativeId      String
+  formative        FormativeAssessment @relation(fields: [formativeId], references: [id])
+  student          Student             @relation(fields: [studentId], references: [id])
 
-  // Foreign Keys
-  studentId            String
-  formativeId          String
-
-  // Relations
-  student              Student              @relation(fields: [studentId], references: [id])
-  formative            FormativeAssessment  @relation(fields: [formativeId], references: [id])
-  
   @@unique([studentId, formativeId])
   @@index([studentId])
   @@index([formativeId])
 }
 
 model Session {
-  id          String   @id @default(uuid())
-  title       String
-  module      String
-  date        DateTime
-  startTime   String
-  endTime     String
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  groupId      String
+  id            String       @id @default(uuid())
+  title         String
+  module        String
+  date          DateTime
+  startTime     String
+  endTime       String
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  groupId       String
   facilitatorId String
-
-  // Relations
-  group        Group     @relation(fields: [groupId], references: [id])
-  facilitator  User      @relation(fields: [facilitatorId], references: [id])
-  attendance   Attendance[]
+  attendance    Attendance[]
+  facilitator   User         @relation(fields: [facilitatorId], references: [id])
+  group         Group        @relation(fields: [groupId], references: [id])
 }
 
 model Attendance {
-  id          String   @id @default(uuid())
-  date        DateTime
-  status      String
-  notes       String?
-  markedBy    String?  // User who marked the attendance
-  markedAt    DateTime?
-  qrCodeScan  Boolean  @default(false) // Marked via QR code
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  studentId   String
-  sessionId   String?  // Optional for manual attendance
-  groupId     String?  // Direct group reference for non-session attendance
-
-  // Relations
-  student     Student  @relation(fields: [studentId], references: [id])
-  session     Session?  @relation(fields: [sessionId], references: [id])
+  id         String    @id @default(uuid())
+  date       DateTime
+  status     String
+  notes      String?
+  markedBy   String?
+  markedAt   DateTime?
+  qrCodeScan Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  studentId  String
+  sessionId  String?
+  groupId    String?
+  session    Session?  @relation(fields: [sessionId], references: [id])
+  student    Student   @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, date, groupId])
   @@index([date])
@@ -246,196 +193,146 @@ model Attendance {
 }
 
 model AttendancePolicy {
-  id                    String   @id @default(uuid())
-  name                  String
-  description           String?
-  
-  // Threshold settings
-  minimumPercentage     Int      @default(80) // Minimum attendance % required
-  consecutiveAbsences   Int      @default(3)  // Alert after X consecutive absences
-  warningThreshold      Int      @default(75) // Warning level %
-  criticalThreshold     Int      @default(60) // Critical level %
-  
-  // Notification settings
-  notifyOnAbsence       Boolean  @default(true)
-  notifyOnWarning       Boolean  @default(true)
-  notifyOnCritical      Boolean  @default(true)
-  
-  // Active policy
-  isActive              Boolean  @default(true)
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  name                String
+  description         String?
+  minimumPercentage   Int      @default(80)
+  consecutiveAbsences Int      @default(3)
+  warningThreshold    Int      @default(75)
+  criticalThreshold   Int      @default(60)
+  notifyOnAbsence     Boolean  @default(true)
+  notifyOnWarning     Boolean  @default(true)
+  notifyOnCritical    Boolean  @default(true)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model AttendanceAlert {
-  id                String   @id @default(uuid())
-  type              String   // "ABSENCE", "LOW_ATTENDANCE", "CONSECUTIVE_ABSENCE", "PATTERN"
-  severity          String   // "INFO", "WARNING", "CRITICAL"
-  message           String
-  details           String?
-  resolved          Boolean  @default(false)
-  resolvedAt        DateTime?
-  resolvedBy        String?
-  notificationSent  Boolean  @default(false)
-  
-  // Foreign Keys
-  studentId         String
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  id               String    @id @default(uuid())
+  type             String
+  severity         String
+  message          String
+  details          String?
+  resolved         Boolean   @default(false)
+  resolvedAt       DateTime?
+  resolvedBy       String?
+  notificationSent Boolean   @default(false)
+  studentId        String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
   @@index([studentId])
   @@index([type])
   @@index([resolved])
 }
 
 model AttendanceReport {
-  id              String   @id @default(uuid())
-  title           String
-  type            String   // "DAILY", "WEEKLY", "MONTHLY", "CUSTOM"
-  startDate       DateTime
-  endDate         DateTime
-  format          String   // "PDF", "CSV", "EXCEL"
-  filePath        String?
-  generatedBy     String
-  parameters      String?  // JSON with report parameters
-  
-  createdAt       DateTime @default(now())
+  id          String   @id @default(uuid())
+  title       String
+  type        String
+  startDate   DateTime
+  endDate     DateTime
+  format      String
+  filePath    String?
+  generatedBy String
+  parameters  String?
+  createdAt   DateTime @default(now())
 }
 
 model Assessment {
-  id            String   @id @default(uuid())
-  
-  // Assessment Classification
-  type          String   // "FORMATIVE" | "SUMMATIVE" | "INTEGRATED"
-  method        String   // "KNOWLEDGE" | "PRACTICAL" | "OBSERVATION" | "PORTFOLIO"
-  
-  // Results
-  result        String?  // "COMPETENT" | "NOT_YET_COMPETENT" | "PENDING"
-  score         Int?
-  assessedDate  DateTime?
-  dueDate       DateTime
-  
-  // Feedback & Notes
-  notes         String?
-  feedback      String?
-  
-  // Moderation
-  moderationStatus String @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED" | "RESUBMIT"
+  id               String       @id @default(uuid())
+  type             String
+  method           String
+  result           String?
+  score            Int?
+  assessedDate     DateTime?
+  dueDate          DateTime
+  notes            String?
+  feedback         String?
+  moderationStatus String       @default("PENDING")
   moderatedBy      String?
   moderatedDate    DateTime?
   moderationNotes  String?
-  
-  // Attempt tracking
-  attemptNumber    Int @default(1)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  attemptNumber    Int          @default(1)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  studentId        String
+  unitStandardId   String
+  unitStandard     UnitStandard @relation(fields: [unitStandardId], references: [id])
+  student          Student      @relation(fields: [studentId], references: [id])
 
-  // Foreign Keys
-  studentId      String
-  unitStandardId String  // Now required - links to specific unit standard
-
-  // Relations
-  student        Student      @relation(fields: [studentId], references: [id])
-  unitStandard   UnitStandard @relation(fields: [unitStandardId], references: [id])
-  
-  // Indexes for performance
   @@index([unitStandardId])
   @@index([studentId, unitStandardId])
   @@index([studentId, result])
 }
 
 model ModuleProgress {
-  id              String   @id @default(uuid())
-  status          String   @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
-  progress        Int      @default(0) // 0-100 percentage
-  creditsEarned   Int      @default(0) // Credits earned in this module
-  startDate       DateTime?
-  completionDate  DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(uuid())
+  status         String    @default("NOT_STARTED")
+  progress       Int       @default(0)
+  creditsEarned  Int       @default(0)
+  startDate      DateTime?
+  completionDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  studentId      String
+  moduleId       String
+  module         Module    @relation(fields: [moduleId], references: [id])
+  student        Student   @relation(fields: [studentId], references: [id])
 
-  // Foreign Keys
-  studentId       String
-  moduleId        String
-
-  // Relations
-  student         Student  @relation(fields: [studentId], references: [id])
-  module          Module   @relation(fields: [moduleId], references: [id])
-  
   @@unique([studentId, moduleId])
 }
 
 model UnitStandardProgress {
-  id              String   @id @default(uuid())
-  status          String   @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
-  startDate       DateTime?
-  completionDate  DateTime?
-  formativesPassed Int     @default(0)
-  summativePassed Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String       @id @default(uuid())
+  status           String       @default("NOT_STARTED")
+  startDate        DateTime?
+  completionDate   DateTime?
+  formativesPassed Int          @default(0)
+  summativePassed  Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  studentId        String
+  unitStandardId   String
+  unitStandard     UnitStandard @relation(fields: [unitStandardId], references: [id])
+  student          Student      @relation(fields: [studentId], references: [id])
 
-  // Foreign Keys
-  studentId       String
-  unitStandardId  String
-
-  // Relations
-  student         Student      @relation(fields: [studentId], references: [id])
-  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
-  
   @@unique([studentId, unitStandardId])
 }
 
 model POEChecklist {
-  id                    String   @id @default(uuid())
-  
-  // Module POE Files (Physical)
-  module1POE            Boolean  @default(false)
-  module1POEDate        DateTime?
-  module2POE            Boolean  @default(false)
-  module2POEDate        DateTime?
-  module3POE            Boolean  @default(false)
-  module3POEDate        DateTime?
-  module4POE            Boolean  @default(false)
-  module4POEDate        DateTime?
-  module5POE            Boolean  @default(false)
-  module5POEDate        DateTime?
-  module6POE            Boolean  @default(false)
-  module6POEDate        DateTime?
-  
-  // Assessment Evidence
-  assessmentsSigned     Boolean  @default(false)
-  assessmentsDate       DateTime?
-  
-  // Logbook
-  logbookComplete       Boolean  @default(false)
-  logbookSigned         Boolean  @default(false)
-  logbookDate           DateTime?
-  
-  // Supporting Documents
-  idCopyPresent         Boolean  @default(false)
-  idCopyDate            DateTime?
-  contractSigned        Boolean  @default(false)
-  contractDate          DateTime?
-  inductionComplete     Boolean  @default(false)
-  inductionDate         DateTime?
-  
-  // Verification
-  verifiedBy            String?
-  verifiedDate          DateTime?
-  notes                 String?
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  // Foreign Keys
-  studentId   String   @unique
-
-  // Relations
-  student     Student  @relation(fields: [studentId], references: [id])
+  id                String    @id @default(uuid())
+  module1POE        Boolean   @default(false)
+  module1POEDate    DateTime?
+  module2POE        Boolean   @default(false)
+  module2POEDate    DateTime?
+  module3POE        Boolean   @default(false)
+  module3POEDate    DateTime?
+  module4POE        Boolean   @default(false)
+  module4POEDate    DateTime?
+  module5POE        Boolean   @default(false)
+  module5POEDate    DateTime?
+  module6POE        Boolean   @default(false)
+  module6POEDate    DateTime?
+  assessmentsSigned Boolean   @default(false)
+  assessmentsDate   DateTime?
+  logbookComplete   Boolean   @default(false)
+  logbookSigned     Boolean   @default(false)
+  logbookDate       DateTime?
+  idCopyPresent     Boolean   @default(false)
+  idCopyDate        DateTime?
+  contractSigned    Boolean   @default(false)
+  contractDate      DateTime?
+  inductionComplete Boolean   @default(false)
+  inductionDate     DateTime?
+  verifiedBy        String?
+  verifiedDate      DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  studentId         String    @unique
+  student           Student   @relation(fields: [studentId], references: [id])
 }
 
 model POEFile {
@@ -446,136 +343,109 @@ model POEFile {
   filePath    String
   description String?
   uploadedAt  DateTime @default(now())
-
-  // This model kept for future digital POE if needed
-  // Currently POE tracking uses POEChecklist for physical files
 }
 
 model Module {
-  id              String   @id @default(uuid())
-  moduleNumber    Int      @unique // 1-6
-  code            String   @unique // "MODULE_1", "MODULE_2", etc.
-  name            String   // "Numeracy", "Communication Skills", etc.
-  fullName        String   // Full official name
-  purpose         String   // Purpose of the module
-  description     String?  // Additional description
-  
-  // Credits and Hours
-  credits         Int      // Total credits (16, 24, 22, 26, 23, 26)
-  notionalHours   Int      // Total notional hours
-  classroomHours  Int      // 30% classroom time
-  workplaceHours  Int      // 70% workplace time
-  
-  // Metadata
-  order           Int      // Display order
-  status          String   @default("ACTIVE") // "ACTIVE", "ARCHIVED"
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relations
-  unitStandards   UnitStandard[]
-  lessonPlans     LessonPlan[]
-  documents       CurriculumDocument[]
-  embeddings      CurriculumEmbedding[]
-  progress        ModuleProgress[]
-  students        Student[] // Students currently on this module
+  id                   String                @id @default(uuid())
+  moduleNumber         Int                   @unique
+  code                 String                @unique
+  name                 String
+  fullName             String
+  purpose              String
+  description          String?
+  credits              Int
+  notionalHours        Int
+  classroomHours       Int
+  workplaceHours       Int
+  order                Int
+  status               String                @default("ACTIVE")
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  documents            CurriculumDocument[]
+  embeddings           CurriculumEmbedding[]
   formativeAssessments FormativeAssessment[]
+  lessonPlans          LessonPlan[]
+  progress             ModuleProgress[]
+  students             Student[]
+  unitStandards        UnitStandard[]
 }
 
 model CurriculumEmbedding {
-  id          String   @id @default(uuid())
-  content     String   // The text chunk
-  embedding   String   // JSON array of vector embeddings from OpenAI
-  metadata    String?  // JSON metadata (page, section, etc.)
-  createdAt   DateTime @default(now())
-
-  // Foreign Keys
-  moduleId    String
-
-  // Relations
-  module      Module @relation(fields: [moduleId], references: [id])
+  id        String   @id @default(uuid())
+  content   String
+  embedding String
+  metadata  String?
+  createdAt DateTime @default(now())
+  moduleId  String
+  module    Module   @relation(fields: [moduleId], references: [id])
 }
 
 model DocumentChunk {
-  id          String   @id @default(cuid())
-  content     String   // The actual text content
-  filename    String   // Source filename
-  filePath    String   // Relative path
-  category    String   // e.g., 'module-1', 'daily-report'
-  tags        String   // Comma-separated tags
-  chunkIndex  Int
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  content    String
+  filename   String
+  filePath   String
+  category   String
+  tags       String
+  chunkIndex Int
+  createdAt  DateTime @default(now())
 
   @@index([category])
   @@index([filename])
 }
 
 model UnitStandard {
-  id          String   @id @default(uuid())
-  code        String   @unique // "7480", "119673", etc.
-  title       String   // Full title of the unit standard
-  credits     Int      // Credits for this unit standard
-  level       Int      // NQF Level (2 or 3)
-  type        String   // "Fundamental", "Core", "Elective"
-  content     String?  // Additional content/description
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  moduleId    String
-
-  // Relations
-  module      Module   @relation(fields: [moduleId], references: [id])
-  activities  Activity[]
-  assessments Assessment[]
-  progress    UnitStandardProgress[]
+  id                   String                 @id @default(uuid())
+  code                 String                 @unique
+  title                String
+  credits              Int
+  level                Int
+  type                 String
+  content              String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  moduleId             String
+  activities           Activity[]
+  assessments          Assessment[]
   formativeAssessments FormativeAssessment[]
+  module               Module                 @relation(fields: [moduleId], references: [id])
+  progress             UnitStandardProgress[]
   unitStandardRollouts UnitStandardRollout[]
 }
 
 model Activity {
-  id              String   @id @default(uuid())
-  description     String
-  duration        Int
-  resources       String?
-  assessmentType  String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Foreign Keys
-  unitStandardId  String
-
-  // Relations
-  unitStandard    UnitStandard @relation(fields: [unitStandardId], references: [id])
+  id             String       @id @default(uuid())
+  description    String
+  duration       Int
+  resources      String?
+  assessmentType String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  unitStandardId String
+  unitStandard   UnitStandard @relation(fields: [unitStandardId], references: [id])
 }
 
 model LessonPlan {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  date        DateTime
-  startTime   String
-  endTime     String
-  venue       String?
-  objectives  String?
-  materials   String?
-  activities  String?
-  notes       String?
-  aiGenerated Boolean @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  date          DateTime
+  startTime     String
+  endTime       String
+  venue         String?
+  objectives    String?
+  materials     String?
+  activities    String?
+  notes         String?
+  aiGenerated   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   moduleId      String
   facilitatorId String
   groupId       String?
-
-  // Relations
-  module        Module @relation(fields: [moduleId], references: [id])
-  facilitator   User   @relation(fields: [facilitatorId], references: [id])
-  group         Group? @relation(fields: [groupId], references: [id])
+  group         Group?   @relation(fields: [groupId], references: [id])
+  facilitator   User     @relation(fields: [facilitatorId], references: [id])
+  module        Module   @relation(fields: [moduleId], references: [id])
 }
 
 model CurriculumDocument {
@@ -587,109 +457,138 @@ model CurriculumDocument {
   filePath    String
   description String?
   category    String
-  version     String @default("1.0")
+  version     String   @default("1.0")
   uploadedAt  DateTime @default(now())
-
-  // Foreign Keys
   moduleId    String
-
-  // Relations
-  module      Module @relation(fields: [moduleId], references: [id])
+  module      Module   @relation(fields: [moduleId], references: [id])
 }
 
 model GroupCourse {
-  id          String   @id @default(uuid())
-  status      String @default("PLANNED")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  groupId     String
-
-  // Relations
-  group       Group    @relation(fields: [groupId], references: [id])
+  id        String   @id @default(uuid())
+  status    String   @default("PLANNED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id])
 }
 
 model CourseProgress {
-  id          String   @id @default(uuid())
-  progress    Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  studentId   String
-
-  // Relations
-  student     Student  @relation(fields: [studentId], references: [id])
+  id        String   @id @default(uuid())
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
 }
 
 model RecurringSessionOverride {
-  id                String   @id @default(uuid())
-  date              DateTime // Specific date this override applies to
-  groupName         String   // Name of the group from WEEKLY_SCHEDULE
-  venue             String   // "Lecture Room" or "Computer Lab"
-  
-  // Override details
-  isCancelled       Boolean  @default(false)
-  cancellationReason String?
-  notes             String?
-  
-  // Notification settings
-  notificationEnabled Boolean @default(true)
-  notificationSent    Boolean @default(false)
-  notificationTime    Int     @default(30) // Minutes before session to notify
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  @@unique([date, groupName, venue]) // One override per group/venue/date
+  id                  String   @id @default(uuid())
+  date                DateTime
+  groupName           String
+  venue               String
+  isCancelled         Boolean  @default(false)
+  cancellationReason  String?
+  notes               String?
+  notificationEnabled Boolean  @default(true)
+  notificationSent    Boolean  @default(false)
+  notificationTime    Int      @default(30)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([date, groupName, venue])
 }
 
 model ScheduleTemplate {
-  id          String   @id @default(uuid())
-  name        String   // e.g., "Standard Week A", "Exam Week"
+  id          String          @id @default(uuid())
+  name        String
   description String?
-  isActive    Boolean  @default(true)
-  
-  // Schedule Definition (JSON)
-  // Structure: { "Monday": { "09:00-10:00": { "activity": "Lecture", "moduleId": "..." } } }
+  isActive    Boolean         @default(true)
   schedule    String
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   groups      GroupSchedule[]
 }
 
 model GroupSchedule {
-  id          String   @id @default(uuid())
-  startDate   DateTime
-  endDate     DateTime?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Foreign Keys
-  groupId     String
-  templateId  String
-
-  // Relations
-  group       Group            @relation(fields: [groupId], references: [id])
-  template    ScheduleTemplate @relation(fields: [templateId], references: [id])
+  id         String           @id @default(uuid())
+  startDate  DateTime
+  endDate    DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  groupId    String
+  templateId String
+  template   ScheduleTemplate @relation(fields: [templateId], references: [id])
+  group      Group            @relation(fields: [groupId], references: [id])
 
   @@index([groupId])
   @@index([templateId])
 }
 
-// Note: SQLite does not support native enums. String types are used with application-level validation.
-// Valid values for reference:
-// - Company.status: "ACTIVE", "INACTIVE"
-// - Group.status: "ACTIVE", "INACTIVE", "PLANNING", "COMPLETED", "ON_HOLD"
-// - User.role: "ADMIN", "FACILITATOR", "COORDINATOR"
-// - Student.status: "ACTIVE", "INACTIVE", "COMPLETED", "WITHDRAWN"
-// - Attendance.status: "PRESENT", "ABSENT", "LATE", "EXCUSED"
-// - Assessment.result: "COMPETENT", "NOT_YET_COMPETENT", "PENDING"
-// - GroupCourse.status: "PLANNED", "IN_PROGRESS", "COMPLETED", "SUSPENDED", "CANCELLED"
-// - Module.status: "NOT_STARTED", "IN_PROGRESS", "COMPLETED", "SKIPPED"
+// Calendar Feature Models
+model Plan {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  groupId     String
+  facilitatorId String
+  venue       String?
+  objectives  String?
+  materials   String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  group       Group     @relation(fields: [groupId], references: [id])
+  facilitator User      @relation("PlanFacilitator", fields: [facilitatorId], references: [id])
+  reminders   Reminder[]
+  
+  @@index([groupId])
+  @@index([facilitatorId])
+}
 
+model Reminder {
+  id          String    @id @default(uuid())
+  planId      String
+  message     String?
+  venue       String?
+  sendTo      String?   // Comma-separated email addresses
+  scheduledAt DateTime
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  plan        Plan      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  
+  @@index([planId])
+  @@index([scheduledAt])
+}
+
+model ReminderPreference {
+  id                           String    @id @default(uuid())
+  userId                       String    @unique
+  emailRemindersEnabled        Boolean   @default(true)
+  browserNotificationsEnabled  Boolean   @default(true)
+  quietHoursStart              String?   // Format: "HH:MM"
+  quietHoursEnd                String?   // Format: "HH:MM"
+  timeZone                     String    @default("UTC")
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id            String   @id
+  name          String
+  address       String?
+  contactPerson String?
+  email         String?
+  phone         String?
+  industry      String?
+  status        String   @default("ACTIVE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  Group         Group[]
+}

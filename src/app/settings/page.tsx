@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
 import { 
   User, Bell, Shield, Palette, Globe, Save, Check, Mail, Phone, Building2, 
   Lock, Eye, EyeOff, Clock, Calendar, DollarSign, AlertTriangle, 
@@ -46,6 +45,16 @@ export default function SettingsPage() {
     dailyDigest: false,
     moderationAlerts: true,
     studentProgressUpdates: true,
+  });
+
+  // Reminder Preferences
+  const { data: reminderSettings, error: reminderError } = useSWR('/api/settings/reminders', fetcher);
+  const [reminderForm, setReminderForm] = useState({
+    emailRemindersEnabled: false,
+    browserNotificationsEnabled: true,
+    quietHoursStart: "22:00",
+    quietHoursEnd: "08:00",
+    timeZone: "Africa/Johannesburg",
   });
 
   // System Settings
@@ -111,6 +120,12 @@ export default function SettingsPage() {
       setAppearanceForm(appearanceSettings);
     }
   }, [appearanceSettings]);
+
+  useEffect(() => {
+    if (reminderSettings) {
+      setReminderForm(reminderSettings);
+    }
+  }, [reminderSettings]);
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -258,9 +273,36 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveReminders = async () => {
+    setSaving(true);
+    setSavedSuccess(false);
+
+    try {
+      const response = await fetch('/api/settings/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reminderForm),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save reminder preferences');
+      }
+
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch (error: any) {
+      console.error('Error saving reminder preferences:', error);
+      alert(error.message || 'Failed to save reminder preferences. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const tabs = [
     { id: "profile", icon: User, label: "Profile" },
     { id: "notifications", icon: Bell, label: "Notifications" },
+    { id: "reminders", icon: Clock, label: "Reminders" },
     { id: "system", icon: Server, label: "System" },
     { id: "appearance", icon: Palette, label: "Appearance" },
     { id: "security", icon: Shield, label: "Security" },
@@ -268,11 +310,9 @@ export default function SettingsPage() {
   
   return (
     <>
-      <Header />
-      
       <div className="p-6">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             {/* Tabs */}
             <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
               <div className="flex overflow-x-auto">
@@ -284,8 +324,8 @@ export default function SettingsPage() {
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 whitespace-nowrap ${
                         activeTab === tab.id
-                          ? "border-blue-600 text-blue-600 bg-white dark:bg-slate-800"
-                          : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? "border-blue-600 text-blue-600 bg-white"
+                          : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -299,21 +339,18 @@ export default function SettingsPage() {
             {/* Profile Tab */}
             {activeTab === "profile" && (
               <div className="p-8">
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Profile Information</h3>
-                  <p className="text-slate-600 dark:text-slate-400">Update your personal information and contact details</p>
-                </div>
+                {/* ...existing code... */}
 
                 <div className="space-y-6">
                   {/* Profile Picture Section */}
                   <div className="flex items-center gap-6 pb-6 border-b border-slate-200 dark:border-slate-700">
-                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-blue-600 text-3xl font-semibold">
                       {profileForm.name ? profileForm.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AM'}
                     </div>
                     <div>
                       <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Profile Photo</h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Upload a professional photo</p>
-                      <button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm font-medium">
+                      <p className="text-sm text-slate-600 mb-3">Upload a professional photo</p>
+                      <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
                         Change Photo
                       </button>
                     </div>
@@ -851,6 +888,141 @@ export default function SettingsPage() {
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Appearance'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reminders Tab */}
+            {activeTab === "reminders" && (
+              <div className="p-8">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Reminder Preferences</h3>
+                  <p className="text-slate-600 dark:text-slate-400">Configure how you receive reminders for lessons and plans</p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Email Reminders */}
+                  <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Mail className="w-5 h-5 text-blue-600" />
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Email Reminders</h4>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={reminderForm.emailRemindersEnabled}
+                          onChange={(e) => setReminderForm({...reminderForm, emailRemindersEnabled: e.target.checked})}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Receive email notifications for upcoming lessons and plans
+                    </p>
+                  </div>
+
+                  {/* Browser Notifications */}
+                  <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Bell className="w-5 h-5 text-green-600" />
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Browser Notifications</h4>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={reminderForm.browserNotificationsEnabled}
+                          onChange={(e) => setReminderForm({...reminderForm, browserNotificationsEnabled: e.target.checked})}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-green-600"></div>
+                      </label>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Pop-up notifications on your browser for instant alerts
+                    </p>
+                  </div>
+
+                  {/* Quiet Hours */}
+                  <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                      <Moon className="w-5 h-5" />
+                      Quiet Hours
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">No reminders will be sent during these hours</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Start Time
+                        </label>
+                        <input
+                          type="time"
+                          value={reminderForm.quietHoursStart}
+                          onChange={(e) => setReminderForm({...reminderForm, quietHoursStart: e.target.value})}
+                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          End Time
+                        </label>
+                        <input
+                          type="time"
+                          value={reminderForm.quietHoursEnd}
+                          onChange={(e) => setReminderForm({...reminderForm, quietHoursEnd: e.target.value})}
+                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timezone */}
+                  <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                      <Globe className="w-5 h-5" />
+                      Timezone
+                    </label>
+                    <select
+                      value={reminderForm.timeZone}
+                      onChange={(e) => setReminderForm({...reminderForm, timeZone: e.target.value})}
+                      className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="Africa/Johannesburg">South Africa (SAST)</option>
+                      <option value="Africa/Cairo">Egypt (EAT)</option>
+                      <option value="Africa/Lagos">Nigeria (WAT)</option>
+                      <option value="Africa/Nairobi">Kenya (EAT)</option>
+                      <option value="Europe/London">UK (GMT/BST)</option>
+                      <option value="Europe/Paris">Europe (CET/CEST)</option>
+                      <option value="America/New_York">USA - Eastern (EST/EDT)</option>
+                      <option value="America/Chicago">USA - Central (CST/CDT)</option>
+                      <option value="America/Denver">USA - Mountain (MST/MDT)</option>
+                      <option value="America/Los_Angeles">USA - Pacific (PST/PDT)</option>
+                      <option value="Asia/Dubai">UAE (GST)</option>
+                      <option value="Asia/Singapore">Singapore (SGT)</option>
+                      <option value="Asia/Tokyo">Japan (JST)</option>
+                      <option value="Australia/Sydney">Australia (AEDT/AEST)</option>
+                    </select>
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="flex justify-end">
+                    {savedSuccess && (
+                      <div className="mr-4 flex items-center gap-2 text-green-600 dark:text-green-400">
+                        <Check className="w-5 h-5" />
+                        <span className="font-medium">Saved successfully!</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={handleSaveReminders}
+                      disabled={saving}
+                      className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      <Save className="w-5 h-5" />
+                      {saving ? 'Saving...' : 'Save Preferences'}
                     </button>
                   </div>
                 </div>

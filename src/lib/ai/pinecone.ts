@@ -1,8 +1,9 @@
 import { Pinecone } from '@pinecone-database/pinecone';
+import { generateEmbedding } from './cohere';
 
 // Initialize Pinecone client
 const pinecone = new Pinecone({
-    apiKey: process.env.PINECONE_API_KEY || '',
+    apiKey: (process.env.PINECONE_API_KEY || '').trim(),
 });
 
 export const PINECONE_INDEX_NAME = 'learnership-docs';
@@ -41,32 +42,33 @@ export async function searchDocuments(
     const index = getPineconeIndex();
 
     try {
-        // Use Pinecone's integrated inference for search
-        // @ts-ignore
-        const results = await index.namespace(PINECONE_NAMESPACE).searchRecords({
-            query: {
-                topK,
-                inputs: { text: query },
-                filter: filter || undefined,
-            },
+        // Generate embedding for the query using Z.AI
+        const queryEmbedding = await generateEmbedding(query);
+
+        const results = await index.namespace(PINECONE_NAMESPACE).query({
+            vector: queryEmbedding,
+            topK,
+            filter: filter || undefined,
+            includeMetadata: true,
+            includeValues: false,
         });
 
-        return results.result.hits.map((hit) => ({
-            id: hit._id,
-            score: hit._score || 0,
-            content: ((hit.fields as any)?.text as string) || '',
+        return results.matches.map((hit) => ({
+            id: hit.id,
+            score: hit.score || 0,
+            content: (hit.metadata?.content as string) || '',
             metadata: {
-                id: hit._id,
-                filename: ((hit.fields as any)?.filename as string) || '',
-                category: ((hit.fields as any)?.category as string) || '',
-                moduleNumber: (hit.fields as any)?.moduleNumber as number | undefined,
-                moduleName: ((hit.fields as any)?.moduleName as string) || '',
-                unitStandardCode: ((hit.fields as any)?.unitStandardCode as string) || '',
-                tags: (((hit.fields as any)?.tags as string) || '').split(',').filter(Boolean),
-                content: ((hit.fields as any)?.text as string) || '',
-                chunkIndex: ((hit.fields as any)?.chunkIndex as number) || 0,
-                totalChunks: ((hit.fields as any)?.totalChunks as number) || 1,
-                createdAt: ((hit.fields as any)?.createdAt as string) || '',
+                id: hit.id,
+                filename: (hit.metadata?.filename as string) || '',
+                category: (hit.metadata?.category as string) || '',
+                moduleNumber: hit.metadata?.moduleNumber as number | undefined,
+                moduleName: (hit.metadata?.moduleName as string) || '',
+                unitStandardCode: (hit.metadata?.unitStandardCode as string) || '',
+                tags: ((hit.metadata?.tags as string) || '').split(',').filter(Boolean),
+                content: (hit.metadata?.content as string) || '',
+                chunkIndex: (hit.metadata?.chunkIndex as number) || 0,
+                totalChunks: (hit.metadata?.totalChunks as number) || 1,
+                createdAt: (hit.metadata?.createdAt as string) || '',
             },
         }));
     } catch (error) {
@@ -83,20 +85,30 @@ export async function upsertDocuments(
     }>
 ): Promise<void> {
     const index = getPineconeIndex();
+    const batchSize = 50;
 
-    const formattedRecords = records.map((record) => ({
-        _id: record.id,
-        text: record.text,
-        ...record.metadata,
-        tags: record.metadata.tags.join(','),
-    }));
+    for (let i = 0; i < records.length; i += batchSize) {
+        const batch = records.slice(i, i + batchSize);
 
-    // Upsert in batches of 100
-    const batchSize = 100;
-    for (let i = 0; i < formattedRecords.length; i += batchSize) {
-        const batch = formattedRecords.slice(i, i + batchSize);
+        // Generate embeddings for the batch
+        // Note: Ideally parallelize this or use batch embedding API if available
+        const vectors = await Promise.all(
+            batch.map(async (record) => {
+                const embedding = await generateEmbedding(record.text);
+                return {
+                    id: record.id,
+                    values: embedding,
+                    metadata: {
+                        ...record.metadata,
+                        content: record.text, // Store text in metadata for retrieval
+                        tags: record.metadata.tags.join(','),
+                    },
+                };
+            })
+        );
+
         // @ts-ignore
-        await index.namespace(PINECONE_NAMESPACE).upsertRecords({ records: batch });
+        await index.namespace(PINECONE_NAMESPACE).upsert({ records: vectors } as any);
     }
 }
 

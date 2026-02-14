@@ -7,7 +7,6 @@ interface ProgressReportProps {
   groups: Array<{
     id: string;
     name: string;
-    company: string;
     startDate: string;
     endDate: string;
     status: string;
@@ -111,7 +110,6 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">{group.name}</h3>
-                  <p className="text-sm text-slate-600">{group.company}</p>
                 </div>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge.color}`}>
                   {statusBadge.label}

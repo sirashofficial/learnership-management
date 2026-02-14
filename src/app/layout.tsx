@@ -5,6 +5,8 @@ import MainLayout from "@/components/MainLayout";
 import { StudentProvider } from "@/contexts/StudentContextSimple";
 import { GroupsProvider } from "@/contexts/GroupsContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { Providers } from "@/components/providers";
+import { AIChat } from "@/components/ai/AIChat";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Outfit - Modern, premium, distinctive sans-serif
@@ -40,17 +42,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${outfit.variable} ${lora.variable} font-sans antialiased bg-background text-text`}>
+      <body className={`${outfit.variable} ${lora.variable} font-sans antialiased bg-white text-slate-900`}>
         <ErrorBoundary>
-          <AuthProvider>
-            <GroupsProvider>
-              <StudentProvider>
-                <MainLayout>
-                  {children}
-                </MainLayout>
-              </StudentProvider>
-            </GroupsProvider>
-          </AuthProvider>
+          <Providers>
+            <MainLayout>
+              {children}
+              <AIChat />
+            </MainLayout>
+          </Providers>
         </ErrorBoundary>
       </body>
     </html>

@@ -20,7 +20,6 @@ export async function GET(
         },
         group: {
           include: {
-            company: true,
           },
         },
       },
@@ -79,12 +78,6 @@ export async function PATCH(
           select: {
             id: true,
             name: true,
-            company: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
           },
         },
       },

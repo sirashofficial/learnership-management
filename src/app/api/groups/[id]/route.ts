@@ -10,7 +10,6 @@ export async function GET(
     const group = await prisma.group.findUnique({
       where: { id: params.id },
       include: {
-        company: true,
         students: {
           select: {
             id: true,
@@ -72,10 +71,6 @@ export async function PUT(
         endDate: body.endDate ? new Date(body.endDate) : undefined,
         status: body.status,
         notes: body.notes,
-        companyId: body.companyId,
-      },
-      include: {
-        company: true,
       },
     });
 
@@ -91,23 +86,29 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Check if group has students
-    const studentCount = await prisma.student.count({
-      where: { groupId: params.id },
+    // Get group with student count
+    const group = await prisma.group.findUnique({
+      where: { id: params.id },
+      include: {
+        _count: {
+          select: { students: true }
+        }
+      }
     });
 
-    if (studentCount > 0) {
-      return errorResponse(
-        `Cannot delete group. There are ${studentCount} students assigned to this group.`,
-        400
-      );
+    if (!group) {
+      return errorResponse('Group not found', 404);
     }
 
+    // Delete the group (students will be disconnected automatically via the relation)
     await prisma.group.delete({
       where: { id: params.id },
     });
 
-    return successResponse(null, 'Group deleted successfully');
+    return successResponse(
+      { id: params.id, studentCount: group._count.students },
+      'Group deleted successfully'
+    );
   } catch (error) {
     return handleApiError(error);
   }

@@ -35,12 +35,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            company: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
             _count: {
               select: { students: true },
             },
@@ -73,12 +67,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            company: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
             _count: {
               select: { students: true },
             },
@@ -105,7 +93,6 @@ export async function GET(request: NextRequest) {
         groups: lesson.group ? [{
           id: lesson.group.id,
           name: lesson.group.name,
-          companyName: lesson.group.company?.name || null,
           studentCount: lesson.group._count.students,
         }] : [],
         instructor: {
@@ -129,7 +116,6 @@ export async function GET(request: NextRequest) {
         groups: [{
           id: session.group.id,
           name: session.group.name,
-          companyName: session.group.company?.name || null,
           studentCount: session.group._count.students,
         }],
         instructor: {

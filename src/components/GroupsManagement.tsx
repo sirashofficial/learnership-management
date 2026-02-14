@@ -4,18 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Users, Calendar, MapPin, Phone, Mail, User, Plus, Edit, Trash2, CheckCircle, AlertTriangle, UserPlus } from 'lucide-react';
 import { useStudents } from '@/contexts/StudentContextSimple';
 import { useGroups } from '@/contexts/GroupsContext';
+import { generateRolloutPlan } from '@/lib/rolloutPlanGenerator';
 
 export default function GroupsManagement() {
   const { getStudentCountByGroup, students } = useStudents();
-  const { groups, companies, addGroup, updateGroup, deleteGroup, addCompany, updateCompany, deleteCompany } = useGroups();
+  const { groups, addGroup, updateGroup, deleteGroup } = useGroups();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingGroup, setEditingGroup] = useState<any>(null);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
-  const [showCompanySection, setShowCompanySection] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
-    companyName: '',
     contactPerson: '',
     email: '',
     phone: '',
@@ -23,7 +22,7 @@ export default function GroupsManagement() {
     industry: '',
     startDate: '',
     endDate: '',
-    status: 'Planning' as const,
+    status: 'PLANNING' as const,
     location: '',
     coordinator: '',
     notes: ''
@@ -37,7 +36,6 @@ export default function GroupsManagement() {
   const resetForm = () => {
     setFormData({
       name: '',
-      companyName: '',
       contactPerson: '',
       email: '',
       phone: '',
@@ -45,12 +43,11 @@ export default function GroupsManagement() {
       industry: '',
       startDate: '',
       endDate: '',
-      status: 'Planning',
+      status: 'PLANNING',
       location: '',
       coordinator: '',
       notes: ''
     });
-    setShowCompanySection(false);
   };
 
   const handleCreate = () => {
@@ -63,12 +60,11 @@ export default function GroupsManagement() {
     setEditingGroup(group);
     setFormData({
       name: group.name,
-      companyName: group.company?.name || '',
-      contactPerson: group.company?.contactPerson || '',
-      email: group.company?.email || '',
-      phone: group.company?.phone || '',
-      address: group.company?.address || '',
-      industry: group.company?.industry || '',
+      contactPerson: group.contactPerson || '',
+      email: group.email || '',
+      phone: group.phone || '',
+      address: group.address || '',
+      industry: group.industry || '',
       startDate: group.startDate,
       endDate: group.endDate,
       status: group.status,
@@ -76,52 +72,20 @@ export default function GroupsManagement() {
       coordinator: group.coordinator,
       notes: group.notes
     });
-    setShowCompanySection(!!group.company);
     setShowCreateForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      let companyId = editingGroup?.companyId || null;
-      
-      // Create or update company if provided
-      if (showCompanySection && formData.companyName.trim()) {
-        if (editingGroup?.companyId) {
-          // Update existing company
-          await updateCompany(editingGroup.companyId, {
-            name: formData.companyName,
-            contactPerson: formData.contactPerson,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.address,
-            industry: formData.industry,
-          });
-        } else {
-          // Create new company
-          const newCompanyData = {
-            name: formData.companyName,
-            contactPerson: formData.contactPerson,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.address,
-            industry: formData.industry,
-          };
-          // Note: We'll need to get the ID back from the API
-          // For now, we'll handle this by fetching the companies again
-          await addCompany(newCompanyData);
-          // Get the newly created company
-          const response = await fetch('/api/companies');
-          const data = await response.json();
-          const newCompany = data.data.find((c: any) => c.name === formData.companyName);
-          if (newCompany) companyId = newCompany.id;
-        }
-      }
 
+    try {
       const groupData = {
         name: formData.name,
-        companyId,
+        contactPerson: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        industry: formData.industry,
         startDate: formData.startDate,
         endDate: formData.endDate,
         status: formData.status,
@@ -133,7 +97,10 @@ export default function GroupsManagement() {
       if (editingGroup) {
         await updateGroup(editingGroup.id, groupData);
       } else {
-        await addGroup(groupData);
+        const createdGroup = await addGroup(groupData as any);
+        if (createdGroup?.id && formData.startDate) {
+          await generateAndSavePlan(createdGroup, formData.startDate, formData.endDate);
+        }
       }
 
       setShowCreateForm(false);
@@ -145,15 +112,42 @@ export default function GroupsManagement() {
     }
   };
 
+  const handleStartDateChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      startDate: value,
+      endDate: value ? addMonthsToInput(value, 12) : '',
+    }));
+  };
+
+  const generateAndSavePlan = async (createdGroup: any, startDateInput: string, endDateInput: string) => {
+    const planStartDate = toPlanDate(startDateInput);
+    const rolloutPlan = generateRolloutPlan(createdGroup.name, 0, planStartDate);
+    const rolloutData = buildModuleDates(rolloutPlan);
+
+    await fetch(`/api/groups/${createdGroup.id}/rollout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rolloutPlan: rolloutData }),
+    });
+
+    const notesPayload = buildNotesPayload(createdGroup.notes, rolloutPlan);
+    await updateGroup(createdGroup.id, {
+      startDate: new Date(startDateInput).toISOString(),
+      endDate: new Date(endDateInput).toISOString(),
+      notes: notesPayload,
+    });
+  };
+
   const handleDelete = async (groupId: string) => {
     const group = groups.find(g => g.id === groupId);
     const studentCount = group?._count?.students || 0;
-    
+
     if (studentCount > 0) {
       alert(`Cannot delete group "${group?.name}". There are ${studentCount} students assigned to this group. Please reassign students first.`);
       return;
     }
-    
+
     if (confirm('Are you sure you want to delete this group?')) {
       try {
         await deleteGroup(groupId);
@@ -188,17 +182,16 @@ export default function GroupsManagement() {
     const start = new Date(group.startDate);
     const end = new Date(group.endDate);
     const now = new Date();
-    
+
     if (now < start) return 0;
     if (now > end) return 100;
-    
+
     const total = end.getTime() - start.getTime();
     const elapsed = now.getTime() - start.getTime();
     return Math.round((elapsed / total) * 100);
   };
 
   const totalStudents = groups.reduce((sum, g) => sum + (g._count?.students || 0), 0);
-  const totalCompanies = groups.filter(g => g.company).length;
 
   return (
     <div className="space-y-6">
@@ -234,7 +227,7 @@ export default function GroupsManagement() {
             <div>
               <p className="text-sm font-medium text-slate-600">Active Groups</p>
               <p className="text-3xl font-bold text-slate-900">
-                {groups.filter(g => g.status === 'Active').length}
+                {groups.filter(g => g.status === 'ACTIVE').length}
               </p>
             </div>
             <CheckCircle className="h-8 w-8 text-green-500" />
@@ -250,16 +243,6 @@ export default function GroupsManagement() {
             <Users className="h-8 w-8 text-purple-500" />
           </div>
         </div>
-
-        <div className="bg-white rounded-lg p-6 border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">With Companies</p>
-              <p className="text-3xl font-bold text-slate-900">{totalCompanies}</p>
-            </div>
-            <Building2 className="h-8 w-8 text-orange-500" />
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -273,13 +256,12 @@ export default function GroupsManagement() {
               {groups.map((group) => {
                 const studentCount = group._count?.students || 0;
                 const groupStudents = getGroupStudents(group.name);
-                
+
                 return (
                   <div
                     key={group.id}
-                    className={`p-6 cursor-pointer hover:bg-slate-50 ${
-                      selectedGroup?.id === group.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                    }`}
+                    className={`p-6 cursor-pointer hover:bg-slate-50 ${selectedGroup?.id === group.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      }`}
                     onClick={() => setSelectedGroup(group)}
                   >
                     <div className="flex justify-between items-start">
@@ -291,12 +273,12 @@ export default function GroupsManagement() {
                             {group.status}
                           </span>
                         </div>
-                        
+
                         <div className="space-y-1 text-sm text-slate-600">
-                          {group.company && (
+                          {group.industry && (
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4" />
-                              <span>{group.company.name}</span>
+                              <span>{group.industry}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-2">
@@ -304,8 +286,11 @@ export default function GroupsManagement() {
                             <span>{studentCount} students {studentCount > 0 ? `(${groupStudents.map(s => s.name).join(', ')})` : ''}</span>
                           </div>
                           <div className="flex items-center gap-2">
+                            {renderPlanStatus(group)}
+                          </div>
+                          <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            <span>{new Date(group.startDate).toLocaleDateString()} - {new Date(group.endDate).toLocaleDateString()}</span>
+                            <span>{group.startDate ? new Date(group.startDate).toLocaleDateString() : 'TBD'} - {group.endDate ? new Date(group.endDate).toLocaleDateString() : 'TBD'}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
@@ -314,22 +299,22 @@ export default function GroupsManagement() {
                         </div>
 
                         {/* Progress Bar */}
-                        {group.status === 'Active' && (
+                        {group.status === 'ACTIVE' && (
                           <div className="mt-3">
                             <div className="flex justify-between text-xs text-slate-500 mb-1">
                               <span>Progress</span>
                               <span>{calculateProgress(group)}%</span>
                             </div>
                             <div className="w-full bg-slate-200 rounded-full h-2">
-                              <div 
-                                className="bg-blue-600 h-2 rounded-full transition-all" 
+                              <div
+                                className="bg-blue-600 h-2 rounded-full transition-all"
                                 style={{ width: `${calculateProgress(group)}%` }}
                               ></div>
                             </div>
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex gap-2 ml-4">
                         <button
                           onClick={(e) => {
@@ -363,7 +348,7 @@ export default function GroupsManagement() {
           {selectedGroup ? (
             <div className="bg-white rounded-lg border border-slate-200 p-6">
               <h3 className="text-lg font-semibold mb-4">Group Details</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium text-slate-900 mb-2">Group Information</h4>
@@ -391,34 +376,33 @@ export default function GroupsManagement() {
                   </div>
                 )}
 
-                {selectedGroup.company && (
+                {selectedGroup.industry && (
                   <div className="border-t pt-4">
-                    <h4 className="font-medium text-slate-900 mb-2">Company Details</h4>
+                    <h4 className="font-medium text-slate-900 mb-2">Contact Information</h4>
                     <div className="space-y-2 text-sm">
-                      <div><strong>Company:</strong> {selectedGroup.company.name}</div>
-                      {selectedGroup.company.industry && <div><strong>Industry:</strong> {selectedGroup.company.industry}</div>}
-                      {selectedGroup.company.contactPerson && (
+                      {selectedGroup.industry && <div><strong>Industry:</strong> {selectedGroup.industry}</div>}
+                      {selectedGroup.contactPerson && (
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          <span>{selectedGroup.company.contactPerson}</span>
+                          <span>{selectedGroup.contactPerson}</span>
                         </div>
                       )}
-                      {selectedGroup.company.email && (
+                      {selectedGroup.email && (
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4" />
-                          <span>{selectedGroup.company.email}</span>
+                          <span>{selectedGroup.email}</span>
                         </div>
                       )}
-                      {selectedGroup.company.phone && (
+                      {selectedGroup.phone && (
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4" />
-                          <span>{selectedGroup.company.phone}</span>
+                          <span>{selectedGroup.phone}</span>
                         </div>
                       )}
-                      {selectedGroup.company.address && (
+                      {selectedGroup.address && (
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
-                          <span>{selectedGroup.company.address}</span>
+                          <span>{selectedGroup.address}</span>
                         </div>
                       )}
                     </div>
@@ -463,7 +447,7 @@ export default function GroupsManagement() {
                   {editingGroup ? 'Edit Group' : 'Create New Group'}
                 </h3>
               </div>
-              
+
               <div className="p-6 space-y-6">
                 {/* Group Information */}
                 <div>
@@ -476,7 +460,7 @@ export default function GroupsManagement() {
                         required
                         className="w-full px-3 py-2 border border-slate-300 rounded-md"
                         value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="e.g., NVC Level 2 - Cohort A"
                       />
                     </div>
@@ -485,7 +469,7 @@ export default function GroupsManagement() {
                       <select
                         className="w-full px-3 py-2 border border-slate-300 rounded-md"
                         value={formData.status}
-                        onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                       >
                         <option value="Planning">Planning</option>
                         <option value="Active">Active</option>
@@ -500,7 +484,7 @@ export default function GroupsManagement() {
                         required
                         className="w-full px-3 py-2 border border-slate-300 rounded-md"
                         value={formData.startDate}
-                        onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                        onChange={(e) => handleStartDateChange(e.target.value)}
                       />
                     </div>
                     <div>
@@ -510,7 +494,7 @@ export default function GroupsManagement() {
                         required
                         className="w-full px-3 py-2 border border-slate-300 rounded-md"
                         value={formData.endDate}
-                        onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                        readOnly
                       />
                     </div>
                     <div>
@@ -519,7 +503,7 @@ export default function GroupsManagement() {
                         type="text"
                         className="w-full px-3 py-2 border border-slate-300 rounded-md"
                         value={formData.coordinator}
-                        onChange={(e) => setFormData({...formData, coordinator: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, coordinator: e.target.value })}
                         placeholder="Training coordinator name"
                       />
                     </div>
@@ -529,92 +513,70 @@ export default function GroupsManagement() {
                         type="text"
                         className="w-full px-3 py-2 border border-slate-300 rounded-md"
                         value={formData.location}
-                        onChange={(e) => setFormData({...formData, location: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         placeholder="Training location"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Optional Company Information */}
+                {/* Contact Information */}
                 <div className="border-t pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium">Company Information (Optional)</h4>
-                    <button
-                      type="button"
-                      onClick={() => setShowCompanySection(!showCompanySection)}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      {showCompanySection ? 'Hide Company Details' : 'Add Company Details'}
-                    </button>
-                  </div>
-                  
-                  {showCompanySection && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Company Name</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                            value={formData.companyName}
-                            onChange={(e) => setFormData({...formData, companyName: e.target.value})}
-                            placeholder="Company name"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Industry</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                            value={formData.industry}
-                            onChange={(e) => setFormData({...formData, industry: e.target.value})}
-                            placeholder="e.g., Technology, Retail"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Contact Person</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                            value={formData.contactPerson}
-                            onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
-                            placeholder="Primary contact name"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Email</label>
-                          <input
-                            type="email"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                            value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                            placeholder="contact@company.com"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Phone</label>
-                          <input
-                            type="tel"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                            placeholder="+27 11 234 5678"
-                          />
-                        </div>
+                  <h4 className="font-medium mb-4">Contact Information</h4>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Contact Person</label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+                          value={formData.contactPerson}
+                          onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                          placeholder="Primary contact name"
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Address</label>
-                        <textarea
+                        <label className="block text-sm font-medium mb-1">Industry</label>
+                        <input
+                          type="text"
                           className="w-full px-3 py-2 border border-slate-300 rounded-md"
-                          rows={2}
-                          value={formData.address}
-                          onChange={(e) => setFormData({...formData, address: e.target.value})}
-                          placeholder="Company address"
+                          value={formData.industry}
+                          onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                          placeholder="e.g., Technology, Retail"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Email</label>
+                        <input
+                          type="email"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="contact@company.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Phone</label>
+                        <input
+                          type="tel"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="+27 11 234 5678"
                         />
                       </div>
                     </div>
-                  )}
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Address</label>
+                      <textarea
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md"
+                        rows={2}
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="Company address"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Notes */}
@@ -624,7 +586,7 @@ export default function GroupsManagement() {
                     className="w-full px-3 py-2 border border-slate-300 rounded-md"
                     rows={3}
                     value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Additional notes about the group..."
                   />
                 </div>
@@ -655,4 +617,153 @@ export default function GroupsManagement() {
       )}
     </div>
   );
+}
+
+function renderPlanStatus(group: any) {
+  const plan = extractStoredPlan(group.notes);
+  if (!plan) {
+    return (
+      <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-xs font-medium">
+        <AlertTriangle className="h-3 w-3" />
+        NO PLAN
+      </span>
+    );
+  }
+
+  const status = getPlanStatus(plan);
+
+  if (status === 'NOT_STARTED') {
+    return (
+      <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs font-medium">
+        <Calendar className="h-3 w-3" />
+        NOT STARTED
+      </span>
+    );
+  }
+
+  if (status === 'BEHIND') {
+    return (
+      <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs font-medium">
+        <AlertTriangle className="h-3 w-3" />
+        BEHIND SCHEDULE
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-medium">
+      <CheckCircle className="h-3 w-3" />
+      ON TRACK
+    </span>
+  );
+}
+
+function getPlanStatus(plan: any): 'NOT_STARTED' | 'ON_TRACK' | 'BEHIND' {
+  const today = normalizeDate(new Date());
+  const unitStandards = plan.modules.flatMap((module: any) => module.unitStandards || []);
+
+  if (unitStandards.length === 0) {
+    return 'NOT_STARTED';
+  }
+
+  const starts = unitStandards.map((unit: any) => normalizeDate(parsePlanDate(unit.startDate)));
+  const ends = unitStandards.map((unit: any) => normalizeDate(parsePlanDate(unit.endDate)));
+  const earliestStart = starts.reduce((min: Date, current: Date) => (current < min ? current : min), starts[0]);
+  const latestEnd = ends.reduce((max: Date, current: Date) => (current > max ? current : max), ends[0]);
+
+  if (today < earliestStart) {
+    return 'NOT_STARTED';
+  }
+
+  const isCurrent = unitStandards.some((unit: any) => {
+    const start = normalizeDate(parsePlanDate(unit.startDate));
+    const end = normalizeDate(parsePlanDate(unit.endDate));
+    return start <= today && end >= today;
+  });
+
+  if (isCurrent) {
+    return 'ON_TRACK';
+  }
+
+  if (today > latestEnd) {
+    return 'BEHIND';
+  }
+
+  return 'BEHIND';
+}
+
+function extractStoredPlan(notes: string | null | undefined) {
+  if (!notes) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(notes);
+    if (parsed && parsed.rolloutPlan) {
+      return parsed.rolloutPlan;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function parsePlanDate(value: string): Date {
+  const [day, month, year] = value.split('/').map((part) => Number(part));
+  return new Date(year, month - 1, day);
+}
+
+function normalizeDate(date: Date): Date {
+  const result = new Date(date.getTime());
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function addMonthsToInput(value: string, months: number): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const targetMonth = date.getMonth() + months;
+  const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12;
+  const day = date.getDate();
+  const lastDay = new Date(targetYear, normalizedMonth + 1, 0).getDate();
+  const result = new Date(targetYear, normalizedMonth, Math.min(day, lastDay));
+  return result.toISOString().split('T')[0];
+}
+
+function toPlanDate(input: string): string {
+  const date = new Date(input);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function buildModuleDates(plan: any) {
+  const rolloutData: Record<string, Date> = {};
+
+  plan.modules.forEach((module: any) => {
+    const first = module.unitStandards[0];
+    const last = module.unitStandards[module.unitStandards.length - 1];
+    rolloutData[`module${module.moduleNumber}StartDate`] = parsePlanDate(first.startDate);
+    rolloutData[`module${module.moduleNumber}EndDate`] = parsePlanDate(last.endDate);
+  });
+
+  return rolloutData;
+}
+
+function buildNotesPayload(notes: string | null | undefined, plan: any) {
+  if (!notes) {
+    return JSON.stringify({ rolloutPlan: plan });
+  }
+
+  try {
+    const parsed = JSON.parse(notes);
+    return JSON.stringify({ ...parsed, rolloutPlan: plan });
+  } catch {
+    return JSON.stringify({ notesText: notes, rolloutPlan: plan });
+  }
 }

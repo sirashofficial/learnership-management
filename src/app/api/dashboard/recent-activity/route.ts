@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       include: {
         group: {
           include: {
-            company: true,
+
           },
         },
         facilitator: {

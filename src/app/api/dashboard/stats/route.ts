@@ -15,8 +15,6 @@ export async function GET(request: NextRequest) {
       studentsLastMonth,
       totalGroups,
       groupsLastMonth,
-      totalCompanies,
-      companiesLastMonth,
       activeCourses,
       coursesLastMonth,
       pendingAssessments,
@@ -44,15 +42,6 @@ export async function GET(request: NextRequest) {
       prisma.group.count({
         where: {
           status: { in: ['ACTIVE', 'Active'] },
-          createdAt: { lte: thirtyDaysAgo }
-        }
-      }),
-
-      // Total companies
-      prisma.company.count({ where: { status: 'ACTIVE' } }),
-      prisma.company.count({
-        where: {
-          status: 'ACTIVE',
           createdAt: { lte: thirtyDaysAgo }
         }
       }),
@@ -142,12 +131,8 @@ export async function GET(request: NextRequest) {
         trend: calculateTrend(totalStudents, studentsLastMonth),
       },
       totalGroups: {
-        value: totalGroups + totalCompanies, // Combined for "Groups & Companies" card
-        trend: calculateTrend(totalGroups + totalCompanies, groupsLastMonth + companiesLastMonth),
-      },
-      totalCompanies: {
-        value: totalCompanies,
-        trend: calculateTrend(totalCompanies, companiesLastMonth),
+        value: totalGroups,
+        trend: calculateTrend(totalGroups, groupsLastMonth),
       },
       attendanceRate: {
         value: attendanceRate,

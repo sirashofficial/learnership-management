@@ -119,84 +119,58 @@ export default function DashboardAlerts() {
   };
 
   return (
-    <div className="card-premium p-8 noise-texture mb-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h3 className="text-xl font-black text-slate-900 font-display tracking-tight">System Directives</h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Critical infrastructure alerts</p>
-        </div>
+    <div className="bg-white rounded-lg border border-slate-200 p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-slate-900">Alerts</h3>
         {visibleAlerts.length > 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-xl border border-red-100 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">
-              {visibleAlerts.length} Active Directives
-            </span>
-          </div>
+          <span className="text-xs text-red-500 font-medium">
+            {visibleAlerts.length} active
+          </span>
         )}
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="animate-spin rounded-xl h-8 w-8 border-b-2 border-emerald-500"></div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parsing notification grid...</p>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
         </div>
       ) : visibleAlerts.length === 0 ? (
-        <div className="text-center py-20 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-          </div>
-          <p className="text-sm font-black text-slate-900 font-display tracking-tight">Status: Nominal</p>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">No pending interventions required</p>
+        <div className="text-center py-12">
+          <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+          <p className="text-sm text-slate-500">All clear</p>
+          <p className="text-xs text-slate-400 mt-0.5">No pending alerts</p>
         </div>
       ) : (
-        <div className="space-y-4 max-h-[32rem] overflow-y-auto custom-scrollbar p-1">
+        <div className="space-y-1 max-h-96 overflow-y-auto">
           {visibleAlerts.slice(0, 10).map((alert: any) => {
             const styles = getPriorityStyles(alert.priority);
             return (
               <div
                 key={alert.id}
-                className={cn(
-                  "group relative p-6 rounded-[1.5rem] border-l-[6px] bg-white hover:shadow-premium transition-all duration-300 cursor-pointer overflow-hidden",
-                  styles.border
-                )}
+                className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors duration-150 border-l-2 border-transparent"
+                style={{ borderLeftColor: alert.priority === 'URGENT' ? '#ef4444' : alert.priority === 'WARNING' ? '#f59e0b' : '#10b981' }}
                 onClick={() => handleAlertClick(alert)}
               >
-                {/* Visual Accent Layer */}
-                <div className={cn("absolute inset-0 opacity-[0.03] transition-opacity group-hover:opacity-[0.07]", styles.bg)} />
+                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5", styles.bg, styles.icon)}>
+                  {getAlertIcon(alert.type)}
+                </div>
 
-                <div className="relative flex items-center gap-6">
-                  <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500", styles.bg, styles.icon)}>
-                    {getAlertIcon(alert.type)}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-4">
-                      <p className={cn("text-base font-black font-display tracking-tight leading-tight", styles.text)}>
-                        {alert.message}
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDismiss(alert.id);
-                        }}
-                        className="flex-shrink-0 p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-300 hover:text-red-500"
-                        title="Dismiss Directive"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-4 mt-3">
-                      <div className={cn("px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border", styles.bg.replace('bg-', 'border-').replace('/20', '/50'))}>
-                        {alert.priority}
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                        <Clock className="w-3 h-3" />
-                        {formatTimestamp(alert.timestamp)}
-                      </div>
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-900 leading-snug">{alert.message}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={cn("text-xs font-medium", styles.icon)}>{alert.priority}</span>
+                    <span className="text-xs text-slate-400">{formatTimestamp(alert.timestamp)}</span>
                   </div>
                 </div>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDismiss(alert.id);
+                  }}
+                  className="p-1 hover:bg-slate-200 rounded transition-colors text-slate-300 hover:text-slate-500 flex-shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             );
           })}

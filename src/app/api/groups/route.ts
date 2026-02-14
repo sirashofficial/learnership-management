@@ -1,9 +1,12 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { normalizeGroupName } from '@/lib/groupNameUtils';
 // GET /api/groups
 export async function GET(request: NextRequest) {
+  console.log('API HIT: /api/groups');
   try {
+    console.log('GET /api/groups called');
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
@@ -12,7 +15,6 @@ export async function GET(request: NextRequest) {
         ...(status && { status: status as any }),
       },
       include: {
-        company: true,
         students: {
           select: {
             id: true,
@@ -31,9 +33,31 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { name: 'asc' },
     });
-
+    console.log('GET /api/groups success:', groups.length, 'groups');
+    
+    // DEBUG: Log group.notes for each group to verify rollout plan data
+    console.log('\n📋 DEBUG: Group Notes (Rollout Plans):');
+    groups.forEach((group: any) => {
+      console.log(`\n  Group: ${group.name}`);
+      if (group.notes) {
+        try {
+          const parsed = JSON.parse(group.notes);
+          const moduleCount = parsed.rolloutPlan?.modules?.length || 0;
+          const totalUnits = parsed.rolloutPlan?.modules?.reduce((sum: number, m: any) => sum + (m.unitStandards?.length || 0), 0) || 0;
+          console.log(`    ✅ Notes found - ${moduleCount} modules, ${totalUnits} total units`);
+          console.log(`    Preview: ${JSON.stringify(parsed).substring(0, 100)}...`);
+        } catch (e) {
+          console.log(`    ⚠️  Notes present but not valid JSON: ${group.notes.substring(0, 50)}...`);
+        }
+      } else {
+        console.log(`    ❌ No notes (empty/null)`);
+      }
+    });
+    console.log('\n');
+    
     return successResponse(groups);
   } catch (error) {
+    console.error('GET /api/groups error:', error);
     return handleApiError(error);
   }
 }
@@ -43,19 +67,33 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // Validate required fields
+    if (!body.name || !body.startDate || !body.status) {
+      return errorResponse('Missing required fields: name, startDate, or status', 400);
+    }
+
+    // Normalize group name(s)
+    const normalizedNames = normalizeGroupName(body.name);
+    // Check for duplicate group(s)
+    const existing = await prisma.group.findFirst({
+      where: {
+        name: { in: normalizedNames },
+      },
+    });
+    if (existing) {
+      return errorResponse('A group with this name (or equivalent) already exists.', 409);
+    }
+
+    // Proceed to create group with normalized name (first in list)
     const group = await prisma.group.create({
       data: {
-        name: body.name,
+        name: normalizedNames[0],
         location: body.location,
         coordinator: body.coordinator,
-        startDate: new Date(body.startDate),
-        endDate: new Date(body.endDate),
-        status: body.status || 'Planning',
+        startDate: body.startDate ? new Date(body.startDate) : new Date(),
+        endDate: body.endDate ? new Date(body.endDate) : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+        status: body.status || 'ACTIVE',
         notes: body.notes,
-        companyId: body.companyId || null,
-      },
-      include: {
-        company: true,
       },
     });
 
@@ -85,10 +123,6 @@ export async function PUT(request: NextRequest) {
         endDate: data.endDate ? new Date(data.endDate) : undefined,
         status: data.status,
         notes: data.notes,
-        companyId: data.companyId,
-      },
-      include: {
-        company: true,
       },
     });
 

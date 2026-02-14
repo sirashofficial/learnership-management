@@ -1,6 +1,4 @@
 "use client";
-
-import Header from "@/components/Header";
 import { BookOpen, Upload, Brain, FileText, Download, Plus, Loader2, CheckCircle, AlertCircle, X, Eye } from "lucide-react";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -179,7 +177,6 @@ export default function CurriculumPage() {
 
   return (
     <>
-      <Header />
 
       <div className="p-6">
         {/* Tabs */}
@@ -232,11 +229,11 @@ export default function CurriculumPage() {
                 <div className="col-span-3 text-center py-12">
                   <BookOpen className="w-12 h-12 mx-auto text-slate-400 mb-4" />
                   <p className="text-slate-600">No curriculum modules found.</p>
-                  <p className="text-sm text-slate-500 mt-1">Upload curriculum documents to get started.</p>
+                  <p className="text-xs text-slate-500 mt-1">Upload curriculum documents to get started.</p>
                 </div>
               ) : (
                 modules.map((module) => (
-                  <div key={module.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+                  <div key={module.id} className="bg-white rounded-lg border border-slate-200 p-5 hover:shadow-sm transition-shadow">
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
                         <BookOpen className="w-6 h-6" />
@@ -276,7 +273,7 @@ export default function CurriculumPage() {
                         {expandedModule === module.id && (
                           <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
                             {module.unitStandards.map((us: any, idx: number) => (
-                              <div key={us.id || idx} className="text-xs bg-slate-50 rounded p-2">
+                              <div key={us.id || idx} className="text-xs bg-slate-50 rounded-lg p-2">
                                 <span className="font-medium text-slate-700">{us.code || `US${idx + 1}`}</span>
                                 <span className="text-slate-500 ml-2">{us.title}</span>
                                 {us.credits && <span className="text-blue-600 ml-2">({us.credits} credits)</span>}
@@ -306,7 +303,7 @@ export default function CurriculumPage() {
         {/* AI Upload Tab Content */}
         {activeTab === 'ai-upload' && (
           <div className="max-w-3xl mx-auto space-y-6">
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6">
+            <div className="bg-slate-50 border-2 border-purple-200 rounded-lg p-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-purple-600 rounded-lg">
                   <Brain className="h-8 w-8 text-white" />
@@ -322,7 +319,7 @@ export default function CurriculumPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border-2 border-slate-300 shadow-lg">
+            <div className="bg-white rounded-lg border-2 border-slate-300 shadow-sm">
               {/* Upload Area */}
               <div className="p-8">
                 <label
@@ -407,7 +404,7 @@ export default function CurriculumPage() {
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 transition-all duration-300"
+                        className="bg-blue-600 h-3 transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       />
                     </div>
@@ -433,7 +430,7 @@ export default function CurriculumPage() {
                 <button
                   onClick={processWithAI}
                   disabled={uploadedFiles.length === 0 || isUploading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                  className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                 >
                   {isUploading ? (
                     <>

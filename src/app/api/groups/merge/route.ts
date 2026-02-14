@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
       },
       include: {
         students: true,
-        company: true
       }
     });
 
@@ -37,14 +36,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the company from the first group
-    const primaryCompanyId = groupsToMerge[0].companyId;
-
     // Create the new merged group
     const mergedGroup = await prisma.group.create({
       data: {
         name: targetGroupName.trim(),
-        companyId: primaryCompanyId,
         startDate: groupsToMerge[0].startDate,
         endDate: groupsToMerge[0].endDate,
         status: 'ACTIVE',

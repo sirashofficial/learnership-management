@@ -39,10 +39,90 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create or update an override
+// POST - Create recurring sessions or update an override
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    
+    // Check if this is for creating recurring sessions
+    if (body.action === 'create-recurring' && body.groupId && body.title) {
+      const {
+        groupId,
+        title,
+        module,
+        startTime,
+        endTime,
+        notes,
+        facilitatorId,
+        frequency = 'WEEKLY',
+        scheduleEndDate,
+        startDate = new Date(),
+        skipWeekends = true
+      } = body;
+
+      if (!facilitatorId) {
+        return NextResponse.json(
+          { error: 'facilitatorId is required' },
+          { status: 400 }
+        );
+      }
+
+      // Default end date is 6 months from start
+      const endDateForSchedule = scheduleEndDate ? new Date(scheduleEndDate) : new Date(new Date().setMonth(new Date().getMonth() + 6));
+      const sessions = [];
+      const currentDate = new Date(startDate);
+      
+      while (currentDate < endDateForSchedule) {
+        const dayOfWeek = currentDate.getDay();
+        if (skipWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          continue;
+        }
+
+        const session = await prisma.session.create({
+          data: {
+            title,
+            module,
+            date: new Date(currentDate),
+            startTime,
+            endTime,
+            notes: notes || `${frequency} recurring session`,
+            groupId,
+            facilitatorId
+          }
+        });
+
+        sessions.push(session);
+
+        switch (frequency) {
+          case 'DAILY':
+            currentDate.setDate(currentDate.getDate() + 1);
+            break;
+          case 'WEEKLY':
+            currentDate.setDate(currentDate.getDate() + 7);
+            break;
+          case 'BIWEEKLY':
+            currentDate.setDate(currentDate.getDate() + 14);
+            break;
+          case 'MONTHLY':
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            break;
+          default:
+            currentDate.setDate(currentDate.getDate() + 7);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Created ${sessions.length} recurring sessions`,
+        sessionCount: sessions.length,
+        frequency,
+        endDate: endDateForSchedule.toISOString(),
+        sessions: sessions.slice(0, 5)
+      });
+    }
+
+    // Otherwise, handle override creation
     const { date, groupName, venue, isCancelled, cancellationReason, notes, notificationEnabled, notificationTime } = body;
 
     if (!date || !groupName || !venue) {
@@ -82,9 +162,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(override);
   } catch (error) {
-    console.error('Error creating/updating override:', error);
+    console.error('Error in POST:', error);
     return NextResponse.json(
-      { error: 'Failed to create/update override' },
+      { error: 'Failed to process request' },
       { status: 500 }
     );
   }

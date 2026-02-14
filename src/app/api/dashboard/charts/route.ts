@@ -51,12 +51,6 @@ export async function GET(request: NextRequest) {
     const groupsWithCounts = await prisma.group.findMany({
       where: { status: 'ACTIVE' },
       include: {
-        company: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
         _count: {
           select: { students: true },
         },
@@ -66,7 +60,6 @@ export async function GET(request: NextRequest) {
     const groupDistribution = groupsWithCounts.map((group: any) => ({
       id: group.id,
       name: group.name,
-      companyName: group.company?.name || 'No Company',
       studentCount: group._count.students,
       percentage: 0, // Will calculate after getting total
     }));

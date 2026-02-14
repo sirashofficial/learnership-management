@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Header from "@/components/Header";
 import { useStudents } from "@/hooks/useStudents";
 import {
   Calendar, Users, TrendingUp, ChevronDown, ChevronRight, Check, X,
   ChevronLeft, ChevronRight as ChevronRightIcon, Clock, AlertCircle,
   Download, Filter, BarChart3, Copy, CheckSquare, FileText, Bell, Settings
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, downloadExport } from "@/lib/utils";
 import { format, addDays, subDays, startOfWeek, endOfWeek, isToday } from "date-fns";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -43,6 +42,7 @@ export default function AttendancePage() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [expandedCollection, setExpandedCollection] = useState<string | null>("montazility");
   const [attendanceData, setAttendanceData] = useState<{ [key: string]: string }>({});
+  const [attendanceReasons, setAttendanceReasons] = useState<{ [key: string]: string }>({});
   const [savingAttendance, setSavingAttendance] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -56,7 +56,10 @@ export default function AttendancePage() {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selectedForBulk, setSelectedForBulk] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string | null>(null);
-  const [absentReasons, setAbsentReasons] = useState<{ [key: string]: string }>({});
+  const [todayStats, setTodayStats] = useState<any>(null);
+  const [weekStats, setWeekStats] = useState<any>(null);
+  const [lowAttendanceCount, setLowAttendanceCount] = useState<number>(0);
+  const [selectedHistoryGroup, setSelectedHistoryGroup] = useState<string | null>(null);
 
   // Group collections
   const groupCollections: GroupCollection[] = [
@@ -88,6 +91,9 @@ export default function AttendancePage() {
   // Fetch alerts on mount
   useEffect(() => {
     fetchAlerts();
+    fetchTodayStats();
+    fetchWeekStats();
+    fetchLowAttendanceCount();
   }, []);
 
   // Fetch attendance history when date changes
@@ -95,7 +101,7 @@ export default function AttendancePage() {
     if (activeView === 'history' || activeView === 'analytics') {
       fetchHistoryData();
     }
-  }, [selectedDate, activeView]);
+  }, [selectedDate, activeView, selectedHistoryGroup]);
 
   const fetchAlerts = async () => {
     try {
@@ -109,11 +115,62 @@ export default function AttendancePage() {
     }
   };
 
+  const fetchTodayStats = async () => {
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const response = await fetch(`/api/attendance/stats?startDate=${today}&endDate=${today}`);
+      const data = await response.json();
+      if (data.success) {
+        setTodayStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching today stats:', error);
+    }
+  };
+
+  const fetchWeekStats = async () => {
+    try {
+      const start = format(startOfWeek(new Date()), 'yyyy-MM-dd');
+      const end = format(endOfWeek(new Date()), 'yyyy-MM-dd');
+      const response = await fetch(`/api/attendance/stats?startDate=${start}&endDate=${end}`);
+      const data = await response.json();
+      if (data.success) {
+        setWeekStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching week stats:', error);
+    }
+  };
+
+  const fetchLowAttendanceCount = async () => {
+    try {
+      // Get all student IDs
+      const studentIds = apiStudents.map(s => s.id).join(',');
+      if (!studentIds) return;
+      
+      const response = await fetch(`/api/attendance/rates?studentIds=${studentIds}`);
+      const data = await response.json();
+      if (data.success) {
+        // Count students with attendance rate below 80%
+        const lowCount = Object.values(data.data as any).filter((stats: any) => 
+          stats.attendanceRate < 80
+        ).length;
+        setLowAttendanceCount(lowCount);
+      }
+    } catch (error) {
+      console.error('Error fetching attendance rates:', error);
+    }
+  };
+
   const fetchHistoryData = async () => {
     try {
       const startDate = format(startOfWeek(selectedDate), 'yyyy-MM-dd');
       const endDate = format(endOfWeek(selectedDate), 'yyyy-MM-dd');
-      const response = await fetch(`/api/attendance/history?startDate=${startDate}&endDate=${endDate}`);
+      let url = `/api/attendance/history?startDate=${startDate}&endDate=${endDate}`;
+      if (selectedHistoryGroup) {
+        url += `&groupId=${selectedHistoryGroup}`;
+      }
+      const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
         setHistoryData(data.data);
@@ -196,23 +253,46 @@ export default function AttendancePage() {
 
 
 
-      const attendanceRecords = Object.entries(attendanceData)
-        .filter(([key, status]) => status !== "NOT_MARKED" && key.includes(format(selectedDate, "yyyy-MM-dd")))
-        .map(([key, status]) => {
-          const studentId = key.split('-')[0];
+      // 1. Filter relevant records
+      const recordsToProcess = Object.entries(attendanceData)
+        .filter(([key, status]) => status !== "NOT_MARKED" && key.includes(format(selectedDate, "yyyy-MM-dd")));
+
+      // 2. Helper to extract studentId from key (format: ${studentId}-${yyyy-MM-dd})
+      const extractStudentId = (key: string) => {
+        const dateStr = format(selectedDate, "yyyy-MM-dd");
+        // Date is always at the end, so extract from the right: remove date and the dash
+        return key.substring(0, key.length - dateStr.length - 1);
+      };
+
+      // 3. Validate reasons for absence
+      for (const [key, status] of recordsToProcess) {
+        if (status === 'ABSENT' && !attendanceReasons[key]) {
+          const studentId = extractStudentId(key);
           const student = apiStudents.find(s => s.id === studentId);
+          throw new Error(`Please provide a reason for ${student?.firstName || 'Student'} ${student?.lastName || ''}'s absence.`);
+        }
+      }
 
-          return {
-            studentId,
-            groupId: student?.group?.id || null, // FIX: Use null instead of undefined
-            sessionId: null, // Manual attendance doesn't have a session
-            status,
-            date: selectedDate.toISOString(),
-            markedBy: "System",
-          };
-        });
+      // 4. Create records payload
+      const attendanceRecords = recordsToProcess.map(([key, status]) => {
+        const studentId = extractStudentId(key);
+        const student = apiStudents.find(s => s.id === studentId);
 
+        return {
+          studentId,
+          groupId: student?.group?.id || null, // FIX: Use null instead of undefined
+          sessionId: null, // Manual attendance doesn't have a session
+          status,
+          date: selectedDate.toISOString(),
+          markedBy: "System",
 
+          notes: attendanceReasons[key] || null,
+        };
+      });
+
+      console.log(`📝 Extracted and prepared ${attendanceRecords.length} attendance records:`, 
+        attendanceRecords.map(r => ({ studentId: r.studentId, status: r.status }))
+      );
 
       // Use bulk API endpoint
       const response = await fetch('/api/attendance', {
@@ -291,23 +371,22 @@ export default function AttendancePage() {
       // Get first group for demo (in production, allow user to select)
       const firstGroupId = Object.keys(groupedStudents)[0];
 
-      const response = await fetch(
-        `/api/attendance/export?format=${formatType}&groupId=${firstGroupId}&startDate=${startDate}&endDate=${endDate}`
+      await downloadExport(
+        '/api/attendance/export',
+        `attendance-${format(selectedDate, 'yyyy-MM-dd')}.${formatType}`,
+        {
+          format: formatType,
+          groupId: firstGroupId,
+          startDate,
+          endDate
+        }
       );
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `attendance-${format(selectedDate, 'yyyy-MM-dd')}.${formatType}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
       setShowExportMenu(false);
+      alert('✅ Attendance exported successfully!');
     } catch (error) {
       console.error('Error exporting:', error);
+      alert('Failed to export attendance. Please try again.');
     }
   };
 
@@ -335,7 +414,7 @@ export default function AttendancePage() {
     if (isFiltered) return null;
 
     return (
-      <div key={student.id} className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-colors">
+      <div key={student.id} className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
         <div className="flex items-center gap-3 flex-1">
           <input
             type="checkbox"
@@ -349,27 +428,39 @@ export default function AttendancePage() {
               }
               setSelectedForBulk(newSelected);
             }}
-            className="w-4 h-4 rounded border-slate-300"
+            className="w-4 h-4 rounded border-gray-300"
           />
           <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
             {student.firstName[0]}{student.lastName[0]}
           </div>
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-gray-900 dark:text-white">
               {student.firstName} {student.lastName}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{student.studentId}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{student.studentId}</p>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {status === 'ABSENT' && (
+            <input
+              type="text"
+              placeholder="Reason for absence..."
+              value={attendanceReasons[getAttendanceKey(student.id)] || ''}
+              onChange={(e) => {
+                const key = getAttendanceKey(student.id);
+                setAttendanceReasons(prev => ({ ...prev, [key]: e.target.value }));
+              }}
+              className="px-3 py-2 border border-red-200 rounded-lg text-sm w-48 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            />
+          )}
           <button
             onClick={() => markAttendance(student.id, "PRESENT")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               status === "PRESENT"
                 ? "bg-green-500 text-white"
-                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-green-100 dark:hover:bg-green-900/30"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30"
             )}
           >
             Present
@@ -380,7 +471,7 @@ export default function AttendancePage() {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               status === "LATE"
                 ? "bg-yellow-500 text-white"
-                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
             )}
           >
             Late
@@ -391,25 +482,11 @@ export default function AttendancePage() {
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               status === "ABSENT"
                 ? "bg-red-500 text-white"
-                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-red-100 dark:hover:bg-red-900/30"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-red-900/30"
             )}
           >
             Absent
           </button>
-          {status === "ABSENT" && (
-            <select
-              value={absentReasons[student.id] || ""}
-              onChange={(e) => setAbsentReasons(prev => ({ ...prev, [student.id]: e.target.value }))}
-              className="px-2 py-1 text-xs border border-red-300 rounded-lg bg-red-50 text-red-700 focus:ring-1 focus:ring-red-400"
-            >
-              <option value="">Select reason...</option>
-              <option value="SICK">Sick</option>
-              <option value="BUSINESS">Business</option>
-              <option value="NO_SHOW">No Show</option>
-              <option value="PERSONAL">Personal</option>
-              <option value="OTHER">Other</option>
-            </select>
-          )}
         </div>
       </div>
     );
@@ -425,7 +502,22 @@ export default function AttendancePage() {
 
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Attendance History</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance History</h2>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Group:</label>
+            <select
+              value={selectedHistoryGroup || ''}
+              onChange={(e) => setSelectedHistoryGroup(e.target.value || null)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Groups</option>
+              {Object.values(groupedStudents).map((group: any) => (
+                <option key={group.id} value={group.id}>{group.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         {Object.entries(groupedByDate).map(([date, records]: [string, any]) => {
           const stats = {
             present: records.filter((r: any) => r.status === 'PRESENT').length,
@@ -434,9 +526,9 @@ export default function AttendancePage() {
           };
 
           return (
-            <div key={date} className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+            <div key={date} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {format(new Date(date), 'EEEE, MMMM d, yyyy')}
                 </h3>
                 <div className="flex gap-4 text-sm">
@@ -445,27 +537,48 @@ export default function AttendancePage() {
                   <span className="text-red-600 dark:text-red-400">Absent: {stats.absent}</span>
                 </div>
               </div>
-              <div className="space-y-2">
-                {records.map((record: any) => (
-                  <div key={record.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-slate-900 dark:text-white">
-                        {record.student?.firstName} {record.student?.lastName}
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {record.student?.group?.name}
-                      </p>
-                    </div>
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-sm font-medium",
-                      record.status === 'PRESENT' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                      record.status === 'LATE' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-                      record.status === 'ABSENT' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                    )}>
-                      {record.status}
-                    </span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Student</th>
+                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Group</th>
+                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Marked By</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {records.map((record: any) => (
+                      <tr key={record.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                        <td className="py-3 px-3">
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {record.student?.firstName} {record.student?.lastName}
+                          </p>
+                        </td>
+                        <td className="py-3 px-3">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {record.student?.group?.name || 'N/A'}
+                          </p>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={cn(
+                            "px-3 py-1 rounded-full text-sm font-medium",
+                            record.status === 'PRESENT' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                            record.status === 'LATE' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+                            record.status === 'ABSENT' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          )}>
+                            {record.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {record.markedBy || 'System'}
+                          </p>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           );
@@ -491,57 +604,59 @@ export default function AttendancePage() {
 
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Attendance Analytics</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Analytics</h2>
 
         {/* Overall Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total Records</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{historyData.length}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Today's Attendance</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {todayStats?.attendanceRate?.toFixed(1) || '0'}%
+                </p>
               </div>
-              <FileText className="w-8 h-8 text-blue-500" />
+              <Calendar className="w-8 h-8 text-blue-500" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Present</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">This Week</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {historyData.filter(r => r.status === 'PRESENT').length}
+                  {weekStats?.attendanceRate?.toFixed(1) || '0'}%
                 </p>
               </div>
-              <Check className="w-8 h-8 text-green-500" />
+              <TrendingUp className="w-8 h-8 text-green-500" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Late</p>
-                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                  {historyData.filter(r => r.status === 'LATE').length}
+                <p className="text-sm text-gray-500 dark:text-gray-400">Students Below 80%</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                  {lowAttendanceCount}
                 </p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-500" />
+              <AlertCircle className="w-8 h-8 text-orange-500" />
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Absent</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Active Alerts</p>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {historyData.filter(r => r.status === 'ABSENT').length}
+                  {alerts.length}
                 </p>
               </div>
-              <X className="w-8 h-8 text-red-500" />
+              <Bell className="w-8 h-8 text-red-500" />
             </div>
           </div>
         </div>
 
         {/* Attendance Trend Chart */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Weekly Trend</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Weekly Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -558,32 +673,55 @@ export default function AttendancePage() {
 
         {/* Alerts Section */}
         {alerts.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Bell className="w-5 h-5 text-orange-500" />
-              Active Alerts
+              Active Alerts ({alerts.length})
             </h3>
             <div className="space-y-3">
-              {alerts.map((alert) => (
-                <div key={alert.id} className={cn(
-                  "p-4 rounded-lg border-l-4",
-                  alert.severity === 'CRITICAL' && "bg-red-50 dark:bg-red-900/20 border-red-500",
-                  alert.severity === 'WARNING' && "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500",
-                  alert.severity === 'INFO' && "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
-                )}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium text-slate-900 dark:text-white">{alert.message}</p>
-                      {alert.details && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{alert.details}</p>
-                      )}
+              {alerts.map((alert) => {
+                const student = apiStudents.find(s => s.id === alert.studentId);
+                return (
+                  <div key={alert.id} className={cn(
+                    "p-4 rounded-lg border-l-4",
+                    alert.severity === 'CRITICAL' && "bg-red-50 dark:bg-red-900/20 border-red-500",
+                    alert.severity === 'WARNING' && "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500",
+                    alert.severity === 'INFO' && "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
+                  )}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-gray-900 dark:text-white">{alert.message}</p>
+                          {alert.type === 'LOW_ATTENDANCE' && (
+                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded">
+                              Low Rate
+                            </span>
+                          )}
+                        </div>
+                        {alert.details && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{alert.details}</p>
+                        )}
+                        {student && (
+                          <div className="mt-2 flex items-center gap-4">
+                            <span className="text-sm text-gray-500">
+                              {student.firstName} {student.lastName}
+                            </span>
+                            <button
+                              onClick={() => window.alert('Reminder functionality will be implemented in a future update')}
+                              className="text-xs px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                            >
+                              Send Reminder
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2">
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                      <X className="w-4 h-4" />
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -593,452 +731,425 @@ export default function AttendancePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500 dark:text-slate-400">Loading students...</div>
-          </div>
-        </main>
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-500">Loading students...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                Attendance Management
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">
-                Track and manage student attendance
-              </p>
-            </div>
-
-            <div className="flex gap-3">
+    <div className="space-y-6">
+      {/* View Tabs */}
+      <div className="flex gap-2 mb-6 justify-between items-center">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveView('mark')}
+            className={cn(
+              "px-4 py-2 rounded-lg font-medium transition-colors",
+              activeView === 'mark'
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Mark Attendance
+          </button>
+          <button
+            onClick={() => setActiveView('history')}
+            className={cn(
+              "px-4 py-2 rounded-lg font-medium transition-colors",
+              activeView === 'history'
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            History
+          </button>
+          <button
+            onClick={() => setActiveView('analytics')}
+            className={cn(
+              "px-4 py-2 rounded-lg font-medium transition-colors",
+              activeView === 'analytics'
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            <BarChart3 className="w-4 h-4 inline mr-2" />
+            Analytics
+          </button>
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+          {showExportMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
               <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-sm"
+                onClick={() => exportAttendance('csv')}
+                className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
               >
-                <Filter className="w-4 h-4" />
-                Filters
+                <FileText className="w-4 h-4" />
+                Export as CSV
               </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 shadow-sm"
-                >
-                  <Download className="w-4 h-4" />
-                  Export
-                </button>
-                {showExportMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg z-10 py-2">
-                    <button
-                      onClick={() => exportAttendance('csv')}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
-                    >
-                      Export as CSV
-                    </button>
-                    <button
-                      onClick={() => exportAttendance('json')}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
-                    >
-                      Export as JSON
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* View Tabs */}
-          <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => setActiveView('mark')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors",
-                activeView === 'mark'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              Mark Attendance
-            </button>
-            <button
-              onClick={() => setActiveView('history')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors",
-                activeView === 'history'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              History
-            </button>
-            <button
-              onClick={() => setActiveView('analytics')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition-colors",
-                activeView === 'analytics'
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              )}
-            >
-              <BarChart3 className="w-4 h-4 inline mr-2" />
-              Analytics
-            </button>
-          </div>
-
-          {/* Filters Panel */}
-          {showFilters && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm mb-6">
-              <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Filter by Status</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilterStatus(null)}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                    !filterStatus
-                      ? "bg-indigo-600 text-white"
-                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                  )}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilterStatus('PRESENT')}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                    filterStatus === 'PRESENT'
-                      ? "bg-green-600 text-white"
-                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                  )}
-                >
-                  Present
-                </button>
-                <button
-                  onClick={() => setFilterStatus('LATE')}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                    filterStatus === 'LATE'
-                      ? "bg-yellow-600 text-white"
-                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                  )}
-                >
-                  Late
-                </button>
-                <button
-                  onClick={() => setFilterStatus('ABSENT')}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                    filterStatus === 'ABSENT'
-                      ? "bg-red-600 text-white"
-                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                  )}
-                >
-                  Absent
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Bulk Actions */}
-          {selectedForBulk.size > 0 && activeView === 'mark' && (
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 mb-6 flex items-center justify-between">
-              <p className="text-indigo-900 dark:text-indigo-300 font-medium">
-                {selectedForBulk.size} student{selectedForBulk.size !== 1 ? 's' : ''} selected
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleBulkAction('PRESENT')}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                >
-                  Mark All Present
-                </button>
-                <button
-                  onClick={() => handleBulkAction('LATE')}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
-                >
-                  Mark All Late
-                </button>
-                <button
-                  onClick={() => handleBulkAction('ABSENT')}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-                >
-                  Mark All Absent
-                </button>
-                <button
-                  onClick={() => setSelectedForBulk(new Set())}
-                  className="px-4 py-2 bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors text-sm font-medium"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Date Navigation */}
-          {activeView === 'mark' && (
-            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
               <button
-                onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                onClick={() => exportAttendance('json')}
+                className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
               >
-                <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                <FileText className="w-4 h-4" />
+                Export as JSON
               </button>
-
-              <div className="flex items-center gap-4">
-                <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {format(selectedDate, "EEEE, MMMM d, yyyy")}
-                </span>
-                {isToday(selectedDate) && (
-                  <span className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full">
-                    Today
-                  </span>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                {!isToday(selectedDate) && (
-                  <button
-                    onClick={() => setSelectedDate(new Date())}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                  >
-                    Today
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                >
-                  <ChevronRightIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                </button>
-              </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Main Content */}
-        {activeView === 'mark' && (
-          <div className="space-y-6">
-            {/* Save Button */}
-            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                {lastSaved ? (
-                  <>
-                    <Check className="w-4 h-4 text-green-500" />
-                    Last saved {format(lastSaved, "h:mm a")}
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="w-4 h-4 text-orange-500" />
-                    Unsaved changes
-                  </>
-                )}
-              </div>
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="bg-white rounded-lg p-4 shadow-soft mb-6">
+          <h3 className="font-semibold text-gray-900 mb-3">Filter by Status</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilterStatus(null)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                !filterStatus
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-100 text-gray-700"
+              )}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilterStatus('PRESENT')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                filterStatus === 'PRESENT'
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-100 text-gray-700"
+              )}
+            >
+              Present
+            </button>
+            <button
+              onClick={() => setFilterStatus('LATE')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                filterStatus === 'LATE'
+                  ? "bg-yellow-600 text-white"
+                  : "bg-gray-100 text-gray-700"
+              )}
+            >
+              Late
+            </button>
+            <button
+              onClick={() => setFilterStatus('ABSENT')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                filterStatus === 'ABSENT'
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-100 text-gray-700"
+              )}
+            >
+              Absent
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Actions */}
+      {selectedForBulk.size > 0 && activeView === 'mark' && (
+        <div className="bg-indigo-50 rounded-lg p-4 mb-6 flex items-center justify-between">
+          <p className="text-indigo-900 font-medium">
+            {selectedForBulk.size} student{selectedForBulk.size !== 1 ? 's' : ''} selected
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleBulkAction('PRESENT')}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+            >
+              Mark All Present
+            </button>
+            <button
+              onClick={() => handleBulkAction('LATE')}
+              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
+            >
+              Mark All Late
+            </button>
+            <button
+              onClick={() => handleBulkAction('ABSENT')}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              Mark All Absent
+            </button>
+            <button
+              onClick={() => setSelectedForBulk(new Set())}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors text-sm font-medium"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Date Navigation */}
+      {activeView === 'mark' && (
+        <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-soft">
+          <button
+            onClick={() => setSelectedDate(subDays(selectedDate, 1))}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+
+          <div className="flex items-center gap-4">
+            <Calendar className="w-5 h-5 text-indigo-600" />
+            <span className="text-lg font-semibold text-gray-900">
+              {format(selectedDate, "EEEE, MMMM d, yyyy")}
+            </span>
+            {isToday(selectedDate) && (
+              <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
+                Today
+              </span>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            {!isToday(selectedDate) && (
               <button
-                onClick={saveAttendance}
-                disabled={savingAttendance}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+                onClick={() => setSelectedDate(new Date())}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
               >
-                {savingAttendance ? (
-                  <>Saving...</>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Save Attendance
-                  </>
-                )}
+                Today
               </button>
+            )}
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ChevronRightIcon className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {activeView === 'mark' && (
+        <div className="space-y-6">
+          {/* Save Button */}
+          <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-soft">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              {lastSaved ? (
+                <>
+                  <Check className="w-4 h-4 text-green-500" />
+                  Last saved {format(lastSaved, "h:mm a")}
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-4 h-4 text-orange-500" />
+                  Unsaved changes
+                </>
+              )}
             </div>
+            <button
+              onClick={saveAttendance}
+              disabled={savingAttendance}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+            >
+              {savingAttendance ? (
+                <>Saving...</>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Save Attendance
+                </>
+              )}
+            </button>
+          </div>
 
-            {/* Montazility Collection */}
-            {groupCollections.map((collection) => {
-              const subGroups = collection.subGroupNames
-                .map(name => Object.values(groupedStudents).find(g => g.name === name))
-                .filter(Boolean);
+          {/* Montazility Collection */}
+          {groupCollections.map((collection) => {
+            const subGroups = collection.subGroupNames
+              .map(name => Object.values(groupedStudents).find(g => g.name === name))
+              .filter(Boolean);
 
-              const totalStudents = subGroups.reduce((sum, g) => sum + g.students.length, 0);
-              const isExpanded = expandedCollection === collection.id;
+            const totalStudents = subGroups.reduce((sum, g) => sum + g.students.length, 0);
+            const isExpanded = expandedCollection === collection.id;
 
-              return (
-                <div key={collection.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden">
-                  <button
-                    onClick={() => setExpandedCollection(isExpanded ? null : collection.id)}
-                    className="w-full flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-slate-400" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-slate-400" />
-                      )}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div className="text-left">
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            {collection.name}
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {totalStudents} students across {subGroups.length} groups
-                          </p>
-                        </div>
+            return (
+              <div key={collection.id} className="bg-white rounded-lg shadow-soft overflow-hidden">
+                <button
+                  onClick={() => setExpandedCollection(isExpanded ? null : collection.id)}
+                  className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    {isExpanded ? (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <Users className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {collection.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {totalStudents} students across {subGroups.length} groups
+                        </p>
                       </div>
                     </div>
-                  </button>
+                  </div>
+                </button>
 
-                  {isExpanded && (
-                    <div className="border-t border-slate-200 dark:border-slate-700 p-6 space-y-4">
-                      {subGroups.map((group) => {
-                        const stats = calculateGroupStats(group.id);
-                        const groupExpanded = expandedGroups.has(group.id);
+                {isExpanded && (
+                  <div className="border-t border-gray-200 p-6 space-y-4">
+                    {subGroups.map((group) => {
+                      const stats = calculateGroupStats(group.id);
+                      const groupExpanded = expandedGroups.has(group.id);
 
-                        return (
-                          <div key={group.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                            <button
-                              onClick={() => {
-                                const newExpanded = new Set(expandedGroups);
-                                if (groupExpanded) {
-                                  newExpanded.delete(group.id);
-                                } else {
-                                  newExpanded.add(group.id);
-                                }
-                                setExpandedGroups(newExpanded);
-                              }}
-                              className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                {groupExpanded ? (
-                                  <ChevronDown className="w-4 h-4 text-slate-400" />
-                                ) : (
-                                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                                )}
-                                <h4 className="font-medium text-slate-900 dark:text-white">{group.name}</h4>
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                  ({group.students.length} students)
-                                </span>
+                      return (
+                        <div key={group.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => {
+                              const newExpanded = new Set(expandedGroups);
+                              if (groupExpanded) {
+                                newExpanded.delete(group.id);
+                              } else {
+                                newExpanded.add(group.id);
+                              }
+                              setExpandedGroups(newExpanded);
+                            }}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              {groupExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-gray-400" />
+                              )}
+                              <h4 className="font-medium text-gray-900">{group.name}</h4>
+                              <span className="text-sm text-gray-500">
+                                ({group.students.length} students)
+                              </span>
+                            </div>
+
+                            <div className="flex gap-4 text-sm">
+                              <span className="text-green-600">✓ {stats.present}</span>
+                              <span className="text-yellow-600">⏰ {stats.late}</span>
+                              <span className="text-red-600">✗ {stats.absent}</span>
+                              <span className="text-gray-500">— {stats.notMarked}</span>
+                            </div>
+                          </button>
+
+                          {groupExpanded && (
+                            <div className="border-t border-gray-200 p-4 bg-white">
+                              <div className="flex justify-end mb-3">
+                                <button
+                                  onClick={() => markAllPresent(group.id)}
+                                  className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                                >
+                                  <CheckSquare className="w-4 h-4" />
+                                  Mark All Present
+                                </button>
                               </div>
-
-                              <div className="flex gap-4 text-sm">
-                                <span className="text-green-600 dark:text-green-400">✓ {stats.present}</span>
-                                <span className="text-yellow-600 dark:text-yellow-400">⏰ {stats.late}</span>
-                                <span className="text-red-600 dark:text-red-400">✗ {stats.absent}</span>
-                                <span className="text-slate-500 dark:text-slate-400">— {stats.notMarked}</span>
+                              <div className="space-y-2">
+                                {group.students.map((student: any) => renderAttendanceRow(student))}
                               </div>
-                            </button>
-
-                            {groupExpanded && (
-                              <div className="border-t border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-700/50">
-                                <div className="flex justify-end mb-3">
-                                  <button
-                                    onClick={() => markAllPresent(group.id)}
-                                    className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-                                  >
-                                    <CheckSquare className="w-4 h-4" />
-                                    Mark All Present
-                                  </button>
-                                </div>
-                                <div className="space-y-2">
-                                  {group.students.map((student: any) => renderAttendanceRow(student))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Individual Groups */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Other Groups</h2>
-              {Object.values(groupedStudents)
-                .filter(group => !groupCollections.some(c => c.subGroupNames.includes(group.name)))
-                .map((group: any) => {
-                  const stats = calculateGroupStats(group.id);
-                  const isExpanded = expandedGroups.has(group.id);
-
-                  return (
-                    <div key={group.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden">
-                      <button
-                        onClick={() => {
-                          const newExpanded = new Set(expandedGroups);
-                          if (isExpanded) {
-                            newExpanded.delete(group.id);
-                          } else {
-                            newExpanded.add(group.id);
-                          }
-                          setExpandedGroups(newExpanded);
-                        }}
-                        className="w-full flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-4">
-                          {isExpanded ? (
-                            <ChevronDown className="w-5 h-5 text-slate-400" />
-                          ) : (
-                            <ChevronRight className="w-5 h-5 text-slate-400" />
+                            </div>
                           )}
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div className="text-left">
-                              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                {group.name}
-                              </h3>
-                              <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {group.students.length} students
-                              </p>
-                            </div>
-                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-                        <div className="flex gap-4 text-sm">
-                          <span className="text-green-600 dark:text-green-400">✓ {stats.present}</span>
-                          <span className="text-yellow-600 dark:text-yellow-400">⏰ {stats.late}</span>
-                          <span className="text-red-600 dark:text-red-400">✗ {stats.absent}</span>
-                          <span className="text-slate-500 dark:text-slate-400">— {stats.notMarked}</span>
-                        </div>
-                      </button>
+          {/* Individual Groups */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-900">Other Groups</h2>
+            {Object.values(groupedStudents)
+              .filter(group => !groupCollections.some(c => c.subGroupNames.includes(group.name)))
+              .map((group: any) => {
+                const stats = calculateGroupStats(group.id);
+                const isExpanded = expandedGroups.has(group.id);
 
-                      {isExpanded && (
-                        <div className="border-t border-slate-200 dark:border-slate-700 p-6 bg-slate-50 dark:bg-slate-700/50">
-                          <div className="flex justify-end mb-3">
-                            <button
-                              onClick={() => markAllPresent(group.id)}
-                              className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-                            >
-                              <CheckSquare className="w-4 h-4" />
-                              Mark All Present
-                            </button>
+                return (
+                  <div key={group.id} className="bg-white rounded-lg shadow-soft overflow-hidden">
+                    <button
+                      onClick={() => {
+                        const newExpanded = new Set(expandedGroups);
+                        if (isExpanded) {
+                          newExpanded.delete(group.id);
+                        } else {
+                          newExpanded.add(group.id);
+                        }
+                        setExpandedGroups(newExpanded);
+                      }}
+                      className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        {isExpanded ? (
+                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        )}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-blue-600" />
                           </div>
-                          <div className="space-y-2">
-                            {group.students.map((student: any) => renderAttendanceRow(student))}
+                          <div className="text-left">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {group.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {group.students.length} students
+                            </p>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
+                      </div>
+
+                      <div className="flex gap-4 text-sm">
+                        <span className="text-green-600">✓ {stats.present}</span>
+                        <span className="text-yellow-600">⏰ {stats.late}</span>
+                        <span className="text-red-600">✗ {stats.absent}</span>
+                        <span className="text-gray-500">— {stats.notMarked}</span>
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="border-t border-gray-200 p-6 bg-white">
+                        <div className="flex justify-end mb-3">
+                          <button
+                            onClick={() => markAllPresent(group.id)}
+                            className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                          >
+                            <CheckSquare className="w-4 h-4" />
+                            Mark All Present
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {group.students.map((student: any) => renderAttendanceRow(student))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
-        )}
+        </div>
+      )}
 
-        {activeView === 'history' && renderHistoryView()}
-        {activeView === 'analytics' && renderAnalyticsView()}
-      </main>
+      {activeView === 'history' && renderHistoryView()}
+      {activeView === 'analytics' && renderAnalyticsView()}
     </div>
   );
 }

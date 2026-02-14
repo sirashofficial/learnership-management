@@ -28,12 +28,6 @@ export async function GET(
                     select: {
                         id: true,
                         name: true,
-                        company: {
-                            select: {
-                                id: true,
-                                name: true,
-                            },
-                        },
                     },
                 },
             },

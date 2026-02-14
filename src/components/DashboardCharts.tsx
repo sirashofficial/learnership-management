@@ -41,13 +41,13 @@ export default function DashboardCharts() {
   };
 
   return (
-    <div className="space-y-6 mb-8">
+    <div className="space-y-6">
       {/* Time Range Filter */}
       <div className="flex justify-end">
         <select
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value)}
-          className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
+          className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
         >
           <option value="7">Last 7 Days</option>
           <option value="30">Last 30 Days</option>
@@ -57,23 +57,20 @@ export default function DashboardCharts() {
       </div>
 
       {/* Attendance Trend Chart */}
-      <div className="card-premium overflow-hidden p-8 noise-texture">
+      <div className="bg-white rounded-lg border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-black text-slate-900 group-hover:text-emerald-700 transition-colors font-display tracking-tight">Attendance Trend</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Daily interaction velocity across cohorts</p>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-900">Attendance Trend</h3>
           <button
             onClick={() => handleExport('Attendance Trend', attendanceTrend)}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-            title="Export Chart"
+            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            title="Export"
           >
-            <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <Download className="w-4 h-4 text-slate-400" />
           </button>
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
           </div>
         ) : (
           <AttendanceTrendChart data={attendanceTrend} />
@@ -81,48 +78,42 @@ export default function DashboardCharts() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Group Distribution Chart */}
-        <div className="card-premium p-8 noise-texture">
+        {/* Group Distribution */}
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl font-black text-slate-900 font-display tracking-tight">Group Distribution</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Student density by cohort allocation</p>
-            </div>
+            <h3 className="text-sm font-semibold text-slate-900">Group Distribution</h3>
             <button
               onClick={() => handleExport('Group Distribution', groupDistribution)}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              title="Export Chart"
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+              title="Export"
             >
-              <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              <Download className="w-4 h-4 text-slate-400" />
             </button>
           </div>
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
             </div>
           ) : (
             <GroupDistributionChart data={groupDistribution} />
           )}
         </div>
 
-        {/* Course Progress Chart */}
-        <div className="card-premium p-8 noise-texture">
+        {/* Course Progress */}
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl font-black text-slate-900 font-display tracking-tight">Curriculum Velocity</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Completion trajectory across active courses</p>
-            </div>
+            <h3 className="text-sm font-semibold text-slate-900">Course Progress</h3>
             <button
               onClick={() => handleExport('Course Progress', courseProgress)}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              title="Export Chart"
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+              title="Export"
             >
-              <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              <Download className="w-4 h-4 text-slate-400" />
             </button>
           </div>
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
             </div>
           ) : (
             <CourseProgressChart data={courseProgress} />

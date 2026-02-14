@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Plus, Check, AlertCircle, Clock, FileCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +9,7 @@ interface AssessmentModalProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
   students: Array<{ id: string; firstName: string; lastName: string; studentId: string }>;
-  modules: Array<{ id: string; code: string; name: string }>;
+  modules: Array<{ id: string; code: string; name: string; unitStandards?: Array<{ id: string; code: string; title: string }> }>;
   assessment?: any;
 }
 
@@ -29,7 +29,14 @@ export default function AssessmentModal({
     method: assessment?.method || "KNOWLEDGE",
     dueDate: assessment?.dueDate?.split("T")[0] || "",
     notes: assessment?.notes || "",
+    score: assessment?.score || undefined,
+    result: assessment?.result || "PENDING",
+    feedback: assessment?.feedback || "",
   });
+
+  // Filter unit standards by selected module
+  const selectedModule = modules.find((m) => m.id === formData.module || m.name === formData.module);
+  const unitStandards = selectedModule?.unitStandards || [];
 
   if (!isOpen) return null;
 
@@ -97,14 +104,20 @@ export default function AssessmentModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Unit Standard *
               </label>
-              <input
+              <select
                 required
-                type="text"
-                placeholder="e.g., US119472"
                 value={formData.unitStandard}
                 onChange={(e) => setFormData({ ...formData, unitStandard: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+                disabled={!selectedModule}
+              >
+                <option value="">{selectedModule ? 'Select a unit standard...' : 'Select a module first...'}</option>
+                {unitStandards.map((us) => (
+                  <option key={us.id} value={us.id}>
+                    {us.code} - {us.title}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -155,6 +168,54 @@ export default function AssessmentModal({
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          {/* Marks/Score - Only for Summative and Integrated */}
+          {(formData.type === 'SUMMATIVE' || formData.type === 'INTEGRATED') && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Marks (Score)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.score || ""}
+                  onChange={(e) => setFormData({ ...formData, score: e.target.value ? parseInt(e.target.value) : undefined })}
+                  placeholder="0-100"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Result
+                </label>
+                <select
+                  value={formData.result}
+                  onChange={(e) => setFormData({ ...formData, result: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="COMPETENT">Competent</option>
+                  <option value="NOT_YET_COMPETENT">Not Yet Competent</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Feedback */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Feedback
+            </label>
+            <textarea
+              rows={2}
+              value={formData.feedback}
+              onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
+              placeholder="Provide feedback to the student..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
 

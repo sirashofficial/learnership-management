@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Plus, Save, FileText, ArrowRight, BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming this exists given previous grep results (cn usage)
 
@@ -25,7 +26,15 @@ interface UnitStandard {
     title: string;
 }
 
+interface Student {
+    id: string;
+    firstName: string;
+    lastName: string;
+    studentNumber: string;
+}
+
 export default function CurriculumBuilderPage() {
+    const router = useRouter();
     // State: Search
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -33,7 +42,11 @@ export default function CurriculumBuilderPage() {
 
     // State: Form Data
     const [modules, setModules] = useState<Module[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
     const [isLoadingModules, setIsLoadingModules] = useState(true);
+    const [isLoadingStudents, setIsLoadingStudents] = useState(true);
+
+    const [selectedStudentId, setSelectedStudentId] = useState('');
 
     const [selectedModuleId, setSelectedModuleId] = useState('');
     const [selectedUSId, setSelectedUSId] = useState('');
@@ -61,7 +74,21 @@ export default function CurriculumBuilderPage() {
                 setIsLoadingModules(false);
             }
         }
+        async function fetchStudents() {
+            try {
+                const res = await fetch('/api/students');
+                if (res.ok) {
+                    const data = await res.json();
+                    setStudents(data.students || []);
+                }
+            } catch (error) {
+                console.error('Failed to fetch students', error);
+            } finally {
+                setIsLoadingStudents(false);
+            }
+        }
         fetchModules();
+        fetchStudents();
     }, []);
 
     // Handle Search
@@ -215,6 +242,26 @@ export default function CurriculumBuilderPage() {
                     </header>
 
                     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        {/* Student Selection */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Student <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                value={selectedStudentId}
+                                onChange={(e) => setSelectedStudentId(e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                required
+                            >
+                                <option value="">Select Student...</option>
+                                {students.map(s => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.firstName} {s.lastName} ({s.studentNumber})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         {/* Module Selection */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -310,7 +357,7 @@ export default function CurriculumBuilderPage() {
                         <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                             {submitStatus === 'success' && (
                                 <span className="flex items-center text-green-600 text-sm font-medium">
-                                    <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully!
+                                    <CheckCircle className="w-4 h-4 mr-1" /> Assessment created! Redirecting to curriculum...
                                 </span>
                             )}
                             {submitStatus === 'error' && (

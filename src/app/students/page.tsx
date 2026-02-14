@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import Header from '@/components/Header';
 import AddStudentModal from '@/components/AddStudentModal';
 import StudentDetailsModal from '@/components/StudentDetailsModal';
 import BulkAssessmentModal from '@/components/BulkAssessmentModal';
@@ -363,7 +362,6 @@ export default function StudentsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <Header />
         <div className="text-center text-red-600 dark:text-red-400 py-12">
           Error loading students
         </div>
@@ -371,72 +369,62 @@ export default function StudentsPage() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <Header />
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-          Students
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Manage and track student progress
-        </p>
-      </div>
+    return (
+      <div className="space-y-6">
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <p className="text-sm font-medium text-slate-600">
               Total Students
             </p>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-slate-900">
             {stats.total}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <p className="text-sm font-medium text-slate-600">
               Active Students
             </p>
           </div>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+          <p className="text-2xl font-bold text-emerald-600">
             {stats.active}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <p className="text-sm font-medium text-slate-600">
               Avg Progress
             </p>
           </div>
-          <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
+          <p className="text-2xl font-bold text-cyan-600">
             {stats.averageProgress}%
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <p className="text-sm font-medium text-slate-600">
               Needs Attention
             </p>
             <AlertTriangle className="h-5 w-5 text-amber-500" />
           </div>
-          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+          <p className="text-2xl font-bold text-amber-600">
             {stats.needsAttention}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             {stats.stalledCount} stalled, {stats.atRiskCount} at risk
           </p>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mb-6">
+      <div className="bg-white rounded-lg border border-slate-200 mb-6">
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
@@ -448,7 +436,7 @@ export default function StudentsPage() {
                   placeholder="Search by name, ID, email, or ID number..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -459,7 +447,7 @@ export default function StudentsPage() {
                 onClick={() => setViewMode('table')}
                 className={`p-2 rounded-lg ${viewMode === 'table'
                   ? 'bg-teal-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                  : 'bg-slate-100 text-slate-600'
                   }`}
               >
                 <List className="h-5 w-5" />
@@ -468,7 +456,7 @@ export default function StudentsPage() {
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg ${viewMode === 'grid'
                   ? 'bg-teal-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                  : 'bg-slate-100 text-slate-600'
                   }`}
               >
                 <Grid3x3 className="h-5 w-5" />
@@ -480,7 +468,7 @@ export default function StudentsPage() {
               onClick={() => setShowFilters(!showFilters)}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showFilters
                 ? 'bg-teal-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                : 'bg-slate-100 text-slate-600'
                 }`}
             >
               <Filter className="h-5 w-5" />
@@ -497,7 +485,7 @@ export default function StudentsPage() {
               onClick={() => setShowOnlyAlerts(!showOnlyAlerts)}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showOnlyAlerts
                 ? 'bg-amber-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                : 'bg-slate-100 text-slate-600'
                 }`}
             >
               <AlertTriangle className="h-5 w-5" />
@@ -507,7 +495,7 @@ export default function StudentsPage() {
             {/* Export CSV */}
             <button
               onClick={handleExportCSV}
-              className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center gap-2"
+              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 flex items-center gap-2"
             >
               <Download className="h-5 w-5" />
               Export
@@ -516,7 +504,7 @@ export default function StudentsPage() {
             {/* Add Student */}
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 flex items-center gap-2 shadow-lg"
+              className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 flex items-center gap-2 shadow-soft"
             >
               <UserPlus className="h-5 w-5" />
               Add Student
@@ -526,17 +514,17 @@ export default function StudentsPage() {
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+          <div className="p-4 border-b border-slate-200 bg-slate-50">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Group Filter */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Group / Company
                 </label>
                 <select
                   value={selectedGroup}
                   onChange={(e) => setSelectedGroup(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="all">All Groups</option>
                   {groups?.map((group: any) => (
@@ -549,13 +537,13 @@ export default function StudentsPage() {
 
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Status
                 </label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="all">All Statuses</option>
                   <option value="ACTIVE">Active</option>
@@ -567,13 +555,13 @@ export default function StudentsPage() {
 
               {/* Progress Range Filter */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Progress Range
                 </label>
                 <select
                   value={progressRange}
                   onChange={(e) => setProgressRange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="all">All Progress</option>
                   <option value="0-25">0-25%</option>
@@ -585,13 +573,13 @@ export default function StudentsPage() {
 
               {/* Module Filter */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Current Module
                 </label>
                 <select
                   value={selectedModule}
                   onChange={(e) => setSelectedModule(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="all">All Modules</option>
                   {modules.map((m: any) => (
@@ -607,10 +595,10 @@ export default function StudentsPage() {
 
         {/* Bulk Actions Banner */}
         {selectedStudents.length > 0 && (
-          <div className="p-4 bg-teal-50 dark:bg-teal-900/20 border-b border-teal-200 dark:border-teal-800">
+          <div className="p-4 bg-teal-50 border-b border-teal-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-teal-900 dark:text-teal-100">
+                <span className="text-sm font-medium text-teal-900">
                   {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
                 </span>
                 <button
@@ -637,9 +625,10 @@ export default function StudentsPage() {
               </div>
               <button
                 onClick={() => setSelectedStudents([])}
-                className="p-1.5 hover:bg-teal-200 dark:hover:bg-teal-800 rounded-lg"
+                  className="p-1.5 hover:bg-teal-200 rounded-lg"
               >
                 <X className="h-5 w-5 text-teal-900 dark:text-teal-100" />
+                                <X className="h-5 w-5 text-teal-900" />
               </button>
             </div>
           </div>
@@ -652,15 +641,15 @@ export default function StudentsPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
         </div>
       ) : filteredStudents.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-12 text-center">
+        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
           <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="h-8 w-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">
               No students found
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-4">
+            <p className="text-slate-600 mb-4">
               {searchQuery || selectedGroup !== 'all' || selectedStatus !== 'all' || progressRange !== 'all'
                 ? 'Try adjusting your filters or search query'
                 : 'Get started by adding your first student'}
@@ -677,7 +666,7 @@ export default function StudentsPage() {
         </div>
       ) : viewMode === 'table' ? (
         // Table View
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
@@ -754,7 +743,7 @@ export default function StudentsPage() {
                     <tr
                       key={student.id}
                       onClick={() => handleViewDetails(student)}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer"
+                      className="hover:bg-slate-50 cursor-pointer"
                     >
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <input
@@ -771,7 +760,7 @@ export default function StudentsPage() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900 dark:text-white">
+                              <span className="font-medium text-slate-900">
                                 {student.firstName} {student.lastName}
                               </span>
                               {alert.type !== 'NONE' && (
@@ -780,7 +769,7 @@ export default function StudentsPage() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                            <div className="text-sm text-slate-500">
                               {student.email}
                             </div>
                           </div>
@@ -791,23 +780,23 @@ export default function StudentsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm">
-                          <div className="font-medium text-slate-900 dark:text-white">
+                          <div className="font-medium text-slate-900">
                             {student.group?.name || 'No Group'}
                           </div>
-                          <div className="text-slate-500 dark:text-slate-400">
+                          <div className="text-slate-500">
                             {student.group?.name || 'N/A'}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                          <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
                             <div
                               className={`h-full ${getProgressColor(student.progress)}`}
                               style={{ width: `${student.progress}%` }}
                             />
                           </div>
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 min-w-[3rem] text-right">
+                          <span className="text-sm font-medium text-slate-700 min-w-[3rem] text-right">
                             {student.totalCreditsEarned || 0}
                           </span>
                           <button
@@ -825,7 +814,7 @@ export default function StudentsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          <div className="text-sm font-medium text-slate-700">
                             {attendance}%
                           </div>
                         </div>
@@ -839,7 +828,7 @@ export default function StudentsPage() {
                         {format(new Date(student.createdAt), 'MMM d, yyyy')}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                        <span className="text-sm font-medium text-slate-900">
                           {student.currentModuleId ? (
                             `M${modules.find(m => m.id === student.currentModuleId)?.moduleNumber || '?'}`
                           ) : '-'}
@@ -860,7 +849,7 @@ export default function StudentsPage() {
             return (
               <div
                 key={student.id}
-                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 hover:shadow-lg transition-shadow cursor-pointer relative"
+                className="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-soft transition-shadow cursor-pointer relative"
                 onClick={() => handleViewDetails(student)}
               >
                 {/* Checkbox */}
@@ -884,21 +873,21 @@ export default function StudentsPage() {
                 </div>
 
                 {/* Name */}
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-1">
+                <h3 className="text-lg font-semibold text-slate-900 text-center mb-1">
                   {student.firstName} {student.lastName}
                 </h3>
 
                 {/* Student ID */}
-                <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
+                <p className="text-sm text-slate-500 text-center mb-4">
                   {student.studentId}
                 </p>
 
                 {/* Group */}
                 <div className="mb-4 text-center">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  <p className="text-sm font-medium text-slate-900">
                     {student.group?.name || 'No Group'}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500">
                     {student.group?.name || 'N/A'}
                   </p>
                 </div>
@@ -906,14 +895,14 @@ export default function StudentsPage() {
                 {/* Progress */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                    <span className="text-sm text-slate-600">
                       Progress
                     </span>
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                    <span className="text-sm font-medium text-slate-900">
                       {student.progress}%
                     </span>
                   </div>
-                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-full ${getProgressColor(student.progress)}`}
                       style={{ width: `${student.progress}%` }}
@@ -923,17 +912,17 @@ export default function StudentsPage() {
 
                 {/* Attendance */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="text-sm text-slate-600">
                     Attendance
                   </span>
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                  <span className="text-sm font-medium text-slate-900">
                     {attendance}%
                   </span>
                 </div>
 
                 {/* Status */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="text-sm text-slate-600">
                     Status
                   </span>
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(student.status)}`}>
@@ -942,8 +931,8 @@ export default function StudentsPage() {
                 </div>
 
                 {/* Enrollment Date */}
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-4 pt-4 border-t border-slate-200 text-center">
+                  <p className="text-xs text-slate-500">
                     Enrolled {format(new Date(student.createdAt), 'MMM d, yyyy')}
                   </p>
                 </div>

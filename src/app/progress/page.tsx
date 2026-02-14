@@ -1,19 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import Header from "@/components/Header";
+import { useState, useEffect } from "react";
+// ...existing code...
 import { useProgress } from "@/hooks/useProgress";
 import { useStudents } from "@/hooks/useStudents";
-import { BookOpen, CheckCircle, Clock, Calendar, TrendingUp, Award, ChevronRight, X, User } from "lucide-react";
+import { BookOpen, CheckCircle, Clock, Calendar, TrendingUp, Award, ChevronRight, X, User, Users as UsersIcon, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import Link from "next/link";
 
+type ViewMode = 'individual' | 'group';
+
+interface GroupProgressStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  studentNumber: string;
+  completedOutcomes: number;
+  totalOutcomes: number;
+  completionPercentage: number;
+  status: 'ON_TRACK' | 'BEHIND' | 'AT_RISK';
+}
+
+interface GroupProgressData {
+  students: GroupProgressStudent[];
+  summary: {
+    totalStudents: number;
+    onTrack: number;
+    behind: number;
+    atRisk: number;
+  };
+}
+
 export default function ProgressPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('individual');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  const [dateRange, setDateRange] = useState<string>('all');
+  const [groups, setGroups] = useState<any[]>([]);
+  const [groupProgressData, setGroupProgressData] = useState<GroupProgressData | null>(null);
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
+  const [loadingGroupProgress, setLoadingGroupProgress] = useState(false);
   const { students } = useStudents();
   const { moduleProgress, unitStandardProgress, isLoading } = useProgress({
-    studentId: selectedStudentId || undefined,
+    studentId: viewMode === 'individual' ? (selectedStudentId || undefined) : undefined,
   });
 
   const getStatusColor = (status: string) => {
@@ -24,6 +54,12 @@ export default function ProgressPage() {
         return "bg-blue-100 text-blue-700 border-blue-200";
       case "NOT_STARTED":
         return "bg-slate-100 text-slate-600 border-slate-200";
+      case "ON_TRACK":
+        return "bg-green-100 text-green-700 border-green-200";
+      case "BEHIND":
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case "AT_RISK":
+        return "bg-red-100 text-red-700 border-red-200";
       default:
         return "bg-slate-100 text-slate-600 border-slate-200";
     }
@@ -53,66 +89,295 @@ export default function ProgressPage() {
   const completedUnitStandards = unitStandardProgress?.filter((u: any) => u.status === "COMPLETED").length || 0;
   const totalUnitStandards = unitStandardProgress?.length || 0;
 
+  // Fetch groups on mount
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  // Fetch group progress when group is selected in group view
+  useEffect(() => {
+    if (viewMode === 'group' && selectedGroupId) {
+      fetchGroupProgress();
+    }
+  }, [viewMode, selectedGroupId, dateRange]);
+
+  const fetchGroups = async () => {
+    try {
+      const response = await fetch('/api/groups');
+      const data = await response.json();
+      setGroups(data.groups || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+    }
+  };
+
+  const fetchGroupProgress = async () => {
+    setLoadingGroupProgress(true);
+    try {
+      const params = new URLSearchParams({ groupId: selectedGroupId });
+      if (dateRange !== 'all') {
+        params.append('dateRange', dateRange);
+      }
+      const response = await fetch(`/api/reports/group-progress?${params}`);
+      const data = await response.json();
+      setGroupProgressData(data.data || null);
+    } catch (error) {
+      console.error('Error fetching group progress:', error);
+      setGroupProgressData(null);
+    } finally {
+      setLoadingGroupProgress(false);
+    }
+  };
+
+  const toggleStudentExpanded = (studentId: string) => {
+    const newExpanded = new Set(expandedStudents);
+    if (newExpanded.has(studentId)) {
+      newExpanded.delete(studentId);
+    } else {
+      newExpanded.add(studentId);
+    }
+    setExpandedStudents(newExpanded);
+  };
+
   return (
     <>
-      <Header />
+      
       
       <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Progress Tracking</h1>
-          <p className="text-slate-600 dark:text-slate-400">Monitor student progress through modules and unit standards</p>
+        {/* View Mode Toggle */}
+        <div className="bg-white rounded-lg border border-background-border p-4 mb-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('individual')}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === 'individual'
+                  ? 'bg-primary text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <User className="w-4 h-4 inline mr-2" />
+              Individual View
+            </button>
+            <button
+              onClick={() => setViewMode('group')}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === 'group'
+                  ? 'bg-primary text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <UsersIcon className="w-4 h-4 inline mr-2" />
+              Group View
+            </button>
+          </div>
         </div>
 
-        {/* Breadcrumb when student is filtered */}
-        {selectedStudentId && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Link href="/progress" className="text-blue-600 hover:text-blue-800 hover:underline">
-                  All Students
-                </Link>
-                <ChevronRight className="w-4 h-4 text-blue-400" />
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-blue-600" />
-                  <span className="font-medium text-blue-900">
-                    {students?.find((s: any) => s.id === selectedStudentId)?.firstName}{' '}
-                    {students?.find((s: any) => s.id === selectedStudentId)?.lastName}
-                  </span>
+        {/* Filters */}
+        <div className="bg-white rounded-lg border border-background-border p-4">
+          <div className={`grid grid-cols-1 ${viewMode === 'group' ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-4`}>
+            {viewMode === 'group' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Select Group *
+                  </label>
+                  <select
+                    value={selectedGroupId}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">-- Select a group --</option>
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Date Range
+                  </label>
+                  <select
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="all">All Time</option>
+                  </select>
+                </div>
+              </>
+            )}
+            {viewMode === 'individual' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Filter by Student
+                </label>
+                <select
+                  value={selectedStudentId}
+                  onChange={(e) => setSelectedStudentId(e.target.value)}
+                  className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">All Students</option>
+                  {students?.map((student: any) => (
+                    <option key={student.id} value={student.id}>
+                      {student.firstName} {student.lastName} ({student.studentId})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Group Progress View */}
+        {viewMode === 'group' && selectedGroupId && (
+          <>
+            {/* Summary Stats */}
+            {groupProgressData && groupProgressData.summary && (
+              <div className="bg-white rounded-lg border border-background-border p-6">
+                <h3 className="font-semibold text-slate-900 mb-4">Group Summary</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary">
+                      {groupProgressData.summary.totalStudents}
+                    </div>
+                    <div className="text-sm text-slate-600 mt-1">Total Students</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-600">
+                      {groupProgressData.summary.onTrack}
+                    </div>
+                    <div className="text-sm text-slate-600 mt-1">On Track</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-amber-600">
+                      {groupProgressData.summary.behind}
+                    </div>
+                    <div className="text-sm text-slate-600 mt-1">Behind</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-red-600">
+                      {groupProgressData.summary.atRisk}
+                    </div>
+                    <div className="text-sm text-slate-600 mt-1">At Risk</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-center text-sm text-slate-600">
+                  <strong>{groupProgressData.summary.onTrack}</strong> of <strong>{groupProgressData.summary.totalStudents}</strong> students on track
+                  {groupProgressData.summary.totalStudents > 0 && (
+                    <span className="ml-2 text-primary font-medium">
+                      ({Math.round((groupProgressData.summary.onTrack / groupProgressData.summary.totalStudents) * 100)}%)
+                    </span>
+                  )}
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedStudentId("")}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                <X className="w-4 h-4" />
-                Clear Filter
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Student Filter */}
-        <div className="bg-white rounded-xl border border-background-border p-4">
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Filter by Student
-          </label>
-          <select
-            value={selectedStudentId}
-            onChange={(e) => setSelectedStudentId(e.target.value)}
-            className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">All Students</option>
-            {students?.map((student: any) => (
-              <option key={student.id} value={student.id}>
-                {student.firstName} {student.lastName} ({student.studentId})
-              </option>
-            ))}
-          </select>
-        </div>
+            )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl border border-background-border p-5">
+            {/* Students Progress Table */}
+            <div className="bg-white rounded-lg border border-background-border p-6">
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Student Progress
+              </h3>
+
+              {loadingGroupProgress ? (
+                <div className="text-center py-12 text-slate-500">Loading group progress...</div>
+              ) : groupProgressData && groupProgressData.students && groupProgressData.students.length > 0 ? (
+                <div className="space-y-2">
+                  {groupProgressData.students.map((student: GroupProgressStudent) => {
+                    const isExpanded = expandedStudents.has(student.id);
+                    return (
+                      <div key={student.id} className="border border-slate-200 rounded-lg overflow-hidden">
+                        <button
+                          onClick={() => toggleStudentExpanded(student.id)}
+                          className="w-full p-4 hover:bg-slate-50 transition-colors flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-4 flex-1">
+                            {isExpanded ? (
+                              <ChevronDown className="w-5 h-5 text-slate-400" />
+                            ) : (
+                              <ChevronRight className="w-5 h-5 text-slate-400" />
+                            )}
+                            <div className="text-left">
+                              <div className="font-medium text-slate-900">
+                                {student.firstName} {student.lastName}
+                              </div>
+                              <div className="text-sm text-slate-500">{student.studentNumber}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <div className="text-sm font-medium text-slate-900">
+                                {student.completedOutcomes} / {student.totalOutcomes}
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                {student.completionPercentage}% complete
+                              </div>
+                            </div>
+                            <div className="w-32">
+                              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div
+                                  className={cn(
+                                    "h-full transition-all",
+                                    student.status === 'ON_TRACK' ? 'bg-green-500' :
+                                    student.status === 'BEHIND' ? 'bg-amber-500' :
+                                    'bg-red-500'
+                                  )}
+                                  style={{ width: `${student.completionPercentage}%` }}
+                                />
+                              </div>
+                            </div>
+                            <span
+                              className={cn(
+                                "px-3 py-1 text-xs font-medium rounded-full border",
+                                getStatusColor(student.status)
+                              )}
+                            >
+                              {student.status === 'ON_TRACK' ? '✓ On Track' :
+                               student.status === 'BEHIND' ? '⚠ Behind' :
+                               '✗ At Risk'}
+                            </span>
+                          </div>
+                        </button>
+                        {isExpanded && (
+                          <div className="p-4 bg-slate-50 border-t border-slate-200">
+                            <p className="text-sm text-slate-600">
+                              Click to view detailed progress for {student.firstName} {student.lastName}
+                            </p>
+                            <button
+                              onClick={() => {
+                                setViewMode('individual');
+                                setSelectedStudentId(student.id);
+                              }}
+                              className="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-slate-500">
+                  <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p>No progress data available for this group</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Individual Progress View (existing code) */}
+        {viewMode === 'individual' && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">\n
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                 <BookOpen className="w-5 h-5" />
@@ -122,7 +387,7 @@ export default function ProgressPage() {
             <p className="text-sm text-text-light">Total Modules</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-background-border p-5">
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5" />
@@ -132,7 +397,7 @@ export default function ProgressPage() {
             <p className="text-sm text-text-light">Completed</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-background-border p-5">
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
                 <Clock className="w-5 h-5" />
@@ -142,7 +407,7 @@ export default function ProgressPage() {
             <p className="text-sm text-text-light">In Progress</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-background-border p-5">
+          <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
                 <Award className="w-5 h-5" />
@@ -156,7 +421,7 @@ export default function ProgressPage() {
         </div>
 
         {/* Module Progress */}
-        <div className="bg-white rounded-xl border border-background-border p-6">
+        <div className="bg-white rounded-lg border border-background-border p-6">
           <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-primary" />
             Module Progress
@@ -277,7 +542,7 @@ export default function ProgressPage() {
 
         {/* Unit Standard Progress Details */}
         {selectedStudentId && unitStandardProgress && unitStandardProgress.length > 0 && (
-          <div className="bg-white rounded-xl border border-background-border p-6">
+          <div className="bg-white rounded-lg border border-background-border p-6">
             <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <Award className="w-5 h-5 text-primary" />
               Unit Standard Details
@@ -339,6 +604,8 @@ export default function ProgressPage() {
               ))}
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </>
