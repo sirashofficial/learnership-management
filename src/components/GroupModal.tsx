@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Save, Building2, MapPin, Calendar, Users, Loader2 } from "lucide-react";
 import { useGroups } from "@/contexts/GroupsContext";
+import Toast, { useToast } from "./Toast";
 import { generateRolloutPlan } from "@/lib/rolloutPlanGenerator";
 
 interface GroupModalProps {
@@ -13,6 +14,7 @@ interface GroupModalProps {
 
 export default function GroupModal({ group, onClose, onSave }: GroupModalProps) {
   const { addGroup, updateGroup } = useGroups();
+  const { toast, showToast, hideToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: group?.name || "",
@@ -37,7 +39,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
     e.preventDefault();
 
     if (!formData.name) {
-      alert("Please enter a group name");
+      showToast('Please enter a group name', 'warning');
       return;
     }
 
@@ -52,12 +54,12 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
         }
       }
 
-      alert(group ? 'Group updated successfully!' : 'Group created successfully!');
+      showToast(group ? 'Group updated successfully!' : 'Group created successfully!', 'success');
       if (onSave) onSave(formData);
       onClose();
     } catch (error) {
       console.error('Error saving group:', error);
-      alert('Failed to save group. Please check all fields and try again.');
+      showToast('Failed to save group. Please check all fields and try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -83,8 +85,9 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between">
@@ -233,8 +236,12 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
             </button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+
+      {/* Toast */}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+    </>
   );
 }
 

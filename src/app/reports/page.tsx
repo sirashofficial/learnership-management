@@ -53,6 +53,7 @@ export default function ReportsPage() {
     const [isAiGenerating, setIsAiGenerating] = useState(false);
     const [aiReport, setAiReport] = useState<string | null>(null);
     const [showAiModal, setShowAiModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     // New state for different report types
     const [selectedGroup, setSelectedGroup] = useState<string>('');
@@ -138,7 +139,7 @@ export default function ReportsPage() {
 
     const handleGenerateReport = async () => {
         if (!selectedGroups.length || !selectedDate || !facilitatorName) {
-            alert('Please fill in all required fields (Date, Groups, Facilitator)');
+            setErrorMessage('Please fill in Date, Groups, and Facilitator Name before generating.');
             return;
         }
 
@@ -151,11 +152,13 @@ export default function ReportsPage() {
         }
 
         setIsGenerating(true);
+        setErrorMessage('');
         try {
             // 1. Fetch Data for all selected groups with their specific training data
             const response = await fetch('/api/reports/daily', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     date: selectedDate,
                     groupIds: selectedGroups,
@@ -175,7 +178,8 @@ export default function ReportsPage() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch report data');
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to generate report — check that the group exists and has students');
             }
 
             const { data } = await response.json();
@@ -183,9 +187,9 @@ export default function ReportsPage() {
             // 2. Generate PDF Client-Side
             generatePDF(data);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error generating report:', error);
-            alert('Failed to generate report. Please try again.');
+            setErrorMessage(error.message || 'Failed to generate report. Please try again.');
         } finally {
             setIsGenerating(false);
         }
@@ -635,6 +639,13 @@ export default function ReportsPage() {
                                 Generate attendance report for a specific date and group
                             </p>
                         </div>
+
+                        {/* Error Display */}
+                        {errorMessage && (
+                            <div className="p-4 mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
+                                {errorMessage}
+                            </div>
+                        )}
                         
                         <div className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -648,7 +659,10 @@ export default function ReportsPage() {
                                     <input
                                         type="date"
                                         value={selectedDate}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        onChange={(e) => {
+                                            setSelectedDate(e.target.value);
+                                            setErrorMessage('');
+                                        }}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>

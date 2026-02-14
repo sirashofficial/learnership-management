@@ -15,6 +15,7 @@ export default function ModerationPage() {
       const response = await fetch("/api/assessments/moderate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           assessmentId, // Include the assessmentId
           ...data,

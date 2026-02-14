@@ -18,7 +18,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,9 +37,7 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -59,9 +57,7 @@ export default function AdminUsersPage() {
     try {
       const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -211,7 +207,6 @@ export default function AdminUsersPage() {
             setShowAddModal(false);
             setEditingUser(null);
           }}
-          token={token}
         />
       )}
     </div>
@@ -219,7 +214,7 @@ export default function AdminUsersPage() {
 }
 
 // User Modal Component
-function UserModal({ user, onClose, onSave, token }: { user: User | null; onClose: () => void; onSave: () => void; token: string | null }) {
+function UserModal({ user, onClose, onSave }: { user: User | null; onClose: () => void; onSave: () => void }) {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -245,8 +240,8 @@ function UserModal({ user, onClose, onSave, token }: { user: User | null; onClos
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(body),
       });
 

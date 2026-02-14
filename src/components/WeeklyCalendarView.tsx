@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, startOfWeek, addDays, parseISO } from 'date-fns';
 import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-config';
 import { ChevronLeft, ChevronRight, Clock, Users, AlertCircle } from 'lucide-react';
 
 interface WeeklySession {
@@ -30,7 +31,7 @@ export function WeeklyCalendarView({ groupId, initialDate = new Date() }: Weekly
   // Fetch weekly schedule
   const { data: weeklyData, isLoading } = useSWR(
     `/api/sessions/generate?weekStart=${weekStart.toISOString()}&groupId=${groupId}`,
-    (url) => fetch(url).then((res) => res.json()),
+    fetcher,
     { revalidateOnFocus: false }
   );
 

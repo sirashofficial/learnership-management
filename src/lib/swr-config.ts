@@ -79,18 +79,20 @@ export const swrConfig = {
 
 // Default fetcher for SWR with authentication
 export const fetcher = async (url: string) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  
   const res = await fetch(url, {
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    credentials: 'include',
   });
-  
+
   if (!res.ok) {
     const error: any = new Error('An error occurred while fetching the data.');
-    error.info = await res.json();
+    try {
+      error.info = await res.json();
+    } catch {
+      error.info = {};
+    }
     error.status = res.status;
     throw error;
   }
-  
+
   return res.json();
 };

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, ReactNode } from "react";
 import useSWR, { mutate } from "swr";
+import { fetcher as globalFetcher } from "@/lib/swr-config";
 
 export interface Group {
   id: string;
@@ -39,44 +40,32 @@ interface GroupsContextType {
 
 const GroupsContext = createContext<GroupsContextType | undefined>(undefined);
 
-const fetcher = async (url: string) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(url, {
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-  });
-
-  const data = await res.json();
-
-  if (!res.ok || data.success === false) {
-    throw new Error(data.error || data.message || 'An error occurred while fetching data');
-  }
-
-  return data.data || data;
-};
-
 export function GroupsProvider({ children }: { children: ReactNode }) {
   // Fetch groups data
-  const { data: groupsData, error: groupsError, isLoading: groupsLoading } = useSWR('/api/groups', fetcher, {
+  const { data: groupsData, error: groupsError, isLoading: groupsLoading } = useSWR('/api/groups', globalFetcher, {
     revalidateOnFocus: true,
     revalidateIfStale: true,
     refreshInterval: 30000,
     shouldRetryOnError: true,
   });
 
-  // Ensure groups is always an array
-  const groups = Array.isArray(groupsData) ? groupsData : [];
+  // Ensure groups is always an array - handle both wrapped and unwrapped responses
+  const groups = Array.isArray(groupsData) 
+    ? groupsData 
+    : Array.isArray(groupsData?.data) 
+      ? groupsData.data 
+      : [];
   const isLoading = groupsLoading;
   const error = groupsError;
 
   const addGroup = async (groupData: Omit<Group, "id" | "createdAt">) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('/api/groups', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
         },
+        credentials: 'include',
         body: JSON.stringify(groupData),
       });
 
@@ -93,13 +82,12 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const updateGroup = async (id: string, updates: Partial<Group>) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`/api/groups/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
         },
+        credentials: 'include',
         body: JSON.stringify(updates),
       });
 
@@ -114,10 +102,9 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
   const deleteGroup = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`/api/groups/${id}`, {
         method: 'DELETE',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        credentials: 'include',
       });
 
       if (!response.ok) {

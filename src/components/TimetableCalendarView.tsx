@@ -16,6 +16,7 @@ import {
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Bell } from 'lucide-react';
 import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-config';
 import { EventDetailModal } from './EventDetailModal';
 import { PlanForm } from './PlanForm';
 import { SessionForm } from './SessionForm';
@@ -71,13 +72,13 @@ export function TimetableCalendarView() {
 
   const { data: lessonsData, mutate: mutateLessons } = useSWR(
     `/api/timetable?startDate=${monthStart.toISOString()}&endDate=${monthEnd.toISOString()}`,
-    (url) => fetch(url).then((res) => res.json())
+    fetcher
   );
 
   // Fetch plans for the month
   const { data: plansData, mutate: mutatePlans } = useSWR(
     `/api/plans?startDate=${monthStart.toISOString()}&endDate=${monthEnd.toISOString()}`,
-    (url) => fetch(url).then((res) => res.json())
+    fetcher
   );
 
   // Combine lessons and plans into calendar events

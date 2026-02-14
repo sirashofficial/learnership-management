@@ -80,7 +80,7 @@ export default function AssessmentsPage() {
 
   const fetchAssessments = async () => {
     try {
-      const res = await fetch('/api/assessments');
+      const res = await fetch('/api/assessments', { credentials: 'include' });
       const data = await res.json();
       setAssessments(Array.isArray(data) ? data : data.data || []);
     } catch (error) {
@@ -188,6 +188,7 @@ export default function AssessmentsPage() {
           const res = await fetch(`/api/assessments/${existing.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ result, assessedDate: new Date().toISOString() })
           });
 
@@ -202,6 +203,7 @@ export default function AssessmentsPage() {
           const res = await fetch('/api/assessments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
               studentId,
               unitStandardId,
@@ -643,6 +645,7 @@ export default function AssessmentsPage() {
         const res = await fetch(`/api/assessments/${assessmentId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             moderationStatus: 'APPROVED',
             moderationNotes
@@ -664,6 +667,7 @@ export default function AssessmentsPage() {
         const res = await fetch(`/api/assessments/${assessmentId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             moderationStatus: 'REJECTED',
             moderationNotes
@@ -685,6 +689,7 @@ export default function AssessmentsPage() {
         const res = await fetch(`/api/assessments/${assessmentId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             moderationStatus: 'RESUBMIT',
             moderationNotes
@@ -1003,6 +1008,7 @@ export default function AssessmentsPage() {
             await fetch('/api/assessments', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify({
                 studentId,
                 unitStandardId: unitId,
@@ -1016,7 +1022,7 @@ export default function AssessmentsPage() {
           }
         }
 
-        alert(`Marked ${selectedUnits.size * selectedStudents.size} assessment(s)`);
+        console.log(`Marked ${selectedUnits.size * selectedStudents.size} assessment(s)`);
         setSelectedUnits(new Set());
         setSelectedStudents(new Set());
         fetchAssessments();
@@ -1148,7 +1154,9 @@ export default function AssessmentsPage() {
           ...(exportScope === 'group' && { groupId: selectedGroupForExport })
         });
 
-        const response = await fetch(`/api/assessments/export?${params.toString()}`);
+        const response = await fetch(`/api/assessments/export?${params.toString()}`, {
+          credentials: 'include'
+        });
 
         if (response.ok) {
           // Handle file download

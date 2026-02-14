@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import useSWR, { mutate } from "swr";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then((res) => res.json());
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -94,11 +94,12 @@ export default function SettingsPage() {
 
   // Update forms when data loads
   useEffect(() => {
-    if (profileData) {
+    const userData = profileData?.data || profileData;
+    if (userData && userData.name) {
       setProfileForm(prev => ({
         ...prev,
-        name: profileData.name || "",
-        email: profileData.email || "",
+        name: userData.name || prev.name,
+        email: userData.email || prev.email,
       }));
     }
   }, [profileData]);
@@ -135,6 +136,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/settings/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(profileForm),
       });
 
@@ -162,6 +164,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/settings/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(notificationForm),
       });
 
@@ -186,6 +189,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/settings/system', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(systemForm),
       });
 
@@ -213,6 +217,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/settings/appearance', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(appearanceForm),
       });
 
@@ -250,6 +255,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/settings/security', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(securityForm),
       });
 
@@ -281,6 +287,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/settings/reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(reminderForm),
       });
 

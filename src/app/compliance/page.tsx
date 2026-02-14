@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
+import { fetcher } from '@/lib/swr-config';
 import { useStudents } from "@/hooks/useStudents";
-import { useAttendance } from "@/hooks/useAttendance";
 import { useAssessmentStats } from "@/hooks/useAssessmentStats";
 import { useProgress } from "@/hooks/useProgress";
 import { FileText, CheckCircle, AlertCircle, Clock, Download, Users, Calendar, Award, TrendingUp, Eye } from "lucide-react";
@@ -29,16 +30,20 @@ export default function CompliancePage() {
   const [groupCompliance, setGroupCompliance] = useState<GroupCompliance[]>([]);
   const [isLoadingGroups, setIsLoadingGroups] = useState(false);
   const { students } = useStudents();
-  const { attendance } = useAttendance();
   const { stats: assessmentStats } = useAssessmentStats();
   const { moduleProgress } = useProgress();
 
+  // Fetch attendance rates
+  const studentIds = students?.map((s: any) => s.id).join(',') || '';
+  const { data: attendanceRatesData } = useSWR(
+    studentIds ? `/api/attendance/rates?studentIds=${studentIds}` : null,
+    fetcher
+  );
+  const attendanceRates: Record<string, number> = attendanceRatesData?.data || {};
+
   // Calculate compliance metrics
   const calculateAttendanceRate = (studentId: string) => {
-    const studentAttendance = attendance?.filter((a: any) => a.studentId === studentId) || [];
-    if (studentAttendance.length === 0) return 0;
-    const present = studentAttendance.filter((a: any) => a.status === "PRESENT").length;
-    return Math.round((present / studentAttendance.length) * 100);
+    return attendanceRates[studentId] ?? 0;
   };
 
   // Fetch groups and their compliance data

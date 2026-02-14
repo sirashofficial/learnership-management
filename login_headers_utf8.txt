@@ -1,0 +1,14 @@
+﻿STATUS: 200
+HEADERS: {
+  "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
+  "content-type": "application/json",
+  "set-cookie": [
+    "auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzY2Y1MjdjMi1jMDJhLTQzNTAtYTE3OC0zM2U4YTViM2EwM2EiLCJlbWFpbCI6ImFzaEB5ZWhhLnRyYWluaW5nIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzcwNTY2NzUwLCJleHAiOjE3NzExNzE1NTB9.isTPMJqZoDmWlIi8P95DsiLK1GhN6ALgK2ahxDgJRtc; Path=/; Expires=Sun, 15 Feb 2026 16:05:50 GMT; Max-Age=604800; HttpOnly; SameSite=lax"
+  ],
+  "date": "Sun, 08 Feb 2026 16:05:50 GMT",
+  "connection": "keep-alive",
+  "keep-alive": "timeout=5",
+  "transfer-encoding": "chunked"
+}
+BODY: {"success":true,"message":"Login successful","data":{"user":{"id":"3cf527c2-c02a-4350-a178-33e8a5b3a03a","name":"Ash","email":"ash@yeha.training","role":"ADMIN"},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzY2Y1MjdjMi1jMDJhLTQzNTAtYTE3OC0zM2U4YTViM2EwM2EiLCJlbWFpbCI6ImFzaEB5ZWhhLnRyYWluaW5nIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzcwNTY2NzUwLCJleHAiOjE3NzExNzE1NTB9.isTPMJqZoDmWlIi8P95DsiLK1GhN6ALgK2ahxDgJRtc"}}
+No more data in response.

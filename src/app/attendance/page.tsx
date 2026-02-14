@@ -105,7 +105,9 @@ export default function AttendancePage() {
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch('/api/attendance/alerts?unresolvedOnly=true');
+      const response = await fetch('/api/attendance/alerts?unresolvedOnly=true', {
+        credentials: 'include',
+      });
       const data = await response.json();
       if (data.success) {
         setAlerts(data.data);
@@ -170,7 +172,9 @@ export default function AttendancePage() {
       if (selectedHistoryGroup) {
         url += `&groupId=${selectedHistoryGroup}`;
       }
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        credentials: 'include',
+      });
       const data = await response.json();
       if (data.success) {
         setHistoryData(data.data);
@@ -518,7 +522,15 @@ export default function AttendancePage() {
             </select>
           </div>
         </div>
-        {Object.entries(groupedByDate).map(([date, records]: [string, any]) => {
+        {Object.keys(groupedByDate).length === 0 ? (
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center border border-slate-200">
+            <p className="text-lg font-medium text-slate-600 dark:text-slate-400">No attendance records for this week</p>
+            <p className="text-sm text-slate-400 mt-2">
+              Navigate to a different week or mark attendance on the Mark tab first
+            </p>
+          </div>
+        ) : (
+          Object.entries(groupedByDate).map(([date, records]: [string, any]) => {
           const stats = {
             present: records.filter((r: any) => r.status === 'PRESENT').length,
             late: records.filter((r: any) => r.status === 'LATE').length,
@@ -582,7 +594,8 @@ export default function AttendancePage() {
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
     );
   };
@@ -601,6 +614,20 @@ export default function AttendancePage() {
     }, {});
 
     const chartData = Object.values(dailyStats);
+
+    if (historyData.length === 0) {
+      return (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Analytics</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center border border-slate-200">
+            <p className="text-lg font-medium text-slate-600 dark:text-slate-400">No data for this period</p>
+            <p className="text-sm text-slate-400 mt-2">
+              Mark attendance for this week to see analytics
+            </p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-6">

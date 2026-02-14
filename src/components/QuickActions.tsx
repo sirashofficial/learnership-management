@@ -6,10 +6,12 @@ import AddStudentModal from './AddStudentModal';
 import GroupModal from './GroupModal';
 import ScheduleLessonModal from './ScheduleLessonModal';
 import MarkAttendanceModal from './MarkAttendanceModal';
+import Toast, { useToast } from './Toast';
 import { cn } from '@/lib/utils';
 
 export default function QuickActions() {
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showScheduleLesson, setShowScheduleLesson] = useState(false);
@@ -37,17 +39,17 @@ export default function QuickActions() {
       if (response.ok) {
         const result = await response.json();
         console.log('✅ Success:', result);
-        alert('Student added successfully!');
+        showToast('Student added successfully!', 'success');
         setShowAddStudent(false);
         router.refresh();
       } else {
         const error = await response.json();
         console.error('❌ API Error:', error);
-        alert(error.error || error.message || 'Failed to add student');
+        showToast(error.error || error.message || 'Failed to add student', 'error');
       }
     } catch (error) {
       console.error('❌ Error adding student:', error);
-      alert('Failed to add student');
+      showToast('Failed to add student', 'error');
     }
   };
 
@@ -60,15 +62,16 @@ export default function QuickActions() {
       });
 
       if (response.ok) {
+        showToast('Group created successfully!', 'success');
         setShowCreateGroup(false);
         router.refresh();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to create group');
+        showToast(error.error || 'Failed to create group', 'error');
       }
     } catch (error) {
       console.error('Error creating group:', error);
-      alert('Failed to create group');
+      showToast('Failed to create group', 'error');
     }
   };
 
@@ -107,6 +110,8 @@ export default function QuickActions() {
           </button>
         </div>
       </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
       {/* Modals */}
       {showAddStudent && (

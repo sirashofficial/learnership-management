@@ -46,6 +46,13 @@ export default function ProgressPage() {
     studentId: viewMode === 'individual' ? (selectedStudentId || undefined) : undefined,
   });
 
+  // Auto-select first student on load
+  useEffect(() => {
+    if (students && students.length > 0 && !selectedStudentId) {
+      setSelectedStudentId(students[0].id);
+    }
+  }, [students, selectedStudentId]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "COMPLETED":
@@ -530,11 +537,16 @@ export default function ProgressPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-500">
-              <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p>No progress data available</p>
-              <p className="text-sm text-slate-400 mt-1">
-                Progress will be tracked once students begin their modules
+            <div className="text-center py-12 text-slate-600 border border-dashed border-slate-300 rounded-lg">
+              <BookOpen className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+              <p className="font-medium text-lg">
+                {selectedStudentId ? 'No progress recorded yet' : 'Select a student to view their progress'}
+              </p>
+              <p className="text-sm mt-1">
+                {selectedStudentId 
+                  ? 'Progress will appear here once this student begins their modules'
+                  : 'Use the dropdown above to filter by a specific student'
+                }
               </p>
             </div>
           )}

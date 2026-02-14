@@ -1,0 +1,122 @@
+﻿
+> learnership-management-system@1.0.0 build
+> next build
+
+  Γû▓ Next.js 14.2.35
+  - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/60) ...
+   Generating static pages (15/60) 
+   Generating static pages (30/60) 
+   Generating static pages (45/60) 
+ Γ£ô Generating static pages (60/60)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+Γöî Γùï /                                    8.74 kB         119 kB
+Γö£ Γùï /_not-found                          880 B          88.7 kB
+Γö£ Γùï /admin                               2 kB            108 kB
+Γö£ Γùï /admin/users                         3.88 kB        91.7 kB
+Γö£ Γùï /ai                                  7.6 kB          114 kB
+Γö£ ╞Æ /api/ai/chat                         0 B                0 B
+Γö£ ╞Æ /api/ai/generate-assessment          0 B                0 B
+Γö£ ╞Æ /api/ai/index-documents              0 B                0 B
+Γö£ ╞Æ /api/ai/recommendations              0 B                0 B
+Γö£ ╞Æ /api/ai/semantic-search              0 B                0 B
+Γö£ ╞Æ /api/assessments                     0 B                0 B
+Γö£ ╞Æ /api/assessments/[id]/complete       0 B                0 B
+Γö£ ╞Æ /api/assessments/analytics           0 B                0 B
+Γö£ ╞Æ /api/assessments/bulk                0 B                0 B
+Γö£ ╞Æ /api/assessments/bulk-generate       0 B                0 B
+Γö£ ╞Æ /api/assessments/bulk-update         0 B                0 B
+Γö£ ╞Æ /api/assessments/by-group            0 B                0 B
+Γö£ ╞Æ /api/assessments/export              0 B                0 B
+Γö£ ╞Æ /api/assessments/moderate            0 B                0 B
+Γö£ ╞Æ /api/assessments/stats               0 B                0 B
+Γö£ ╞Æ /api/assessments/templates           0 B                0 B
+Γö£ ╞Æ /api/attendance                      0 B                0 B
+Γö£ ╞Æ /api/attendance/alerts               0 B                0 B
+Γö£ ╞Æ /api/attendance/bulk                 0 B                0 B
+Γö£ ╞Æ /api/attendance/export               0 B                0 B
+Γö£ ╞Æ /api/attendance/history              0 B                0 B
+Γö£ ╞Æ /api/attendance/policies             0 B                0 B
+Γö£ ╞Æ /api/attendance/rates                0 B                0 B
+Γö£ ╞Æ /api/attendance/stats                0 B                0 B
+Γö£ ╞Æ /api/auth/login                      0 B                0 B
+Γö£ ╞Æ /api/auth/logout                     0 B                0 B
+Γö£ ╞Æ /api/auth/me                         0 B                0 B
+Γö£ ╞Æ /api/auth/register                   0 B                0 B
+Γö£ ╞Æ /api/companies                       0 B                0 B
+Γö£ Γùï /api/curriculum                      0 B                0 B
+Γö£ Γùï /api/dashboard/alerts                0 B                0 B
+Γö£ ╞Æ /api/dashboard/charts                0 B                0 B
+Γö£ Γùï /api/dashboard/recent-activity       0 B                0 B
+Γö£ Γùï /api/dashboard/schedule              0 B                0 B
+Γö£ Γùï /api/dashboard/stats                 0 B                0 B
+Γö£ ╞Æ /api/formatives                      0 B                0 B
+Γö£ ╞Æ /api/formatives/completion           0 B                0 B
+Γö£ ╞Æ /api/group-schedules                 0 B                0 B
+Γö£ ╞Æ /api/groups                          0 B                0 B
+Γö£ ╞Æ /api/groups/[id]                     0 B                0 B
+Γö£ ╞Æ /api/groups/[id]/lessons/generate    0 B                0 B
+Γö£ ╞Æ /api/groups/[id]/rollout             0 B                0 B
+Γö£ ╞Æ /api/groups/merge                    0 B                0 B
+Γö£ ╞Æ /api/lessons                         0 B                0 B
+Γö£ ╞Æ /api/lessons/[id]                    0 B                0 B
+Γö£ ╞Æ /api/modules                         0 B                0 B
+Γö£ ╞Æ /api/modules/[id]                    0 B                0 B
+Γö£ ╞Æ /api/poe                             0 B                0 B
+Γö£ ╞Æ /api/progress                        0 B                0 B
+Γö£ ╞Æ /api/recurring-sessions              0 B                0 B
+Γö£ ╞Æ /api/reports/daily                   0 B                0 B
+Γö£ ╞Æ /api/reports/group-progress          0 B                0 B
+Γö£ ╞Æ /api/schedule-templates              0 B                0 B
+Γö£ ╞Æ /api/search                          0 B                0 B
+Γö£ Γùï /api/settings/appearance             0 B                0 B
+Γö£ Γùï /api/settings/notifications          0 B                0 B
+Γö£ ╞Æ /api/settings/profile                0 B                0 B
+Γö£ ╞Æ /api/settings/security               0 B                0 B
+Γö£ Γùï /api/settings/system                 0 B                0 B
+Γö£ ╞Æ /api/students                        0 B                0 B
+Γö£ ╞Æ /api/students/[id]                   0 B                0 B
+Γö£ ╞Æ /api/students/[id]/progress          0 B                0 B
+Γö£ ╞Æ /api/timetable                       0 B                0 B
+Γö£ ╞Æ /api/timetable/[id]                  0 B                0 B
+Γö£ ╞Æ /api/users                           0 B                0 B
+Γö£ ╞Æ /api/users/[id]                      0 B                0 B
+Γö£ ╞Æ /api/users/[id]/password             0 B                0 B
+Γö£ Γùï /assessment-checklist                3.59 kB        91.4 kB
+Γö£ Γùï /assessments                         16.9 kB         239 kB
+Γö£ Γùï /attendance                          10 kB           232 kB
+Γö£ Γùï /compliance                          14.5 kB         272 kB
+Γö£ Γùï /curriculum                          4.39 kB         239 kB
+Γö£ Γùï /curriculum/builder                  3.41 kB        91.3 kB
+Γö£ Γùï /groups                              11.1 kB         129 kB
+Γö£ ╞Æ /groups/[id]                         9.9 kB          131 kB
+Γö£ Γùï /lessons                             4.1 kB          110 kB
+Γö£ Γùï /login                               1.92 kB        98.5 kB
+Γö£ Γùï /moderation                          3.62 kB         116 kB
+Γö£ Γùï /poe                                 3.71 kB         132 kB
+Γö£ Γùï /progress                            4.21 kB         125 kB
+Γö£ Γùï /register                            1.71 kB        98.3 kB
+Γö£ Γùï /reports                             3.72 kB         245 kB
+Γö£ Γùï /settings                            7.19 kB         113 kB
+Γö£ Γùï /students                            9.43 kB         141 kB
+Γöö Γùï /timetable                           15.3 kB         138 kB
++ First Load JS shared by all            87.9 kB
+  Γö£ chunks/2117-516aa4561fd1893e.js      31.9 kB
+  Γö£ chunks/fd9d1056-27f854c128760e38.js  53.6 kB
+  Γöö other shared chunks (total)          2.31 kB
+
+
+╞Æ Middleware                             42.8 kB
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

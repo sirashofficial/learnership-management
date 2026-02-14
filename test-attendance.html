@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance API Test</title>
+</head>
+<body>
+    <h1>Attendance API Test</h1>
+    <div id="results"></div>
+
+    <script>
+        async function test() {
+            const results = [];
+            
+            // Test GET
+            try {
+                const getResponse = await fetch('/api/attendance', { method: 'GET' });
+                results.push(`GET /api/attendance: ${getResponse.status}`);
+            } catch (e) {
+                results.push(`GET error: ${e.message}`);
+            }
+
+            // Test POST
+            try {
+                const postResponse = await fetch('/api/attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        records: [
+                            { studentId: 'NVC001', groupId: 'G001', status: 'PRESENT', date: '2024-01-15' }
+                        ]
+                    })
+                });
+                results.push(`POST /api/attendance: ${postResponse.status}`);
+                const data = await postResponse.json();
+                results.push(`Response: ${JSON.stringify(data).substring(0, 200)}`);
+            } catch (e) {
+                results.push(`POST error: ${e.message}`);
+            }
+
+            document.getElementById('results').innerHTML = results.map(r => `<p>${r}</p>`).join('');
+        }
+
+        test();
+    </script>
+</body>
+</html>

@@ -7,8 +7,7 @@ import { mutate } from "swr";
 import { useGroups } from "@/contexts/GroupsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import useSWR from "swr";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json()).then((data) => data.data || data);
+import { fetcher } from "@/lib/swr-config";
 
 type GeneratingStep = {
   title: string;
@@ -27,9 +26,11 @@ export default function LessonsPage() {
   const router = useRouter();
   const { groups } = useGroups();
   const { user } = useAuth();
-  const { data: modules } = useSWR('/api/curriculum/modules', fetcher);
+  const { data: modulesData } = useSWR('/api/modules', fetcher);
+  const modules = modulesData?.data?.modules || modulesData?.modules || [];
   const { data: unitStandards } = useSWR('/api/unit-standards', fetcher);
-  const { data: lessons, mutate: mutateLessons } = useSWR('/api/lessons', fetcher);
+  const { data: lessonsData, mutate: mutateLessons } = useSWR('/api/lessons', fetcher);
+  const realLessons = lessonsData?.data || [];
   const { data: indexStats } = useSWR('/api/ai/index-documents', fetcher);
   
   const [activeTab, setActiveTab] = useState<'list' | 'manual' | 'ai'>('list');
@@ -64,7 +65,7 @@ export default function LessonsPage() {
 
   const handleAIGenerate = async () => {
     if (!aiFormData.groupId || !aiFormData.unitStandardId) {
-      alert('Please select a group and unit standard');
+      console.warn('Missing group or unit standard selection');
       return;
     }
 
@@ -209,7 +210,7 @@ export default function LessonsPage() {
         throw new Error(error.error || 'Failed to create lesson');
       }
 
-      await mutate('/api/lessons');
+      await mutateLessons();
       alert('Lesson plan created successfully!');
       setShowCreateForm(false);
       setFormData({
@@ -234,11 +235,7 @@ export default function LessonsPage() {
     }
   };
 
-  const mockLessons = lessons || [
-    { id: 1, title: "Module 3: Market Requirements", group: "Azelis 26'", date: "Feb 5, 2026", time: "09:00 - 14:00", venue: "Training Room A" },
-    { id: 2, title: "Module 2: HIV/AIDS & Communications", group: "Beyond Insights 26'", date: "Feb 6, 2026", time: "09:00 - 14:00", venue: "Training Room B" },
-    { id: 3, title: "Module 5: Financial Requirements", group: "City Logistics 26'", date: "Feb 7, 2026", time: "09:00 - 14:00", venue: "Training Room A" },
-  ];
+
 
   return (
     <>
@@ -297,21 +294,14 @@ export default function LessonsPage() {
           {/* List View */}
           {activeTab === 'list' && (
             <div className="divide-y divide-slate-200">
-              {mockLessons.length === 0 ? (
+              {realLessons.length === 0 ? (
                 <div className="p-12 text-center">
                   <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No lesson plans yet</h3>
-                  <p className="text-slate-600 mb-4">Generate your first lesson plan with AI or create manually</p>
-                  <button
-                    onClick={() => setActiveTab('ai')}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors inline-flex items-center gap-2"
-                  >
-                    <Sparkles className="w-5 h-5" />
-                    Generate with AI
-                  </button>
+                  <p className="font-medium text-slate-900 mb-1">No lesson plans yet</p>
+                  <p className="text-sm text-slate-600 mb-4">Create your first lesson plan using the form above</p>
                 </div>
               ) : (
-                mockLessons.map((lesson: any) => (
+                realLessons.map((lesson: any) => (
                   <div key={lesson.id} className="p-6 hover:bg-slate-50 transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -319,26 +309,23 @@ export default function LessonsPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-600">
                           <div className="flex items-center gap-2">
                             <Users className="w-4 h-4" />
-                            {lesson.group?.name || lesson.group}
+                            {lesson.group?.name || 'No group'}
                           </div>
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
-                            {typeof lesson.date === 'string' ? lesson.date : new Date(lesson.date).toLocaleDateString()}
+                            {lesson.date ? new Date(lesson.date).toLocaleDateString() : 'No date'}
                           </div>
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
-                            {lesson.time || `${lesson.startTime} - ${lesson.endTime}`}
+                            {lesson.startTime} - {lesson.endTime}
                           </div>
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4" />
-                            {lesson.venue || 'TBD'}
+                            {lesson.venue || 'No venue'}
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => router.push(`/lessons/${lesson.id}`)}
-                        className="ml-4 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
+                      <button className="ml-4 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                         View Details
                       </button>
                     </div>

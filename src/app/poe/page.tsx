@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { FolderOpen, Check, X, Save, Eye } from "lucide-react";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
+import { fetcher } from '@/lib/swr-config';
 import StudentDetailsModal from "@/components/StudentDetailsModal";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json()).then((data) => data.data || data);
 
 export default function POEPage() {
   const { data: students } = useSWR('/api/students', fetcher);
-  const { data: poeChecklists } = useSWR('/api/poe', fetcher);
+  const { data: poeChecklists, mutate: mutatePOE } = useSWR('/api/poe', fetcher);
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>("");
   const [saving, setSaving] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const studentList = students || [];
   const checklists = poeChecklists || [];
@@ -39,6 +39,7 @@ export default function POEPage() {
 
   const updateChecklist = async (studentId: string, field: string, value: boolean) => {
     setSaving(studentId);
+    setSaveError(null);
     try {
       const response = await fetch('/api/poe', {
         method: 'PUT',
@@ -51,10 +52,11 @@ export default function POEPage() {
 
       if (!response.ok) throw new Error('Failed to update');
 
-      mutate('/api/poe');
+      mutatePOE();
     } catch (error) {
       console.error('Error updating POE checklist:', error);
-      alert('Failed to update checklist');
+      setSaveError('Failed to update checklist. Please try again.');
+      setTimeout(() => setSaveError(null), 4000);
     } finally {
       setSaving(null);
     }
@@ -100,6 +102,13 @@ export default function POEPage() {
             Use this page to track physical portfolio of evidence files. Check off items as you verify they are present in each student's physical file.
           </p>
         </div>
+
+        {/* Error Display */}
+        {saveError && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
+            {saveError}
+          </div>
+        )}
 
         {/* Filter */}
         <div className="bg-white rounded-lg border border-slate-200 p-4">
