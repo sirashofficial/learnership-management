@@ -7,7 +7,7 @@ import { requireAuth } from '@/lib/middleware';
 const createAssessmentSchema = z.object({
   studentId: z.string(),
   unitStandardId: z.string(), // Now required
-  type: z.enum(['FORMATIVE', 'SUMMATIVE', 'INTEGRATED']),
+  type: z.enum(['FORMATIVE', 'SUMMATIVE', 'WORKPLACE', 'INTEGRATED']),
   method: z.enum(['KNOWLEDGE', 'PRACTICAL', 'OBSERVATION', 'PORTFOLIO']),
   dueDate: z.string().transform(str => new Date(str)),
   notes: z.string().optional(),
@@ -123,16 +123,23 @@ export async function PUT(request: NextRequest) {
     }
 
     const update: any = {};
-    
-    if (result) update.result = result;
+
+    if (result !== undefined) {
+      update.result = result ?? 'PENDING';
+    }
     if (score !== undefined) update.score = score;
     if (feedback) update.feedback = feedback;
     if (notes) update.notes = notes;
     if (assessedDate) update.assessedDate = new Date(assessedDate);
     if (moderationStatus) update.moderationStatus = moderationStatus;
-    
-    // Set assessed date to now if not provided but result is being set
-    if (result && !assessedDate) {
+
+    const isReset = result === 'PENDING' || result === null;
+    if (isReset) {
+      update.result = 'PENDING';
+      update.assessedDate = null;
+      update.moderationStatus = 'PENDING';
+    } else if (result && !assessedDate) {
+      // Set assessed date to now if not provided but result is being set
       update.assessedDate = new Date();
     }
 
@@ -151,8 +158,11 @@ export async function PUT(request: NextRequest) {
 
     console.log('✅ Assessment marked:', { assessmentId: id, result, score });
 
-    // Update student progress if competent and approved
+    // Update student progress when assessments change
     if (result === 'COMPETENT' && assessment.moderationStatus === 'APPROVED') {
+      await updateStudentProgress(assessment.studentId, assessment.unitStandardId);
+    }
+    if (isReset || result === 'NOT_YET_COMPETENT') {
       await updateStudentProgress(assessment.studentId, assessment.unitStandardId);
     }
 

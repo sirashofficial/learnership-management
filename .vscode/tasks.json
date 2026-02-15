@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Push to GitHub",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"cd 'c:\\Users\\LATITUDE 5400\\Downloads\\Learnership Management'; git -c 'core.sshCommand=ssh -o StrictHostKeyChecking=no' push origin main; echo 'Push completed'; exit 0"
+			],
+			"group": "none"
+		},
+		{
+			"label": "Push to GitHub SSH",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command Set-Location 'c:\\Users\\LATITUDE 5400\\Downloads\\Learnership Management'; & { git push origin main }"
+		}
+	]
+}

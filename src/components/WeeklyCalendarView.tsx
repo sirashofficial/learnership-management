@@ -1,41 +1,62 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { format, startOfWeek, addDays, parseISO } from 'date-fns';
 import useSWR from 'swr';
+import { useRouter } from 'next/navigation';
 import { fetcher } from '@/lib/swr-config';
-import { ChevronLeft, ChevronRight, Clock, Users, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
 
-interface WeeklySession {
+interface TimetableSession {
   id: string;
-  time: string;
-  topic: string;
-  facilitator?: string;
-  status: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  venue?: string;
+  groupId?: string;
+  group?: {
+    id: string;
+    name: string;
+    colour: string;
+  } | null;
 }
 
 interface WeeklyViewProps {
-  groupId: string;
+  groupId?: string;
   initialDate?: Date;
 }
 
 const DAYS_OF_WEEK = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
 
 export function WeeklyCalendarView({ groupId, initialDate = new Date() }: WeeklyViewProps) {
+  const router = useRouter();
   const [weekStart, setWeekStart] = useState<Date>(
-    startOfWeek(initialDate, { weekStartsOn: 1 }) // Start on Monday
+    startOfWeek(initialDate, { weekStartsOn: 1 })
   );
+  const weekEnd = addDays(weekStart, 4);
+  const weekShowingStart = `${format(weekStart, 'MMM d, yyyy')} - ${format(weekEnd, 'MMM d, yyyy')}`;
 
-  const weekShowingStart = `${format(weekStart, 'MMM d, yyyy')} - ${format(addDays(weekStart, 4), 'MMM d, yyyy')}`;
+  const weekUrl = `/api/timetable?start=${weekStart.toISOString()}&end=${weekEnd.toISOString()}${
+    groupId ? `&groupId=${groupId}` : ''
+  }`;
 
-  // Fetch weekly schedule
-  const { data: weeklyData, isLoading } = useSWR(
-    `/api/sessions/generate?weekStart=${weekStart.toISOString()}&groupId=${groupId}`,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  const { data: weeklyData, isLoading } = useSWR(weekUrl, fetcher, {
+    revalidateOnFocus: false,
+  });
 
-  const schedule = weeklyData?.data?.schedule || {};
+  const sessions: TimetableSession[] = weeklyData?.data || [];
+
+  const sessionsByDay = useMemo(() => {
+    const map = new Map<string, TimetableSession[]>();
+    sessions.forEach((session) => {
+      const key = format(parseISO(session.date), 'yyyy-MM-dd');
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)?.push(session);
+    });
+    return map;
+  }, [sessions]);
 
   const handlePrevWeek = () => {
     setWeekStart((prev) => addDays(prev, -7));
@@ -75,8 +96,23 @@ export function WeeklyCalendarView({ groupId, initialDate = new Date() }: Weekly
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           {DAYS_OF_WEEK.map((day, index) => {
             const dayDate = addDays(weekStart, index);
-            const dayClasses = schedule[day] || [];
-            const isToday = format(dayDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+            const dayKey = format(dayDate, 'yyyy-MM-dd');
+            const daySessions = sessionsByDay.get(dayKey) || [];
+            const isToday = dayKey === format(new Date(), 'yyyy-MM-dd');
+
+            const grouped = daySessions.reduce<Record<string, TimetableSession[]>>(
+              (acc, session) => {
+                const key = `${session.startTime}-${session.endTime}-${session.venue || ''}`;
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(session);
+                return acc;
+              },
+              {}
+            );
+
+            const groupKeys = Object.keys(grouped).sort((a, b) =>
+              a.localeCompare(b)
+            );
 
             return (
               <div
@@ -96,55 +132,45 @@ export function WeeklyCalendarView({ groupId, initialDate = new Date() }: Weekly
                     )}
                   </div>
                 </div>
-                <div className="pt-4 space-y-2 p-3">
-                  {dayClasses.length > 0 ? (
-                    dayClasses.map((session: WeeklySession) => (
-                      <div
-                        key={session.id}
-                        className="p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors group cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-slate-900 truncate">
-                              {session.topic}
-                            </p>
-                            <div className="flex items-center gap-1 mt-2 text-xs text-slate-600">
-                              <Clock className="w-3 h-3" />
-                              <span>{session.time}</span>
-                            </div>
-                            {session.facilitator && (
-                              <p className="text-xs text-slate-500 mt-1">
-                                👨‍🏫 {session.facilitator}
-                              </p>
-                            )}
-                          </div>
-                          <div
-                            className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
-                              session.status === 'SCHEDULED'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-amber-100 text-amber-700'
-                            }`}
+                <div className="pt-4 space-y-3 p-3">
+                  {groupKeys.length > 0 ? (
+                    groupKeys.map((groupKey) => (
+                      <div key={groupKey} className="flex gap-2">
+                        {grouped[groupKey].map((session) => (
+                          <button
+                            key={session.id}
+                            type="button"
+                            onClick={() => session.groupId && router.push(`/groups/${session.groupId}`)}
+                            className="flex-1 min-w-0 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm hover:bg-slate-50 transition"
                           >
-                            {session.status}
-                          </div>
-                        </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: session.group?.colour || '#94a3b8' }}
+                              />
+                              <p className="text-sm font-semibold text-slate-900 truncate">
+                                {session.group?.name || 'Unknown group'}
+                              </p>
+                            </div>
+                            <div className="mt-2 flex items-center gap-1 text-xs text-slate-600">
+                              <MapPin className="w-3 h-3" />
+                              <span>{session.venue || 'Venue TBC'}</span>
+                            </div>
+                            <div className="mt-1 flex items-center gap-1 text-xs text-slate-600">
+                              <Clock className="w-3 h-3" />
+                              <span>{session.startTime} - {session.endTime}</span>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-sm text-slate-400 py-4">No classes</p>
+                    <p className="text-center text-sm text-slate-400 py-4">No sessions</p>
                   )}
                 </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && Object.values(schedule).every((day: any) => day.length === 0) && (
-        <div className="border border-amber-200 bg-amber-50 rounded-lg p-6 flex items-center gap-3 text-amber-800">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">No classes scheduled for this week. Generate sessions to populate the timetable.</p>
         </div>
       )}
     </div>

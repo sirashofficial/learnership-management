@@ -13,10 +13,12 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { mutate as globalMutate } from 'swr';
+import Toast, { useToast } from '@/components/Toast';
 
 interface Assessment {
   id: string;
-  type: 'FORMATIVE' | 'SUMMATIVE' | 'INTEGRATED';
+  type: 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE' | 'INTEGRATED';
   result: 'COMPETENT' | 'NOT_YET_COMPETENT' | 'PENDING';
   dueDate: string;
   assessedDate?: string;
@@ -44,6 +46,7 @@ export default function AssessmentsPage() {
   const { students } = useStudents();
   const { groups } = useGroups();
   const { user } = useAuth();
+  const { toast, showToast, hideToast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
   const filteredUnitStandardId = searchParams.get('unitStandardId');
@@ -61,6 +64,22 @@ export default function AssessmentsPage() {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [bulkPassing, setBulkPassing] = useState(false);
+
+  const filteredStudents = useMemo(() => {
+    if (!selectedGroup) return students;
+    return students.filter((student: any) => student.groupId === selectedGroup || student.group?.id === selectedGroup);
+  }, [students, selectedGroup]);
+
+  const filteredStudentIds = useMemo(() => new Set(filteredStudents.map((student: any) => student.id)), [filteredStudents]);
+
+  const filteredAssessments = useMemo(() => {
+    if (!selectedGroup) return assessments;
+    return assessments.filter((assessment: any) => filteredStudentIds.has(assessment.student?.id));
+  }, [assessments, filteredStudentIds, selectedGroup]);
+
+  const scopedStudents = filteredStudents;
+  const scopedAssessments = filteredAssessments;
 
   // Fetch unit standards and assessments
   useEffect(() => {
@@ -83,6 +102,10 @@ export default function AssessmentsPage() {
       const res = await fetch('/api/assessments', { credentials: 'include' });
       const data = await res.json();
       setAssessments(Array.isArray(data) ? data : data.data || []);
+      // Auto-sync related data across the app
+      globalMutate('/api/students');
+      globalMutate('/api/groups');
+      globalMutate('/api/groups/progress');
     } catch (error) {
       console.error('Error fetching assessments:', error);
     }
@@ -173,30 +196,35 @@ export default function AssessmentsPage() {
       }
     };
 
-    // Helper to mark assessment
+    // Helper to mark assessment — supports 3-state: COMPETENT, NOT_YET_COMPETENT, PENDING (reset)
     const handleMarkAssessment = async (unitStandardId: string, studentId: string, type: 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE', result: string) => {
       try {
         // Check if assessment exists
-        const existing = assessments.find(a =>
+        const existing = scopedAssessments.find(a =>
           a.student.id === studentId &&
           a.unitStandard?.id === unitStandardId &&
           a.type === type
         );
 
         if (existing) {
-          // Update
+          // Update via the [id] route — supports PENDING as reset
           const res = await fetch(`/api/assessments/${existing.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ result, assessedDate: new Date().toISOString() })
+            body: JSON.stringify({
+              result: result,
+              assessedDate: result !== 'PENDING' ? new Date().toISOString() : null
+            })
           });
 
           if (res.ok) {
             fetchAssessments();
           }
         } else {
-          // Create
+          // Only create if we're actually marking (not resetting)
+          if (result === 'PENDING') return;
+
           const dueDate = new Date();
           dueDate.setDate(dueDate.getDate() + 7);
 
@@ -234,6 +262,53 @@ export default function AssessmentsPage() {
         alert(`Marked ${selectedStudents.size} students as ${result}`);
       } finally {
         setLoading(false);
+      }
+    };
+
+    const handleBulkPassAll = async (
+      unitStandardId: string,
+      assessmentType: 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE',
+      studentIds: string[]
+    ) => {
+      if (studentIds.length === 0) return;
+
+      setBulkPassing(true);
+      try {
+        const res = await fetch('/api/assessments/bulk-pass', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            unitStandardId,
+            assessmentType,
+            studentIds,
+          }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Failed to bulk mark assessments');
+        }
+
+        const data = await res.json();
+        const updated = data?.data?.updated ?? data?.updated ?? 0;
+        const skipped = data?.data?.skipped ?? data?.skipped ?? 0;
+
+        showToast(
+          `✓ ${updated} students marked as Passed. ${skipped} students skipped (already passed or failed).`,
+          'success'
+        );
+
+        await fetchAssessments();
+        globalMutate('/api/assessments');
+        globalMutate('/api/students');
+        globalMutate('/api/groups');
+        globalMutate('/api/groups/progress');
+      } catch (error: any) {
+        console.error('Error bulk passing assessments:', error);
+        showToast(error?.message || 'Failed to bulk mark assessments', 'error');
+      } finally {
+        setBulkPassing(false);
       }
     };
 
@@ -436,11 +511,13 @@ export default function AssessmentsPage() {
                         {isUnitExpanded && (
                           <AssessmentTabs
                             unitStandard={unit}
-                            students={students}
-                            assessments={assessments.filter(a => a.unitStandard?.id === unit.id)}
+                            students={scopedStudents}
+                            assessments={scopedAssessments.filter(a => a.unitStandard?.id === unit.id)}
                             onMarkAssessment={handleMarkAssessment}
                             onBulkMark={handleBulkMark}
+                            onBulkPassAll={handleBulkPassAll}
                             loading={loading}
+                            bulkPassing={bulkPassing}
                           />
                         )}
                       </div>
@@ -458,9 +535,10 @@ export default function AssessmentsPage() {
   // ====================
   // ASSESSMENT TABS COMPONENT
   // ====================
-  const AssessmentTabs = ({ unitStandard, students, assessments, onMarkAssessment, onBulkMark, loading }: any) => {
+  const AssessmentTabs = ({ unitStandard, students, assessments, onMarkAssessment, onBulkMark, onBulkPassAll, loading, bulkPassing }: any) => {
     const [activeTab, setActiveTab] = useState<'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE'>('FORMATIVE');
     const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
     const formativeAssessments = assessments.filter((a: any) => a.type === 'FORMATIVE');
     const summativeAssessments = assessments.filter((a: any) => a.type === 'SUMMATIVE');
@@ -480,7 +558,7 @@ export default function AssessmentsPage() {
     const getCompletionStats = () => {
       const types: ('FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE')[] = ['FORMATIVE', 'SUMMATIVE', 'WORKPLACE'];
       return types.map(type => {
-        const completedCount = students.filter((student: any) => 
+        const completedCount = students.filter((student: any) =>
           getAssessmentStatus(student.id, type) === 'COMPETENT'
         ).length;
         return { type, completedCount, total: students.length };
@@ -504,11 +582,10 @@ export default function AssessmentsPage() {
                 setActiveTab(tab as 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE');
                 setSelectedStudents(new Set());
               }}
-              className={`px-4 py-2 rounded font-semibold transition ${
-                activeTab === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 rounded font-semibold transition ${activeTab === tab
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
             >
               {tab} Assessment
             </button>
@@ -556,6 +633,50 @@ export default function AssessmentsPage() {
         </div>
 
         {/* Students grid */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-medium text-gray-700">
+            {unitStandard.code} — {unitStandard.title}
+          </div>
+          <button
+            onClick={() => setShowBulkConfirm(true)}
+            disabled={bulkPassing || students.length === 0}
+            className="px-3 py-1.5 rounded text-sm font-semibold border-2 border-green-600 text-green-700 hover:bg-green-50 disabled:opacity-50"
+          >
+            ✓ Mark All as Passed
+          </button>
+        </div>
+
+        {showBulkConfirm && (
+          <div className="bg-green-50 border border-green-200 rounded p-3 mb-3 flex items-center justify-between">
+            <div className="text-sm text-green-800">
+              Mark all {students.length} students as PASSED for {unitStandard.code} — {unitStandard.title}?
+              You can still update individual students after.
+            </div>
+            <div className="flex gap-2 ml-4">
+              <button
+                onClick={() => setShowBulkConfirm(false)}
+                className="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowBulkConfirm(false);
+                  onBulkPassAll(
+                    unitStandard.id,
+                    activeTab,
+                    students.map((s: any) => s.id)
+                  );
+                }}
+                disabled={bulkPassing}
+                className="px-3 py-1.5 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+              >
+                {bulkPassing ? 'Working...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {students.map((student: any) => {
             const status = getAssessmentStatus(student.id, activeTab);
@@ -588,34 +709,43 @@ export default function AssessmentsPage() {
                   <div className="text-xs text-gray-500">{student.studentId}</div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  {/* Current state indicator */}
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded ${status === 'COMPETENT' ? 'bg-green-100 text-green-700' :
+                    status === 'NOT_YET_COMPETENT' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                    {status === 'COMPETENT' ? 'Passed' : status === 'NOT_YET_COMPETENT' ? 'NYC' : 'Not marked'}
+                  </span>
+                  {/* Pass toggle — clicking again resets to unmarked */}
                   <button
                     onClick={() => onMarkAssessment(
-                      unitStandard.id, 
-                      student.id, 
-                      activeTab, 
+                      unitStandard.id,
+                      student.id,
+                      activeTab,
                       status === 'COMPETENT' ? 'PENDING' : 'COMPETENT'
                     )}
-                    className={`px-3 py-1 rounded text-sm font-semibold border transition ${
-                      status === 'COMPETENT'
-                        ? 'bg-green-600 text-white border-green-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-green-300'
-                    }`}
+                    title={status === 'COMPETENT' ? 'Click to reset to unmarked' : 'Mark as Competent'}
+                    className={`px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all ${status === 'COMPETENT'
+                      ? 'bg-green-600 text-white border-green-600 shadow-sm ring-2 ring-green-200'
+                      : 'bg-white text-gray-500 border-gray-300 hover:border-green-400 hover:text-green-600'
+                      }`}
                   >
                     ✓
                   </button>
+                  {/* Fail toggle — clicking again resets to unmarked */}
                   <button
                     onClick={() => onMarkAssessment(
-                      unitStandard.id, 
-                      student.id, 
-                      activeTab, 
+                      unitStandard.id,
+                      student.id,
+                      activeTab,
                       status === 'NOT_YET_COMPETENT' ? 'PENDING' : 'NOT_YET_COMPETENT'
                     )}
-                    className={`px-3 py-1 rounded text-sm font-semibold border transition ${
-                      status === 'NOT_YET_COMPETENT'
-                        ? 'bg-red-600 text-white border-red-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
-                    }`}
+                    title={status === 'NOT_YET_COMPETENT' ? 'Click to reset to unmarked' : 'Mark as Not Yet Competent'}
+                    className={`px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all ${status === 'NOT_YET_COMPETENT'
+                      ? 'bg-red-600 text-white border-red-600 shadow-sm ring-2 ring-red-200'
+                      : 'bg-white text-gray-500 border-gray-300 hover:border-red-400 hover:text-red-600'
+                      }`}
                   >
                     ✗
                   </button>
@@ -637,8 +767,8 @@ export default function AssessmentsPage() {
     const [moderationNotes, setModerationNotes] = useState('');
 
     useEffect(() => {
-      setUnreviewed(assessments.filter(a => a.moderationStatus === 'PENDING'));
-    }, [assessments]);
+      setUnreviewed(scopedAssessments.filter(a => a.moderationStatus === 'PENDING'));
+    }, [scopedAssessments]);
 
     const handleApprove = async (assessmentId: string) => {
       try {
@@ -724,11 +854,10 @@ export default function AssessmentsPage() {
                 <button
                   key={assessment.id}
                   onClick={() => setSelectedAssessment(assessment)}
-                  className={`w-full p-3 rounded border text-left transition ${
-                    selectedAssessment?.id === assessment.id
-                      ? 'bg-blue-50 border-blue-300'
-                      : 'bg-white border-gray-200 hover:border-blue-300'
-                  }`}
+                  className={`w-full p-3 rounded border text-left transition ${selectedAssessment?.id === assessment.id
+                    ? 'bg-blue-50 border-blue-300'
+                    : 'bg-white border-gray-200 hover:border-blue-300'
+                    }`}
                 >
                   <div className="font-semibold text-sm">
                     {assessment.student.firstName} {assessment.student.lastName} - {assessment.type}
@@ -805,7 +934,7 @@ export default function AssessmentsPage() {
     const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 
     const getStudentProgress = (studentId: string) => {
-      const studentAssessments = assessments.filter(a => a.student.id === studentId);
+      const studentAssessments = scopedAssessments.filter(a => a.student.id === studentId);
       const totalUnits = unitStandards.length;
 
       let competentUnits = 0;
@@ -837,14 +966,14 @@ export default function AssessmentsPage() {
                 const units = unitStandards.filter(u => u.module.id === m.id);
                 let competentCount = 0;
                 units.forEach(unit => {
-                  const hasCompleteAssessments = students.filter(s => {
-                    const formative = assessments.find(a => a.student.id === s.id && a.unitStandard?.id === unit.id && a.type === 'FORMATIVE' && a.result === 'COMPETENT');
-                    const summative = assessments.find(a => a.student.id === s.id && a.unitStandard?.id === unit.id && a.type === 'SUMMATIVE' && a.result === 'COMPETENT');
+                  const hasCompleteAssessments = scopedStudents.filter(s => {
+                    const formative = scopedAssessments.find(a => a.student.id === s.id && a.unitStandard?.id === unit.id && a.type === 'FORMATIVE' && a.result === 'COMPETENT');
+                    const summative = scopedAssessments.find(a => a.student.id === s.id && a.unitStandard?.id === unit.id && a.type === 'SUMMATIVE' && a.result === 'COMPETENT');
                     return formative && summative;
                   });
                   competentCount += hasCompleteAssessments.length;
                 });
-                return { moduleId: m.id, moduleName: m.name, competent: competentCount, total: units.length * students.length, percentage: units.length * students.length > 0 ? Math.round((competentCount / (units.length * students.length)) * 100) : 0 };
+                return { moduleId: m.id, moduleName: m.name, competent: competentCount, total: units.length * scopedStudents.length, percentage: units.length * scopedStudents.length > 0 ? Math.round((competentCount / (units.length * scopedStudents.length)) * 100) : 0 };
               });
 
               const modProg = moduleProgress.find(mp => mp.moduleId === module.id);
@@ -872,7 +1001,7 @@ export default function AssessmentsPage() {
           <h3 className="font-semibold mb-4">Student Progress</h3>
 
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {students.map(student => {
+            {scopedStudents.map(student => {
               const progress = getStudentProgress(student.id);
               return (
                 <button
@@ -915,7 +1044,7 @@ export default function AssessmentsPage() {
   // ====================
   const ComplianceView = () => {
     const getComplianceStatus = (studentId: string) => {
-      const studentAssessments = assessments.filter(a => a.student.id === studentId);
+      const studentAssessments = scopedAssessments.filter(a => a.student.id === studentId);
       const allAssessmentsMade = unitStandards.every(unit => {
         const hasFormative = studentAssessments.some(a => a.unitStandard?.id === unit.id && a.type === 'FORMATIVE');
         const hasSummative = studentAssessments.some(a => a.unitStandard?.id === unit.id && a.type === 'SUMMATIVE');
@@ -926,12 +1055,12 @@ export default function AssessmentsPage() {
     };
 
     const getCompliancePercentage = () => {
-      const compliantStudents = students.filter(s => getComplianceStatus(s.id)).length;
-      return students.length > 0 ? Math.round((compliantStudents / students.length) * 100) : 0;
+      const compliantStudents = scopedStudents.filter(s => getComplianceStatus(s.id)).length;
+      return scopedStudents.length > 0 ? Math.round((compliantStudents / scopedStudents.length) * 100) : 0;
     };
 
     const getNonCompliantStudents = () => {
-      return students.filter(s => !getComplianceStatus(s.id));
+      return scopedStudents.filter(s => !getComplianceStatus(s.id));
     };
 
     return (
@@ -961,7 +1090,7 @@ export default function AssessmentsPage() {
               <div className="space-y-2">
                 {getNonCompliantStudents().map(student => {
                   const missing = unitStandards.filter(unit => {
-                    const studentAssessments = assessments.filter(a => a.student.id === student.id && a.unitStandard?.id === unit.id);
+                    const studentAssessments = scopedAssessments.filter(a => a.student.id === student.id && a.unitStandard?.id === unit.id);
                     const hasFormative = studentAssessments.some(a => a.type === 'FORMATIVE');
                     const hasSummative = studentAssessments.some(a => a.type === 'SUMMATIVE');
                     return !hasFormative || !hasSummative;
@@ -1065,7 +1194,7 @@ export default function AssessmentsPage() {
           <div className="bg-white p-4 rounded border border-gray-200">
             <h3 className="font-semibold mb-4">Select Students</h3>
             <div className="space-y-2 max-h-80 overflow-y-auto">
-              {students.map(student => (
+              {scopedStudents.map(student => (
                 <label key={student.id} className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1218,7 +1347,7 @@ export default function AssessmentsPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded"
               >
                 <option value="">Select student</option>
-                {students.map(s => (
+                {scopedStudents.map(s => (
                   <option key={s.id} value={s.id}>
                     {s.firstName} {s.lastName}
                   </option>
@@ -1272,14 +1401,14 @@ export default function AssessmentsPage() {
   // ====================
   const AnalyticsView = () => {
     // Calculate statistics
-    const totalAssessments = assessments.length;
-    const competentCount = assessments.filter(a => a.result === 'COMPETENT').length;
-    const notYetCount = assessments.filter(a => a.result === 'NOT_YET_COMPETENT').length;
+    const totalAssessments = scopedAssessments.length;
+    const competentCount = scopedAssessments.filter(a => a.result === 'COMPETENT').length;
+    const notYetCount = scopedAssessments.filter(a => a.result === 'NOT_YET_COMPETENT').length;
     const competencyRate = totalAssessments > 0 ? Math.round((competentCount / totalAssessments) * 100) : 0;
 
     // Per-unit-standard data
     const unitStandardStats = unitStandards.map(unit => {
-      const unitAssessments = assessments.filter(a => a.unitStandard?.id === unit.id);
+      const unitAssessments = scopedAssessments.filter(a => a.unitStandard?.id === unit.id);
       const competent = unitAssessments.filter(a => a.result === 'COMPETENT').length;
       return {
         unit: `${unit.code}`,
@@ -1290,8 +1419,8 @@ export default function AssessmentsPage() {
     }).sort((a, b) => b.rate - a.rate);
 
     // Per-assessment-type data
-    const formativeStats = assessments.filter(a => a.type === 'FORMATIVE');
-    const summativeStats = assessments.filter(a => a.type === 'SUMMATIVE');
+    const formativeStats = scopedAssessments.filter(a => a.type === 'FORMATIVE');
+    const summativeStats = scopedAssessments.filter(a => a.type === 'SUMMATIVE');
 
     const typeData = [
       {
@@ -1415,13 +1544,36 @@ export default function AssessmentsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Assessment Management</h1>
         </div>
 
+        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm font-semibold text-gray-700">Group filter</label>
+            <select
+              value={selectedGroup}
+              onChange={(e) => setSelectedGroup(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded text-sm"
+            >
+              <option value="">All groups</option>
+              {(groups || []).map((group: any) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+            {selectedGroup && (
+              <span className="text-xs text-gray-500">
+                {scopedStudents.length} students, {scopedAssessments.length} assessments
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* View tabs */}
         <div className="bg-white border-b border-gray-200 rounded-t-lg overflow-x-auto">
           <div className="flex gap-0">
             {[
               { id: 'manage', label: 'Manage', icon: CheckCircle },
               { id: 'moderation', label: 'Moderation', icon: Eye },
-              { id: 'progress', label: 'Progress' , icon: TrendingUp },
+              { id: 'progress', label: 'Progress', icon: TrendingUp },
               { id: 'compliance', label: 'Compliance', icon: AlertTriangle },
               { id: 'bulk', label: 'Bulk Actions', icon: Users },
               { id: 'export', label: 'Export', icon: Download },
@@ -1432,11 +1584,10 @@ export default function AssessmentsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveView(tab.id as any)}
-                  className={`px-4 py-3 font-semibold flex items-center gap-2 whitespace-nowrap transition ${
-                    activeView === tab.id
-                      ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
+                  className={`px-4 py-3 font-semibold flex items-center gap-2 whitespace-nowrap transition ${activeView === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
                 >
                   <Icon size={18} />
                   {tab.label}
@@ -1475,6 +1626,7 @@ export default function AssessmentsPage() {
           {activeView === 'export' && <ExportView />}
           {activeView === 'analytics' && <AnalyticsView />}
         </div>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       </div>
     </div>
   );

@@ -125,6 +125,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const isReset = result === 'PENDING' || result === null;
+
     const assessment = await prisma.assessment.update({
       where: { id: assessmentId },
       data: {
@@ -133,7 +135,7 @@ export async function PUT(request: NextRequest) {
         feedback,
         type,
         method,
-        assessedDate: result ? new Date() : undefined,
+        assessedDate: isReset ? null : new Date(),
         moderationStatus: result === 'COMPETENT' ? 'APPROVED' : 'PENDING'
       },
       include: {

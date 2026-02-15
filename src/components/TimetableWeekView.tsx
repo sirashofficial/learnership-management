@@ -1,196 +1,300 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { format, addDays } from 'date-fns';
-import { ChevronDown } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns';
+import useSWR from 'swr';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { fetcher } from '@/lib/swr-config';
+import { useGroups } from '@/contexts/GroupsContext';
+import MiniCalendar from '@/components/MiniCalendar';
+import SessionDetailPanel from '@/components/SessionDetailPanel';
+import SessionHoverCard from '@/components/SessionHoverCard';
+import NextSessionPanel from '@/components/NextSessionPanel';
+import { getGroupColour } from '@/lib/groupColours';
+import SessionAttendanceModal from '@/components/SessionAttendanceModal';
+import Toast, { useToast } from '@/components/Toast';
 
-interface Session {
-  day: string;
-  venue: string;
-  groups: string[];
+interface TimetableSession {
+  id: string;
+  date: string;
   startTime: string;
   endTime: string;
-  color: string;
+  venue?: string;
+  groupId?: string;
+  group?: {
+    id: string;
+    name: string;
+    colour: string;
+  } | null;
 }
 
 interface TimetableWeekViewProps {
-  currentDate: Date;
-  selectedGroup: string | null;
-  onSelectGroup: (groupName: string) => void;
-  groups: string[];
-  weeklySchedule: Record<string, Record<string, string[]>>;
+  selectedDate: Date;
+  onSelectDate: (date: Date) => void;
+  selectedGroupId: string;
+  onGroupChange: (groupId: string) => void;
 }
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-const TIME_SLOTS = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00'];
-
-const GROUP_COLORS: Record<string, string> = {
-  'Montzelity 26\'': 'bg-purple-100 border-purple-300 text-purple-900',
-  'Azelis 25\'': 'bg-teal-100 border-teal-300 text-teal-900',
-  'Beyond Insights 26\'': 'bg-blue-100 border-blue-300 text-blue-900',
-  'City Logistics 26\'': 'bg-cyan-100 border-cyan-300 text-cyan-900',
-  'Monteagle 25\'': 'bg-pink-100 border-pink-300 text-pink-900',
-  'Kelpack 25\'': 'bg-green-100 border-green-300 text-green-900',
-  'Flint Group 25\'': 'bg-indigo-100 border-indigo-300 text-indigo-900',
-  'Wahl 25\'': 'bg-amber-100 border-amber-300 text-amber-900',
-  'Packaging World 25\'': 'bg-emerald-100 border-emerald-300 text-emerald-900',
-};
+function getShortGroupName(name: string) {
+  return name
+    .replace(/\s*\(LP\)\s*-\s*\d{4}/i, '')
+    .replace(/\s*\(\d{4}\)/i, '')
+    .trim();
+}
 
 export default function TimetableWeekView({
-  currentDate,
-  selectedGroup,
-  onSelectGroup,
-  groups,
-  weeklySchedule
+  selectedDate,
+  onSelectDate,
+  selectedGroupId,
+  onGroupChange,
 }: TimetableWeekViewProps) {
-  const [expandedVenues, setExpandedVenues] = useState<Record<string, boolean>>({
-    'Lecture Room': true,
-    'Computer Lab': true,
-  });
+  const { groups } = useGroups();
+  const [selectedSession, setSelectedSession] = useState<TimetableSession | null>(null);
+  const [attendanceSession, setAttendanceSession] = useState<TimetableSession | null>(null);
+  const [hoveredSession, setHoveredSession] = useState<TimetableSession | null>(null);
+  const [hoverPosition, setHoverPosition] = useState({ top: 0, left: 0 });
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { toast, showToast, hideToast } = useToast();
 
-  // Build sessions from weekly schedule
-  const sessions = useMemo(() => {
-    const result: Session[] = [];
-    
-    Object.entries(weeklySchedule).forEach(([day, venues]) => {
-      Object.entries(venues).forEach(([venue, groupList]) => {
-        if (groupList.length > 0) {
-          result.push({
-            day,
-            venue,
-            groups: groupList,
-            startTime: '09:00',
-            endTime: '14:00',
-            color: GROUP_COLORS[groupList[0]] || 'bg-gray-100'
-          });
-        }
-      });
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 4);
+  const weekLabel = `${format(weekStart, 'MMM d')} – ${format(weekEnd, 'MMM d, yyyy')}`;
+
+  const weekUrl = `/api/timetable?start=${weekStart.toISOString()}&end=${weekEnd.toISOString()}${
+    selectedGroupId !== 'all' ? `&groupId=${selectedGroupId}` : ''
+  }`;
+
+  const { data, isLoading } = useSWR(weekUrl, fetcher, { revalidateOnFocus: false });
+  const sessions: TimetableSession[] = data?.data || [];
+
+  const sessionsByDay = useMemo(() => {
+    const map = new Map<string, TimetableSession[]>();
+    sessions.forEach((session) => {
+      const key = format(parseISO(session.date), 'yyyy-MM-dd');
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)?.push(session);
     });
-    
-    return result;
-  }, [weeklySchedule]);
+    return map;
+  }, [sessions]);
 
-  const toggleVenue = (venue: string) => {
-    setExpandedVenues(prev => ({
-      ...prev,
-      [venue]: !prev[venue]
-    }));
+  const dayDates = Array.from({ length: 5 }, (_, index) => addDays(weekStart, index));
+
+  const handlePrevWeek = () => onSelectDate(addDays(weekStart, -7));
+  const handleNextWeek = () => onSelectDate(addDays(weekStart, 7));
+  const handleToday = () => onSelectDate(new Date());
+
+  const handleMouseEnter = (session: TimetableSession, rect: DOMRect) => {
+    if (selectedSession) return;
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+    }
+    hoverTimeout.current = setTimeout(() => {
+      setHoveredSession(session);
+      setHoverPosition({ top: rect.bottom + 8, left: rect.left });
+    }, 300);
   };
 
-  // Filter sessions by selected group
-  const filteredSessions = selectedGroup
-    ? sessions.filter(s => s.groups.includes(selectedGroup))
-    : sessions;
+  const handleMouseLeave = () => {
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+    }
+    setHoveredSession(null);
+  };
+
+  const activeGroup = groups.find((group) => group.id === selectedSession?.groupId);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
-      {/* Group Selector */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Filter by Group
-        </label>
-        <select
-          value={selectedGroup || ''}
-          onChange={(e) => onSelectGroup(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">All Groups</option>
-          {groups.map(group => (
-            <option key={group} value={group}>{group}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Weekly Timetable */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Week of {format(currentDate, 'MMM d, yyyy')}
-        </h3>
-
-        {/* Schedule by Venue */}
-        {(['Lecture Room', 'Computer Lab'] as const).map(venue => {
-          const venueSessions = filteredSessions.filter(s => s.venue === venue);
-          const isExpanded = expandedVenues[venue];
-
-          return (
-            <div key={venue} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-              {/* Venue Header */}
+    <div className="flex flex-col gap-6 min-[1200px]:flex-row">
+      <div className="w-full min-[1200px]:w-[240px] flex-shrink-0 space-y-4">
+        <MiniCalendar
+          selectedDate={selectedDate}
+          onSelectDate={(date) => {
+            setSelectedSession(null);
+            onSelectDate(date);
+          }}
+        />
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-sm font-semibold text-slate-900">Group Legend</p>
+          <div className="mt-3 space-y-2">
+            <button
+              type="button"
+              onClick={() => onGroupChange('all')}
+              className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 text-sm ${
+                selectedGroupId === 'all' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <span className="h-2 w-2 rounded-full bg-slate-300" />
+              All Groups
+            </button>
+            {groups.map((group) => (
               <button
-                onClick={() => toggleVenue(venue)}
-                className="w-full bg-slate-100 dark:bg-slate-700 p-4 flex items-center justify-between hover:bg-slate-150 dark:hover:bg-slate-600 transition-colors"
+                key={group.id}
+                type="button"
+                onClick={() => onGroupChange(group.id)}
+                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 text-sm ${
+                  selectedGroupId === group.id
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
               >
-                <div>
-                  <h4 className="font-semibold text-slate-900 dark:text-white">{venue}</h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {venueSessions.length} sessions per week
-                  </p>
-                </div>
-                <ChevronDown
-                  className={`w-5 h-5 text-slate-600 dark:text-slate-400 transition-transform ${
-                    isExpanded ? 'rotate-0' : '-rotate-90'
-                  }`}
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: getGroupColour(group.name) }}
                 />
+                {group.name}
               </button>
-
-              {/* Venue Sessions */}
-              {isExpanded && (
-                <div className="p-4 space-y-3">
-                  {venueSessions.length > 0 ? (
-                    venueSessions.map((session, idx) => (
-                      <div
-                        key={`${session.day}-${venue}-${idx}`}
-                        className={`p-4 border-2 rounded-lg ${GROUP_COLORS[session.groups[0]] || 'bg-gray-100'}`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="font-semibold">{session.day}</p>
-                            <p className="text-sm opacity-75">
-                              {session.startTime} - {session.endTime}
-                            </p>
-                          </div>
-                          <span className="text-xs font-medium bg-black bg-opacity-10 px-2 py-1 rounded">
-                            {venue}
-                          </span>
-                        </div>
-
-                        {/* Groups assigned to this session */}
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {session.groups.map(group => (
-                            <span
-                              key={group}
-                              className="text-xs font-medium bg-white bg-opacity-50 px-2 py-1 rounded"
-                            >
-                              {group}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-slate-500 dark:text-slate-400 text-sm italic">
-                      No sessions scheduled in this venue
-                      {selectedGroup && ` for ${selectedGroup}`}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Group Colors</h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {Object.entries(GROUP_COLORS).map(([groupName, colors]) => (
-            <div key={groupName} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded border-2 ${colors}`}></div>
-              <span className="text-xs text-slate-600 dark:text-slate-400">{groupName}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
+
+      <div className="flex-1 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">Week View</h2>
+            <p className="text-sm text-slate-500">{weekLabel}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrevWeek}
+              className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleToday}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={handleNextWeek}
+              className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div className="grid grid-cols-5 border-b border-slate-200">
+            {dayDates.map((day) => {
+              const isToday = isSameDay(day, new Date());
+              return (
+                <div
+                  key={day.toISOString()}
+                  className={`px-4 py-3 text-sm font-semibold uppercase tracking-wide ${
+                    isToday ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-500'
+                  }`}
+                >
+                  <div>{format(day, 'EEE')}</div>
+                  <div className="text-base font-bold text-slate-900">{format(day, 'd')}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-5">
+            {dayDates.map((day) => {
+              const dayKey = format(day, 'yyyy-MM-dd');
+              const daySessions = sessionsByDay.get(dayKey) || [];
+              const isToday = isSameDay(day, new Date());
+              return (
+                <div
+                  key={dayKey}
+                  className={`min-h-[180px] border-r border-slate-200 p-3 ${
+                    isToday ? 'bg-emerald-50/60' : 'bg-white'
+                  } last:border-r-0`}
+                >
+                  <div className="text-xs font-semibold text-slate-500">09:00 – 14:00</div>
+                  {isLoading ? (
+                    <div className="mt-4 space-y-3">
+                      {[...Array(2)].map((_, index) => (
+                        <div key={index} className="h-16 rounded-xl border border-slate-200 bg-slate-50 animate-pulse" />
+                      ))}
+                    </div>
+                  ) : daySessions.length === 0 ? (
+                    <p className="mt-6 text-sm text-slate-400">No sessions</p>
+                  ) : (
+                    <div className="mt-4 space-y-3">
+                      {daySessions.map((session) => (
+                        <button
+                          key={session.id}
+                          type="button"
+                          onMouseEnter={(event) => handleMouseEnter(session, event.currentTarget.getBoundingClientRect())}
+                          onMouseLeave={handleMouseLeave}
+                          onClick={() => {
+                            setSelectedSession(session);
+                            setHoveredSession(null);
+                          }}
+                          className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span
+                              className="mt-1 h-10 w-1 rounded-full"
+                              style={{ backgroundColor: session.group?.colour || '#10b981' }}
+                            />
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">
+                                {getShortGroupName(session.group?.name || 'Unnamed group')}
+                              </p>
+                              <p className="text-xs text-slate-500">{session.venue || 'Venue TBC'}</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full min-[1200px]:w-[280px] flex-shrink-0">
+        <SessionDetailPanel
+          session={selectedSession}
+          group={activeGroup}
+          onClose={() => setSelectedSession(null)}
+          onMarkAttendance={(session) => setAttendanceSession(session)}
+          emptyState={<NextSessionPanel variant="single" />}
+        />
+      </div>
+
+      {hoveredSession && (
+        <SessionHoverCard
+          session={hoveredSession}
+          group={groups.find((group) => group.id === hoveredSession.groupId)}
+          position={hoverPosition}
+          visible={!selectedSession}
+        />
+      )}
+
+      {attendanceSession && (
+        <SessionAttendanceModal
+          isOpen={Boolean(attendanceSession)}
+          session={{
+            id: attendanceSession.id,
+            date: attendanceSession.date,
+            groupId: attendanceSession.groupId,
+            groupName: attendanceSession.group?.name,
+          }}
+          onClose={() => setAttendanceSession(null)}
+          onSaved={(summary) => {
+            showToast(
+              `Attendance saved for ${attendanceSession.group?.name || 'group'} — ${summary.present} present, ${summary.absent} absent`,
+              'success'
+            );
+            setAttendanceSession(null);
+          }}
+        />
+      )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </div>
   );
 }

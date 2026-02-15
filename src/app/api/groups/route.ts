@@ -33,7 +33,87 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { name: 'asc' },
     });
-    console.log('GET /api/groups success:', groups.length, 'groups');
+    const groupIds = groups.map((group) => group.id);
+    const totalCreditsRequired = 140;
+
+    const competentAssessments = groupIds.length > 0
+      ? await prisma.assessment.findMany({
+          where: {
+            result: 'COMPETENT',
+            student: {
+              groupId: { in: groupIds },
+            },
+          },
+          select: {
+            studentId: true,
+            unitStandardId: true,
+            unitStandard: { select: { credits: true } },
+            student: { select: { groupId: true } },
+          },
+        })
+      : [];
+
+    const progressMap = new Map<
+      string,
+      {
+        studentUnits: Map<string, Map<string, number>>;
+      }
+    >();
+
+    for (const assessment of competentAssessments) {
+      const groupId = assessment.student?.groupId;
+      if (!groupId || !assessment.unitStandardId) continue;
+
+      if (!progressMap.has(groupId)) {
+        progressMap.set(groupId, { studentUnits: new Map() });
+      }
+
+      const groupEntry = progressMap.get(groupId);
+      if (!groupEntry) continue;
+
+      if (!groupEntry.studentUnits.has(assessment.studentId)) {
+        groupEntry.studentUnits.set(assessment.studentId, new Map());
+      }
+
+      const unitMap = groupEntry.studentUnits.get(assessment.studentId);
+      if (!unitMap) continue;
+      unitMap.set(assessment.unitStandardId, assessment.unitStandard?.credits || 0);
+    }
+
+    const groupsWithProgress = groups.map((group) => {
+      const studentCount = group._count?.students || group.students?.length || 0;
+      const groupEntry = progressMap.get(group.id);
+
+      let totalCreditsEarned = 0;
+      let totalUniqueUnitsPassed = 0;
+
+      if (groupEntry) {
+        for (const unitMap of groupEntry.studentUnits.values()) {
+          totalUniqueUnitsPassed += unitMap.size;
+          totalCreditsEarned += Array.from(unitMap.values()).reduce((sum, credits) => sum + credits, 0);
+        }
+      }
+
+      const avgCreditsPerStudent = studentCount > 0
+        ? Math.round(totalCreditsEarned / studentCount)
+        : 0;
+      const avgProgressPercent = studentCount > 0
+        ? Math.round((avgCreditsPerStudent / totalCreditsRequired) * 100)
+        : 0;
+
+      return {
+        ...group,
+        actualProgress: {
+          avgCreditsPerStudent,
+          avgProgressPercent,
+          totalCreditsEarned,
+          totalUniqueUnitsPassed,
+          totalCreditsRequired,
+        },
+      };
+    });
+
+    console.log('GET /api/groups success:', groupsWithProgress.length, 'groups');
     
     // DEBUG: Log group.notes for each group to verify rollout plan data
     console.log('\n📋 DEBUG: Group Notes (Rollout Plans):');
@@ -55,7 +135,7 @@ export async function GET(request: NextRequest) {
     });
     console.log('\n');
     
-    return successResponse(groups);
+    return successResponse(groupsWithProgress);
   } catch (error) {
     console.error('GET /api/groups error:', error);
     return handleApiError(error);

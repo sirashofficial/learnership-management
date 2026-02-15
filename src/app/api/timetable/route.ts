@@ -1,47 +1,60 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { getGroupColour } from '@/lib/groupColours';
 
-// GET /api/timetable - Get lessons with filters
+async function getOrCreateDefaultModule() {
+  const existing = await prisma.module.findFirst();
+  if (existing) return existing;
+
+  return prisma.module.create({
+    data: {
+      code: 'GEN001',
+      name: 'General Training',
+      description: 'General training sessions',
+      credits: 10,
+    },
+  });
+}
+
+async function getDefaultFacilitator() {
+  const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  if (admin) return admin;
+
+  return prisma.user.findFirst();
+}
+
+function parseDateParam(value: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
-
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const groupId = searchParams.get('groupId');
-    const moduleId = searchParams.get('moduleId');
-    const search = searchParams.get('search');
+    const startParam = searchParams.get('start') || searchParams.get('startDate');
+    const endParam = searchParams.get('end') || searchParams.get('endDate');
+    const groupId = searchParams.get('groupId') || undefined;
 
-    // Use Session instead of LessonPlan
-    const lessons = await prisma.session.findMany({
+    const start = parseDateParam(startParam);
+    const end = parseDateParam(endParam);
+
+    if (!start || !end) {
+      return Response.json(
+        { error: 'start and end are required' },
+        { status: 400 }
+      );
+    }
+
+    const sessions = await prisma.lessonPlan.findMany({
       where: {
-        ...(startDate && endDate && {
-          date: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
-          },
-        }),
-        ...(groupId && { groupId }),
-        // Session has 'module' as string, not moduleId
-        ...(search && {
-          OR: [
-            { title: { contains: search } },
-            { notes: { contains: search } },
-          ],
-        }),
+        date: {
+          gte: start,
+          lte: end,
+        },
+        ...(groupId ? { groupId } : {}),
       },
       include: {
-        facilitator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
         group: {
           select: {
             id: true,
@@ -49,29 +62,67 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [
-        { date: 'asc' },
-        { startTime: 'asc' },
-      ],
+      orderBy: { date: 'asc' },
     });
 
-    return successResponse(lessons);
+    const data = sessions.map((session) => ({
+      id: session.id,
+      title: session.title,
+      date: session.date,
+      startTime: session.startTime,
+      endTime: session.endTime,
+      venue: session.venue,
+      groupId: session.groupId,
+      group: session.group
+        ? {
+            id: session.group.id,
+            name: session.group.name,
+            colour: getGroupColour(session.group.name),
+          }
+        : null,
+    }));
+
+    return Response.json({ data });
   } catch (error) {
-    return handleApiError(error);
+    console.error('Error fetching timetable sessions:', error);
+    return Response.json(
+      { error: 'Failed to fetch timetable sessions' },
+      { status: 500 }
+    );
   }
 }
 
-// POST /api/timetable - Create new lesson
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Validate required fields
-    if (!body.title || !body.date || !body.startTime || !body.endTime || !body.groupId || !body.moduleId) {
-      return errorResponse('Missing required fields', 400);
+    if (!body.title || !body.date || !body.startTime || !body.endTime || !body.groupId) {
+      return Response.json(
+        { error: 'title, date, startTime, endTime, and groupId are required' },
+        { status: 400 }
+      );
     }
 
-    const lesson = await prisma.lessonPlan.create({
+    const module = body.moduleId
+      ? await prisma.module.findUnique({ where: { id: body.moduleId } })
+      : await getOrCreateDefaultModule();
+
+    const facilitator = body.facilitatorId
+      ? await prisma.user.findUnique({ where: { id: body.facilitatorId } })
+      : await getDefaultFacilitator();
+
+    if (!module) {
+      return Response.json({ error: 'Module not found' }, { status: 400 });
+    }
+
+    if (!facilitator) {
+      return Response.json(
+        { error: 'Facilitator not found' },
+        { status: 400 }
+      );
+    }
+
+    const session = await prisma.lessonPlan.create({
       data: {
         title: body.title,
         description: body.description || null,
@@ -79,29 +130,16 @@ export async function POST(request: NextRequest) {
         startTime: body.startTime,
         endTime: body.endTime,
         venue: body.venue || null,
-        objectives: body.objectives || null,
-        materials: body.materials || null,
-        activities: body.activities || null,
+        objectives: body.objectives ? JSON.stringify(body.objectives) : null,
+        materials: body.materials ? JSON.stringify(body.materials) : null,
+        activities: body.activities ? JSON.stringify(body.activities) : null,
         notes: body.notes || null,
-        moduleId: body.moduleId,
-        facilitatorId: body.facilitatorId || null,
+        aiGenerated: Boolean(body.aiGenerated),
+        moduleId: module.id,
+        facilitatorId: facilitator.id,
         groupId: body.groupId,
       },
       include: {
-        module: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-          },
-        },
-        facilitator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
         group: {
           select: {
             id: true,
@@ -111,8 +149,29 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(lesson, 'Lesson created successfully');
+    return Response.json({
+      data: {
+        id: session.id,
+        title: session.title,
+        date: session.date,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        venue: session.venue,
+        groupId: session.groupId,
+        group: session.group
+          ? {
+              id: session.group.id,
+              name: session.group.name,
+              colour: getGroupColour(session.group.name),
+            }
+          : null,
+      },
+    });
   } catch (error) {
-    return handleApiError(error);
+    console.error('Error creating timetable session:', error);
+    return Response.json(
+      { error: 'Failed to create timetable session' },
+      { status: 500 }
+    );
   }
 }

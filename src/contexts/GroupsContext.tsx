@@ -13,6 +13,7 @@ export interface Group {
   assessingDate?: string;
   fisaDate?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'PLANNING' | 'COMPLETED' | 'ON_HOLD';
+  students?: Array<any>;
   location?: string;
   address?: string;
   contactName?: string;
@@ -26,6 +27,13 @@ export interface Group {
   _count?: {
     students: number;
     sessions: number;
+  };
+  actualProgress?: {
+    avgCreditsPerStudent: number;
+    avgProgressPercent: number;
+    totalCreditsEarned: number;
+    totalUniqueUnitsPassed: number;
+    totalCreditsRequired: number;
   };
 }
 

@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 // Removed Sidebar and Header imports
 import { useGroups } from '@/contexts/GroupsContext';
 import GroupModal from '@/components/GroupModal';
+import GroupDrawer from '@/components/GroupDrawer';
 import GroupUploadModal from '@/components/GroupUploadModal';
 import AddStudentModal from '@/components/AddStudentModal';
 import {
@@ -30,6 +32,8 @@ import {
 } from 'lucide-react';
 import { differenceInDays, format, isAfter, isBefore, startOfMonth } from 'date-fns';
 
+type PlanStatus = 'NO_PLAN' | 'NOT_STARTED' | 'ON_TRACK' | 'BEHIND' | 'AT_RISK' | 'COMPLETE';
+
 // Rollout Status Helper
 const getRolloutStatus = (rolloutPlan: any) => {
   if (!rolloutPlan) return { status: 'NO_PLAN', color: 'slate', label: 'No Plan' };
@@ -51,8 +55,6 @@ const getRolloutStatus = (rolloutPlan: any) => {
 
   return { status: 'ON_TRACK', color: 'emerald', label: 'On Track' };
 };
-
-type PlanStatus = 'NO_PLAN' | 'NOT_STARTED' | 'ON_TRACK' | 'BEHIND' | 'COMPLETE';
 
 const extractStoredPlan = (notes: string | null | undefined) => {
   if (!notes) return null;
@@ -158,53 +160,50 @@ const MODULE_INFO = [
   { number: 6, name: 'Business Operations', credits: 26 },
 ];
 
-const TOTAL_CREDITS = 140;
+const TOTAL_CREDITS = MODULE_INFO.reduce((total, module) => total + module.credits, 0);
 
-// Get the current module info with full name
-const getCurrentModuleInfo = (plan: any): { label: string; moduleNumber: number | null } => {
+const getCurrentModuleInfo = (plan: any) => {
   if (!plan?.modules || plan.modules.length === 0) {
     return { label: '', moduleNumber: null };
   }
 
   const today = normalizeDate(new Date());
-  
-  // Check each module's unit standards to find the current one
+
   for (const module of plan.modules) {
-    if (!module.unitStandards || module.unitStandards.length === 0) continue;
-    
-    // Check if today falls within any unit standard of this module
+    if (!Array.isArray(module.unitStandards) || module.unitStandards.length === 0) continue;
+
     for (const unit of module.unitStandards) {
+      if (!unit?.startDate || !unit?.endDate) continue;
       const start = normalizeDate(parsePlanDate(unit.startDate));
       const end = normalizeDate(parsePlanDate(unit.endDate));
-      
+
       if (today >= start && today <= end) {
         const moduleNumber = module.moduleNumber ?? module.moduleIndex;
-        const moduleInfo = MODULE_INFO.find(m => m.number === moduleNumber);
+        const moduleInfo = MODULE_INFO.find((info) => info.number === moduleNumber);
         return {
-          label: moduleInfo ? `Module ${moduleInfo.number} – ${moduleInfo.name}` : `Module ${moduleNumber}`,
-          moduleNumber
+          label: moduleInfo ? `Module ${moduleInfo.number} - ${moduleInfo.name}` : `Module ${moduleNumber}`,
+          moduleNumber: moduleNumber ?? null,
         };
       }
     }
   }
 
-  // Check if programme is complete (past last workplace activity)
   const lastModule = plan.modules[plan.modules.length - 1];
-  if (lastModule?.workplaceActivityEndDate) {
-    const workplaceEnd = normalizeDate(parsePlanDate(lastModule.workplaceActivityEndDate));
+  const workplaceEndValue = lastModule?.workplaceActivityEndDate || lastModule?.workplaceActivity?.endDate;
+  if (workplaceEndValue) {
+    const workplaceEnd = normalizeDate(parsePlanDate(workplaceEndValue));
     if (today > workplaceEnd) {
       return { label: 'Programme Complete', moduleNumber: null };
     }
   }
 
-  // If we're past the last unit but before workplace end, still show the last module
   const lastUnitModule = plan.modules[plan.modules.length - 1];
   if (lastUnitModule) {
     const lastModuleNumber = lastUnitModule.moduleNumber ?? lastUnitModule.moduleIndex;
-    const moduleInfo = MODULE_INFO.find(m => m.number === lastModuleNumber);
+    const moduleInfo = MODULE_INFO.find((info) => info.number === lastModuleNumber);
     return {
-      label: moduleInfo ? `Module ${moduleInfo.number} – ${moduleInfo.name}` : `Module ${lastModuleNumber}`,
-      moduleNumber: lastModuleNumber
+      label: moduleInfo ? `Module ${moduleInfo.number} - ${moduleInfo.name}` : `Module ${lastModuleNumber}`,
+      moduleNumber: lastModuleNumber ?? null,
     };
   }
 
@@ -225,7 +224,7 @@ const getCreditCompletion = (plan: any): { completed: number; percentage: number
     if (module.workplaceActivityEndDate || module.workplaceActivity?.endDate) {
       const endValue = module.workplaceActivityEndDate || module.workplaceActivity?.endDate;
       const workplaceEnd = normalizeDate(parsePlanDate(endValue));
-      
+
       if (today > workplaceEnd) {
         // Find the module info to get its credit value
         const moduleNumber = module.moduleNumber ?? module.moduleIndex;
@@ -239,6 +238,13 @@ const getCreditCompletion = (plan: any): { completed: number; percentage: number
 
   const percentage = Math.round((completedCredits / TOTAL_CREDITS) * 100);
   return { completed: completedCredits, percentage };
+};
+
+const getPerformanceStatus = (projectedPercent: number, actualPercent: number, hasPlan: boolean): PlanStatus => {
+  if (!hasPlan) return 'NO_PLAN';
+  if (actualPercent >= projectedPercent) return 'ON_TRACK';
+  if (projectedPercent - actualPercent <= 10) return 'BEHIND';
+  return 'AT_RISK';
 };
 
 const renderStatusBadge = (status: PlanStatus) => {
@@ -255,6 +261,13 @@ const renderStatusBadge = (status: PlanStatus) => {
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700">
           <AlertTriangle className="w-3.5 h-3.5" />
           Behind
+        </span>
+      );
+    case 'AT_RISK':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-red-50 text-red-700">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          At Risk
         </span>
       );
     case 'NOT_STARTED':
@@ -288,7 +301,6 @@ export default function GroupsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCompanies, setExpandedCompanies] = useState<string[]>([]);
   const [expandedCollections, setExpandedCollections] = useState<string[]>(['montazility']);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
@@ -296,7 +308,30 @@ export default function GroupsPage() {
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [selectedForMerge, setSelectedForMerge] = useState<string[]>([]);
   const [attendanceByGroup, setAttendanceByGroup] = useState<Record<string, number>>({});
+  const { data: actualProgressData } = useSWR(
+    '/api/groups/progress',
+    (url: string) => fetch(url, { credentials: 'include' }).then((res) => res.json()),
+    { revalidateOnFocus: false }
+  );
+  const actualProgressByGroup = useMemo(() => {
+    const payload = actualProgressData?.data || actualProgressData || [];
+    const progressMap: Record<string, { avgCredits: number; avgPercent: number }> = {};
+    for (const item of payload) {
+      progressMap[item.groupId] = {
+        avgCredits: item.avgCreditsPerStudent || 0,
+        avgPercent: item.avgProgressPercent || 0,
+      };
+    }
+    return progressMap;
+  }, [actualProgressData]);
   const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
+  const [drawerGroup, setDrawerGroup] = useState<any | null>(null);
+  const [drawerMeta, setDrawerMeta] = useState<{
+    statusLabel: string;
+    currentModuleLabel: string;
+    attendanceRate: number;
+    actualProgress?: { avgCredits: number; avgPercent: number };
+  } | null>(null);
 
   // Define Collections (Dynamic)
   const montazilityCollection = {
@@ -332,7 +367,10 @@ export default function GroupsPage() {
     : 0;
   const programmeRows = activeGroups.map((group: any) => {
     const storedPlan = extractStoredPlan(group.notes);
-    const status = getPlanStatus(storedPlan);
+    const creditProgress = getCreditCompletion(storedPlan);
+    const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
+    const actualPercent = actualProgress?.avgPercent || actualProgress?.avgProgressPercent || 0;
+    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan));
     return {
       id: group.id,
       name: group.name,
@@ -344,6 +382,7 @@ export default function GroupsPage() {
   });
   const onTrackCount = programmeRows.filter((row) => row.status === 'ON_TRACK').length;
   const behindCount = programmeRows.filter((row) => row.status === 'BEHIND').length;
+  const atRiskCount = programmeRows.filter((row) => row.status === 'AT_RISK').length;
   const attendanceTone = avgAttendance >= 80 ? 'emerald' : avgAttendance >= 60 ? 'amber' : 'red';
 
   useEffect(() => {
@@ -419,7 +458,7 @@ export default function GroupsPage() {
     // Build confirmation message
     const studentCount = group._count?.students || 0;
     let confirmMessage = `Are you sure you want to delete "${group.name}"? This cannot be undone.`;
-    
+
     if (studentCount > 0) {
       confirmMessage += `\n\nWarning: This group has ${studentCount} student${studentCount !== 1 ? 's' : ''}. Deleting it will unassign them from this group.`;
     }
@@ -443,11 +482,22 @@ export default function GroupsPage() {
   };
 
   const handleViewGroup = (group: any) => {
-    setExpandedGroups(prev =>
-      prev.includes(group.id)
-        ? prev.filter(id => id !== group.id)
-        : [...prev, group.id]
-    );
+    const storedPlan = extractStoredPlan(group.notes);
+    const creditProgress = getCreditCompletion(storedPlan);
+    const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
+    const actualPercent = actualProgress?.avgPercent || actualProgress?.avgProgressPercent || 0;
+    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan));
+
+    setDrawerMeta({
+      statusLabel: status === 'AT_RISK' ? 'At Risk' : status === 'BEHIND' ? 'Behind' : status === 'ON_TRACK' ? 'On Track' : 'No Plan',
+      currentModuleLabel: getCurrentModuleLabel(storedPlan),
+      attendanceRate: attendanceByGroup[group.id] ?? 0,
+      actualProgress: actualProgress ? {
+        avgCredits: actualProgress.avgCredits || actualProgress.avgCreditsPerStudent || 0,
+        avgPercent: actualPercent,
+      } : undefined,
+    });
+    setDrawerGroup(group);
   };
 
   if (isLoading) {
@@ -639,7 +689,7 @@ export default function GroupsPage() {
                     onView={() => handleViewGroup(group)}
                     isSelected={selectedForMerge.includes(group.id)}
                     onSelect={() => toggleSelectForMerge(group.id)}
-                    isExpanded={expandedGroups.includes(group.id)}
+                    actualProgress={actualProgressByGroup[group.id]}
                   />
                 ))}
               </div>
@@ -660,7 +710,7 @@ export default function GroupsPage() {
               onView={() => handleViewGroup(group)}
               isSelected={selectedForMerge.includes(group.id)}
               onSelect={() => toggleSelectForMerge(group.id)}
-              isExpanded={expandedGroups.includes(group.id)}
+              actualProgress={actualProgressByGroup[group.id]}
             />
           ))}
         </div>
@@ -700,13 +750,12 @@ export default function GroupsPage() {
           <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
             <div className="flex items-center gap-3">
               <div
-                className={`p-3 rounded-lg text-white ${
-                  attendanceTone === 'emerald'
-                    ? 'bg-emerald-600'
-                    : attendanceTone === 'amber'
-                      ? 'bg-amber-500'
-                      : 'bg-red-500'
-                }`}
+                className={`p-3 rounded-lg text-white ${attendanceTone === 'emerald'
+                  ? 'bg-emerald-600'
+                  : attendanceTone === 'amber'
+                    ? 'bg-amber-500'
+                    : 'bg-red-500'
+                  }`}
               >
                 <Calendar className="w-5 h-5" />
               </div>
@@ -739,46 +788,52 @@ export default function GroupsPage() {
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm text-slate-600">Behind Schedule</p>
-                <p className="text-2xl font-semibold text-slate-900">{behindCount}</p>
+                <p className="text-sm text-slate-600">Behind / At Risk</p>
+                <p className="text-2xl font-semibold text-slate-900">{behindCount + atRiskCount}</p>
                 <p className="text-xs text-slate-500">Need attention</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-1">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            On Track
-          </span>
-          <span>Today falls within a scheduled unit standard.</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 px-2 py-1">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Behind
-          </span>
-          <span>Past a unit end date with the next not started.</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-700 px-2 py-1">
-            <Clock className="w-3.5 h-3.5" />
-            Not Started
-          </span>
-          <span>Plan exists, first unit not started yet.</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 text-teal-700 px-2 py-1">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Complete
-          </span>
-          <span>All units past assessing date.</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 px-2 py-1">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            No Plan
-          </span>
-          <span>No rollout plan saved.</span>
-          <span className="text-slate-500">Between Modules = between unit standards (no active range).</span>
-        </div>
-
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-base font-semibold text-slate-900">Group Performance</h4>
+            <div className="relative group">
+              <button className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 px-2.5 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">
+                Status guide
+                <Info className="w-3.5 h-3.5" />
+              </button>
+              <div className="absolute right-0 top-9 w-72 rounded-lg bg-white border border-slate-200 shadow-lg p-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+                <div className="space-y-2 text-xs text-slate-600">
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5">On Track</span>
+                    <span>Today falls within a scheduled unit standard.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 px-2 py-0.5">Behind</span>
+                    <span>Past a unit end date with the next not started.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 px-2 py-0.5">At Risk</span>
+                    <span>Actual progress lags projected by more than 10%.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-700 px-2 py-0.5">Not Started</span>
+                    <span>Plan exists, first unit not started yet.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 text-teal-700 px-2 py-0.5">Complete</span>
+                    <span>All units are past the assessing date.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 px-2 py-0.5">No Plan</span>
+                    <span>No rollout plan saved.</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">Between Modules means today sits between unit standard date ranges.</div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="overflow-x-auto border border-slate-200 rounded-lg">
             <table className="min-w-full divide-y divide-slate-200">
@@ -913,6 +968,16 @@ export default function GroupsPage() {
           }}
         />
       )}
+
+      <GroupDrawer
+        isOpen={Boolean(drawerGroup)}
+        group={drawerGroup}
+        onClose={() => setDrawerGroup(null)}
+        attendanceRate={drawerMeta?.attendanceRate}
+        actualProgress={drawerMeta?.actualProgress}
+        statusLabel={drawerMeta?.statusLabel}
+        currentModuleLabel={drawerMeta?.currentModuleLabel}
+      />
     </div>
   );
 }
@@ -926,21 +991,23 @@ interface GroupCardProps {
   onView: () => void;
   isSelected?: boolean;
   onSelect?: () => void;
-  isExpanded?: boolean;
+  actualProgress?: { avgCredits: number; avgPercent: number };
 }
 
-function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, isSelected, onSelect, isExpanded }: GroupCardProps) {
+function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, isSelected, onSelect, actualProgress }: GroupCardProps) {
   const router = useRouter();
   const studentCount = group._count?.students || 0;
   const attendanceRate = group.attendanceRate || 0;
-  const students = group.students || [];
-  
+
   // Extract rollout plan from notes
   const rolloutPlan = extractStoredPlan(group.notes);
-  
+
   // Get current module info and credit completion
   const currentModule = getCurrentModuleInfo(rolloutPlan);
   const creditProgress = getCreditCompletion(rolloutPlan);
+  const resolvedActualProgress = actualProgress || group.actualProgress;
+  const actualPercent = resolvedActualProgress?.avgPercent || resolvedActualProgress?.avgProgressPercent || 0;
+  const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan));
 
   const handleExportReport = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1001,32 +1068,41 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             <p className="text-2xl font-bold text-slate-900">{attendanceRate}%</p>
             <p className="text-xs text-slate-600">Attendance</p>
           </div>
-          
-          {/* Current Module and Progress Bar */}
-          {rolloutPlan && (
-            <div className="flex flex-col gap-2 flex-1 max-w-xs">
-              {/* Current Module Label */}
-              {currentModule.label && (
-                <p className="text-xs font-medium text-slate-700">
-                  {currentModule.label}
-                </p>
-              )}
-              
-              {/* Credit Progress Bar */}
+
+          {/* Dual Progress Bars (Projected + Actual) */}
+          <div className="flex flex-col gap-1.5 flex-1 max-w-xs">
+            {/* Current Module Label */}
+            {rolloutPlan && currentModule.label && (
+              <p className="text-xs font-medium text-slate-700">
+                {currentModule.label}
+              </p>
+            )}
+
+            {/* Projected */}
+            {rolloutPlan && (
               <div className="flex items-center gap-2">
-                <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300"
-                    style={{ width: `${creditProgress.percentage}%` }}
-                  />
+                <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><Calendar className="w-3 h-3" /> Proj</span>
+                <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all" style={{ width: `${creditProgress.percentage}%` }} />
                 </div>
-                <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                <span className="text-[10px] font-semibold text-teal-700 whitespace-nowrap w-20 text-right">
                   {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
                 </span>
               </div>
+            )}
+
+            {/* Actual */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3" /> Real</span>
+              <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all" style={{ width: `${actualProgress?.avgPercent || 0}%` }} />
+              </div>
+              <span className="text-[10px] font-semibold text-blue-700 whitespace-nowrap w-20 text-right">
+                {actualPercent}% ({resolvedActualProgress?.avgCredits || resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
+              </span>
             </div>
-          )}
-          
+          </div>
+
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={onAddStudents}
@@ -1097,7 +1173,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 Started {new Date(group.startDate).toLocaleDateString()}
               </p>
               {/* Rollout Status Badge */}
-              {renderStatusBadge(getPlanStatus(rolloutPlan))}
+              {renderStatusBadge(performanceStatus)}
             </div>
           </div>
         </div>
@@ -1120,33 +1196,53 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
         </div>
       </div>
 
-      {/* Current Module and Progress Bar */}
-      {rolloutPlan && (
-        <div className="mb-4 space-y-2">
-          {/* Current Module Label */}
-          {currentModule.label && (
-            <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              {currentModule.label}
-            </p>
-          )}
-          
-          {/* Credit Progress Bar */}
+      {/* Current Module & Progress Bars */}
+      <div className="mb-4 space-y-3 px-4">
+        {/* Current Module Label */}
+        {rolloutPlan && currentModule.label && (
+          <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            {currentModule.label}
+          </p>
+        )}
+
+        {/* Projected Progress Bar (from rollout plan dates) */}
+        {rolloutPlan && (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-400">Credit Progress</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-300">
-                {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS} credits)
+              <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                <Calendar className="w-3 h-3" /> Projected
+              </span>
+              <span className="font-semibold text-teal-700 dark:text-teal-300">
+                {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
               </span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-300"
                 style={{ width: `${creditProgress.percentage}%` }}
               />
             </div>
           </div>
+        )}
+
+        {/* Actual Progress Bar (from real assessment data) */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Actual
+            </span>
+            <span className="font-semibold text-blue-700 dark:text-blue-300">
+              {actualPercent}% ({resolvedActualProgress?.avgCredits || resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
+            </span>
+          </div>
+          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-300"
+              style={{ width: `${actualPercent}%` }}
+            />
+          </div>
         </div>
-      )}
+      </div>
 
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
         <button
@@ -1180,51 +1276,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
       </div>
 
 
-      {/* Students List */}
-      {
-        isExpanded && studentCount > 0 && (
-          <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-            <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Students ({studentCount})
-            </h5>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {students.map((student: any) => (
-                <div key={student.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-semibold text-xs">
-                      {student.firstName?.charAt(0)}{student.lastName?.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {student.firstName} {student.lastName}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{student.studentId}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{student.progress || 0}%</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Progress</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      }
-      {
-        isExpanded && studentCount === 0 && (
-          <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 text-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400">No students in this group yet</p>
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddStudents(); }}
-              className="mt-2 text-sm text-teal-600 dark:text-teal-400 hover:underline"
-            >
-              Add first student
-            </button>
-          </div>
-        )
-      }
+      {/* Drawer handles student drill-down */}
     </div >
   );
 }

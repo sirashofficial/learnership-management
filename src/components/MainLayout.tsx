@@ -3,13 +3,29 @@
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
 const publicPaths = ['/login', '/register'];
 
 export default function MainLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const isPublicPage = publicPaths.includes(pathname);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('sidebarCollapsed');
+        if (saved === 'true') {
+            setIsSidebarCollapsed(true);
+        }
+    }, []);
+
+    const handleToggleSidebar = () => {
+        setIsSidebarCollapsed((prev) => {
+            const next = !prev;
+            localStorage.setItem('sidebarCollapsed', String(next));
+            return next;
+        });
+    };
 
     if (isPublicPage) {
         return (
@@ -23,8 +39,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
     return (
         <div className="min-h-screen bg-white">
-            <Sidebar />
-            <main className="transition-all duration-150 ml-[var(--sidebar-width)] min-h-screen">
+            <Sidebar isCollapsed={isSidebarCollapsed} onToggle={handleToggleSidebar} />
+            <main
+                className={`min-h-screen transition-all duration-300 ease-in-out ${
+                    isSidebarCollapsed ? 'ml-[var(--sidebar-collapsed)]' : 'ml-[var(--sidebar-width)]'
+                }`}
+            >
                 <Header />
                 <div className="px-6 lg:px-8 py-6 page-enter">
                     {children}

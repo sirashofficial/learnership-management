@@ -1,41 +1,55 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-// GET /api/timetable/[id] - Get lesson details
+import { getGroupColour } from '@/lib/groupColours';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const lesson = await prisma.lessonPlan.findUnique({
+    const session = await prisma.lessonPlan.findUnique({
       where: { id: params.id },
       include: {
-        module: true,
-        facilitator: {
+        group: {
           select: {
             id: true,
             name: true,
-            email: true,
-          },
-        },
-        group: {
-          include: {
           },
         },
       },
     });
 
-    if (!lesson) {
-      return errorResponse('Lesson not found', 404);
+    if (!session) {
+      return Response.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    return successResponse(lesson);
+    return Response.json({
+      data: {
+        id: session.id,
+        title: session.title,
+        date: session.date,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        venue: session.venue,
+        groupId: session.groupId,
+        group: session.group
+          ? {
+              id: session.group.id,
+              name: session.group.name,
+              colour: getGroupColour(session.group.name),
+            }
+          : null,
+      },
+    });
   } catch (error) {
-    return handleApiError(error);
+    console.error('Error fetching timetable session:', error);
+    return Response.json(
+      { error: 'Failed to fetch timetable session' },
+      { status: 500 }
+    );
   }
 }
 
-// PATCH /api/timetable/[id] - Update lesson
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -43,37 +57,27 @@ export async function PATCH(
   try {
     const body = await request.json();
 
-    const lesson = await prisma.lessonPlan.update({
+    const existing = await prisma.lessonPlan.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!existing) {
+      return Response.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    const session = await prisma.lessonPlan.update({
       where: { id: params.id },
       data: {
-        ...(body.title && { title: body.title }),
-        ...(body.description !== undefined && { description: body.description }),
-        ...(body.date && { date: new Date(body.date) }),
-        ...(body.startTime && { startTime: body.startTime }),
-        ...(body.endTime && { endTime: body.endTime }),
-        ...(body.venue !== undefined && { venue: body.venue }),
-        ...(body.objectives !== undefined && { objectives: body.objectives }),
-        ...(body.materials !== undefined && { materials: body.materials }),
-        ...(body.activities !== undefined && { activities: body.activities }),
-        ...(body.notes !== undefined && { notes: body.notes }),
-        ...(body.moduleId && { moduleId: body.moduleId }),
-        ...(body.groupId && { groupId: body.groupId }),
+        title: body.title ?? existing.title,
+        description: body.description ?? existing.description,
+        date: body.date ? new Date(body.date) : existing.date,
+        startTime: body.startTime ?? existing.startTime,
+        endTime: body.endTime ?? existing.endTime,
+        venue: body.venue ?? existing.venue,
+        groupId: body.groupId ?? existing.groupId,
+        notes: body.notes ?? existing.notes,
       },
       include: {
-        module: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-          },
-        },
-        facilitator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
         group: {
           select: {
             id: true,
@@ -83,24 +87,54 @@ export async function PATCH(
       },
     });
 
-    return successResponse(lesson, 'Lesson updated successfully');
+    return Response.json({
+      data: {
+        id: session.id,
+        title: session.title,
+        date: session.date,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        venue: session.venue,
+        groupId: session.groupId,
+        group: session.group
+          ? {
+              id: session.group.id,
+              name: session.group.name,
+              colour: getGroupColour(session.group.name),
+            }
+          : null,
+      },
+    });
   } catch (error) {
-    return handleApiError(error);
+    console.error('Error updating timetable session:', error);
+    return Response.json(
+      { error: 'Failed to update timetable session' },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE /api/timetable/[id] - Delete lesson
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.lessonPlan.delete({
+    const existing = await prisma.lessonPlan.findUnique({
       where: { id: params.id },
     });
 
-    return successResponse(null, 'Lesson deleted successfully');
+    if (!existing) {
+      return Response.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    await prisma.lessonPlan.delete({ where: { id: params.id } });
+
+    return Response.json({ success: true });
   } catch (error) {
-    return handleApiError(error);
+    console.error('Error deleting timetable session:', error);
+    return Response.json(
+      { error: 'Failed to delete timetable session' },
+      { status: 500 }
+    );
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   startOfMonth,
   endOfMonth,
@@ -14,9 +14,10 @@ import {
   subMonths,
   parseISO,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus, Bell } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-config';
+import { useGroups } from '@/contexts/GroupsContext';
 import { EventDetailModal } from './EventDetailModal';
 import { PlanForm } from './PlanForm';
 import { SessionForm } from './SessionForm';
@@ -30,6 +31,11 @@ interface Lesson {
   endTime: string;
   venue?: string;
   groupId?: string;
+  group?: {
+    id: string;
+    name: string;
+    colour: string;
+  } | null;
 }
 
 interface Plan {
@@ -56,7 +62,18 @@ interface CalendarEvent {
   data: Lesson | Plan;
 }
 
-export function TimetableCalendarView() {
+interface TimetableCalendarViewProps {
+  groupId?: string;
+}
+
+function getShortGroupName(name: string) {
+  return name
+    .replace(/\s*\(LP\)\s*-\s*\d{4}/i, '')
+    .replace(/\s*\(\d{4}\)/i, '')
+    .trim();
+}
+
+export function TimetableCalendarView({ groupId }: TimetableCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
@@ -65,13 +82,18 @@ export function TimetableCalendarView() {
   const [selectedDayForPlan, setSelectedDayForPlan] = useState<Date | null>(null);
   const [selectedDayForSession, setSelectedDayForSession] = useState<Date | null>(null);
   const [editingSession, setEditingSession] = useState<any>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const { groups } = useGroups();
 
   // Fetch lessons for the month
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
+  const lessonsUrl = `/api/timetable?start=${monthStart.toISOString()}&end=${monthEnd.toISOString()}${
+    groupId ? `&groupId=${groupId}` : ''
+  }`;
 
   const { data: lessonsData, mutate: mutateLessons } = useSWR(
-    `/api/timetable?startDate=${monthStart.toISOString()}&endDate=${monthEnd.toISOString()}`,
+    lessonsUrl,
     fetcher
   );
 
@@ -94,7 +116,7 @@ export function TimetableCalendarView() {
           date: parseISO(lesson.date),
           startTime: lesson.startTime,
           endTime: lesson.endTime,
-          color: '#3b82f6', // Blue for lessons
+          color: lesson.group?.colour || '#3b82f6',
           data: lesson,
         });
       });
@@ -145,8 +167,14 @@ export function TimetableCalendarView() {
     return calendarEvents.filter((event) => isSameDay(event.date, day));
   };
 
+  const getStudentCount = (groupId?: string) => {
+    if (!groupId) return 0;
+    const match = groups.find((group) => group.id === groupId);
+    return match?._count?.students || match?.students?.length || 0;
+  };
+
   const handleDayClick = (day: Date, event?: CalendarEvent) => {
-    if (event) {
+    if (event && event.type === 'plan') {
       setSelectedEvent(event);
       setShowEventModal(true);
     }
@@ -247,6 +275,13 @@ export function TimetableCalendarView() {
                   const isCurrentMonth = isSameMonth(day, currentDate);
                   const isToday = isSameDay(day, new Date());
 
+                  const sessionEvents = dayEvents.filter(
+                    (event) => event.type === 'lesson'
+                  );
+                  const planEvents = dayEvents.filter(
+                    (event) => event.type === 'plan'
+                  );
+
                   return (
                     <div
                       key={day.toISOString()}
@@ -268,28 +303,61 @@ export function TimetableCalendarView() {
                         {format(day, 'd')}
                       </div>
 
-                      {/* Events */}
+                      {/* Sessions */}
                       <div className="space-y-1">
-                        {dayEvents.slice(0, 2).map((event) => (
-                          <div
-                            key={event.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDayClick(day, event);
-                            }}
-                            className="text-xs p-1 rounded truncate text-white font-semibold cursor-pointer hover:opacity-80 transition"
-                            style={{ backgroundColor: event.color }}
-                            title={event.title}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
-                        {dayEvents.length > 2 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 pl-1">
-                            +{dayEvents.length - 2} more
-                          </div>
-                        )}
+                        {sessionEvents.map((event) => {
+                          const lesson = event.data as Lesson;
+                          const isActive = activeSessionId === event.id;
+                          const groupName = lesson.group?.name || 'Unknown group';
+                          return (
+                            <div key={event.id} className="relative">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveSessionId(isActive ? null : event.id);
+                                }}
+                                className="w-full text-left text-xs px-2 py-1 rounded text-white font-semibold truncate hover:opacity-90 transition"
+                                style={{ backgroundColor: event.color }}
+                                title={groupName}
+                              >
+                                {getShortGroupName(groupName)}
+                              </button>
+                              {isActive && (
+                                <div className="absolute z-20 mt-1 w-56 rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 shadow-lg">
+                                  <p className="font-semibold text-slate-900">{groupName}</p>
+                                  <p className="text-slate-600">{lesson.venue || 'Venue TBC'}</p>
+                                  <p className="text-slate-600">
+                                    {lesson.startTime} - {lesson.endTime}
+                                  </p>
+                                  <p className="text-slate-600">
+                                    Students: {getStudentCount(lesson.groupId)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
+
+                      {/* Plans */}
+                      {planEvents.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {planEvents.map((event) => (
+                            <div
+                              key={event.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDayClick(day, event);
+                              }}
+                              className="text-[10px] px-2 py-1 rounded border border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100 transition"
+                              title={event.title}
+                            >
+                              {event.title}
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Quick add button */}
                       {isCurrentMonth && (

@@ -59,8 +59,12 @@ const adminItems = [
     { icon: Shield, label: "User Management", href: "/admin/users" },
 ];
 
-export default function Sidebar() {
-    const [isCollapsed, setIsCollapsed] = useState(false);
+interface SidebarProps {
+    isCollapsed: boolean;
+    onToggle: () => void;
+}
+
+export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     const [sidebarTheme, setSidebarTheme] = useState<'dark' | 'light'>('dark');
     const pathname = usePathname();
     const { user, logout } = useAuth();
@@ -124,7 +128,7 @@ export default function Sidebar() {
     return (
         <aside
             className={cn(
-                "fixed left-0 top-0 h-full z-50 transition-all duration-200",
+                "fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out",
                 isCollapsed ? "w-[var(--sidebar-collapsed)]" : "w-[var(--sidebar-width)]"
             )}
         >
@@ -153,7 +157,7 @@ export default function Sidebar() {
                         )}
                     </div>
                     <button
-                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        onClick={onToggle}
                         className={cn(
                             "p-1.5 rounded-md transition-colors duration-150",
                             isDark

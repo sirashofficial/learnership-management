@@ -9,7 +9,7 @@
  */
 
 :root {
-  --sidebar-width: 240px;
+  --sidebar-width: 256px;
   --sidebar-collapsed: 64px;
   --header-height: 57px;
 }

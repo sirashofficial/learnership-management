@@ -47,7 +47,7 @@ export const createAssessmentSchema = z.object({
     studentId: z.string().uuid('Invalid student ID'),
     unitStandard: z.string().min(1, 'Unit standard is required'),
     module: z.string().min(1, 'Module is required'),
-    type: z.enum(['FORMATIVE', 'SUMMATIVE', 'INTEGRATED']),
+    type: z.enum(['FORMATIVE', 'SUMMATIVE', 'WORKPLACE', 'INTEGRATED']),
     method: z.enum(['KNOWLEDGE', 'PRACTICAL', 'OBSERVATION', 'PORTFOLIO']),
     result: z.enum(['COMPETENT', 'NOT_YET_COMPETENT', 'PENDING']).optional(),
     score: z.number().min(0).max(100).optional(),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     ArrowLeft,
@@ -13,16 +13,19 @@ import {
     TrendingUp,
     CheckCircle2,
     AlertCircle,
-    Download
+    Download,
+    ChevronUp
 } from 'lucide-react';
 import { format } from 'date-fns';
+import useSWR, { mutate as globalMutate } from 'swr';
 import { cn } from '@/lib/utils';
 import { generateRolloutPlan } from '@/lib/rolloutPlanGenerator';
 import { downloadRolloutDocx } from '@/lib/downloadRolloutDocx';
 import { TodayClassesDashboard } from '@/components/TodayClassesDashboard';
+import Toast, { useToast } from '@/components/Toast';
+import { fetcher } from '@/lib/swr-config';
 import {
     extractRolloutPlan,
-    formatDate,
     isCurrentlyActive,
     getTotalCredits,
     getProjectedCompletionDate,
@@ -41,8 +44,11 @@ interface AssessmentStats {
     earnedCredits: number;
 }
 
+type AssessmentType = 'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE';
+
 export default function GroupDetailPage({ params }: GroupDetailProps) {
     const router = useRouter();
+    const { toast, showToast, hideToast } = useToast();
     const [group, setGroup] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isGeneratingLessons, setIsGeneratingLessons] = useState(false);
@@ -57,6 +63,32 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
 
     const planSummary = rolloutPlan || extractRolloutPlan(group?.notes);
 
+    const { data: assessmentsData, mutate: mutateAssessments } = useSWR(
+        params.id ? `/api/assessments?groupId=${params.id}` : null,
+        fetcher
+    );
+    const assessments = useMemo(() => {
+        const raw = assessmentsData?.data || assessmentsData || [];
+        return Array.isArray(raw) ? raw : [];
+    }, [assessmentsData]);
+
+    const { data: unitStandardsData } = useSWR('/api/unit-standards', fetcher);
+    const unitStandards = useMemo(() => {
+        const raw = unitStandardsData?.data || unitStandardsData || [];
+        return Array.isArray(raw) ? raw : [];
+    }, [unitStandardsData]);
+    const unitStandardByCode = useMemo(() => {
+        const map = new Map<string, any>();
+        unitStandards.forEach((unit: any) => {
+            if (unit?.code) {
+                map.set(String(unit.code), unit);
+            }
+        });
+        return map;
+    }, [unitStandards]);
+
+    const students = useMemo(() => group?.students || [], [group]);
+
     // Derived stats
     const totalCredits = useMemo(() => getTotalCredits(planSummary), [planSummary]);
     const projectedDate = useMemo(() => getProjectedCompletionDate(planSummary), [planSummary]);
@@ -64,6 +96,162 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
         calculateProjectedVsActual(planSummary, assessmentStats.completedIds),
         [planSummary, assessmentStats.completedIds]
     );
+
+    const [openRowKey, setOpenRowKey] = useState<string | null>(null);
+
+    const assessmentIndex = useMemo(() => {
+        const map = new Map<string, any>();
+        assessments.forEach((assessment: any) => {
+            const unitId = assessment.unitStandard?.id || assessment.unitStandardId;
+            const studentId = assessment.student?.id || assessment.studentId;
+            if (!unitId || !studentId || !assessment.type) return;
+            const key = `${studentId}|${unitId}|${assessment.type}`;
+            map.set(key, assessment);
+        });
+        return map;
+    }, [assessments]);
+
+    const toggleRow = useCallback((rowKey: string) => {
+        setOpenRowKey((prev) => (prev === rowKey ? null : rowKey));
+    }, []);
+
+    const refreshAssessmentStats = useCallback(async () => {
+        try {
+            const statusRes = await fetch(`/api/groups/${params.id}/assessment-status`);
+            if (statusRes.ok) {
+                setAssessmentStats(await statusRes.json());
+            }
+        } catch (error) {
+            console.error('Error refreshing assessment stats:', error);
+        }
+    }, [params.id]);
+
+    const updateAssessmentsCache = useCallback((updatedAssessment: any) => {
+        mutateAssessments((prev: any) => {
+            const previousList = Array.isArray(prev) ? prev : prev?.data || [];
+            const next = previousList.map((item: any) =>
+                item.id === updatedAssessment.id ? updatedAssessment : item
+            );
+            const exists = previousList.some((item: any) => item.id === updatedAssessment.id);
+            const nextList = exists ? next : [updatedAssessment, ...previousList];
+            return Array.isArray(prev) ? nextList : { ...prev, data: nextList };
+        }, { revalidate: false });
+    }, [mutateAssessments]);
+
+    const handleAssessmentToggle = useCallback(async (
+        studentId: string,
+        unitStandardId: string,
+        type: AssessmentType,
+        targetResult: 'COMPETENT' | 'NOT_YET_COMPETENT'
+    ) => {
+        if (!unitStandardId) return;
+        const key = `${studentId}|${unitStandardId}|${type}`;
+        const existing = assessmentIndex.get(key);
+        const current = existing?.result || 'PENDING';
+        const newResult = current === targetResult ? 'PENDING' : targetResult;
+
+        console.log('TOGGLE CALLED', {
+            studentId,
+            unitStandardId,
+            assessmentType: type,
+            currentResult: current,
+        });
+
+        try {
+            if (existing?.id) {
+                const res = await fetch(`/api/assessments/${existing.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        result: newResult,
+                        assessedDate: newResult !== 'PENDING' ? new Date().toISOString() : null,
+                    }),
+                });
+
+                if (res.ok) {
+                    const updated = await res.json();
+                    updateAssessmentsCache(updated?.data || updated);
+                }
+            } else if (newResult !== 'PENDING') {
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + 7);
+                const res = await fetch('/api/assessments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        studentId,
+                        unitStandardId,
+                        type,
+                        method: 'PRACTICAL',
+                        result: newResult,
+                        dueDate,
+                        assessedDate: new Date().toISOString(),
+                    }),
+                });
+
+                if (res.ok) {
+                    const created = await res.json();
+                    updateAssessmentsCache(created?.data || created);
+                }
+            }
+
+            refreshAssessmentStats();
+            globalMutate('/api/assessments');
+            globalMutate('/api/students');
+            globalMutate('/api/groups');
+            globalMutate(`/api/groups/${params.id}`);
+        } catch (error) {
+            console.error('Failed to update assessment', error);
+            showToast('Failed to update assessment', 'error');
+        }
+    }, [assessmentIndex, params.id, refreshAssessmentStats, showToast, updateAssessmentsCache]);
+
+    const handleBulkPass = useCallback(async (
+        unitStandardId: string,
+        assessmentType: AssessmentType,
+        studentIds: string[]
+    ) => {
+        if (!unitStandardId || studentIds.length === 0) return;
+
+        try {
+            const res = await fetch('/api/assessments/bulk-pass', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    unitStandardId,
+                    assessmentType,
+                    studentIds,
+                }),
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Failed to bulk pass assessments');
+            }
+
+            const data = await res.json();
+            const updated = data?.data?.updated ?? data?.updated ?? 0;
+            const skipped = data?.data?.skipped ?? data?.skipped ?? 0;
+
+            showToast(
+                `✓ ${updated} students marked as Passed. ${skipped} students skipped (already passed or failed).`,
+                'success'
+            );
+
+            mutateAssessments();
+            refreshAssessmentStats();
+            globalMutate('/api/assessments');
+            globalMutate('/api/students');
+            globalMutate('/api/groups');
+            globalMutate(`/api/groups/${params.id}`);
+        } catch (error: any) {
+            console.error('Failed to bulk pass assessments', error);
+            showToast(error?.message || 'Failed to bulk pass assessments', 'error');
+        }
+    }, [mutateAssessments, params.id, refreshAssessmentStats, showToast]);
 
     useEffect(() => {
         const fetchGroupData = async () => {
@@ -301,10 +489,10 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                                     <table className="w-full text-sm text-left">
                                         <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
                                             <tr>
-                                                <th className="px-6 py-4 min-w-[140px]">Dates</th>
-                                                <th className="px-6 py-4 min-w-[200px]">Module & Unit Standard</th>
-                                                <th className="px-6 py-4 w-24 text-center">Credits</th>
-                                                <th className="px-6 py-4 w-32 text-center">Status</th>
+                                                <th className="px-6 py-4 min-w-[180px]">Dates</th>
+                                                <th className="px-6 py-4">Unit Standard</th>
+                                                <th className="px-6 py-4 w-[70px] text-center">Credits</th>
+                                                <th className="px-6 py-4 w-[150px] text-center">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -313,8 +501,13 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                                                     key={index}
                                                     module={module}
                                                     index={index}
-                                                    statusMap={assessmentStats.statusMap}
-                                                    router={router}
+                                                    students={students}
+                                                    assessmentIndex={assessmentIndex}
+                                                    unitStandardByCode={unitStandardByCode}
+                                                    openRowKey={openRowKey}
+                                                    onToggleRow={toggleRow}
+                                                    onToggleAssessment={handleAssessmentToggle}
+                                                    onBulkPass={handleBulkPass}
                                                 />
                                             ))}
                                         </tbody>
@@ -465,11 +658,33 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                     </div>
                 </div>
             )}
+
+            {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
         </div>
     );
 }
 
-function ModuleSection({ module, index, statusMap, router }: { module: any, index: number, statusMap: any, router: any }) {
+function ModuleSection({
+    module,
+    index,
+    students,
+    assessmentIndex,
+    unitStandardByCode,
+    openRowKey,
+    onToggleRow,
+    onToggleAssessment,
+    onBulkPass,
+}: {
+    module: any;
+    index: number;
+    students: any[];
+    assessmentIndex: Map<string, any>;
+    unitStandardByCode: Map<string, any>;
+    openRowKey: string | null;
+    onToggleRow: (rowKey: string) => void;
+    onToggleAssessment: (studentId: string, unitStandardId: string, type: AssessmentType, targetResult: 'COMPETENT' | 'NOT_YET_COMPETENT') => void;
+    onBulkPass: (unitStandardId: string, assessmentType: AssessmentType, studentIds: string[]) => void;
+}) {
     const moduleNumber = module.moduleNumber ?? module.moduleIndex ?? index + 1;
     const moduleName = module.moduleName || `Module ${moduleNumber}`;
     const units = Array.isArray(module.unitStandards) ? module.unitStandards : [];
@@ -477,141 +692,492 @@ function ModuleSection({ module, index, statusMap, router }: { module: any, inde
     const workplaceStart = module.workplaceActivity?.startDate || module.workplaceActivityStartDate;
     const workplaceEnd = module.workplaceActivity?.endDate || module.workplaceActivityEndDate;
     const hasWorkplace = !!workplaceStart;
+    const resolveUnitStandardId = (unitId: string) => {
+        if (!unitId) return '';
+        const fromCode = unitStandardByCode.get(String(unitId))?.id;
+        if (fromCode) return fromCode;
+        if (String(unitId).includes('-')) return unitId;
+        return '';
+    };
+
+    const workplaceAnchorUnitId = resolveUnitStandardId(units[0]?.id || '');
+
+    const getResultFor = (studentId: string, unitStandardId: string, type: AssessmentType | 'INTEGRATED') => {
+        if (!unitStandardId) return 'PENDING';
+        const key = `${studentId}|${unitStandardId}|${type}`;
+        return assessmentIndex.get(key)?.result || 'PENDING';
+    };
+
+    const isOverdue = (dateValue?: string | null) => {
+        const parsed = parsePlanDate(dateValue || '');
+        if (!parsed) return false;
+        return normalizeDate(new Date()) > normalizeDate(parsed);
+    };
+
+    const getUnitStatus = (unit: any) => {
+        if (students.length === 0) {
+            return 'NOT_STARTED';
+        }
+
+        const resolvedUnitId = resolveUnitStandardId(unit.id);
+        if (!resolvedUnitId) return 'NOT_STARTED';
+
+        const formativePassed = students.filter((student) =>
+            getResultFor(student.id, resolvedUnitId, 'FORMATIVE') === 'COMPETENT'
+        ).length;
+
+        const summativePassed = students.filter((student) => {
+            const summative = getResultFor(student.id, resolvedUnitId, 'SUMMATIVE') === 'COMPETENT';
+            const integrated = getResultFor(student.id, resolvedUnitId, 'INTEGRATED') === 'COMPETENT';
+            return summative || integrated;
+        }).length;
+
+        const allComplete = formativePassed === students.length && summativePassed === students.length;
+
+        const hasAnyAssessment = students.some((student) => {
+            return ['FORMATIVE', 'SUMMATIVE', 'WORKPLACE', 'INTEGRATED'].some((type) =>
+                assessmentIndex.has(`${student.id}|${resolvedUnitId}|${type}`)
+            );
+        });
+
+        const scheduledDate = unit.assessingDate || unit.endDate || unit.summativeDate;
+
+        if (allComplete) return 'COMPLETED';
+        if (scheduledDate && isOverdue(scheduledDate)) return 'OVERDUE';
+        if (hasAnyAssessment) return 'IN_PROGRESS';
+        return 'NOT_STARTED';
+    };
+
+    const getWorkplaceStatus = () => {
+        if (!workplaceAnchorUnitId || students.length === 0) {
+            return 'REQUIRED';
+        }
+
+        const passedCount = students.filter((student) =>
+            getResultFor(student.id, workplaceAnchorUnitId, 'WORKPLACE') === 'COMPETENT'
+        ).length;
+
+        const hasAnyAssessment = students.some((student) =>
+            assessmentIndex.has(`${student.id}|${workplaceAnchorUnitId}|WORKPLACE`)
+        );
+
+        if (passedCount === students.length) return 'COMPLETED';
+        if (hasAnyAssessment) return 'IN_PROGRESS';
+        return 'REQUIRED';
+    };
 
     return (
         <>
-            {/* Module Separator */}
-            <tr className="bg-slate-50/50 border-b border-t border-slate-200">
-                <td colSpan={4} className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
-                            MODULE {moduleNumber}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                            {moduleName}
-                        </span>
-                    </div>
+            <tr className="bg-gray-100 border-b-2 border-gray-200">
+                <td colSpan={4} className="py-3 px-4 text-sm font-bold uppercase text-slate-600">
+                    MODULE {moduleNumber} - {moduleName}
                 </td>
             </tr>
 
-            {/* Unit Standards */}
             {units.map((unit: any) => {
-                const isActive = isCurrentlyActive(unit.startDate, unit.endDate);
-                const status = statusMap[unit.id] || 'not-started';
+                const rowKey = `unit:${unit.id}`;
+                const isOpen = openRowKey === rowKey;
+                const status = getUnitStatus(unit);
+                const code = unit.code || unit.id;
+                const resolvedUnitId = resolveUnitStandardId(unit.id);
 
                 return (
-                    <tr
-                        key={unit.id}
-                        onClick={() => router.push(`/assessments?unitStandardId=${unit.id}`)}
-                        className={cn(
-                            "group cursor-pointer transition-all border-l-[4px] border-b border-slate-50",
-                            isActive
-                                ? "bg-emerald-50/50 border-l-emerald-500 hover:bg-emerald-100/50"
-                                : "bg-white border-l-transparent hover:bg-slate-50 hover:border-l-slate-300"
-                        )}
-                    >
-                        {/* Dates */}
-                        <td className="px-6 py-4 align-top">
-                            <div className="flex flex-col gap-1 text-xs">
-                                <span className={cn("font-medium", isActive ? "text-emerald-900" : "text-slate-900")}>
-                                    {unit.startDate} - {unit.endDate}
-                                </span>
-                                {(unit.summativeDate || unit.assessingDate) && (
-                                    <div className="mt-1 text-slate-500 flex flex-col gap-0.5">
-                                        {unit.summativeDate && <span>Summ: {unit.summativeDate}</span>}
-                                        {unit.assessingDate && <span>Assess: {unit.assessingDate}</span>}
-                                    </div>
-                                )}
-                            </div>
-                        </td>
+                    <Fragment key={unit.id}>
+                        <tr
+                            className={cn(
+                                "border-b border-slate-50",
+                                isCurrentlyActive(unit.startDate, unit.endDate)
+                                    ? "bg-emerald-50/40"
+                                    : "bg-white"
+                            )}
+                        >
+                            <td className="px-6 py-5 align-top">
+                                <div className="flex flex-col gap-1 text-sm text-slate-700">
+                                    <span className="font-medium">
+                                        {formatDateRange(unit.startDate, unit.endDate)}
+                                    </span>
+                                    {(unit.summativeDate || unit.assessingDate) && (
+                                        <div className="text-xs text-slate-500 flex flex-col gap-0.5">
+                                            {unit.summativeDate && (
+                                                <span>Summ: {formatShortDate(unit.summativeDate)}</span>
+                                            )}
+                                            {unit.assessingDate && (
+                                                <span>Assess: {formatShortDate(unit.assessingDate)}</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </td>
 
-                        {/* Details */}
-                        <td className="px-6 py-4 align-top">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-mono text-xs text-slate-500 min-w-[34px]">{unit.id}</span>
-                                    <span className={cn("font-medium text-sm line-clamp-1", isActive ? "text-emerald-900" : "text-slate-900")}>
+                            <td className="px-6 py-5 align-top">
+                                <div className="flex flex-col gap-1">
+                                    <span className="font-mono text-xs text-slate-500">{code}</span>
+                                    <span className="font-medium text-sm text-slate-900 whitespace-normal">
                                         {unit.title}
                                     </span>
                                 </div>
-                            </div>
-                        </td>
+                            </td>
 
-                        {/* Credits */}
-                        <td className="px-6 py-4 align-top text-center">
-                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
-                                {unit.credits}
-                            </span>
-                        </td>
+                            <td className="px-6 py-5 align-top text-center">
+                                <div className="font-bold text-slate-900">{unit.credits}</div>
+                                <div className="text-xs text-slate-400">cr</div>
+                            </td>
 
-                        {/* Status */}
-                        <td className="px-6 py-4 align-top text-center">
-                            <StatusPill status={status} />
-                        </td>
-                    </tr>
+                            <td className="px-6 py-5 align-top text-center">
+                                <button
+                                    type="button"
+                                    onClick={() => onToggleRow(rowKey)}
+                                    className="w-full flex justify-center"
+                                >
+                                    <StatusPill status={status} />
+                                </button>
+                            </td>
+                        </tr>
+
+                        {isOpen && (
+                            <tr>
+                                <td colSpan={4} className="bg-white">
+                                    <InlineMarkingPanel
+                                        rowKey={rowKey}
+                                        unit={unit}
+                                        module={module}
+                                        students={students}
+                                        assessmentIndex={assessmentIndex}
+                                        onToggleAssessment={onToggleAssessment}
+                                        onBulkPass={onBulkPass}
+                                        isWorkplaceActivity={false}
+                                        hasWorkplace={hasWorkplace}
+                                        unitStandardId={resolvedUnitId}
+                                        onClose={() => onToggleRow(rowKey)}
+                                    />
+                                </td>
+                            </tr>
+                        )}
+                    </Fragment>
                 );
             })}
 
-            {/* Workplace Activity */}
             {hasWorkplace && (
-                <tr className="bg-amber-50 border-b border-amber-100 border-l-[4px] border-l-amber-400">
-                    <td className="px-6 py-4 align-middle text-xs font-semibold text-amber-900" style={{ fontFamily: 'monospace' }}>
-                        {formatDate(workplaceStart)} - {formatDate(workplaceEnd)}
-                    </td>
-                    <td colSpan={2} className="px-6 py-4 align-middle">
-                        <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200">
-                                Workplace Activity
-                            </span>
-                            <span className="text-xs font-medium text-amber-900">
-                                {module.workplaceActivity?.label || 'Workplace Experience Component'}
-                            </span>
-                        </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                        <span className="text-[10px] font-bold text-amber-700/60 uppercase">
-                            Required
-                        </span>
-                    </td>
-                </tr>
+                <>
+                    <tr className="bg-amber-50 border-b border-amber-100 border-l-4 border-l-amber-400">
+                        <td className="px-6 py-5 align-top text-sm font-semibold text-amber-900">
+                            {formatDateRange(workplaceStart, workplaceEnd)}
+                        </td>
+                        <td className="px-6 py-5 align-top">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                                    Workplace Activity
+                                </span>
+                                <span className="text-sm font-medium text-amber-900 whitespace-normal">
+                                    {module.workplaceActivity?.label || 'Workplace Experience Component'}
+                                </span>
+                            </div>
+                        </td>
+                        <td className="px-6 py-5 align-top text-center">
+                            <div className="font-bold text-amber-900">-</div>
+                            <div className="text-xs text-amber-700/70">module</div>
+                        </td>
+                        <td className="px-6 py-5 align-top text-center">
+                            <button
+                                type="button"
+                                onClick={() => onToggleRow(`workplace:${moduleNumber}`)}
+                                className="w-full flex justify-center"
+                            >
+                                <StatusPill status={getWorkplaceStatus()} />
+                            </button>
+                        </td>
+                    </tr>
+
+                    {openRowKey === `workplace:${moduleNumber}` && (
+                        <tr>
+                            <td colSpan={4} className="bg-white">
+                                <InlineMarkingPanel
+                                    rowKey={`workplace:${moduleNumber}`}
+                                    module={module}
+                                    students={students}
+                                    assessmentIndex={assessmentIndex}
+                                    onToggleAssessment={onToggleAssessment}
+                                    onBulkPass={onBulkPass}
+                                    isWorkplaceActivity
+                                    hasWorkplace
+                                    unitStandardId={workplaceAnchorUnitId}
+                                    onClose={() => onToggleRow(`workplace:${moduleNumber}`)}
+                                />
+                            </td>
+                        </tr>
+                    )}
+                </>
             )}
         </>
     );
 }
 
+function InlineMarkingPanel({
+    rowKey,
+    unit,
+    module,
+    students,
+    assessmentIndex,
+    onToggleAssessment,
+    onBulkPass,
+    isWorkplaceActivity,
+    hasWorkplace,
+    unitStandardId,
+    onClose,
+}: {
+    rowKey: string;
+    unit?: any;
+    module: any;
+    students: any[];
+    assessmentIndex: Map<string, any>;
+    onToggleAssessment: (studentId: string, unitStandardId: string, type: AssessmentType, targetResult: 'COMPETENT' | 'NOT_YET_COMPETENT') => void;
+    onBulkPass: (unitStandardId: string, assessmentType: AssessmentType, studentIds: string[]) => void;
+    isWorkplaceActivity: boolean;
+    hasWorkplace: boolean;
+    unitStandardId?: string;
+    onClose: () => void;
+}) {
+    const [activeTab, setActiveTab] = useState<AssessmentType>(
+        isWorkplaceActivity ? 'WORKPLACE' : 'FORMATIVE'
+    );
+
+    useEffect(() => {
+        setActiveTab(isWorkplaceActivity ? 'WORKPLACE' : 'FORMATIVE');
+    }, [isWorkplaceActivity, rowKey]);
+
+    const moduleName = module?.moduleName || module?.name || `Module ${module?.moduleNumber || ''}`;
+
+    const getResult = (studentId: string, type: AssessmentType) => {
+        if (!unitStandardId) return 'PENDING';
+        const key = `${studentId}|${unitStandardId}|${type}`;
+        return assessmentIndex.get(key)?.result || 'PENDING';
+    };
+
+    const completionCounts = useMemo(() => {
+        const total = students.length;
+        const formative = students.filter((student) => getResult(student.id, 'FORMATIVE') === 'COMPETENT').length;
+        const summative = students.filter((student) => getResult(student.id, 'SUMMATIVE') === 'COMPETENT').length;
+        const workplace = students.filter((student) => getResult(student.id, 'WORKPLACE') === 'COMPETENT').length;
+
+        return { total, formative, summative, workplace };
+    }, [students, unitStandardId, assessmentIndex]);
+
+    const canShowWorkplace = isWorkplaceActivity || hasWorkplace;
+
+    return (
+        <div className="border-t border-slate-200 px-6 py-5 bg-slate-50">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                    {isWorkplaceActivity ? (
+                        <>
+                            <div className="text-sm font-semibold text-slate-900">
+                                Workplace Activity - {moduleName}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">
+                                This is the module-level workplace collection assessment covering all unit standards in Module {module?.moduleNumber || ''}.
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">
+                                Mark each student's overall workplace assessment here.
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="text-sm font-semibold text-slate-900">
+                                {unit?.code || unit?.id} - {unit?.title}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">
+                                {unit?.credits} credits - Level {unit?.level}
+                            </div>
+                        </>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-700"
+                >
+                    Collapse
+                    <ChevronUp className="w-4 h-4" />
+                </button>
+            </div>
+
+            {!isWorkplaceActivity && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                    {(['FORMATIVE', 'SUMMATIVE', 'WORKPLACE'] as AssessmentType[]).map((tab) => {
+                        const isDisabled = tab === 'WORKPLACE' && !canShowWorkplace;
+                        return (
+                            <button
+                                key={tab}
+                                type="button"
+                                onClick={() => !isDisabled && setActiveTab(tab)}
+                                disabled={isDisabled}
+                                className={cn(
+                                    "px-3 py-2 rounded-lg text-xs font-semibold transition-all",
+                                    activeTab === tab
+                                        ? "bg-slate-900 text-white"
+                                        : "bg-white text-slate-600 border border-slate-200",
+                                    isDisabled && "opacity-40 cursor-not-allowed"
+                                )}
+                            >
+                                {tab}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {isWorkplaceActivity && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                    <span className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white">
+                        WORKPLACE
+                    </span>
+                </div>
+            )}
+
+            <div className="mt-4 bg-white border border-slate-200 rounded-lg">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <div className="text-sm font-semibold text-slate-700">Student Marking</div>
+                    <button
+                        type="button"
+                        onClick={() => unitStandardId && onBulkPass(unitStandardId, activeTab, students.map((s) => s.id))}
+                        disabled={!unitStandardId || students.length === 0}
+                        className="px-3 py-1.5 text-xs font-semibold border border-green-600 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-50"
+                    >
+                        ✓ Mark All as Passed
+                    </button>
+                </div>
+
+                <div className="divide-y divide-slate-100">
+                    {students.map((student: any) => {
+                        const result = getResult(student.id, activeTab);
+                        return (
+                            <div key={student.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <div className="font-semibold text-sm text-slate-900">
+                                        {student.firstName} {student.lastName}
+                                    </div>
+                                    <div className="text-xs text-slate-500">{student.studentId}</div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className={cn(
+                                            "text-xs font-medium px-2 py-0.5 rounded",
+                                            result === 'COMPETENT'
+                                                ? 'bg-green-100 text-green-700'
+                                                : result === 'NOT_YET_COMPETENT'
+                                                    ? 'bg-red-100 text-red-700'
+                                                    : 'bg-gray-100 text-gray-500'
+                                        )}
+                                    >
+                                        {result === 'COMPETENT' ? 'Passed' : result === 'NOT_YET_COMPETENT' ? 'Failed' : 'Not marked'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => unitStandardId && onToggleAssessment(student.id, unitStandardId, activeTab, 'COMPETENT')}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded text-xs font-semibold border-2 transition-all",
+                                            result === 'COMPETENT'
+                                                ? 'bg-green-600 text-white border-green-600'
+                                                : 'bg-white text-gray-500 border-gray-300'
+                                        )}
+                                    >
+                                        ✓
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => unitStandardId && onToggleAssessment(student.id, unitStandardId, activeTab, 'NOT_YET_COMPETENT')}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded text-xs font-semibold border-2 transition-all",
+                                            result === 'NOT_YET_COMPETENT'
+                                                ? 'bg-red-600 text-white border-red-600'
+                                                : 'bg-white text-gray-500 border-gray-300'
+                                        )}
+                                    >
+                                        ✗
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="text-xs text-slate-500 mt-3">
+                {isWorkplaceActivity
+                    ? `Workplace: ${completionCounts.workplace}/${completionCounts.total} Passed`
+                    : `Formative: ${completionCounts.formative}/${completionCounts.total} Passed | Summative: ${completionCounts.summative}/${completionCounts.total} Passed | Workplace: ${completionCounts.workplace}/${completionCounts.total} Passed`}
+            </div>
+        </div>
+    );
+}
+
 function StatusPill({ status }: { status: string }) {
-    switch (status) {
-        case 'complete':
-            return (
-                <div className="flex justify-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-200">
-                        Complete
-                    </span>
-                </div>
-            );
-        case 'summative-done':
-            return (
-                <div className="flex justify-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-purple-100 text-purple-800 border border-purple-200">
-                        Summative Done
-                    </span>
-                </div>
-            );
-        case 'in-progress':
-            return (
-                <div className="flex justify-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-blue-100 text-blue-800 border border-blue-200">
-                        In Progress
-                    </span>
-                </div>
-            );
-        default:
-            return (
-                <div className="flex justify-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500 border border-slate-200">
-                        Not Started
-                    </span>
-                </div>
-            );
+    const styles: Record<string, string> = {
+        COMPLETED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        IN_PROGRESS: 'bg-amber-100 text-amber-800 border-amber-200',
+        OVERDUE: 'bg-red-100 text-red-700 border-red-200',
+        NOT_STARTED: 'bg-slate-100 text-slate-600 border-slate-200',
+        REQUIRED: 'bg-amber-100 text-amber-800 border-amber-200',
+    };
+
+    const labelMap: Record<string, string> = {
+        COMPLETED: 'COMPLETED',
+        IN_PROGRESS: 'IN PROGRESS',
+        OVERDUE: 'OVERDUE',
+        NOT_STARTED: 'NOT STARTED',
+        REQUIRED: 'REQUIRED',
+    };
+
+    return (
+        <span
+            className={cn(
+                'inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border',
+                styles[status] || styles.NOT_STARTED
+            )}
+        >
+            {labelMap[status] || labelMap.NOT_STARTED}
+        </span>
+    );
+}
+
+function parsePlanDate(value: string): Date | null {
+    if (!value) return null;
+    if (value.includes('-')) {
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
+    if (value.includes('/')) {
+        const [day, month, year] = value.split('/').map((part) => Number(part));
+        if (!day || !month || !year) return null;
+        return new Date(year, month - 1, day);
+    }
+    const fallback = new Date(value);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function normalizeDate(date: Date): Date {
+    const normalized = new Date(date.getTime());
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+}
+
+function formatShortDate(value: string): string {
+    const parsed = parsePlanDate(value);
+    return parsed ? format(parsed, 'dd MMM') : value;
+}
+
+function formatDateRange(start?: string | null, end?: string | null): string {
+    const startDate = start ? parsePlanDate(start) : null;
+    const endDate = end ? parsePlanDate(end) : null;
+    if (startDate && endDate) {
+        return `${format(startDate, 'dd MMM')} - ${format(endDate, 'dd MMM yyyy')}`;
+    }
+    if (startDate) {
+        return format(startDate, 'dd MMM yyyy');
+    }
+    if (endDate) {
+        return format(endDate, 'dd MMM yyyy');
+    }
+    return '-';
 }
