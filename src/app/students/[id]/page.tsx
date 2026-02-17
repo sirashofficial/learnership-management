@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, User, BookOpen, Calendar, CheckCircle, FileText,
-  TrendingUp, AlertCircle, Download
+  TrendingUp, AlertCircle, Download, Trash2
 } from "lucide-react";
 import useSWR from "swr";
 import { cn } from "@/lib/utils";
+import { Breadcrumb, BackButton, StatusBadge, IconButton } from "@/components/ui/AccessibilityComponents";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json()).then((data) => data.data || data);
 
@@ -47,16 +48,17 @@ export default function StudentProfilePage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-      </div>
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb 
+        items={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Students', href: '/students' },
+          { label: `${student.firstName} ${student.lastName}` }
+        ]} 
+      />
+
+      {/* Back Button */}
+      <BackButton href="/students" label="Back to Students" />
 
       {/* Student Header Card */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
@@ -73,14 +75,7 @@ export default function StudentProfilePage() {
                 ID: {student.studentId} | Group: {student.group?.name || 'No Group'}
               </p>
               <div className="flex items-center gap-3">
-                <span className={cn(
-                  "px-3 py-1 rounded-full text-sm font-medium",
-                  student.status === 'ACTIVE' && "bg-green-100 text-green-700",
-                  student.status === 'INACTIVE' && "bg-gray-100 text-gray-700",
-                  student.status === 'COMPLETED' && "bg-blue-100 text-blue-700"
-                )}>
-                  {student.status || 'Active'}
-                </span>
+                <StatusBadge status={student.status || 'ACTIVE'} />
                 <span className="text-sm text-slate-500">
                   Enrolled: {student.enrollmentDate ? new Date(student.enrollmentDate).toLocaleDateString() : 'N/A'}
                 </span>

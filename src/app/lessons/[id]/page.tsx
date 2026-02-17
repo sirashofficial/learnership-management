@@ -7,6 +7,7 @@ import {
   MapPin, Target, BookOpen, CheckCircle, X 
 } from "lucide-react";
 import useSWR from "swr";
+import { Breadcrumb, BackButton, StatusBadge, IconButton } from "@/components/ui/AccessibilityComponents";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json()).then((data) => data.data || data);
 
@@ -93,16 +94,22 @@ export default function LessonDetailPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb 
+        items={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Lessons', href: '/lessons' },
+          { label: lesson.title || 'Lesson' }
+        ]} 
+      />
+
+      {/* Back Button */}
+      <BackButton href="/lessons" label="Back to Lessons" />
+
       {/* Header */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Lessons
-          </button>
+          <h2 className="text-xl font-bold text-slate-900">{displayLesson.title}</h2>
           <div className="flex gap-2">
             <button
               onClick={handlePrint}

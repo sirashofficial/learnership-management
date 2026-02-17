@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#064e3b" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <g fill="#ffffff" font-family="Arial, sans-serif">
+    <text x="80" y="260" font-size="64" font-weight="700">YEHA</text>
+    <text x="80" y="330" font-size="36" opacity="0.9">Youth Education &amp; Skills Management</text>
+    <text x="80" y="390" font-size="24" opacity="0.8">Learnerships • Attendance • Assessments • Compliance</text>
+  </g>
+</svg>

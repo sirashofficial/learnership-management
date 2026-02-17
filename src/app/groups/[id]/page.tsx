@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
     ArrowLeft,
     Calendar,
@@ -14,11 +14,13 @@ import {
     CheckCircle2,
     AlertCircle,
     Download,
-    ChevronUp
+    ChevronUp,
+    Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { cn } from '@/lib/utils';
+import { Breadcrumb, BackButton, StatusBadge, IconButton } from '@/components/ui/AccessibilityComponents';
 import { formatGroupNameDisplay } from '@/lib/groupName';
 import { generateRolloutPlan } from '@/lib/rolloutPlanGenerator';
 import { downloadRolloutDocx } from '@/lib/downloadRolloutDocx';
@@ -416,23 +418,29 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {/* Breadcrumb Navigation */}
+                <Breadcrumb 
+                    items={[
+                        { label: 'Dashboard', href: '/' },
+                        { label: 'Groups', href: '/groups' },
+                        { label: group?.name ? formatGroupNameDisplay(group.name) : 'Group' }
+                    ]} 
+                />
+
+                {/* Back Button */}
+                <BackButton href="/groups" label="Back to Groups" />
+            </div>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => router.back()}
-                            className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{formatGroupNameDisplay(group.name)}</h1>
-                            <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
-                                <span className="flex items-center gap-1.5">
-                                    <Users className="w-4 h-4 text-indigo-500" />
-                                    {group._count?.students || 0} Learners
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{formatGroupNameDisplay(group.name)}</h1>
+                        <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                            <span className="flex items-center gap-1.5">
+                                <Users className="w-4 h-4 text-indigo-500" />
+                                {group._count?.students || 0} Learners
                                 </span>
                                 <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium">
                                     {group.company?.name || 'Independent Group'}

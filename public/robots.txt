@@ -1,0 +1,19 @@
+User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /groups/
+Disallow: /students/
+Disallow: /timetable/
+Disallow: /attendance/
+Disallow: /assessments/
+Disallow: /progress/
+Disallow: /reports/
+Disallow: /settings/
+Disallow: /poe/
+Disallow: /compliance/
+Disallow: /moderation/
+Disallow: /lessons/
+Disallow: /curriculum/
+Disallow: /ai/
+
+Sitemap: http://localhost:3000/sitemap.xml
