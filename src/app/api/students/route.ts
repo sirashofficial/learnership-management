@@ -1,8 +1,16 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { 
+  successPaginatedResponse, 
+  successResponse, 
+  errorResponse, 
+  handleApiError,
+  getPaginationParams,
+  createPagination,
+} from '@/lib/api-utils';
 import { createStudentSchema, updateStudentSchema } from '@/lib/validations';
 import { requireAuth } from '@/lib/middleware';
+
 // GET /api/students - Get all students or export CSV
 export async function GET(request: NextRequest) {
   console.log('API HIT: /api/students');
@@ -15,22 +23,28 @@ export async function GET(request: NextRequest) {
     const groupId = searchParams.get('groupId');
     const status = searchParams.get('status');
     const format = searchParams.get('format'); // csv or json
+    
+    // Extract pagination parameters
+    const { page, pageSize, skip } = getPaginationParams(request);
+
+    const where: any = {};
+    if (groupId) where.groupId = groupId;
+    if (status) where.status = status;
+
+    // Get total count for pagination
+    const total = await prisma.student.count({ where });
 
     const students = await prisma.student.findMany({
-      where: {
-        ...(groupId && { groupId }),
-        ...(status && { status: status as any }),
-      },
+      where,
       include: {
-        group: {
-          include: {
-          },
-        },
+        group: {},
         facilitator: {
           select: { id: true, name: true, email: true },
         },
       },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: pageSize,
     });
 
     // Export as CSV if requested
@@ -61,8 +75,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const pagination = createPagination(page, pageSize, total);
     console.log('GET /api/students success:', students.length, 'students');
-    return successResponse(students);
+    return successPaginatedResponse(students, pagination);
   } catch (error) {
     console.error('GET /api/students error:', error);
     return handleApiError(error);

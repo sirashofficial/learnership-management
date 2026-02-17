@@ -1,6 +1,13 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { 
+  successPaginatedResponse, 
+  successResponse,
+  errorResponse, 
+  handleApiError,
+  getPaginationParams,
+  createPagination,
+} from '@/lib/api-utils';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/middleware';
 
@@ -22,6 +29,9 @@ export async function GET(request: NextRequest) {
     const { error, user: currentUser } = await requireAuth(request);
     if (error) return error;
 
+    // Extract pagination parameters
+    const { page, pageSize, skip } = getPaginationParams(request);
+
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
     const groupId = searchParams.get('groupId');
@@ -38,6 +48,9 @@ export async function GET(request: NextRequest) {
     if (method) where.method = method;
     if (moderationStatus) where.moderationStatus = moderationStatus;
 
+    // Get total count for pagination
+    const total = await prisma.assessment.count({ where });
+
     const assessments = await prisma.assessment.findMany({
       where,
       include: {
@@ -53,9 +66,12 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { dueDate: 'asc' },
+      skip,
+      take: pageSize,
     });
 
-    return successResponse(assessments);
+    const pagination = createPagination(page, pageSize, total);
+    return successPaginatedResponse(assessments, pagination);
   } catch (error) {
     return handleApiError(error);
   }

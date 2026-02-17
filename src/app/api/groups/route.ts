@@ -1,6 +1,13 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { 
+  successPaginatedResponse, 
+  successResponse, 
+  errorResponse, 
+  handleApiError,
+  getPaginationParams,
+  createPagination,
+} from '@/lib/api-utils';
 import { normalizeGroupName } from '@/lib/groupNameUtils';
 import { requireAuth } from '@/lib/middleware';
 
@@ -14,11 +21,18 @@ export async function GET(request: NextRequest) {
     console.log('GET /api/groups called');
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
+    
+    // Extract pagination parameters
+    const { page, pageSize, skip } = getPaginationParams(request);
+
+    const where: any = {};
+    if (status) where.status = status;
+
+    // Get total count for pagination
+    const total = await prisma.group.count({ where });
 
     const groups = await prisma.group.findMany({
-      where: {
-        ...(status && { status: status as any }),
-      },
+      where,
       include: {
         students: {
           select: {
@@ -37,7 +51,10 @@ export async function GET(request: NextRequest) {
         rolloutPlan: true,
       },
       orderBy: { name: 'asc' },
+      skip,
+      take: pageSize,
     });
+
     const groupIds = groups.map((group) => group.id);
     const totalCreditsRequired = 140;
 
@@ -140,7 +157,8 @@ export async function GET(request: NextRequest) {
     });
     console.log('\n');
     
-    return successResponse(groupsWithProgress);
+    const pagination = createPagination(page, pageSize, total);
+    return successPaginatedResponse(groupsWithProgress, pagination);
   } catch (error) {
     console.error('GET /api/groups error:', error);
     return handleApiError(error);
