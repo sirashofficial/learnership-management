@@ -138,12 +138,13 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
             <div className="flex items-center gap-2">
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                className="btn-primary-enhanced px-4 py-2 flex items-center gap-2"
+                aria-label="Save all changes to student profile"
               >
                 <Save className="w-4 h-4" />
                 Save All Changes
               </button>
-              <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors" aria-label="Close modal">
                 <X className="w-5 h-5 text-slate-600" />
               </button>
             </div>
@@ -403,13 +404,15 @@ export default function EditStudentModal({ student, onClose, onSave }: EditStude
           <div className="flex gap-3 pt-4 border-t border-slate-200">
             <button
               onClick={handleSave}
-              className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              className="flex-1 btn-primary-enhanced px-4 py-2.5"
+              aria-label="Save all changes to student profile"
             >
               Save All Changes
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+              className="btn-secondary-outline px-4 py-2.5"
+              aria-label="Cancel and close modal"
             >
               Cancel
             </button>

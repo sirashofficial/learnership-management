@@ -272,7 +272,8 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
                 <div className="space-y-2">
                   <button
                     onClick={() => handleModerate('confirmed')}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                    className="btn-primary-enhanced w-full flex items-center justify-center gap-2 px-4 py-3"
+                    aria-label="Confirm assessment"
                   >
                     <Check className="w-5 h-5" />
                     Confirm Assessment
@@ -280,7 +281,8 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
 
                   <button
                     onClick={() => handleModerate('referred')}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors"
+                    className="alert-warning w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors"
+                    aria-label="Refer assessment back for review"
                   >
                     <AlertTriangle className="w-5 h-5" />
                     Refer Back
@@ -288,7 +290,8 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
 
                   <button
                     onClick={handleOverrideClick}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                    className="btn-destructive w-full flex items-center justify-center gap-2 px-4 py-3"
+                    aria-label="Override assessment decision with approval"
                   >
                     <X className="w-5 h-5" />
                     Override Decision
@@ -317,13 +320,15 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={cancelOverride}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+                      className="btn-secondary-outline flex items-center justify-center gap-2 px-4 py-3"
+                      aria-label="Cancel override operation"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={confirmOverride}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                      className="btn-destructive flex items-center justify-center gap-2 px-4 py-3"
+                      aria-label="Confirm assessment override"
                     >
                       <Check className="w-5 h-5" />
                       Confirm Override

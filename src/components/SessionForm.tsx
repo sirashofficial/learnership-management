@@ -246,14 +246,16 @@ export function SessionForm({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
+              className="flex-1 btn-secondary-outline px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Cancel creating session"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 btn-primary-enhanced px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={editingSession ? "Update session details" : "Create new session"}
             >
               {loading
                 ? 'Saving...'

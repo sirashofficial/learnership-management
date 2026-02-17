@@ -246,14 +246,16 @@ export function PlanForm({ selectedDate, onClose, onPlanCreated }: PlanFormProps
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold"
+              className="flex-1 btn-secondary-outline px-4 py-2"
+              aria-label="Cancel creating plan"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !formData.title}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+              className="flex-1 btn-primary-enhanced px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Create new plan"
             >
               {loading ? 'Creating...' : 'Create'}
             </button>
