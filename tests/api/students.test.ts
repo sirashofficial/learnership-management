@@ -1,5 +1,3 @@
-/// <reference types="jest" />
-
 import { generateTestToken, testFixtures } from '../setup';
 
 declare global {
@@ -7,8 +5,14 @@ declare global {
   function it(name: string, fn: () => void): void;
   function beforeEach(fn: () => void): void;
   function afterEach(fn: () => void): void;
-  const expect: any;
+  namespace NodeJS {
+    interface Global {
+      expect: any;
+    }
+  }
 }
+
+const expect = (global as any).expect || (() => ({}));
 
 // These tests demonstrate the testing strategy
 // Assuming you have a test database or mock setup

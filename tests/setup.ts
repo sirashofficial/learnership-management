@@ -1,5 +1,3 @@
-/// <reference types="jest" />
-
 // Test Setup & Authentication Utilities
 import { hash } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -7,9 +5,16 @@ import jwt from 'jsonwebtoken';
 declare global {
   function beforeAll(fn: () => void): void;
   function afterAll(fn: () => void): void;
-  const jest: any;
-  const expect: any;
+  namespace NodeJS {
+    interface Global {
+      jest: any;
+      expect: any;
+    }
+  }
 }
+
+const jest = (global as any).jest || {};
+const expect = (global as any).expect || (() => ({}));
 
 // Environment setup
 beforeAll(() => {
