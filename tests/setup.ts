@@ -1,11 +1,19 @@
+/// <reference types="jest" />
+
 // Test Setup & Authentication Utilities
 import { hash } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+declare global {
+  function beforeAll(fn: () => void): void;
+  function afterAll(fn: () => void): void;
+  const jest: any;
+  const expect: any;
+}
+
 // Environment setup
 beforeAll(() => {
   process.env.JWT_SECRET = 'test-secret-key-for-testing-only';
-  process.env.NODE_ENV = 'test';
 });
 
 // Create test user credentials

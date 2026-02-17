@@ -283,7 +283,7 @@ export const FloatingActionButton = ({
   label: string;
   className?: string;
 }) => {
-  const isMobile = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
     const checkMobile = () => {

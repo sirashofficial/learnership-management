@@ -1,5 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+/// <reference types="jest" />
+
 import { generateTestToken, testFixtures } from '../setup';
+
+declare global {
+  function describe(name: string, fn: () => void): void;
+  function it(name: string, fn: () => void): void;
+  function beforeEach(fn: () => void): void;
+  function afterEach(fn: () => void): void;
+  const expect: any;
+}
 
 // These tests demonstrate the testing strategy
 // Assuming you have a test database or mock setup
