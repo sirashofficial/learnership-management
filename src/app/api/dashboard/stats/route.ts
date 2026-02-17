@@ -24,13 +24,23 @@ export async function GET(request: NextRequest) {
       studentsWithProgress,
       studentsProgressLastMonth,
     ] = await Promise.all([
-      // Total students
-      prisma.student.count({ where: { status: 'ACTIVE' } }),
+      // Total students (active, attached to non-archived groups)
       prisma.student.count({
         where: {
           status: 'ACTIVE',
-          createdAt: { lte: thirtyDaysAgo }
-        }
+          group: {
+            status: { notIn: ['ARCHIVED', 'Archived'] },
+          },
+        },
+      }),
+      prisma.student.count({
+        where: {
+          status: 'ACTIVE',
+          createdAt: { lte: thirtyDaysAgo },
+          group: {
+            status: { notIn: ['ARCHIVED', 'Archived'] },
+          },
+        },
       }),
 
       // Total active groups
@@ -85,13 +95,21 @@ export async function GET(request: NextRequest) {
 
       // Students with progress
       prisma.student.findMany({
-        where: { status: 'ACTIVE' },
+        where: {
+          status: 'ACTIVE',
+          group: {
+            status: { notIn: ['ARCHIVED', 'Archived'] },
+          },
+        },
         select: { progress: true, createdAt: true },
       }),
       prisma.student.findMany({
         where: {
           status: 'ACTIVE',
-          createdAt: { lte: thirtyDaysAgo }
+          createdAt: { lte: thirtyDaysAgo },
+          group: {
+            status: { notIn: ['ARCHIVED', 'Archived'] },
+          },
         },
         select: { progress: true },
       }),

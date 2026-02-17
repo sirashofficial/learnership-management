@@ -200,6 +200,17 @@ export default function StudentCard({
           Note
         </button>
       </div>
+
+      {/* Progress Bar at Bottom */}
+      <div className="mt-4">
+        <div className="bg-gray-200 rounded-full h-1.5 overflow-hidden">
+          <div
+            className="bg-blue-600 rounded-full h-1.5 transition-all duration-300"
+            style={{ width: `${student.progress}%` }}
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-1.5">{student.progress}% complete</p>
+      </div>
     </div>
   );
 }

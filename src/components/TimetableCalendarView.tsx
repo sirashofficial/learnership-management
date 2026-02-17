@@ -18,6 +18,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-config';
 import { useGroups } from '@/contexts/GroupsContext';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 import { EventDetailModal } from './EventDetailModal';
 import { PlanForm } from './PlanForm';
 import { SessionForm } from './SessionForm';
@@ -67,10 +68,8 @@ interface TimetableCalendarViewProps {
 }
 
 function getShortGroupName(name: string) {
-  return name
-    .replace(/\s*\(LP\)\s*-\s*\d{4}/i, '')
-    .replace(/\s*\(\d{4}\)/i, '')
-    .trim();
+  const formatted = formatGroupNameDisplay(name || '');
+  return formatted.replace(/\s*\(\d{4}\)\s*$/, '').trim();
 }
 
 export function TimetableCalendarView({ groupId }: TimetableCalendarViewProps) {

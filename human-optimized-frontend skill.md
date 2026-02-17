@@ -1,4 +1,4 @@
----
+﻿---
 name: human-optimized-frontend
 description: >
   Generates a frontend interface that is visually pleasing and experientially sound by jointly optimizing
@@ -32,16 +32,16 @@ Do not activate for:
 ### 3. Initial Design Generation
 
 #### Typography
-- Body text baseline: 15–18px equivalent
+- Body text baseline: 15â€“18px equivalent
 - Heading scale:
-  - H1 = body × 2.2–2.6
-  - H2 = body × 1.6–1.9
-  - H3 = body × 1.3–1.5
+  - H1 = body Ã— 2.2â€“2.6
+  - H2 = body Ã— 1.6â€“1.9
+  - H3 = body Ã— 1.3â€“1.5
 - Line height:
-  - Body: 1.45–1.6
-  - Headings: 1.15–1.3
+  - Body: 1.45â€“1.6
+  - Headings: 1.15â€“1.3
 - Font rule:
-  - Serif + sans-serif pairing OR single family with ≥ 4 weights
+  - Serif + sans-serif pairing OR single family with â‰¥ 4 weights
 - Letter spacing:
   - Headings: -1% to -3%
   - Body: 0% to +1%
@@ -54,18 +54,18 @@ Do not activate for:
   - 1 accent
   - 1 neutral base
 - Contrast:
-  - Text ≥ 4.5:1
-  - Interactive elements ≥ 3:1
-- Accent usage ≤ 10% of visible area
+  - Text â‰¥ 4.5:1
+  - Interactive elements â‰¥ 3:1
+- Accent usage â‰¤ 10% of visible area
 - Only one saturated color allowed
 - Gradients allowed only as background fields
 
 #### Layout & Composition
 - Single spacing base unit (8px or 10px)
 - Visual weight distribution:
-  - Primary: 40–55%
-  - Secondary: 25–35%
-  - Tertiary: ≤ 20%
+  - Primary: 40â€“55%
+  - Secondary: 25â€“35%
+  - Tertiary: â‰¤ 20%
 - Maximum two alignment axes per view
 - Symmetry allowed only with counterbalancing contrast
 
@@ -75,14 +75,14 @@ Do not activate for:
   - Low-contrast geometry OR
   - Layered planes
 - Max depth layers: 3
-- Foreground contrast must exceed background by ≥ 20%
+- Foreground contrast must exceed background by â‰¥ 20%
 
 #### Motion Graphics (Mandatory)
 - Required motion categories:
   - Entry motion
   - Hierarchy reinforcement
   - Interaction feedback
-- Timing: 180–420ms
+- Timing: 180â€“420ms
 - Easing:
   - Primary: ease-out
   - Secondary: subtle cubic or linear
@@ -108,35 +108,35 @@ Do not activate for:
 
 ### 4. Quantitative Evaluation Loop
 
-Score each dimension from 0–10:
+Score each dimension from 0â€“10:
 
 **Typography**
-- ≥ 8: hierarchy instantly readable
-- ≤ 6: scale or spacing feels inconsistent
+- â‰¥ 8: hierarchy instantly readable
+- â‰¤ 6: scale or spacing feels inconsistent
 
 **Color**
-- ≥ 8: dominance and emphasis are unambiguous
-- ≤ 6: accents compete or contrast is weak
+- â‰¥ 8: dominance and emphasis are unambiguous
+- â‰¤ 6: accents compete or contrast is weak
 
 **Layout**
-- ≥ 8: eye flow resolves within 1–2 seconds
-- ≤ 6: multiple regions compete equally
+- â‰¥ 8: eye flow resolves within 1â€“2 seconds
+- â‰¤ 6: multiple regions compete equally
 
 **Background**
-- ≥ 7: depth supports hierarchy
-- ≤ 5: background distracts or feels empty
+- â‰¥ 7: depth supports hierarchy
+- â‰¤ 5: background distracts or feels empty
 
 **Motion**
-- ≥ 8: motion improves comprehension and flow
-- ≤ 6: motion distracts or delays intent
+- â‰¥ 8: motion improves comprehension and flow
+- â‰¤ 6: motion distracts or delays intent
 
 **UX**
-- ≥ 8: user intent is obvious, actions feel effortless
-- ≤ 6: hesitation, ambiguity, or friction introduced
+- â‰¥ 8: user intent is obvious, actions feel effortless
+- â‰¤ 6: hesitation, ambiguity, or friction introduced
 
 **Cross-Dimensional Harmony**
-- ≥ 8: visuals, motion, and UX reinforce the same hierarchy and intent
-- ≤ 6: any dimension contradicts another
+- â‰¥ 8: visuals, motion, and UX reinforce the same hierarchy and intent
+- â‰¤ 6: any dimension contradicts another
 
 **Weighted Total Score**
 - Typography: 20%
@@ -145,7 +145,7 @@ Score each dimension from 0–10:
 - Motion: 15%
 - UX: 15%
 - Background: 10%
-- Harmony: mandatory ≥ 8
+- Harmony: mandatory â‰¥ 8
 
 ### 5. Iteration Rules
 - Adjust lowest-scoring dimension first.
@@ -181,3 +181,4 @@ No alternatives. No explanations. No theory.
 If activation conditions are not met, output a minimal statement indicating the skill cannot be activated.
 
 If after maximum iterations UX or harmony thresholds are not met, output a minimal statement indicating that a satisfactory frontend cannot be generated under the given constraints and terminate.
+

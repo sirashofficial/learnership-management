@@ -1,4 +1,4 @@
-# LMS System - Complete Feature Guide
+﻿# LMS System - Complete Feature Guide
 
 ## Current Data State
 - **9 Groups** (4 from 2026, 5 from 2025)
@@ -7,7 +7,7 @@
 
 ---
 
-## 📊 NEW FEATURES IMPLEMENTED
+## ðŸ“Š NEW FEATURES IMPLEMENTED
 
 ### 1. **Unit Standard Reports** (Multi-Group, Multi-Module)
 **Endpoint**: `POST /api/reports/unit-standards`
@@ -91,9 +91,9 @@
 ```
 
 **Mark status**:
-- ✓ COMPETENT (score 70+)
-- ✗ NOT_YET_COMPETENT  
-- ⏳ PENDING
+- âœ“ COMPETENT (score 70+)
+- âœ— NOT_YET_COMPETENT  
+- â³ PENDING
 
 **View assessments for marking**:
 ```
@@ -109,7 +109,7 @@ GET /api/assessments/marking?groupId=X&status=PENDING&unitStandardId=Y
 
 ---
 
-## 🛠️ API ENDPOINTS REFERENCE
+## ðŸ› ï¸ API ENDPOINTS REFERENCE
 
 ### Reports
 - `GET /api/reports/unit-standards` - Get groups and modules available
@@ -131,7 +131,7 @@ GET /api/assessments/marking?groupId=X&status=PENDING&unitStandardId=Y
 
 ---
 
-## 📋 DATA STRUCTURE
+## ðŸ“‹ DATA STRUCTURE
 
 ### 9 Groups Total:
 1. **AZELIS (2025)** - 6 students
@@ -149,7 +149,7 @@ GET /api/assessments/marking?groupId=X&status=PENDING&unitStandardId=Y
 - Knowledge, Practical, Observation, Portfolio methods
 - Score tracking (0-100)
 - Feedback text field
-- Moderation workflow (PENDING → APPROVED/REJECTED)
+- Moderation workflow (PENDING â†’ APPROVED/REJECTED)
 - Automatic progress calculation
 
 ### Timetable Features:
@@ -161,7 +161,7 @@ GET /api/assessments/marking?groupId=X&status=PENDING&unitStandardId=Y
 
 ---
 
-## ✅ SYSTEM READY
+## âœ… SYSTEM READY
 - Build: SUCCESSFUL (65 routes)
 - Database: 9 groups, 46 students, companies auto-linked
 - APIs: All operational
@@ -170,3 +170,4 @@ GET /api/assessments/marking?groupId=X&status=PENDING&unitStandardId=Y
 - Reports: Multi-group/module support
 
 **All issues resolved!**
+

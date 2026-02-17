@@ -1,3 +1,4 @@
+import { formatGroupNameDisplay } from '@/lib/groupName';
 "use client";
 
 import { useState, useEffect } from "react";
@@ -408,7 +409,7 @@ export default function LessonsPage() {
                         >
                           <option value="">Select a group</option>
                           {groups?.map(group => (
-                            <option key={group.id} value={group.id}>{group.name}</option>
+                             <option key={group.id} value={group.id}>{formatGroupNameDisplay(group.name)}</option>
                           ))}
                         </select>
                       </div>
@@ -532,7 +533,7 @@ export default function LessonsPage() {
                         <h3 className="text-2xl font-bold text-slate-900 mb-2">{generatedPlan.title}</h3>
                         <div className="flex gap-4 text-sm text-slate-600">
                           <span>📚 {generatedPlan.unitStandard}</span>
-                          <span>👥 {generatedPlan.group}</span>
+                          <span>👥 {formatGroupNameDisplay(generatedPlan.group)}</span>
                           <span>⏱️ {generatedPlan.duration} minutes</span>
                         </div>
                       </div>
@@ -734,7 +735,7 @@ export default function LessonsPage() {
                   >
                     <option value="">Select a group</option>
                     {groups?.map(group => (
-                      <option key={group.id} value={group.id}>{group.name}</option>
+                      <option key={group.id} value={group.id}>{formatGroupNameDisplay(group.name)}</option>
                     ))}
                   </select>
                 </div>

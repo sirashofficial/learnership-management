@@ -1,6 +1,6 @@
-# YEHA Backend Setup
+﻿# YEHA Backend Setup
 
-## 🚀 Backend Architecture
+## ðŸš€ Backend Architecture
 
 Your YEHA system now has a complete Node.js backend with:
 
@@ -10,7 +10,7 @@ Your YEHA system now has a complete Node.js backend with:
 - **Validation:** Zod schemas for request validation
 - **Type Safety:** Full TypeScript support
 
-## 📦 Installation
+## ðŸ“¦ Installation
 
 1. **Install New Dependencies**
    ```bash
@@ -33,7 +33,7 @@ Your YEHA system now has a complete Node.js backend with:
    npm run dev
    ```
 
-## 🗄️ Database Schema
+## ðŸ—„ï¸ Database Schema
 
 The database includes:
 - **Users** - Facilitators, admins, coordinators
@@ -44,7 +44,7 @@ The database includes:
 - **Assessments** - Student evaluations
 - **POE Files** - Portfolio of Evidence documents
 
-## 🛣️ API Endpoints
+## ðŸ›£ï¸ API Endpoints
 
 ### Students
 - `GET /api/students` - List all students
@@ -68,7 +68,7 @@ The database includes:
 ### Dashboard
 - `GET /api/dashboard/stats` - Get dashboard statistics
 
-## 🧪 Testing the API
+## ðŸ§ª Testing the API
 
 ### Using cURL:
 
@@ -100,31 +100,31 @@ curl -X POST http://localhost:3000/api/students \
 - Visit: `http://localhost:3000/api/sites`
 - Visit: `http://localhost:3000/api/dashboard/stats`
 
-## 📁 Backend File Structure
+## ðŸ“ Backend File Structure
 
 ```
 src/
-├── app/api/              # API endpoints
-│   ├── students/
-│   │   ├── route.ts     # GET, POST students
-│   │   └── [id]/
-│   │       └── route.ts # GET, PATCH, DELETE single student
-│   ├── sites/
-│   ├── attendance/
-│   ├── assessments/
-│   └── dashboard/
-└── lib/                  # Backend utilities
-    ├── prisma.ts        # Database client
-    ├── auth.ts          # JWT authentication
-    ├── api-utils.ts     # Response helpers
-    └── validations.ts   # Zod schemas
+â”œâ”€â”€ app/api/              # API endpoints
+â”‚   â”œâ”€â”€ students/
+â”‚   â”‚   â”œâ”€â”€ route.ts     # GET, POST students
+â”‚   â”‚   â””â”€â”€ [id]/
+â”‚   â”‚       â””â”€â”€ route.ts # GET, PATCH, DELETE single student
+â”‚   â”œâ”€â”€ sites/
+â”‚   â”œâ”€â”€ attendance/
+â”‚   â”œâ”€â”€ assessments/
+â”‚   â””â”€â”€ dashboard/
+â””â”€â”€ lib/                  # Backend utilities
+    â”œâ”€â”€ prisma.ts        # Database client
+    â”œâ”€â”€ auth.ts          # JWT authentication
+    â”œâ”€â”€ api-utils.ts     # Response helpers
+    â””â”€â”€ validations.ts   # Zod schemas
 
 prisma/
-├── schema.prisma        # Database schema
-└── seed.ts              # Sample data
+â”œâ”€â”€ schema.prisma        # Database schema
+â””â”€â”€ seed.ts              # Sample data
 ```
 
-## 🔐 Authentication (Coming Next)
+## ðŸ” Authentication (Coming Next)
 
 The auth system is set up but not yet connected. To add:
 
@@ -133,7 +133,7 @@ The auth system is set up but not yet connected. To add:
 3. **Protected routes:** Add middleware to verify JWT tokens
 4. **Frontend integration:** Store token in localStorage/cookies
 
-## 🔄 Switching to PostgreSQL
+## ðŸ”„ Switching to PostgreSQL
 
 To use PostgreSQL instead of SQLite:
 
@@ -156,7 +156,7 @@ To use PostgreSQL instead of SQLite:
    npx prisma db seed
    ```
 
-## 📊 Prisma Studio
+## ðŸ“Š Prisma Studio
 
 View and edit your database visually:
 ```bash
@@ -164,7 +164,7 @@ npx prisma studio
 ```
 Opens at: `http://localhost:5555`
 
-## 🧰 Useful Commands
+## ðŸ§° Useful Commands
 
 ```bash
 # Generate Prisma Client
@@ -183,16 +183,16 @@ npx prisma studio
 npx prisma db push --force-reset
 ```
 
-## 📝 Next Steps
+## ðŸ“ Next Steps
 
-1. ✅ Backend structure set up
-2. ⬜ Connect frontend to API endpoints
-3. ⬜ Implement authentication
-4. ⬜ Add file upload for POE documents
-5. ⬜ Add real-time features (WebSockets)
-6. ⬜ Deploy to production
+1. âœ… Backend structure set up
+2. â¬œ Connect frontend to API endpoints
+3. â¬œ Implement authentication
+4. â¬œ Add file upload for POE documents
+5. â¬œ Add real-time features (WebSockets)
+6. â¬œ Deploy to production
 
-## 🐛 Troubleshooting
+## ðŸ› Troubleshooting
 
 **Prisma errors:**
 ```bash
@@ -213,3 +213,4 @@ npx kill-port 3000
 npx prisma db push
 npx prisma db seed
 ```
+

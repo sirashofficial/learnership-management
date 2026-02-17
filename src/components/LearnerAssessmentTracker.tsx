@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { CheckCircle2, Circle, AlertCircle, TrendingUp, Book, Award } from 'lucide-react';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface UnitStandardData {
   code: string;
@@ -128,7 +129,7 @@ export default function LearnerAssessmentTracker({
         <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
           <div>
             <p className="text-slate-600 dark:text-slate-400">Group</p>
-            <p className="font-semibold text-slate-900 dark:text-white">{groupName}</p>
+            <p className="font-semibold text-slate-900 dark:text-white">{formatGroupNameDisplay(groupName)}</p>
           </div>
           <div>
             <p className="text-slate-600 dark:text-slate-400">Start Date</p>

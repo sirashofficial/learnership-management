@@ -1,4 +1,4 @@
----
+﻿---
 name: yeha-timetable-dashboard-skill
 description: >
   Use this skill when working on the YEHA Timetable page or Dashboard homepage.
@@ -6,7 +6,7 @@ description: >
   design rules, and patterns Copilot must follow when building or fixing these features.
 ---
 
-# YEHA – Timetable & Dashboard Skill
+# YEHA â€“ Timetable & Dashboard Skill
 
 ## What This Skill Covers
 
@@ -27,7 +27,7 @@ Read this fully before making any changes to these areas.
 |---|---|
 | Framework | Next.js 14 App Router |
 | Language | TypeScript |
-| Styling | Tailwind CSS — no external CSS files |
+| Styling | Tailwind CSS â€” no external CSS files |
 | Database | Prisma + SQLite (`prisma/dev.db`) |
 | Data Fetching | SWR custom hooks in `src/hooks/` |
 | Auth | JWT via `jose` |
@@ -36,42 +36,42 @@ Read this fully before making any changes to these areas.
 
 ---
 
-## The Weekly Rotation — Source of Truth
+## The Weekly Rotation â€” Source of Truth
 
 This is the fixed weekly schedule that drives ALL timetable session generation.
 Do not change this structure without being explicitly told to.
 
 ```
 Monday & Wednesday:
-  Lecture Room  → Montazility 2026 (super-group — see below)
-  Computer Lab  → Azelis 2025, Packaging World 2025
+  Lecture Room  â†’ Montzelity 2026 (super-group â€” see below)
+  Computer Lab  â†’ Azelis 2025, Packaging World 2025
 
 Tuesday & Thursday:
-  Lecture Room  → Flint Group 2025
-  Computer Lab  → Wahl 2025, Monteagle 2025
+  Lecture Room  â†’ Flint Group 2025
+  Computer Lab  â†’ Wahl 2025, Monteagle 2025
 
 Friday:
-  → Open / No fixed classes
+  â†’ Open / No fixed classes
 ```
 
 ### Standard Session Times
 ```
-Morning session:   08:00 – 12:00
-Afternoon session: 13:00 – 16:00
+Morning session:   08:00 â€“ 12:00
+Afternoon session: 13:00 â€“ 16:00
 ```
 
 ---
 
 ## Group Structure
 
-### Montazility 2026 — Super Group (Collection)
+### Montzelity 2026 â€” Super Group (Collection)
 This is a cluster/collection label, not a single group. It contains:
 - City Logistics (LP) 2026
 - Azelis SA (LP) 2026
 - Monteagle (LP) 2026
 - Beyond Insights (LP) 2026
 
-When generating sessions, each sub-group within Montazility 2026 gets its own session block
+When generating sessions, each sub-group within Montzelity 2026 gets its own session block
 on Mon/Wed but they share the same venue (Lecture Room).
 
 ### 2025 Groups (Individual Cohorts)
@@ -85,7 +85,7 @@ on Mon/Wed but they share the same venue (Lecture Room).
 
 ## Colour Assignment (Keep Consistent Across the Whole App)
 
-These colours must be used everywhere — timetable blocks, group labels, timeline bars, dashboard dots.
+These colours must be used everywhere â€” timetable blocks, group labels, timeline bars, dashboard dots.
 
 | Group | Colour |
 |---|---|
@@ -170,27 +170,27 @@ enum ReminderPriority {
 
 ---
 
-## Dashboard — Required Widgets (In Order on Page)
+## Dashboard â€” Required Widgets (In Order on Page)
 
 ```
-1. Stats Cards Row (existing — keep)
+1. Stats Cards Row (existing â€” keep)
    Active Groups | Total Students | Avg Attendance | Alerts
 
 2. Phase Timeline (NEW)
-   Horizontal timeline — one row per group
+   Horizontal timeline â€” one row per group
    Shows modules as coloured phase blocks
    "Today" marker line across all rows
 
 3. Two-column row:
-   LEFT  → Upcoming Schedule (fix to use real timetable data)
-   RIGHT → Alerts / Urgent Notifications (existing — keep but improve)
+   LEFT  â†’ Upcoming Schedule (fix to use real timetable data)
+   RIGHT â†’ Alerts / Urgent Notifications (existing â€” keep but improve)
 
-4. Recent Activity (existing — fix Invalid Date bug)
+4. Recent Activity (existing â€” fix Invalid Date bug)
 ```
 
 ---
 
-## Phase Timeline — Design Rules
+## Phase Timeline â€” Design Rules
 
 This is the most visual new feature. Follow these rules exactly.
 
@@ -205,27 +205,27 @@ Layout:
 Phase Blocks on each bar:
   - Each block = one Module
   - Width = proportional to module duration (days)
-  - Completed → solid group colour
-  - Current → group colour with subtle pulse animation
-  - Future → light grey (#E5E7EB)
+  - Completed â†’ solid group colour
+  - Current â†’ group colour with subtle pulse animation
+  - Future â†’ light grey (#E5E7EB)
 
 Hover tooltip on each block:
   - Module name
-  - Start date – End date
+  - Start date â€“ End date
   - Credits
   - Actual completion %
 
-Click on a group row → navigate to /groups/[groupId]
+Click on a group row â†’ navigate to /groups/[groupId]
 
 Data source:
   - Rollout plan dates from Groups API
   - Actual completion % from assessment records
-  - Do NOT hardcode dates — always calculate from DB
+  - Do NOT hardcode dates â€” always calculate from DB
 ```
 
 ---
 
-## Upcoming Schedule Widget — Rules
+## Upcoming Schedule Widget â€” Rules
 
 ```
 Data: GET /api/timetable/sessions?startDate=[today]&endDate=[+7days]
@@ -236,40 +236,40 @@ Each session card shows:
   - Colour dot (group colour)
   - Group name
   - Day and date (e.g. "Monday, 17 Feb")
-  - Time range (e.g. "08:00 – 12:00")
+  - Time range (e.g. "08:00 â€“ 12:00")
   - Venue
   - Current module name
-  - "Prepare" button → opens PrepPanel (slide-in from right)
+  - "Prepare" button â†’ opens PrepPanel (slide-in from right)
   - "Today" badge if session is today
 
-Fetch with SWR — do not use raw fetch()
+Fetch with SWR â€” do not use raw fetch()
 Revalidate every 5 minutes
 ```
 
 ---
 
-## Prep Panel — Session Preparation Slide-In
+## Prep Panel â€” Session Preparation Slide-In
 
 ```
 Trigger: Click "Prepare" on any upcoming session card
-Behaviour: Slides in from the right side of the screen (not a modal — does not block the page)
+Behaviour: Slides in from the right side of the screen (not a modal â€” does not block the page)
 
 Sections:
-  A — Session Info (read-only)
+  A â€” Session Info (read-only)
       Group, date, time, venue, module, student count, actual credit %
 
-  B — Quick Actions (buttons)
-      "Generate Lesson Plan" → produces structured template, opens editable modal
-      "Mark Attendance" → pre-fills attendance page for this group + date
-      "View Group" → navigates to /groups/[groupId]
-      "Add Reminder" → expands reminder form inline in the panel
+  B â€” Quick Actions (buttons)
+      "Generate Lesson Plan" â†’ produces structured template, opens editable modal
+      "Mark Attendance" â†’ pre-fills attendance page for this group + date
+      "View Group" â†’ navigates to /groups/[groupId]
+      "Add Reminder" â†’ expands reminder form inline in the panel
 
-  C — Reminders (for this session's date and group)
+  C â€” Reminders (for this session's date and group)
       List of existing reminders
       Add new reminder: text, priority, time
 
-Lesson Plan Template (generated, not AI for now — keep it simple):
-  ## Lesson Plan — [Group Name]
+Lesson Plan Template (generated, not AI for now â€” keep it simple):
+  ## Lesson Plan â€” [Group Name]
   **Date:** [date]
   **Module:** [module name]
   **Unit:** [current unit]
@@ -297,9 +297,9 @@ Lesson Plan Template (generated, not AI for now — keep it simple):
 ## Timetable Calendar UI Rules
 
 ```
-Default view: Week view (Mon–Fri)
-Time axis: 07:30 – 17:00 on Y axis (left side)
-Day axis: Mon–Sat on X axis (top)
+Default view: Week view (Monâ€“Fri)
+Time axis: 07:30 â€“ 17:00 on Y axis (left side)
+Day axis: Monâ€“Sat on X axis (top)
 
 Session block:
   - Positioned at exact time on the grid
@@ -307,7 +307,7 @@ Session block:
   - Background = group colour
   - Text: Group name (bold), Venue, Time
   - Border radius: 6px
-  - Click → session detail panel
+  - Click â†’ session detail panel
 
 Filters (left sidebar):
   - Select Group (dropdown, multi-select)
@@ -320,13 +320,13 @@ Navigation:
   - Month/year label at top
 
 Empty day:
-  - Show subtle "+" icon — clicking opens New Session form
+  - Show subtle "+" icon â€” clicking opens New Session form
   - Do NOT show empty rows as dead space
 ```
 
 ---
 
-## Date Handling — Fix Invalid Date Bug
+## Date Handling â€” Fix Invalid Date Bug
 
 All date formatting in the app must use this safe utility.
 Add it to `src/lib/dateUtils.ts` if it doesn't exist.
@@ -356,14 +356,14 @@ with `safeFormatDate(x)` from this utility.
 
 ## What NOT To Do
 
-- ❌ Do not hardcode dates or session data — everything must come from the database
-- ❌ Do not use `window.location.reload()` — use SWR `mutate()`
-- ❌ Do not create separate CSS files — use Tailwind classes only
-- ❌ Do not install new npm packages without listing them first
-- ❌ Do not change the auth system or middleware while working on timetable/dashboard
-- ❌ Do not use `any` TypeScript types — define proper interfaces
-- ❌ Do not format dates without null-checking first (this causes "Invalid Date")
-- ❌ Do not put the Phase Timeline data in a separate context — use SWR hooks
+- âŒ Do not hardcode dates or session data â€” everything must come from the database
+- âŒ Do not use `window.location.reload()` â€” use SWR `mutate()`
+- âŒ Do not create separate CSS files â€” use Tailwind classes only
+- âŒ Do not install new npm packages without listing them first
+- âŒ Do not change the auth system or middleware while working on timetable/dashboard
+- âŒ Do not use `any` TypeScript types â€” define proper interfaces
+- âŒ Do not format dates without null-checking first (this causes "Invalid Date")
+- âŒ Do not put the Phase Timeline data in a separate context â€” use SWR hooks
 
 ---
 
@@ -387,6 +387,7 @@ After each prompt is implemented:
 
 ---
 
-*YEHA Learnership Management System — Timetable & Dashboard Skill v1.0*
+*YEHA Learnership Management System â€” Timetable & Dashboard Skill v1.0*
 *Stack: Next.js 14 | Prisma | SQLite | TypeScript | SWR | Tailwind CSS*
 *Locale: en-ZA (South African date format)*
+

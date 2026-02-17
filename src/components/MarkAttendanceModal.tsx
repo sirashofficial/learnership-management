@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Loader2, Check } from 'lucide-react';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface MarkAttendanceModalProps {
   isOpen: boolean;
@@ -157,7 +158,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                   <option value="">Choose a group</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.name}
+                      {formatGroupNameDisplay(group.name)}
                     </option>
                   ))}
                 </select>

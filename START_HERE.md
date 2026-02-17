@@ -1,4 +1,4 @@
-# YEHA - Student Management System
+﻿# YEHA - Student Management System
 
 ## Quick Start
 
@@ -36,12 +36,12 @@ This means the server isn't running. Make sure:
 3. No other application is using port 3000
 
 ### Features Available
-- ✅ Student Dashboard with statistics
-- ✅ Student Management (Add, View, Edit, Delete)
-- ✅ Attendance Tracking
-- ✅ Progress Monitoring
-- ✅ Real-time Updates
-- ✅ Responsive Design
+- âœ… Student Dashboard with statistics
+- âœ… Student Management (Add, View, Edit, Delete)
+- âœ… Attendance Tracking
+- âœ… Progress Monitoring
+- âœ… Real-time Updates
+- âœ… Responsive Design
 
 ### Default Login
 - Username: Ash (Facilitator)
@@ -65,10 +65,10 @@ This means the server isn't running. Make sure:
 ## Project Structure
 ```
 src/
-├── app/           # Next.js pages
-├── components/    # React components
-├── contexts/      # Global state management
-└── lib/          # Utilities
+â”œâ”€â”€ app/           # Next.js pages
+â”œâ”€â”€ components/    # React components
+â”œâ”€â”€ contexts/      # Global state management
+â””â”€â”€ lib/          # Utilities
 
 Key Files:
 - Dashboard: src/app/page.tsx
@@ -83,4 +83,4 @@ If you need help, check that:
 3. All dependencies are installed
 4. The development server is running
 
-Happy Learning! 🎓
+Happy Learning! ðŸŽ“

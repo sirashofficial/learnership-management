@@ -1,10 +1,10 @@
-# Azelis 2025 Rollout Plan
+﻿# Azelis 2025 Rollout Plan
 
 ## Programme Details
 
 **GROUP:** Azelis  
 **NATIONAL CERTIFICATE:** NEW VENTURE CREATION (SMME)  
-**ID:** 49648 – NQF LEVEL 2  
+**ID:** 49648 â€“ NQF LEVEL 2  
 **START DATE:** 01/08/2025  
 **END DATE:** 31/07/2026  
 **LEARNERSHIP INDUCTION:** 28/07/2025
@@ -48,7 +48,7 @@
 - **Assessing Date:** 29/08/2025
 - **Credits:** 3
 
-**Workplace Activity:** 01/09/2025 – 12/09/2025 (Monday – Friday)
+**Workplace Activity:** 01/09/2025 â€“ 12/09/2025 (Monday â€“ Friday)
 
 ---
 
@@ -75,7 +75,7 @@
 - **Assessing Date:** 09/10/2025
 - **Credits:** 10
 
-**Workplace Activity:** 10/10/2025 – 23/10/2025 (Monday – Friday)
+**Workplace Activity:** 10/10/2025 â€“ 23/10/2025 (Monday â€“ Friday)
 
 ---
 
@@ -109,7 +109,7 @@
 - **Assessing Date:** 26/11/2025
 - **Credits:** 2
 
-**Workplace Activity:** 27/11/2025 – 05/12/2025 (Monday – Friday)
+**Workplace Activity:** 27/11/2025 â€“ 05/12/2025 (Monday â€“ Friday)
 
 ---
 
@@ -136,7 +136,7 @@
 - **Assessing Date:** 09/02/2026
 - **Credits:** 10
 
-**Workplace Activity:** 10/02/2026 – 20/02/2026 (Monday – Friday)
+**Workplace Activity:** 10/02/2026 â€“ 20/02/2026 (Monday â€“ Friday)
 
 ---
 
@@ -163,7 +163,7 @@
 - **Assessing Date:** 27/03/2026
 - **Credits:** 10
 
-**Workplace Activity:** 30/03/2026 – 14/04/2026 (Monday – Friday)
+**Workplace Activity:** 30/03/2026 â€“ 14/04/2026 (Monday â€“ Friday)
 
 ---
 
@@ -211,7 +211,7 @@
 - **Assessing Date:** 29/05/2026
 - **Credits:** 2
 
-**Workplace Activity:** 01/06/2026 – 12/06/2026 (Monday – Friday)
+**Workplace Activity:** 01/06/2026 â€“ 12/06/2026 (Monday â€“ Friday)
 
 ---
 
@@ -221,3 +221,4 @@
 
 **TOTAL CREDITS:** 140  
 **REQUIRED:** 138
+

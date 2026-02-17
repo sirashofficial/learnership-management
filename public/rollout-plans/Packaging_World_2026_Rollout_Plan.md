@@ -1,10 +1,10 @@
-# Packaging World 2026 Rollout Plan
+﻿# Packaging World 2026 Rollout Plan
 
 ## Programme Details
 
 **GROUP:** Packaging World  
 **NATIONAL CERTIFICATE:** NEW VENTURE CREATION (SMME)  
-**ID:** 49648 – NQF LEVEL 2  
+**ID:** 49648 â€“ NQF LEVEL 2  
 **START DATE:** 01 September 2025  
 **END DATE:** 31 August 2026  
 **LEARNERS:** 3  
@@ -49,7 +49,7 @@
 - **Assessing Date:** 10/10/2025
 - **Credits:** 3
 
-**Workplace Activity:** 13/10/2025 – 24/10/2025 (Monday – Friday)
+**Workplace Activity:** 13/10/2025 â€“ 24/10/2025 (Monday â€“ Friday)
 
 ---
 
@@ -76,7 +76,7 @@
 - **Assessing Date:** 04/12/2025
 - **Credits:** 10
 
-**Workplace Activity:** 12/01/2026 – 23/01/2026 (Monday – Friday)
+**Workplace Activity:** 12/01/2026 â€“ 23/01/2026 (Monday â€“ Friday)
 
 ---
 
@@ -110,7 +110,7 @@
 - **Assessing Date:** 03/03/2026
 - **Credits:** 2
 
-**Workplace Activity:** 04/03/2026 – 17/03/2026 (Monday – Friday)
+**Workplace Activity:** 04/03/2026 â€“ 17/03/2026 (Monday â€“ Friday)
 
 ---
 
@@ -137,7 +137,7 @@
 - **Assessing Date:** 10/04/2026
 - **Credits:** 10
 
-**Workplace Activity:** 13/04/2026 – 20/04/2026 (Monday – Friday)
+**Workplace Activity:** 13/04/2026 â€“ 20/04/2026 (Monday â€“ Friday)
 
 ---
 
@@ -164,7 +164,7 @@
 - **Assessing Date:** 18/05/2026
 - **Credits:** 10
 
-**Workplace Activity:** 19/05/2026 – 26/05/2026 (Monday – Friday)
+**Workplace Activity:** 19/05/2026 â€“ 26/05/2026 (Monday â€“ Friday)
 
 ---
 
@@ -212,7 +212,7 @@
 - **Assessing Date:** 03/07/2026
 - **Credits:** 2
 
-**Workplace Activity:** 06/07/2026 – 15/07/2026 (Monday – Friday)
+**Workplace Activity:** 06/07/2026 â€“ 15/07/2026 (Monday â€“ Friday)
 
 ---
 
@@ -222,3 +222,4 @@
 
 **TOTAL CREDITS:** 140  
 **REQUIRED:** 138
+

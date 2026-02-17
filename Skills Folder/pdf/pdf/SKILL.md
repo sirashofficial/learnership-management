@@ -1,4 +1,4 @@
----
+﻿---
 name: pdf
 description: "PDF manipulation toolkit. Extract text/tables, create PDFs, merge/split, fill forms, for programmatic document processing and analysis."
 license: Proprietary. LICENSE.txt has complete terms
@@ -325,3 +325,4 @@ with open("encrypted.pdf", "wb") as output:
 - For JavaScript libraries (pdf-lib), see reference.md
 - If you need to fill out a PDF form, follow the instructions in forms.md
 - For troubleshooting guides, see reference.md
+

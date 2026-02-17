@@ -10,6 +10,7 @@ import { FileText, CheckCircle, AlertCircle, Clock, Download, Users, Calendar, A
 import { cn, downloadExport } from "@/lib/utils";
 import StudentDetailsModal from "@/components/StudentDetailsModal";
 import { generateComplianceReportPDF, type ComplianceReportData, type ReportStudent } from "@/lib/report-generator";
+import { formatGroupNameDisplay } from "@/lib/groupName";
 
 type ViewMode = 'student' | 'group';
 
@@ -337,7 +338,7 @@ export default function CompliancePage() {
                       }}
                     >
                       <div className="flex-1">
-                        <h4 className="font-semibold text-slate-900">{group.name}</h4>
+                        <h4 className="font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h4>
                         <p className="text-sm text-slate-500">{group.studentCount} students</p>
                       </div>
                       <div className="flex items-center gap-6">

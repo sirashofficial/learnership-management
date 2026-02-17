@@ -1,10 +1,10 @@
-# Monteagle Group 2026 Rollout Plan
+﻿# Monteagle Group 2026 Rollout Plan
 
 ## Programme Details
 
 **GROUP:** Monteagle Group  
 **NATIONAL CERTIFICATE:** NEW VENTURE CREATION (SMME)  
-**ID:** 49648 – NQF LEVEL 2  
+**ID:** 49648 â€“ NQF LEVEL 2  
 **START DATE:** 20/11/2025  
 **END DATE:** 19/11/2026  
 **LEARNERS:** 2  
@@ -49,7 +49,7 @@
 - **Assessing Date:** 23/01/2026
 - **Credits:** 3
 
-**Workplace Activity:** 26/01/2026 – 06/01/2026 (Monday – Friday)
+**Workplace Activity:** 26/01/2026 â€“ 06/01/2026 (Monday â€“ Friday)
 
 ---
 
@@ -76,7 +76,7 @@
 - **Assessing Date:** 11/03/2026
 - **Credits:** 10
 
-**Workplace Activity:** 12/03/2026 – 24/03/2026 (Monday – Friday)
+**Workplace Activity:** 12/03/2026 â€“ 24/03/2026 (Monday â€“ Friday)
 
 ---
 
@@ -110,7 +110,7 @@
 - **Assessing Date:** 04/05/2026
 - **Credits:** 2
 
-**Workplace Activity:** 05/05/2026 – 15/05/2026 (Monday – Friday)
+**Workplace Activity:** 05/05/2026 â€“ 15/05/2026 (Monday â€“ Friday)
 
 ---
 
@@ -137,7 +137,7 @@
 - **Assessing Date:** 18/06/2026
 - **Credits:** 10
 
-**Workplace Activity:** 19/06/2026 – 30/06/2026 (Monday – Friday)
+**Workplace Activity:** 19/06/2026 â€“ 30/06/2026 (Monday â€“ Friday)
 
 ---
 
@@ -164,7 +164,7 @@
 - **Assessing Date:** 05/08/2026
 - **Credits:** 10
 
-**Workplace Activity:** 06/08/2026 – 19/08/2026 (Monday – Friday)
+**Workplace Activity:** 06/08/2026 â€“ 19/08/2026 (Monday â€“ Friday)
 
 ---
 
@@ -212,7 +212,7 @@
 - **Assessing Date:** 06/10/2026
 - **Credits:** 2
 
-**Workplace Activity:** 07/10/2026 – 20/10/2026 (Monday – Friday)
+**Workplace Activity:** 07/10/2026 â€“ 20/10/2026 (Monday â€“ Friday)
 
 ---
 
@@ -222,3 +222,4 @@
 
 **TOTAL CREDITS:** 140  
 **REQUIRED:** 138
+

@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-lookup
 description: Activates when the user asks about Agent Skills, wants to find reusable AI capabilities, needs to install skills, or mentions skills for Claude. Use for discovering, retrieving, and installing skills.
 ---
@@ -57,8 +57,8 @@ When the user asks to install a skill:
 1. Call `get_skill` to retrieve all files
 2. Create the directory `.claude/skills/{slug}/`
 3. Save each file to the appropriate location:
-   - `SKILL.md` → `.claude/skills/{slug}/SKILL.md`
-   - Other files → `.claude/skills/{slug}/{filename}`
+   - `SKILL.md` â†’ `.claude/skills/{slug}/SKILL.md`
+   - Other files â†’ `.claude/skills/{slug}/{filename}`
 
 ## Skill Structure
 
@@ -74,3 +74,4 @@ Skills contain:
 - Present search results in a readable format with file counts
 - When installing, confirm the skill was saved successfully
 - Explain what the skill does and when it activates
+

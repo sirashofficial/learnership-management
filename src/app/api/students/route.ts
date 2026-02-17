@@ -7,6 +7,9 @@ import { requireAuth } from '@/lib/middleware';
 export async function GET(request: NextRequest) {
   console.log('API HIT: /api/students');
   try {
+    const { error, user } = await requireAuth(request);
+    if (error) return error;
+
     console.log('GET /api/students called');
     const { searchParams } = new URL(request.url);
     const groupId = searchParams.get('groupId');

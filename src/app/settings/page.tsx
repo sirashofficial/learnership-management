@@ -237,6 +237,31 @@ export default function SettingsPage() {
     }
   };
 
+  const handleThemeChange = async (nextTheme: string) => {
+    const nextForm = { ...appearanceForm, theme: nextTheme };
+    setAppearanceForm(nextForm);
+
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('theme', nextTheme);
+    }
+
+    try {
+      await fetch('/api/settings/appearance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ theme: nextTheme }),
+      });
+      await mutate('/api/settings/appearance');
+    } catch (error) {
+      console.error('Error saving appearance settings:', error);
+    }
+  };
+
   const handleChangePassword = async () => {
     if (securityForm.newPassword !== securityForm.confirmPassword) {
       alert('New passwords do not match');
@@ -787,7 +812,7 @@ export default function SettingsPage() {
                         return (
                           <button
                             key={theme.value}
-                            onClick={() => setAppearanceForm({...appearanceForm, theme: theme.value})}
+                            onClick={() => handleThemeChange(theme.value)}
                             className={`p-4 border-2 rounded-lg transition-colors ${
                               appearanceForm.theme === theme.value
                                 ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'

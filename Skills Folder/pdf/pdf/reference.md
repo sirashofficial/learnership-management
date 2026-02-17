@@ -1,4 +1,4 @@
-# PDF Processing Advanced Reference
+﻿# PDF Processing Advanced Reference
 
 This document contains advanced PDF processing features, detailed examples, and additional libraries not covered in the main skill instructions.
 

@@ -1,4 +1,4 @@
-# Pinecone Knowledge Base Scripts
+﻿# Pinecone Knowledge Base Scripts
 
 This directory contains scripts for setting up and managing the Pinecone knowledge base for the Learnership Management System.
 
@@ -108,3 +108,4 @@ Documents are automatically categorized and tagged:
 **Error: PDF parsing failed**
 - Some PDFs may be image-based or corrupted
 - The script will skip these and continue with other files
+

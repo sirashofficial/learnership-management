@@ -1,4 +1,4 @@
-# YEHA Component & Pattern Reference Guide
+﻿# YEHA Component & Pattern Reference Guide
 
 ## Quick Navigation
 
@@ -181,11 +181,11 @@ import { Alert } from '@/components/ui/Alert';
 | `onDismiss` | function | - | Called when dismissed |
 
 **When to Use:**
-- ✅ Operation success
-- ✅ Form validation errors
-- ✅ Important warnings
-- ✅ Tips and information
-- ❌ Don't use for transient notifications (use Toast instead - future component)
+- âœ… Operation success
+- âœ… Form validation errors
+- âœ… Important warnings
+- âœ… Tips and information
+- âŒ Don't use for transient notifications (use Toast instead - future component)
 
 ---
 
@@ -229,11 +229,11 @@ import { Users } from 'lucide-react';
 | `action` | object | {label: string, onClick: function} |
 
 **When to Use:**
-- ✅ List is empty
-- ✅ No search results
-- ✅ Data not available
-- ❌ Don't use for loading (use LoadingSkeleton)
-- ❌ Don't use for errors (use ErrorState)
+- âœ… List is empty
+- âœ… No search results
+- âœ… Data not available
+- âŒ Don't use for loading (use LoadingSkeleton)
+- âŒ Don't use for errors (use ErrorState)
 
 ---
 
@@ -258,10 +258,10 @@ import { ErrorState } from '@/components/ui/EmptyState';
 ```
 
 **When to Use:**
-- ✅ Data fetch failed
-- ✅ Operation error
-- ✅ Server error (500, etc.)
-- ❌ Don't use for form validation errors (use Alert)
+- âœ… Data fetch failed
+- âœ… Operation error
+- âœ… Server error (500, etc.)
+- âŒ Don't use for form validation errors (use Alert)
 
 ---
 
@@ -304,7 +304,7 @@ import { LoadingSkeleton } from '@/components/ui/EmptyState';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 <Tooltip content="Mark as complete" position="top">
-  <button onClick={handleComplete}>✓</button>
+  <button onClick={handleComplete}>âœ“</button>
 </Tooltip>
 ```
 
@@ -332,11 +332,11 @@ import { Tooltip } from '@/components/ui/Tooltip';
 | `children` | ReactNode | - | Element to attach tooltip to |
 
 **When to Use:**
-- ✅ Explain icon buttons
-- ✅ Provide keyboard shortcut info
-- ✅ Brief help text
-- ❌ Don't use for help text in forms (use helperText prop)
-- ❌ Don't use for essential information (make visible always)
+- âœ… Explain icon buttons
+- âœ… Provide keyboard shortcut info
+- âœ… Brief help text
+- âŒ Don't use for help text in forms (use helperText prop)
+- âŒ Don't use for essential information (make visible always)
 
 ---
 
@@ -502,32 +502,32 @@ return (
 
 1. **Every interactive element needs an accessible name**
    ```tsx
-   ❌ <button><Icon /></button>
-   ✅ <button aria-label="Close">✕</button>
+   âŒ <button><Icon /></button>
+   âœ… <button aria-label="Close">âœ•</button>
    ```
 
 2. **Form inputs must have labels**
    ```tsx
-   ❌ <input type="text" />
-   ✅ <FormInput label="Name" />
+   âŒ <input type="text" />
+   âœ… <FormInput label="Name" />
    ```
 
 3. **Keyboard navigation must work**
    ```tsx
-   ❌ <div onClick={handler}>Click me</div>
-   ✅ <button onClick={handler}>Click me</button>
+   âŒ <div onClick={handler}>Click me</div>
+   âœ… <button onClick={handler}>Click me</button>
    ```
 
 4. **Color is not the only indicator**
    ```tsx
-   ❌ <span className="text-red-600">Error</span>
-   ✅ <Alert variant="error" title="Error message" />
+   âŒ <span className="text-red-600">Error</span>
+   âœ… <Alert variant="error" title="Error message" />
    ```
 
 5. **Focus must be visible**
    ```tsx
-   ❌ *:focus { outline: 0; }  // NEVER do this!
-   ✅ Use .focus-ring utility or focus-visible:ring-2
+   âŒ *:focus { outline: 0; }  // NEVER do this!
+   âœ… Use .focus-ring utility or focus-visible:ring-2
    ```
 
 ---
@@ -539,17 +539,17 @@ return (
 ```css
 /* 8px base unit */
 p-1  = 0.25rem (4px)
-p-2  = 0.5rem (8px)   ← Use this
+p-2  = 0.5rem (8px)   â† Use this
 p-3  = 0.75rem (12px)
-p-4  = 1rem (16px)    ← Or this
-p-6  = 1.5rem (24px)  ← Or this
-p-8  = 2rem (32px)    ← Or this
+p-4  = 1rem (16px)    â† Or this
+p-6  = 1.5rem (24px)  â† Or this
+p-8  = 2rem (32px)    â† Or this
 ```
 
 **Use consistently:**
 ```tsx
-✅ pt-6 pb-6 pl-4 pr-4        (Consistent spacing)
-❌ pt-3 pb-5 pl-2 pr-8        (Inconsistent)
+âœ… pt-6 pb-6 pl-4 pr-4        (Consistent spacing)
+âŒ pt-3 pb-5 pl-2 pr-8        (Inconsistent)
 ```
 
 ---
@@ -558,17 +558,17 @@ p-8  = 2rem (32px)    ← Or this
 
 **Text Colors:**
 ```tsx
-✅ text-slate-900          (On light background)
-✅ dark:text-white         (On dark background)
-✅ text-slate-500          (Secondary/muted text)
-❌ text-blue-600           (Unless it's a link)
+âœ… text-slate-900          (On light background)
+âœ… dark:text-white         (On dark background)
+âœ… text-slate-500          (Secondary/muted text)
+âŒ text-blue-600           (Unless it's a link)
 ```
 
 **Background Colors:**
 ```tsx
-✅ bg-slate-50             (Light backgrounds)
-✅ dark:bg-slate-800       (Dark backgrounds)
-✅ bg-emerald-600          (Actions/CTA)
+âœ… bg-slate-50             (Light backgrounds)
+âœ… dark:bg-slate-800       (Dark backgrounds)
+âœ… bg-emerald-600          (Actions/CTA)
 ```
 
 ---
@@ -577,16 +577,16 @@ p-8  = 2rem (32px)    ← Or this
 
 ```tsx
 /* Primary action */
-✅ className="btn-primary"
+âœ… className="btn-primary"
 
 /* Secondary action */
-✅ className="btn-secondary"
+âœ… className="btn-secondary"
 
 /* Dangerous action */
-✅ className="btn-danger"
+âœ… className="btn-danger"
 
 /* Ghost/tertiary */
-✅ className="btn-ghost"
+âœ… className="btn-ghost"
 ```
 
 ---
@@ -597,22 +597,22 @@ When creating new features, follow this structure:
 
 ```
 src/
-├── app/
-│   ├── feature/
-│   │   ├── page.tsx           (Page component)
-│   │   └── layout.tsx         (Layout if needed)
-│
-├── components/
-│   ├── feature/
-│   │   ├── FeatureForm.tsx    (Form component)
-│   │   ├── FeatureList.tsx    (List component)
-│   │   └── FeatureCard.tsx    (Card component)
-│
-├── hooks/
-│   └── useFeature.ts          (Custom hook)
-│
-└── types/
-    └── feature.ts            (TypeScript types)
+â”œâ”€â”€ app/
+â”‚   â”œâ”€â”€ feature/
+â”‚   â”‚   â”œâ”€â”€ page.tsx           (Page component)
+â”‚   â”‚   â””â”€â”€ layout.tsx         (Layout if needed)
+â”‚
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ feature/
+â”‚   â”‚   â”œâ”€â”€ FeatureForm.tsx    (Form component)
+â”‚   â”‚   â”œâ”€â”€ FeatureList.tsx    (List component)
+â”‚   â”‚   â””â”€â”€ FeatureCard.tsx    (Card component)
+â”‚
+â”œâ”€â”€ hooks/
+â”‚   â””â”€â”€ useFeature.ts          (Custom hook)
+â”‚
+â””â”€â”€ types/
+    â””â”€â”€ feature.ts            (TypeScript types)
 ```
 
 ---
@@ -638,14 +638,14 @@ src/
 
 ## Deprecated Patterns
 
-❌ **Don't use these anymore:**
+âŒ **Don't use these anymore:**
 - Custom styled inputs without validation feedback
 - Inline `className="text-red-600"` for errors
 - No empty states in lists
 - Missing ARIA labels on buttons
 - Manual focus management
 
-✅ **Use new patterns instead:**
+âœ… **Use new patterns instead:**
 - FormInput with error prop
 - Alert component for feedback
 - EmptyState component
@@ -665,3 +665,4 @@ src/
 
 **Last Updated:** February 12, 2026  
 **Version:** 1.0
+

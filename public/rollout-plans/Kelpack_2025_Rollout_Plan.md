@@ -1,10 +1,10 @@
-# Kelpack Manufacturing 2025 Rollout Plan
+﻿# Kelpack Manufacturing 2025 Rollout Plan
 
 ## Programme Details
 
 **GROUP:** Kelpack Manufacturing  
 **NATIONAL CERTIFICATE:** NEW VENTURE CREATION (SMME)  
-**ID:** 49648 – NQF LEVEL 2  
+**ID:** 49648 â€“ NQF LEVEL 2  
 **START DATE:** 01/03/2025  
 **END DATE:** 28/02/2026
 **LEARNERS:** 8  
@@ -49,7 +49,7 @@
 - **Assessing Date:** 02/04/2025
 - **Credits:** 3
 
-**Workplace Activity:** 03/04/2025 – 16/04/2025 (Monday – Friday)
+**Workplace Activity:** 03/04/2025 â€“ 16/04/2025 (Monday â€“ Friday)
 
 ---
 
@@ -76,7 +76,7 @@
 - **Assessing Date:** 29/05/2025
 - **Credits:** 10
 
-**Workplace Activity:** 30/05/2025 – 13/06/2025 (Monday – Friday)
+**Workplace Activity:** 30/05/2025 â€“ 13/06/2025 (Monday â€“ Friday)
 
 ---
 
@@ -110,7 +110,7 @@
 - **Assessing Date:** 23/07/2025
 - **Credits:** 2
 
-**Workplace Activity:** 24/07/2025 – 08/08/2025 (Monday – Friday)
+**Workplace Activity:** 24/07/2025 â€“ 08/08/2025 (Monday â€“ Friday)
 
 ---
 
@@ -137,7 +137,7 @@
 - **Assessing Date:** 18/09/2025
 - **Credits:** 10
 
-**Workplace Activity:** 19/09/2025 – 03/10/2025 (Monday – Friday)
+**Workplace Activity:** 19/09/2025 â€“ 03/10/2025 (Monday â€“ Friday)
 
 ---
 
@@ -164,7 +164,7 @@
 - **Assessing Date:** 13/11/2025
 - **Credits:** 10
 
-**Workplace Activity:** 14/11/2025 – 27/11/2025 (Monday – Friday)
+**Workplace Activity:** 14/11/2025 â€“ 27/11/2025 (Monday â€“ Friday)
 
 ---
 
@@ -212,7 +212,7 @@
 - **Assessing Date:** 06/02/2026
 - **Credits:** 2
 
-**Workplace Activity:** 09/02/2026 – 18/02/2026 (Monday – Friday)
+**Workplace Activity:** 09/02/2026 â€“ 18/02/2026 (Monday â€“ Friday)
 
 ---
 
@@ -222,3 +222,4 @@
 
 **TOTAL CREDITS:** 140  
 **REQUIRED:** 138
+

@@ -8,6 +8,7 @@ import StudentDetailsModal from '@/components/StudentDetailsModal';
 import BulkAssessmentModal from '@/components/BulkAssessmentModal';
 import { useStudents, type Student } from '@/hooks/useStudents';
 import { useGroups } from '@/contexts/GroupsContext';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 import { getStudentAlert, getAlertColor, type StudentAlert } from '@/lib/progress-alerts';
 import {
   Search,
@@ -311,18 +312,38 @@ export default function StudentsPage() {
 
   const handleExportCSV = async () => {
     try {
-      const response = await fetch('/api/students?export=csv');
-      const blob = await response.blob();
+      // Create CSV from filtered students
+      const csvHeaders = ['Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Group', 'Status', 'Progress%'];
+      const csvRows = filteredStudents.map(student => [
+        student.studentId || '',
+        student.firstName || '',
+        student.lastName || '',
+        student.email || '',
+        student.phone || '',
+        student.group?.name || '',
+        student.status || '',
+        (student.progress || 0).toString()
+      ]);
+
+      // Combine headers and rows
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `students_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      a.download = `students_export_${format(new Date(), 'yyyy-MM-dd')}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error exporting CSV:', error);
+      alert('Failed to export CSV. Please try again.');
     }
   };
 
@@ -529,7 +550,7 @@ export default function StudentsPage() {
                   <option value="all">All Groups</option>
                   {groups?.map((group: any) => (
                     <option key={group.id} value={group.id}>
-                      {group.name} - {group.company?.name}
+                      {formatGroupNameDisplay(group.name)} - {group.company?.name}
                     </option>
                   ))}
                 </select>

@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const rememberMe = Boolean(body?.rememberMe);
 
     // Sanitize inputs before validation
     const sanitizedBody = {
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
-    });
+    }, rememberMe ? '30d' : '24h');
 
     // Return user data (without password) and token
     const { password, ...userWithoutPassword } = user;
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60,
     });
 
     return response;

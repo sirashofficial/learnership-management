@@ -1,4 +1,4 @@
-# YEHA – Timetable Fix Prompts (Correcting What Was Built)
+﻿# YEHA â€“ Timetable Fix Prompts (Correcting What Was Built)
 > The timetable has sessions in the DB but the rotation, groups, and design are all wrong.
 > Run these in order. One at a time. Test in browser before moving to the next.
 
@@ -8,36 +8,36 @@
 
 | Problem | What You See | What It Should Be |
 |---|---|---|
-| Wrong days | Sessions only on Sun 15, Mon 16, Tue 17 | Every Mon, Tue, Wed, Thu — every week |
-| Wrong groups | "Market Re...", "HIV/AIDS...", "Financial..." — these are module names, not group names | Group names: Azelis SA, City Logistics, Monteagle, etc. |
+| Wrong days | Sessions only on Sun 15, Mon 16, Tue 17 | Every Mon, Tue, Wed, Thu â€” every week |
+| Wrong groups | "Market Re...", "HIV/AIDS...", "Financial..." â€” these are module names, not group names | Group names: Azelis SA, City Logistics, Monteagle, etc. |
 | Groups not linked | Seed used hardcoded names, not real DB Group IDs | Sessions must reference actual Group.id from database |
-| Wrong design | Small text boxes in a month calendar | Week view with time axis 09:00–14:00, tall coloured blocks |
+| Wrong design | Small text boxes in a month calendar | Week view with time axis 09:00â€“14:00, tall coloured blocks |
 | Missing groups | Kelpack 25' not seeded | Must include all groups from DB |
 
 ---
 
-## The Correct Schedule (This Is The Source of Truth — Do Not Change It)
+## The Correct Schedule (This Is The Source of Truth â€” Do Not Change It)
 
 ```
 MONDAY & WEDNESDAY:
-  Lecture Room  → All MONTZELITY 26' groups (City Logistics 2026, Azelis SA 2026,
-                  Monteagle 2026, Beyond Insights 2026) — each gets their own block
+  Lecture Room  â†’ All MONTZELITY 26' groups (City Logistics 2026, Azelis SA 2026,
+                  Monteagle 2026, Beyond Insights 2026) â€” each gets their own block
                   + KELPACK 25' (if this group exists in the database)
-  Computer Lab  → AZELIS 25', PACKAGING WORLD 25'
+  Computer Lab  â†’ AZELIS 25', PACKAGING WORLD 25'
 
 TUESDAY & THURSDAY:
-  Lecture Room  → FLINT GROUP 25'
-  Computer Lab  → WAHL 25', MONTEAGLE 25'
+  Lecture Room  â†’ FLINT GROUP 25'
+  Computer Lab  â†’ WAHL 25', MONTEAGLE 25'
 
 FRIDAY:
-  → No sessions
+  â†’ No sessions
 
-Session Time: 09:00 – 14:00 (all groups, all days)
+Session Time: 09:00 â€“ 14:00 (all groups, all days)
 ```
 
 ---
 
-## PROMPT 1 — Audit First (No Changes)
+## PROMPT 1 â€” Audit First (No Changes)
 
 ```
 @workspace The timetable seed created 306 sessions but they are showing on wrong days
@@ -68,7 +68,7 @@ Do NOT change any code. Just show me the findings from all 4 points.
 
 ---
 
-## PROMPT 2 — Delete Bad Sessions and Re-Seed Correctly
+## PROMPT 2 â€” Delete Bad Sessions and Re-Seed Correctly
 
 Run this AFTER Prompt 1 confirms the group IDs and what went wrong.
 
@@ -79,25 +79,25 @@ Run this AFTER Prompt 1 confirms the group IDs and what went wrong.
 
 Here is the schedule to implement:
 
-MONDAY and WEDNESDAY each week (session time 09:00 – 14:00):
-  Lecture Room sessions — one session block per group:
-    - City Logistics (LP) 2026  → colour #3B82F6 (blue)
-    - Azelis SA (LP) 2026       → colour #14B8A6 (teal)
-    - Monteagle (LP) 2026       → colour #8B5CF6 (purple)
-    - Beyond Insights (LP) 2026 → colour #F97316 (orange)
-    - Kelpack 2025 (if exists)  → colour #6366F1 (indigo)
+MONDAY and WEDNESDAY each week (session time 09:00 â€“ 14:00):
+  Lecture Room sessions â€” one session block per group:
+    - City Logistics (LP) 2026  â†’ colour #3B82F6 (blue)
+    - Azelis SA (LP) 2026       â†’ colour #14B8A6 (teal)
+    - Monteagle (LP) 2026       â†’ colour #8B5CF6 (purple)
+    - Beyond Insights (LP) 2026 â†’ colour #F97316 (orange)
+    - Kelpack 2025 (if exists)  â†’ colour #6366F1 (indigo)
 
-  Computer Lab sessions — one session block per group:
-    - Azelis 2025               → colour #22C55E (green)
-    - Packaging World 2025      → colour #10B981 (emerald)
+  Computer Lab sessions â€” one session block per group:
+    - Azelis 2025               â†’ colour #22C55E (green)
+    - Packaging World 2025      â†’ colour #10B981 (emerald)
 
-TUESDAY and THURSDAY each week (session time 09:00 – 14:00):
+TUESDAY and THURSDAY each week (session time 09:00 â€“ 14:00):
   Lecture Room sessions:
-    - Flint Group 2025          → colour #EF4444 (red)
+    - Flint Group 2025          â†’ colour #EF4444 (red)
 
   Computer Lab sessions:
-    - Wahl 2025                 → colour #F59E0B (amber)
-    - Monteagle 2025            → colour #EC4899 (pink)
+    - Wahl 2025                 â†’ colour #F59E0B (amber)
+    - Monteagle 2025            â†’ colour #EC4899 (pink)
 
 FRIDAY: No sessions
 
@@ -106,7 +106,7 @@ DATE RANGE: Generate sessions from today (Feb 2026) through May 2026
 CRITICAL REQUIREMENTS:
 - Look up REAL Group IDs from the database using: prisma.group.findMany()
 - Match groups by name (case-insensitive, partial match is fine)
-- If a group name is not found in the DB, log a warning and skip it — do not crash
+- If a group name is not found in the DB, log a warning and skip it â€” do not crash
 - Each session title = the group's actual name (not the module name)
 - Store groupId as a foreign key to the real Group record
 - session.title = group.name
@@ -121,27 +121,27 @@ Please:
 
 ---
 
-## PROMPT 3 — Redesign the Timetable Calendar (Week View with Time Slots)
+## PROMPT 3 â€” Redesign the Timetable Calendar (Week View with Time Slots)
 
 Run after Prompt 2 confirms sessions are correct in the DB.
 
 ```
 @workspace The timetable is currently showing a month calendar with small text event boxes.
 I need to completely replace this with a proper week view that looks like a professional
-scheduling tool — similar to Google Calendar week view but styled for YEHA.
+scheduling tool â€” similar to Google Calendar week view but styled for YEHA.
 
 Here is exactly what I want:
 
 LAYOUT STRUCTURE:
   Left sidebar (fixed, 220px wide):
     - "Timetable" heading
-    - Filter: "All Groups" dropdown — lists every group from the DB
-    - Filter: "All Venues" dropdown — Lecture Room, Computer Lab
+    - Filter: "All Groups" dropdown â€” lists every group from the DB
+    - Filter: "All Venues" dropdown â€” Lecture Room, Computer Lab
     - View toggle: Week | Month (default = Week)
     - Small month mini-calendar for date jumping (optional, nice to have)
 
   Main area:
-    Top row: Week navigation (< prev week | Mon 16 Feb – Fri 20 Feb | next week >)
+    Top row: Week navigation (< prev week | Mon 16 Feb â€“ Fri 20 Feb | next week >)
              + "Today" button on the right
 
     Time grid:
@@ -150,14 +150,14 @@ LAYOUT STRUCTURE:
 
     Session blocks:
       - Positioned at exact time on the grid (09:00 start, top of block)
-      - Height = proportional to duration (09:00–14:00 = 5 hours = full column height)
+      - Height = proportional to duration (09:00â€“14:00 = 5 hours = full column height)
       - Width = full column width minus 8px padding each side
       - Background = group colour (from the colour map below)
       - Border radius: 8px
       - Content inside block:
           Line 1 (bold, white): Group name
           Line 2 (white, smaller): Venue name
-          Line 3 (white, smaller): 09:00 – 14:00
+          Line 3 (white, smaller): 09:00 â€“ 14:00
       - On hover: slight brightness increase, cursor pointer
       - On click: opens session detail panel (side panel, not modal)
 
@@ -166,36 +166,36 @@ LAYOUT STRUCTURE:
       - Each block takes equal width share of the column
 
 COLOUR MAP (apply exactly):
-  City Logistics 2026    → #3B82F6
-  Azelis SA 2026         → #14B8A6
-  Monteagle 2026         → #8B5CF6
-  Beyond Insights 2026   → #F97316
-  Kelpack 2025           → #6366F1
-  Azelis 2025            → #22C55E
-  Packaging World 2025   → #10B981
-  Flint Group 2025       → #EF4444
-  Wahl 2025              → #F59E0B
-  Monteagle 2025         → #EC4899
+  City Logistics 2026    â†’ #3B82F6
+  Azelis SA 2026         â†’ #14B8A6
+  Monteagle 2026         â†’ #8B5CF6
+  Beyond Insights 2026   â†’ #F97316
+  Kelpack 2025           â†’ #6366F1
+  Azelis 2025            â†’ #22C55E
+  Packaging World 2025   â†’ #10B981
+  Flint Group 2025       â†’ #EF4444
+  Wahl 2025              â†’ #F59E0B
+  Monteagle 2025         â†’ #EC4899
 
 SESSION DETAIL SIDE PANEL (opens on click):
   - Slides in from the right (not a modal)
   - Shows: Group name, Date, Time, Venue, Current module, Student count
-  - "View Group" button → /groups/[groupId]
-  - "Mark Attendance" button → pre-fills attendance for this group and date
-  - "Add Reminder" button → small inline form
+  - "View Group" button â†’ /groups/[groupId]
+  - "Mark Attendance" button â†’ pre-fills attendance for this group and date
+  - "Add Reminder" button â†’ small inline form
   - Close button (X) top right
 
 Please:
 1. Fully rewrite src/components/TimetableWeekView.tsx with this design
 2. Update src/app/timetable/page.tsx to use the new component
 3. Fetch sessions from GET /api/timetable/sessions?startDate=&endDate= using SWR
-4. Apply Tailwind CSS only — no external calendar libraries
+4. Apply Tailwind CSS only â€” no external calendar libraries
 5. Show every file changed
 ```
 
 ---
 
-## PROMPT 4 — Fix the Group Colour Consistency Across the Whole App
+## PROMPT 4 â€” Fix the Group Colour Consistency Across the Whole App
 
 Run after Prompt 3. This makes sure group colours are the same everywhere.
 
@@ -213,9 +213,9 @@ const GROUP_COLOURS: Record<string, string> = {
   // Match by checking if the group name INCLUDES any of these keys (case-insensitive)
   'city logistics': '#3B82F6',
   'azelis sa': '#14B8A6',
-  'azelis': '#22C55E',          // 2025 version — matched after 'azelis sa'
+  'azelis': '#22C55E',          // 2025 version â€” matched after 'azelis sa'
   'monteagle 2026': '#8B5CF6',
-  'monteagle': '#EC4899',       // 2025 version — matched after 'monteagle 2026'
+  'monteagle': '#EC4899',       // 2025 version â€” matched after 'monteagle 2026'
   'beyond insights': '#F97316',
   'kelpack': '#6366F1',
   'packaging world': '#10B981',
@@ -225,7 +225,7 @@ const GROUP_COLOURS: Record<string, string> = {
 
 Export a function:
   getGroupColour(groupName: string): string
-  → loops through the map, returns the first match, defaults to '#6B7280' (grey) if no match
+  â†’ loops through the map, returns the first match, defaults to '#6B7280' (grey) if no match
 
 2. Replace all hardcoded group colour logic in:
    - TimetableWeekView.tsx
@@ -240,7 +240,7 @@ Show every file changed.
 
 ---
 
-## PROMPT 5 — Fix the Dashboard Upcoming Schedule
+## PROMPT 5 â€” Fix the Dashboard Upcoming Schedule
 
 Run after Prompt 4. This makes the dashboard show real upcoming sessions with correct group names.
 
@@ -253,14 +253,14 @@ Please update the Upcoming Schedule section on the dashboard (TodaysSchedule.tsx
 DISPLAY:
   - Show next 5 sessions from today onwards
   - Each session card shows:
-      [Colour dot] Group Name         Day, Date • 09:00 – 14:00
-      📍 Venue name                   [Prepare button]
+      [Colour dot] Group Name         Day, Date â€¢ 09:00 â€“ 14:00
+      ðŸ“ Venue name                   [Prepare button]
   - "Today" green badge if the session is today
   - "Tomorrow" amber badge if the session is tomorrow
 
 DATA:
   - Fetch from GET /api/timetable/sessions?startDate=today&endDate=+7days
-  - Use SWR — not raw fetch
+  - Use SWR â€” not raw fetch
   - Colours from getGroupColour() in src/lib/groupColours.ts
 
 PREPARE BUTTON:
@@ -268,7 +268,7 @@ PREPARE BUTTON:
   - We will wire it up fully in the next session
 
 Also fix: If there are no sessions in the next 7 days, show:
-  "No sessions scheduled — check your timetable"
+  "No sessions scheduled â€” check your timetable"
   with a link to /timetable
 
 Show every file changed.
@@ -290,14 +290,15 @@ Show every file changed.
 
 ## Critical Rules for Copilot to Follow
 
-- ALWAYS query the database for real Group IDs — never hardcode them
+- ALWAYS query the database for real Group IDs â€” never hardcode them
 - Session title = the group's actual name from the database
-- Group colours come from src/lib/groupColours.ts — not inline
-- No external calendar libraries — use Tailwind CSS grid/flex
-- Use SWR for all data fetching — no raw fetch() calls
+- Group colours come from src/lib/groupColours.ts â€” not inline
+- No external calendar libraries â€” use Tailwind CSS grid/flex
+- Use SWR for all data fetching â€” no raw fetch() calls
 - Test: after each prompt, check localhost:3000/timetable and confirm sessions show on Mon/Tue/Wed/Thu
 
 ---
 
-*YEHA – Youth Education & Skills Management System*
+*YEHA â€“ Youth Education & Skills Management System*
 *Stack: Next.js 14 | Prisma | SQLite | TypeScript | SWR | Tailwind CSS*
+

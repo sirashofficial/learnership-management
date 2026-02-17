@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface StatDetailsModalProps {
   statType: string;
@@ -215,7 +216,7 @@ function GroupsList({ groups }: { groups: any[] }) {
           className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
         >
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">{group.name}</p>
+            <p className="font-medium text-slate-900 dark:text-white">{formatGroupNameDisplay(group.name)}</p>
             <p className="text-sm text-slate-600 dark:text-slate-400">{group.company?.name || 'No Company'}</p>
           </div>
           <div className="text-right">

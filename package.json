@@ -11,7 +11,11 @@
     "export": "next build && next export",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "node scripts/seed-safe.js",
+    "seed:safe": "node scripts/seed-safe.js",
+    "db:backup": "node scripts/backup-db.js",
+    "db:restore": "node scripts/restore-db.js",
+    "rollout:parity": "node scripts/rollout-parity-report.js",
     "db:studio": "prisma studio",
     "upload-docs": "node scripts/bulk-upload-documents.js"
   },
@@ -69,7 +73,7 @@
     "typescript": "^5.4.5"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node scripts/seed-safe.js"
   },
   "engines": {
     "node": ">=18.0.0"

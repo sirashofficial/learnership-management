@@ -1,6 +1,6 @@
-🌱 Starting CORRECTED timetable seed...\n
-✅ Deleted 347 existing sessions\n
-📋 Found 10 groups in database:
+﻿ðŸŒ± Starting CORRECTED timetable seed...\n
+âœ… Deleted 347 existing sessions\n
+ðŸ“‹ Found 10 groups in database:
   d2b59892 | Azelis 26'
   c85fb28e | Beyond Insights 26'
   2c2b57f0 | City Logistics 26'
@@ -12,21 +12,21 @@
   bdd187bd | Monteagle 25'
   004e6141 | Kelpack
 
-🔍 Group matching results:
-  ✅ cityLogistics2026: City Logistics 26' (2c2b57f0)
-  ✅ azelisSA2026: Azelis 26' (d2b59892)
-  ✅ monteagle2026: Monteagle 26' (dfdc943a)
-  ✅ beyondInsights2026: Beyond Insights 26' (c85fb28e)
-  ✅ kelpack2025: Kelpack (004e6141)
-  ✅ azelis2025: Azelis 25' (8a34711f)
-  ✅ packagingWorld2025: Packaging World 25' (3419ff78)
-  ✅ flintGroup2025: Flint Group 25' (49a2ed75)
-  ✅ wahl2025: Wahl 25' (a3eaa23e)
-  ✅ monteagle2025: Monteagle 25' (bdd187bd)
+ðŸ” Group matching results:
+  âœ… cityLogistics2026: City Logistics 26' (2c2b57f0)
+  âœ… azelisSA2026: Azelis 26' (d2b59892)
+  âœ… monteagle2026: Monteagle 26' (dfdc943a)
+  âœ… beyondInsights2026: Beyond Insights 26' (c85fb28e)
+  âœ… kelpack2025: Kelpack (004e6141)
+  âœ… azelis2025: Azelis 25' (8a34711f)
+  âœ… packagingWorld2025: Packaging World 25' (3419ff78)
+  âœ… flintGroup2025: Flint Group 25' (49a2ed75)
+  âœ… wahl2025: Wahl 25' (a3eaa23e)
+  âœ… monteagle2025: Monteagle 25' (bdd187bd)
 
-📝 Creating 347 sessions...
-\n✅ Successfully created 347 timetable sessions!
-\n📅 Sample sessions:
+ðŸ“ Creating 347 sessions...
+\nâœ… Successfully created 347 timetable sessions!
+\nðŸ“… Sample sessions:
   Mon 2026-02-16 | 09:00-14:00 | Lecture Room    | City Logistics 26'
   Mon 2026-02-16 | 09:00-14:00 | Lecture Room    | Azelis 26'
   Mon 2026-02-16 | 09:00-14:00 | Lecture Room    | Monteagle 26'
@@ -37,3 +37,4 @@
   Tue 2026-02-17 | 09:00-14:00 | Lecture Room    | Flint Group 25'
   Tue 2026-02-17 | 09:00-14:00 | Computer Lab    | Wahl 25'
   Tue 2026-02-17 | 09:00-14:00 | Computer Lab    | Monteagle 25'
+

@@ -1,4 +1,4 @@
----
+﻿---
 name: yeha-timetable-fix-skill
 description: >
   Use this skill when fixing or rebuilding the YEHA Timetable page.
@@ -6,7 +6,7 @@ description: >
   colour assignments, UI design rules, and what went wrong in the first implementation.
 ---
 
-# YEHA – Timetable Fix Skill
+# YEHA â€“ Timetable Fix Skill
 
 ## What This Skill Is For
 
@@ -21,7 +21,7 @@ produced incorrect results. The specific problems were:
 
 ---
 
-## The Correct Weekly Schedule — Source of Truth
+## The Correct Weekly Schedule â€” Source of Truth
 
 This must be implemented exactly. Do not interpret or modify this structure.
 
@@ -29,16 +29,16 @@ This must be implemented exactly. Do not interpret or modify this structure.
 MONDAY and WEDNESDAY (every week):
 
   Venue: Lecture Room
-  Time: 09:00 – 14:00
+  Time: 09:00 â€“ 14:00
   Groups (each gets their own session block):
     - City Logistics (LP) 2026
     - Azelis SA (LP) 2026
     - Monteagle (LP) 2026
     - Beyond Insights (LP) 2026
-    - Kelpack 2025 (only if this group exists in the DB — check first)
+    - Kelpack 2025 (only if this group exists in the DB â€” check first)
 
   Venue: Computer Lab
-  Time: 09:00 – 14:00
+  Time: 09:00 â€“ 14:00
   Groups:
     - Azelis 2025
     - Packaging World 2025
@@ -46,18 +46,18 @@ MONDAY and WEDNESDAY (every week):
 TUESDAY and THURSDAY (every week):
 
   Venue: Lecture Room
-  Time: 09:00 – 14:00
+  Time: 09:00 â€“ 14:00
   Groups:
     - Flint Group 2025
 
   Venue: Computer Lab
-  Time: 09:00 – 14:00
+  Time: 09:00 â€“ 14:00
   Groups:
     - Wahl 2025
     - Monteagle 2025
 
-FRIDAY: No sessions — do not generate any
-SATURDAY/SUNDAY: No sessions — do not generate any
+FRIDAY: No sessions â€” do not generate any
+SATURDAY/SUNDAY: No sessions â€” do not generate any
 ```
 
 ---
@@ -83,11 +83,11 @@ function findGroup(groups, searchTerm) {
 }
 
 // Step 3: Log what was found and what was not
-// If a group is not found → log warning and skip (do not crash)
+// If a group is not found â†’ log warning and skip (do not crash)
 // Example:
 const cityLogistics = findGroup(allGroups, 'city logistics')
 if (!cityLogistics) {
-  console.warn('WARNING: City Logistics 2026 not found in database — skipping')
+  console.warn('WARNING: City Logistics 2026 not found in database â€” skipping')
 } else {
   console.log(`Found: ${cityLogistics.name} (${cityLogistics.id})`)
 }
@@ -109,7 +109,7 @@ if (!cityLogistics) {
 | Monteagle 2025 | `monteagle` + year 2025 filter |
 
 **Important:** Monteagle exists in both 2025 and 2026. Distinguish by year or by checking
-which collection/company they belong to. 2026 = Montazility collection. 2025 = individual.
+which collection/company they belong to. 2026 = Montzelity collection. 2025 = individual.
 
 ---
 
@@ -120,7 +120,7 @@ Each generated session must have:
 ```typescript
 {
   groupId: string        // REAL Group.id from the database
-  title: string          // group.name — EXACTLY as stored in DB
+  title: string          // group.name â€” EXACTLY as stored in DB
   date: Date             // The specific date (e.g. 2026-02-16 for a Monday)
   startTime: "09:00"
   endTime: "14:00"
@@ -136,7 +136,7 @@ belongs in a separate field if needed. The calendar block heading = group name.
 
 ---
 
-## Group Colour Map — Single Source of Truth
+## Group Colour Map â€” Single Source of Truth
 
 Create this in `src/lib/groupColours.ts` and import it everywhere.
 Never define colours inline in components.
@@ -144,23 +144,23 @@ Never define colours inline in components.
 ```typescript
 const COLOUR_MAP: { key: string; colour: string }[] = [
   { key: 'city logistics',    colour: '#3B82F6' },  // Blue
-  { key: 'azelis sa',        colour: '#14B8A6' },  // Teal — must match before 'azelis'
+  { key: 'azelis sa',        colour: '#14B8A6' },  // Teal â€” must match before 'azelis'
   { key: 'beyond insights',  colour: '#F97316' },  // Orange
   { key: 'kelpack',          colour: '#6366F1' },  // Indigo
   { key: 'packaging world',  colour: '#10B981' },  // Emerald
   { key: 'flint',            colour: '#EF4444' },  // Red
   { key: 'wahl',             colour: '#F59E0B' },  // Amber
-  // Monteagle — must distinguish 2026 vs 2025
-  // Handle by checking if the name contains '2026' or belongs to Montazility collection
+  // Monteagle â€” must distinguish 2026 vs 2025
+  // Handle by checking if the name contains '2026' or belongs to Montzelity collection
 ]
 
 // For Monteagle specifically:
-// If group name contains '2026' or company is 'Montazility' → #8B5CF6 (Purple)
-// Otherwise (2025) → #EC4899 (Pink)
+// If group name contains '2026' or company is 'Montzelity' â†’ #8B5CF6 (Purple)
+// Otherwise (2025) â†’ #EC4899 (Pink)
 
 // For Azelis specifically:
-// If group name contains 'SA' or '2026' → #14B8A6 (Teal)
-// Otherwise (2025) → #22C55E (Green)
+// If group name contains 'SA' or '2026' â†’ #14B8A6 (Teal)
+// Otherwise (2025) â†’ #22C55E (Green)
 
 export function getGroupColour(groupName: string, company?: string): string {
   const name = groupName.toLowerCase()
@@ -168,9 +168,9 @@ export function getGroupColour(groupName: string, company?: string): string {
 
   // Monteagle disambiguation
   if (name.includes('monteagle')) {
-    return (name.includes('2026') || comp.includes('montazility'))
-      ? '#8B5CF6'   // Purple — 2026
-      : '#EC4899'   // Pink — 2025
+    return (name.includes('2026') || comp.includes('montzelity'))
+      ? '#8B5CF6'   // Purple â€” 2026
+      : '#EC4899'   // Pink â€” 2025
   }
 
   // Azelis disambiguation
@@ -189,34 +189,34 @@ export function getGroupColour(groupName: string, company?: string): string {
 
 ---
 
-## Timetable UI — Required Design
+## Timetable UI â€” Required Design
 
 ### What Was Wrong
 The first implementation used a month calendar grid with small event boxes (like a basic
 calendar app). This is NOT what was requested.
 
 ### What Is Required
-A professional **week view** with a **time axis** — similar to the reference image shared
+A professional **week view** with a **time axis** â€” similar to the reference image shared
 (coloured blocks on a grid, time on Y axis, days on X axis).
 
 ### Layout Specification
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ TIMETABLE PAGE                                                   │
-├─────────────┬───────────────────────────────────────────────────┤
-│ LEFT SIDEBAR│ WEEK NAVIGATION + GRID                            │
-│ (220px)     │                                                   │
-│             │  < Mon 16 Feb – Fri 20 Feb 2026 >    [Today]     │
-│ Filter:     │                                                   │
-│ All Groups▼ │  TIME  │ MON  │ TUE  │ WED  │ THU  │ FRI        │
-│             │ ───────┼──────┼──────┼──────┼──────┼────        │
-│ All Venues▼ │ 09:00  │ ████ │ ████ │ ████ │ ████ │            │
-│             │ 09:30  │ ████ │ ████ │ ████ │ ████ │            │
-│ [Week] [Mo] │ 10:00  │ ████ │ ████ │ ████ │ ████ │            │
-│             │  ...   │ ████ │ ████ │ ████ │ ████ │            │
-│             │ 14:00  │      │      │      │      │            │
-└─────────────┴───────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ TIMETABLE PAGE                                                   â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ LEFT SIDEBARâ”‚ WEEK NAVIGATION + GRID                            â”‚
+â”‚ (220px)     â”‚                                                   â”‚
+â”‚             â”‚  < Mon 16 Feb â€“ Fri 20 Feb 2026 >    [Today]     â”‚
+â”‚ Filter:     â”‚                                                   â”‚
+â”‚ All Groupsâ–¼ â”‚  TIME  â”‚ MON  â”‚ TUE  â”‚ WED  â”‚ THU  â”‚ FRI        â”‚
+â”‚             â”‚ â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€        â”‚
+â”‚ All Venuesâ–¼ â”‚ 09:00  â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚            â”‚
+â”‚             â”‚ 09:30  â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚            â”‚
+â”‚ [Week] [Mo] â”‚ 10:00  â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚            â”‚
+â”‚             â”‚  ...   â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚ â–ˆâ–ˆâ–ˆâ–ˆ â”‚            â”‚
+â”‚             â”‚ 14:00  â”‚      â”‚      â”‚      â”‚      â”‚            â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Session Block Rules
@@ -224,19 +224,19 @@ A professional **week view** with a **time axis** — similar to the reference i
 ```
 Positioning:
   - Y position = calculated from startTime (09:00 = top of grid)
-  - Height = proportional to duration (09:00–14:00 = full block)
+  - Height = proportional to duration (09:00â€“14:00 = full block)
   - Each 30-minute slot = a fixed pixel height (recommend 48px per 30 min)
   - So 5 hours = 10 slots = 480px tall
 
 Width:
-  - If only 1 group in a column → full column width
-  - If multiple groups share a day+venue → split column equally
+  - If only 1 group in a column â†’ full column width
+  - If multiple groups share a day+venue â†’ split column equally
   - Min gap of 4px between blocks
 
 Content inside block:
   Line 1: Group name (font-bold, text-white, text-sm)
   Line 2: Venue (text-white/80, text-xs)
-  Line 3: 09:00 – 14:00 (text-white/70, text-xs)
+  Line 3: 09:00 â€“ 14:00 (text-white/70, text-xs)
 
 Styling:
   - background-color: group colour
@@ -286,15 +286,15 @@ Content:
   [Group colour header bar]
   Group Name (heading)
   Date: Monday, 16 February 2026
-  Time: 09:00 – 14:00
+  Time: 09:00 â€“ 14:00
   Venue: Lecture Room
   Students: [count from DB]
   Current Module: [from group's rollout plan]
 
   Buttons:
-    [View Group] → /groups/[groupId]
-    [Mark Attendance] → /attendance pre-filled
-    [Add Reminder] → expands inline form
+    [View Group] â†’ /groups/[groupId]
+    [Mark Attendance] â†’ /attendance pre-filled
+    [Add Reminder] â†’ expands inline form
 
   Reminder form (when expanded):
     Text input: "Reminder text..."
@@ -309,7 +309,7 @@ Close button: X top right
 ## Seed Script Requirements
 
 ```javascript
-// scripts/seed-timetable.js — Required structure
+// scripts/seed-timetable.js â€” Required structure
 
 async function main() {
   // 1. Delete all existing sessions
@@ -365,5 +365,6 @@ async function main() {
 
 ---
 
-*YEHA Learnership Management System — Timetable Fix Skill v2.0*
+*YEHA Learnership Management System â€” Timetable Fix Skill v2.0*
 *Stack: Next.js 14 | Prisma | SQLite | TypeScript | SWR | Tailwind CSS*
+

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import useSWR from 'swr';
 import { AlertCircle, CheckCircle2, Clock, Users, TrendingUp, AlertTriangle } from 'lucide-react';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface TodayClass {
   id: string;
@@ -118,7 +119,7 @@ export function TodayClassesDashboard() {
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900">
-                          {classItem.groupName}
+                          {formatGroupNameDisplay(classItem.groupName || '')}
                         </h3>
                         <p className="text-sm text-slate-600 mt-1">{classItem.topic}</p>
                       </div>

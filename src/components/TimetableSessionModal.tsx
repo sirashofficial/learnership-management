@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { X } from 'lucide-react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-config';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface TimetableSessionModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export default function TimetableSessionModal({
   if (!isOpen) return null;
 
   const groupName = groups.find((group: any) => group.id === formData.groupId)?.name || '';
+  const displayGroupName = formatGroupNameDisplay(groupName || '');
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -57,7 +59,7 @@ export default function TimetableSessionModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: groupName ? `${groupName} Session` : 'Training Session',
+          title: displayGroupName ? `${displayGroupName} Session` : 'Training Session',
           groupId: formData.groupId,
           date: formData.date,
           startTime: formData.startTime,
@@ -73,7 +75,7 @@ export default function TimetableSessionModal({
       }
 
       onCreated({
-        groupName: groupName || 'Group',
+        groupName: displayGroupName || 'Group',
         date: new Date(formData.date),
       });
     } catch (err) {
@@ -117,7 +119,7 @@ export default function TimetableSessionModal({
               <option value="">Select a group</option>
               {groups.map((group: any) => (
                 <option key={group.id} value={group.id}>
-                  {group.name}
+                  {formatGroupNameDisplay(group.name)}
                 </option>
               ))}
             </select>

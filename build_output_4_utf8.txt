@@ -26,3 +26,4 @@ Type error: Module '"C:/Users/LATITUDE 5400/Downloads/Learnership Management/nod
 [0m [90m 3 |[39m console[33m.[39mlog([32m'pdf-parse loaded (ESM):'[39m[33m,[39m [36mtypeof[39m pdf)[33m;[39m[0m
 [0m [90m 4 |[39m[0m
 Next.js build worker exited with code: 1 and signal: null
+

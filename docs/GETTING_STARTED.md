@@ -1,4 +1,4 @@
-# Getting Started with Development
+﻿# Getting Started with Development
 
 ## Initial Setup
 
@@ -36,15 +36,15 @@
 
 ```
 src/
-├── app/              # Pages and routes
-│   ├── layout.tsx   # Root layout (includes Sidebar)
-│   ├── page.tsx     # Home/Dashboard page
-│   └── globals.css  # Global styles
-├── components/      # Reusable components
-│   ├── Sidebar.tsx  # Main navigation
-│   └── Header.tsx   # Page headers
-└── lib/            # Utilities
-    └── utils.ts    # Helper functions
+â”œâ”€â”€ app/              # Pages and routes
+â”‚   â”œâ”€â”€ layout.tsx   # Root layout (includes Sidebar)
+â”‚   â”œâ”€â”€ page.tsx     # Home/Dashboard page
+â”‚   â””â”€â”€ globals.css  # Global styles
+â”œâ”€â”€ components/      # Reusable components
+â”‚   â”œâ”€â”€ Sidebar.tsx  # Main navigation
+â”‚   â””â”€â”€ Header.tsx   # Page headers
+â””â”€â”€ lib/            # Utilities
+    â””â”€â”€ utils.ts    # Helper functions
 ```
 
 ### Adding Backend API
@@ -77,9 +77,10 @@ When you're ready to add a backend:
 
 ## Next Steps
 
-1. ✅ Familiarize yourself with the codebase
-2. ⬜ Add authentication system
-3. ⬜ Integrate database
-4. ⬜ Build out remaining pages
-5. ⬜ Add form validation
-6. ⬜ Implement API endpoints
+1. âœ… Familiarize yourself with the codebase
+2. â¬œ Add authentication system
+3. â¬œ Integrate database
+4. â¬œ Build out remaining pages
+5. â¬œ Add form validation
+6. â¬œ Implement API endpoints
+

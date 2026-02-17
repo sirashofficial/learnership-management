@@ -153,6 +153,108 @@ export async function extractRolloutPlan(filePath: string): Promise<RolloutPlan>
   throw new Error(`Unsupported file type: ${filePath}`);
 }
 
+const normalizeDate = (day: string, month: string, year: string) => {
+  const normalizedYear = year.length === 2 ? `20${year}` : year;
+  return `${day}/${month}/${normalizedYear}`;
+};
+
+const moduleNumberFromLabel = (label: string) => {
+  const normalized = label.trim().toLowerCase();
+  const map: Record<string, number> = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+  };
+  if (map[normalized]) {
+    return map[normalized];
+  }
+  const numeric = parseInt(normalized, 10);
+  return Number.isNaN(numeric) ? null : numeric;
+};
+
+function parseUnitStandardsWithModules(text: string): Map<number, UnitStandard[]> {
+  const moduleMap = new Map<number, UnitStandard[]>();
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const modulePattern = /^MODULE\s+(ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)/i;
+  const codePattern = /^(\d{4,5}(?:\/\d{4,5})?)$/;
+  const datePattern = /(\d{2})\/(\d{2})\/(\d{2,4})/g;
+
+  let currentModule: number | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const moduleMatch = line.match(modulePattern);
+    if (moduleMatch) {
+      const moduleNumber = moduleNumberFromLabel(moduleMatch[1]);
+      if (moduleNumber) {
+        currentModule = moduleNumber;
+        if (!moduleMap.has(moduleNumber)) {
+          moduleMap.set(moduleNumber, []);
+        }
+      }
+      continue;
+    }
+
+    const codeMatch = line.match(codePattern);
+    if (!codeMatch) {
+      continue;
+    }
+
+    if (!currentModule) {
+      currentModule = 1;
+      if (!moduleMap.has(currentModule)) {
+        moduleMap.set(currentModule, []);
+      }
+    }
+
+    const code = codeMatch[1];
+    const dates: string[] = [];
+
+    for (let j = i + 1; j < Math.min(lines.length, i + 14); j++) {
+      const nextLine = lines[j];
+      if (modulePattern.test(nextLine) || codePattern.test(nextLine)) {
+        break;
+      }
+      let match: RegExpExecArray | null;
+      datePattern.lastIndex = 0;
+      while ((match = datePattern.exec(nextLine)) !== null) {
+        dates.push(normalizeDate(match[1], match[2], match[3]));
+      }
+    }
+
+    if (dates.length < 2) {
+      continue;
+    }
+
+    const [startDate, endDate, summativeDate, assessingDate] = dates;
+    const unit: UnitStandard = {
+      id: code,
+      code,
+      title: '',
+      startDate,
+      endDate,
+      summativeDate: summativeDate || '',
+      assessingDate: assessingDate || '',
+      credits: 0,
+    };
+
+    moduleMap.get(currentModule)!.push(unit);
+  }
+
+  return moduleMap;
+}
+
 function parseUnitStandards(text: string): UnitStandard[] {
   const unitStandards: UnitStandard[] = [];
   const lines = text
@@ -160,61 +262,71 @@ function parseUnitStandards(text: string): UnitStandard[] {
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
+  const datePattern = /(\d{2})\/(\d{2})\/(\d{2,4})/g;
+  const codePattern = /\b(\d{4,5}(?:\/\d{4,5})?)\b/;
+
+  const collectDatesAround = (index: number) => {
+    const matches: Array<{ idx: number; date: string }> = [];
+    const start = Math.max(0, index - 12);
+    const end = Math.min(lines.length - 1, index + 12);
+
+    for (let j = start; j <= end; j++) {
+      const line = lines[j];
+      let match: RegExpExecArray | null;
+      datePattern.lastIndex = 0;
+      while ((match = datePattern.exec(line)) !== null) {
+        matches.push({ idx: j, date: normalizeDate(match[1], match[2], match[3]) });
+      }
+    }
+
+    return matches.sort((a, b) => a.idx - b.idx).map((item) => item.date);
+  };
+
+  const collectCreditsAround = (index: number) => {
+    for (let j = index + 1; j < Math.min(lines.length, index + 6); j++) {
+      const nextLine = lines[j];
+      const creditMatch = /^(\d{1,3})$/.exec(nextLine);
+      if (creditMatch) {
+        return parseInt(creditMatch[1], 10);
+      }
+    }
+    return 0;
+  };
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (/^\d{4,5}$/.test(line)) {
-      const code = line;
-      let startDate: string | null = null;
-      let endDate: string | null = null;
-      let summativeDate: string | null = null;
-      let assessingDate: string | null = null;
-      let credits = 0;
+    const exactCode = /^\d{4,5}(?:\/\d{4,5})?$/.test(line) ? line : null;
+    const inlineCodeMatch = exactCode ? null : codePattern.exec(line);
+    const code = exactCode || inlineCodeMatch?.[1];
+    if (!code) continue;
 
-      const datePattern = /(\d{2})\/(\d{2})\/(\d{4})/;
-      let dateCount = 0;
+    if (unitStandards.some((unit) => unit.code === code)) {
+      continue;
+    }
 
-      for (let j = i - 1; j >= Math.max(0, i - 20); j--) {
-        const prevLine = lines[j];
-        const dateMatch = datePattern.exec(prevLine);
+    let title = '';
+    if (!exactCode && inlineCodeMatch) {
+      title = line.replace(code, '').replace(/[-–]/g, '').trim();
+    }
+    if (!title && lines[i + 1] && !/\d{2}\/\d{2}\/\d{2,4}/.test(lines[i + 1])) {
+      title = lines[i + 1];
+    }
 
-        if (dateMatch) {
-          const dateStr = `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}`;
-          if (dateCount === 0) {
-            assessingDate = dateStr;
-          } else if (dateCount === 1) {
-            summativeDate = dateStr;
-          } else if (dateCount === 2) {
-            endDate = dateStr;
-          } else if (dateCount === 3) {
-            startDate = dateStr;
-          }
-          dateCount++;
+    const dateCandidates = collectDatesAround(i);
+    const [startDate, endDate, summativeDate, assessingDate] = dateCandidates;
+    const credits = collectCreditsAround(i);
 
-          if (dateCount >= 4) break;
-        }
-      }
-
-      for (let j = i + 1; j < Math.min(lines.length, i + 5); j++) {
-        const nextLine = lines[j];
-        const creditMatch = /^(\d+)$/.exec(nextLine);
-        if (creditMatch) {
-          credits = parseInt(creditMatch[1], 10);
-          break;
-        }
-      }
-
-      if (startDate && endDate && assessingDate) {
-        unitStandards.push({
-          id: code,
-          code,
-          title: '',
-          startDate,
-          endDate,
-          summativeDate: summativeDate || '',
-          assessingDate,
-          credits,
-        });
-      }
+    if (startDate && endDate) {
+      unitStandards.push({
+        id: code,
+        code,
+        title,
+        startDate,
+        endDate,
+        summativeDate: summativeDate || '',
+        assessingDate: assessingDate || '',
+        credits,
+      });
     }
   }
 
@@ -223,13 +335,13 @@ function parseUnitStandards(text: string): UnitStandard[] {
 
 function parseWorkplaceActivityEndDates(text: string): Map<number, string> {
   const dates = new Map<number, string>();
-  const workplacePattern = /Workplace\s+Activity\s*[-–]\s*\((\d{2})\/(\d{2})\/(\d{4})\s*[-–]\s*(\d{2})\/(\d{2})\/(\d{4})\)/gi;
+  const workplacePattern = /Workplace\s+Activity\s*[-–]\s*\((\d{2})\/(\d{2})\/(\d{2,4})\s*[-–]\s*(\d{2})\/(\d{2})\/(\d{2,4})\)/gi;
 
   let match: RegExpExecArray | null;
   let moduleCount = 1;
 
   while ((match = workplacePattern.exec(text)) !== null) {
-    const endDateStr = `${match[4]}/${match[5]}/${match[6]}`;
+    const endDateStr = normalizeDate(match[4], match[5], match[6]);
     if (moduleCount <= 6) {
       dates.set(moduleCount, endDateStr);
       moduleCount++;
@@ -283,21 +395,32 @@ async function extractRolloutPlanFromDocument(filePath: string): Promise<Rollout
     return { groupName: '', startDate: '', endDate: '', numLearners: 0, modules: [] };
   }
 
-  const unitStandards = parseUnitStandards(text);
+  const moduleMapWithHeadings = parseUnitStandardsWithModules(text);
   const workplaceActivityDates = parseWorkplaceActivityEndDates(text);
-  const moduleMap = organizeUnitsByModule(unitStandards);
+  let modules: Module[] = [];
 
-  const modules: Module[] = [];
-  for (let moduleNum = 1; moduleNum <= 6; moduleNum++) {
-    const moduleUnits = moduleMap.get(moduleNum) || [];
-    if (moduleUnits.length === 0) continue;
+  if (moduleMapWithHeadings.size > 0) {
+    modules = Array.from(moduleMapWithHeadings.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([moduleNum, moduleUnits]) => ({
+        moduleNumber: moduleNum,
+        unitStandards: moduleUnits,
+        workplaceActivityEndDate: workplaceActivityDates.get(moduleNum) || undefined,
+      }));
+  } else {
+    const unitStandards = parseUnitStandards(text);
+    const moduleMap = organizeUnitsByModule(unitStandards);
+    for (let moduleNum = 1; moduleNum <= 6; moduleNum++) {
+      const moduleUnits = moduleMap.get(moduleNum) || [];
+      if (moduleUnits.length === 0) continue;
 
-    const workplaceEndDate = workplaceActivityDates.get(moduleNum) || undefined;
-    modules.push({
-      moduleNumber: moduleNum,
-      unitStandards: moduleUnits,
-      workplaceActivityEndDate: workplaceEndDate,
-    });
+      const workplaceEndDate = workplaceActivityDates.get(moduleNum) || undefined;
+      modules.push({
+        moduleNumber: moduleNum,
+        unitStandards: moduleUnits,
+        workplaceActivityEndDate: workplaceEndDate,
+      });
+    }
   }
 
   return {

@@ -84,6 +84,7 @@ export default function ModuleProgressCard({ studentId }: ModuleProgressCardProp
     }
 
     const { student, moduleProgress } = progressData;
+    const creditsRemaining = 137 - (student.totalCreditsEarned || 0);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -119,6 +120,13 @@ export default function ModuleProgressCard({ studentId }: ModuleProgressCardProp
                         <p className="text-sm text-slate-600">
                             {student.totalCreditsEarned} of {student.totalCreditsRequired} credits earned
                         </p>
+                        {creditsRemaining <= 0 ? (
+                            <p className="text-sm text-green-600 font-medium mt-1">Programme Complete ✓</p>
+                        ) : (
+                            <p className="text-sm text-slate-500 mt-1">
+                                {creditsRemaining} credits remaining
+                            </p>
+                        )}
                         {student.currentModule && (
                             <p className="text-sm text-blue-600 font-medium mt-1">
                                 Current: Module {student.currentModule.moduleNumber} - {student.currentModule.name}

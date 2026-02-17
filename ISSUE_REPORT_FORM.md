@@ -1,4 +1,4 @@
-# ISSUE REPORT FORM
+﻿# ISSUE REPORT FORM
 ## Testing Session: [INSERT DATE]
 
 ---
@@ -8,15 +8,15 @@
 ### Basic Info
 - **Test Date**: _______________
 - **Tester Name**: _______________
-- **Browser**: ☐ Chrome ☐ Firefox ☐ Safari ☐ Edge ☐ Other: _______
-- **Screen Size**: ☐ Desktop (1920x) ☐ Tablet (768x) ☐ Mobile (375x)
+- **Browser**: â˜ Chrome â˜ Firefox â˜ Safari â˜ Edge â˜ Other: _______
+- **Screen Size**: â˜ Desktop (1920x) â˜ Tablet (768x) â˜ Mobile (375x)
 
 ### Issue Location
-- **Page**: ☐ Attendance ☐ Assessment ☐ Reports ☐ Timetable ☐ Other: _______
+- **Page**: â˜ Attendance â˜ Assessment â˜ Reports â˜ Timetable â˜ Other: _______
 - **Feature/Tab**: _______________________________________________
 
 ### Issue Description
-**Severity**: ☐ Critical ☐ High ☐ Medium ☐ Low
+**Severity**: â˜ Critical â˜ High â˜ Medium â˜ Low
 
 **Title**: _______________________________________________
 
@@ -48,9 +48,9 @@
 ```
 
 ### Screenshot/Console Error
-- ☐ Console error present (Describe): ____________________________
-- ☐ Visual issue (describe appearance): __________________________
-- ☐ Behavior issue (describe what happened): ____________________
+- â˜ Console error present (Describe): ____________________________
+- â˜ Visual issue (describe appearance): __________________________
+- â˜ Behavior issue (describe what happened): ____________________
 
 ### Data Context
 - **Group Used**: _____________________
@@ -64,10 +64,10 @@
 ```
 
 ### Can You Reproduce It?
-- ☐ Yes, consistently (every time)
-- ☐ Yes, sometimes (intermittently)
-- ☐ Yes, once (couldn't repeat)
-- ☐ No, it's fixed now
+- â˜ Yes, consistently (every time)
+- â˜ Yes, sometimes (intermittently)
+- â˜ Yes, once (couldn't repeat)
+- â˜ No, it's fixed now
 
 ---
 
@@ -76,15 +76,15 @@
 ### Basic Info
 - **Test Date**: _______________
 - **Tester Name**: _______________
-- **Browser**: ☐ Chrome ☐ Firefox ☐ Safari ☐ Edge ☐ Other: _______
-- **Screen Size**: ☐ Desktop (1920x) ☐ Tablet (768x) ☐ Mobile (375x)
+- **Browser**: â˜ Chrome â˜ Firefox â˜ Safari â˜ Edge â˜ Other: _______
+- **Screen Size**: â˜ Desktop (1920x) â˜ Tablet (768x) â˜ Mobile (375x)
 
 ### Issue Location
-- **Page**: ☐ Attendance ☐ Assessment ☐ Reports ☐ Timetable ☐ Other: _______
+- **Page**: â˜ Attendance â˜ Assessment â˜ Reports â˜ Timetable â˜ Other: _______
 - **Feature/Tab**: _______________________________________________
 
 ### Issue Description
-**Severity**: ☐ Critical ☐ High ☐ Medium ☐ Low
+**Severity**: â˜ Critical â˜ High â˜ Medium â˜ Low
 
 **Title**: _______________________________________________
 
@@ -116,9 +116,9 @@
 ```
 
 ### Screenshot/Console Error
-- ☐ Console error present (Describe): ____________________________
-- ☐ Visual issue (describe appearance): __________________________
-- ☐ Behavior issue (describe what happened): ____________________
+- â˜ Console error present (Describe): ____________________________
+- â˜ Visual issue (describe appearance): __________________________
+- â˜ Behavior issue (describe what happened): ____________________
 
 ### Data Context
 - **Group Used**: _____________________
@@ -132,10 +132,10 @@
 ```
 
 ### Can You Reproduce It?
-- ☐ Yes, consistently (every time)
-- ☐ Yes, sometimes (intermittently)
-- ☐ Yes, once (couldn't repeat)
-- ☐ No, it's fixed now
+- â˜ Yes, consistently (every time)
+- â˜ Yes, sometimes (intermittently)
+- â˜ Yes, once (couldn't repeat)
+- â˜ No, it's fixed now
 
 ---
 
@@ -144,15 +144,15 @@
 ### Basic Info
 - **Test Date**: _______________
 - **Tester Name**: _______________
-- **Browser**: ☐ Chrome ☐ Firefox ☐ Safari ☐ Edge ☐ Other: _______
-- **Screen Size**: ☐ Desktop (1920x) ☐ Tablet (768x) ☐ Mobile (375x)
+- **Browser**: â˜ Chrome â˜ Firefox â˜ Safari â˜ Edge â˜ Other: _______
+- **Screen Size**: â˜ Desktop (1920x) â˜ Tablet (768x) â˜ Mobile (375x)
 
 ### Issue Location
-- **Page**: ☐ Attendance ☐ Assessment ☐ Reports ☐ Timetable ☐ Other: _______
+- **Page**: â˜ Attendance â˜ Assessment â˜ Reports â˜ Timetable â˜ Other: _______
 - **Feature/Tab**: _______________________________________________
 
 ### Issue Description
-**Severity**: ☐ Critical ☐ High ☐ Medium ☐ Low
+**Severity**: â˜ Critical â˜ High â˜ Medium â˜ Low
 
 **Title**: _______________________________________________
 
@@ -184,9 +184,9 @@
 ```
 
 ### Screenshot/Console Error
-- ☐ Console error present (Describe): ____________________________
-- ☐ Visual issue (describe appearance): __________________________
-- ☐ Behavior issue (describe what happened): ____________________
+- â˜ Console error present (Describe): ____________________________
+- â˜ Visual issue (describe appearance): __________________________
+- â˜ Behavior issue (describe what happened): ____________________
 
 ### Data Context
 - **Group Used**: _____________________
@@ -200,10 +200,10 @@
 ```
 
 ### Can You Reproduce It?
-- ☐ Yes, consistently (every time)
-- ☐ Yes, sometimes (intermittently)
-- ☐ Yes, once (couldn't repeat)
-- ☐ No, it's fixed now
+- â˜ Yes, consistently (every time)
+- â˜ Yes, sometimes (intermittently)
+- â˜ Yes, once (couldn't repeat)
+- â˜ No, it's fixed now
 
 ---
 
@@ -212,11 +212,11 @@
 ### Testing Stats
 - **Total Test Time**: ______________ minutes
 - **Total Issues Found**: ____ Critical, ____ High, ____ Medium, ____ Low
-- **Pages Tested**: ☐ Attendance ☐ Assessment ☐ Reports ☐ Timetable ☐ All
-- **Test Path Completed**: ☐ Fast (30 min) ☐ Standard (60 min) ☐ Complete (90+ min)
+- **Pages Tested**: â˜ Attendance â˜ Assessment â˜ Reports â˜ Timetable â˜ All
+- **Test Path Completed**: â˜ Fast (30 min) â˜ Standard (60 min) â˜ Complete (90+ min)
 
 ### System Assessment
-- **Ready for Production**: ☐ YES ☐ NO (fix critical issues first)
+- **Ready for Production**: â˜ YES â˜ NO (fix critical issues first)
 - **Main Blocking Issues**: 
   ```
   [List any critical blockers preventing production release]
@@ -297,7 +297,7 @@ Uncaught TypeError: Cannot read property 'id' of undefined
 
 ### Example Network Error
 ```
-POST /api/assessments → Status: 401 Unauthorized
+POST /api/assessments â†’ Status: 401 Unauthorized
 Response: {"error": "Missing authentication token"}
 ```
 
@@ -305,3 +305,4 @@ Response: {"error": "Missing authentication token"}
 
 *For detailed testing instructions, see USER_TESTING_GUIDE.md*
 *For quick reference, see TESTING_SESSION_CARD.md*
+

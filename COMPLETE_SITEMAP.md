@@ -1,4 +1,4 @@
-# Complete Sitemap - Learnership Management System
+﻿# Complete Sitemap - Learnership Management System
 
 *Generated on February 14, 2026*
 
@@ -6,14 +6,14 @@ This document provides a comprehensive overview of all frontend routes and backe
 
 ---
 
-## 📋 Table of Contents
+## ðŸ“‹ Table of Contents
 - [Frontend Routes](#frontend-routes)
 - [Backend API Endpoints](#backend-api-endpoints)
 - [Architecture Overview](#architecture-overview)
 
 ---
 
-## 🎨 Frontend Routes
+## ðŸŽ¨ Frontend Routes
 
 ### Public Routes (Unauthenticated)
 | Route | File | Description |
@@ -120,7 +120,7 @@ This document provides a comprehensive overview of all frontend routes and backe
 
 ---
 
-## 🔌 Backend API Endpoints
+## ðŸ”Œ Backend API Endpoints
 
 ### Authentication & Authorization
 
@@ -433,7 +433,7 @@ This document provides a comprehensive overview of all frontend routes and backe
 
 ---
 
-## 🏗️ Architecture Overview
+## ðŸ—ï¸ Architecture Overview
 
 ### Technology Stack
 
@@ -500,74 +500,74 @@ This document provides a comprehensive overview of all frontend routes and backe
 
 ```
 Sidebar Navigation
-│
-├── Quick Access
-│   ├── Home (Dashboard)
-│   ├── Groups
-│   ├── Students
-│   ├── Timetable
-│   ├── Attendance
-│   └── Reports
-│
-├── Management
-│   ├── Assessments
-│   ├── Progress
-│   ├── POE Management
-│   ├── Compliance
-│   └── Moderation
-│
-├── Tools
-│   ├── Lesson Planner
-│   ├── Curriculum
-│   ├── AI Assistant
-│   └── Settings
-│
-└── Admin (ADMIN role only)
-    └── User Management
+â”‚
+â”œâ”€â”€ Quick Access
+â”‚   â”œâ”€â”€ Home (Dashboard)
+â”‚   â”œâ”€â”€ Groups
+â”‚   â”œâ”€â”€ Students
+â”‚   â”œâ”€â”€ Timetable
+â”‚   â”œâ”€â”€ Attendance
+â”‚   â””â”€â”€ Reports
+â”‚
+â”œâ”€â”€ Management
+â”‚   â”œâ”€â”€ Assessments
+â”‚   â”œâ”€â”€ Progress
+â”‚   â”œâ”€â”€ POE Management
+â”‚   â”œâ”€â”€ Compliance
+â”‚   â””â”€â”€ Moderation
+â”‚
+â”œâ”€â”€ Tools
+â”‚   â”œâ”€â”€ Lesson Planner
+â”‚   â”œâ”€â”€ Curriculum
+â”‚   â”œâ”€â”€ AI Assistant
+â”‚   â””â”€â”€ Settings
+â”‚
+â””â”€â”€ Admin (ADMIN role only)
+    â””â”€â”€ User Management
 ```
 
 ### Data Flow
 
 ```
-User → Frontend Route → API Endpoint → Prisma ORM → PostgreSQL Database
-                           ↓
+User â†’ Frontend Route â†’ API Endpoint â†’ Prisma ORM â†’ PostgreSQL Database
+                           â†“
                     AI Services (optional)
-                           ↓
-                    Response → Frontend
+                           â†“
+                    Response â†’ Frontend
 ```
 
 ### Authentication Flow
 
 ```
-1. User submits credentials → /api/auth/login
-2. Backend validates → Generates JWT token
+1. User submits credentials â†’ /api/auth/login
+2. Backend validates â†’ Generates JWT token
 3. Token stored in localStorage
 4. Token included in Authorization header for protected requests
-5. Backend validates token → Returns user data
-6. Frontend updates AuthContext → Renders protected UI
+5. Backend validates token â†’ Returns user data
+6. Frontend updates AuthContext â†’ Renders protected UI
 ```
 
 ### File Organization
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── (auth routes)       # login, register
-│   ├── (main routes)       # dashboard, groups, students, etc.
-│   ├── api/                # Backend API routes
-│   └── layout.tsx          # Root layout
-├── components/             # Reusable React components
-├── contexts/               # React contexts (AuthContext)
-├── lib/                    # Utilities, helpers, configs
-│   ├── db.ts              # Prisma client
-│   ├── auth.ts            # Auth utilities
-│   └── utils.ts           # General utilities
-└── types/                  # TypeScript type definitions
+â”œâ”€â”€ app/                    # Next.js App Router pages
+â”‚   â”œâ”€â”€ (auth routes)       # login, register
+â”‚   â”œâ”€â”€ (main routes)       # dashboard, groups, students, etc.
+â”‚   â”œâ”€â”€ api/                # Backend API routes
+â”‚   â””â”€â”€ layout.tsx          # Root layout
+â”œâ”€â”€ components/             # Reusable React components
+â”œâ”€â”€ contexts/               # React contexts (AuthContext)
+â”œâ”€â”€ lib/                    # Utilities, helpers, configs
+â”‚   â”œâ”€â”€ db.ts              # Prisma client
+â”‚   â”œâ”€â”€ auth.ts            # Auth utilities
+â”‚   â””â”€â”€ utils.ts           # General utilities
+â””â”€â”€ types/                  # TypeScript type definitions
 ```
 
 ---
 
-## 📊 Route Statistics
+## ðŸ“Š Route Statistics
 
 - **Total Frontend Routes:** 27 pages
 - **Total API Endpoints:** 150+ endpoints
@@ -577,7 +577,7 @@ src/
 
 ---
 
-## 🔐 Security Features
+## ðŸ” Security Features
 
 1. **JWT Authentication:** Token-based authentication for all protected routes
 2. **Role-Based Authorization:** Different permissions for ADMIN, FACILITATOR, STUDENT
@@ -589,3 +589,4 @@ src/
 ---
 
 *This sitemap is auto-generated and reflects the current state of the application as of February 14, 2026.*
+

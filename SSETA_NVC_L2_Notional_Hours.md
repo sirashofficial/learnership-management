@@ -1,4 +1,4 @@
-# SSETA NVC L2 Notional Hours - YEHA
+﻿# SSETA NVC L2 Notional Hours - YEHA
 
 ## Table of Contents
 
@@ -383,17 +383,17 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ### Facilitation
 
-**Overview – Provision / Facilitation:**
+**Overview â€“ Provision / Facilitation:**
 - Discussions with learners
 - Questioning
 - Slide shows
 - Guidance with practical and self-assessment activities
 
-**Overview – Learner Support:**
+**Overview â€“ Learner Support:**
 - Provider Support
 - Workplace Support
 
-**Overview – Learner Duties / Learning:**
+**Overview â€“ Learner Duties / Learning:**
 - Pay attention
 - Participate actively in classroom activities, discussions, etc.
 - Be proactive and ask questions
@@ -404,7 +404,7 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ---
 
-## Module 2 – Numeracy, Literacy & HIV/AIDS
+## Module 2 â€“ Numeracy, Literacy & HIV/AIDS
 
 ### Exit Level Outcome & Unit Standards
 
@@ -436,17 +436,17 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ### Facilitation
 
-**Overview – Provision / Facilitation:**
+**Overview â€“ Provision / Facilitation:**
 - Discussions with learners
 - Questioning
 - Slide shows
 - Guidance with practical and self-assessment activities
 
-**Overview – Learner Support:**
+**Overview â€“ Learner Support:**
 - Provider Support
 - Workplace Support
 
-**Overview – Learner Duties / Learning:**
+**Overview â€“ Learner Duties / Learning:**
 - Pay attention
 - Participate actively in classroom activities, discussions, etc.
 - Be proactive and ask questions
@@ -457,7 +457,7 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ---
 
-## Module 3 – Market Requirements
+## Module 3 â€“ Market Requirements
 
 ### Exit Level Outcome & Unit Standards
 
@@ -487,17 +487,17 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ### Facilitation
 
-**Overview – Provision / Facilitation:**
+**Overview â€“ Provision / Facilitation:**
 - Discussions with learners
 - Questioning
 - Slide shows
 - Guidance with practical and self-assessment activities
 
-**Overview – Learner Support:**
+**Overview â€“ Learner Support:**
 - Provider Support
 - Workplace Support
 
-**Overview – Learner Duties / Learning:**
+**Overview â€“ Learner Duties / Learning:**
 - Pay attention
 - Participate actively in classroom activities, discussions, etc.
 - Be proactive and ask questions
@@ -508,7 +508,7 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ---
 
-## Module 4 – Understand the Sector and Industry
+## Module 4 â€“ Understand the Sector and Industry
 
 ### Exit Level Outcome & Unit Standards
 
@@ -536,17 +536,17 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ### Facilitation
 
-**Overview – Provision / Facilitation:**
+**Overview â€“ Provision / Facilitation:**
 - Discussions with learners
 - Questioning
 - Slide shows
 - Guidance with practical and self-assessment activities
 
-**Overview – Learner Support:**
+**Overview â€“ Learner Support:**
 - Provider Support
 - Workplace Support
 
-**Overview – Learner Duties / Learning:**
+**Overview â€“ Learner Duties / Learning:**
 - Pay attention
 - Participate actively in classroom activities, discussions, etc.
 - Be proactive and ask questions
@@ -557,7 +557,7 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ---
 
-## Module 5 – Financial Requirements
+## Module 5 â€“ Financial Requirements
 
 ### Exit Level Outcome & Unit Standards
 
@@ -585,17 +585,17 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ### Facilitation
 
-**Overview – Provision / Facilitation:**
+**Overview â€“ Provision / Facilitation:**
 - Discussions with learners
 - Questioning
 - Slide shows
 - Guidance with practical and self-assessment activities
 
-**Overview – Learner Support:**
+**Overview â€“ Learner Support:**
 - Provider Support
 - Workplace Support
 
-**Overview – Learner Duties / Learning:**
+**Overview â€“ Learner Duties / Learning:**
 - Pay attention
 - Participate actively in classroom activities, discussions, etc.
 - Be proactive and ask questions
@@ -640,17 +640,17 @@ The roll out strategy below indicates the relationship between theory, practical
 
 ### Facilitation
 
-**Overview – Provision / Facilitation:**
+**Overview â€“ Provision / Facilitation:**
 - Discussions with learners
 - Questioning
 - Slide shows
 - Guidance with practical and self-assessment activities
 
-**Overview – Learner Support:**
+**Overview â€“ Learner Support:**
 - Provider Support
 - Workplace Support
 
-**Overview – Learner Duties / Learning:**
+**Overview â€“ Learner Duties / Learning:**
 - Pay attention
 - Participate actively in classroom activities, discussions, etc.
 - Be proactive and ask questions
@@ -658,3 +658,4 @@ The roll out strategy below indicates the relationship between theory, practical
 - Complete pre-training assignments
 - Assist fellow learners
 - Display conduct according to classroom rules
+

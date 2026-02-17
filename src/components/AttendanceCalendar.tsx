@@ -92,6 +92,9 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
     EXCUSED: "bg-blue-100 text-blue-800 border-blue-300",
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -149,6 +152,10 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
                 return <div key={`empty-${index}`} />;
               }
               const record = getAttendanceForDate(day);
+              const dateValue = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+              dateValue.setHours(0, 0, 0, 0);
+              const isPast = dateValue.getTime() < today.getTime();
+              const isUnmarkedPast = !record && isPast;
               return (
                 <button
                   key={day}
@@ -156,8 +163,12 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
                   className={cn(
                     "aspect-square p-2 rounded-lg border-2 text-center font-medium transition-all hover:scale-105",
                     record
-                      ? statusColors[record.status]
-                      : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                      ? record.status === "ABSENT"
+                        ? "bg-red-100 text-red-800 border-red-300"
+                        : "bg-green-100 text-green-800 border-green-300"
+                      : isUnmarkedPast
+                        ? "bg-slate-100 text-slate-500 border-slate-200 bg-[linear-gradient(135deg,_rgba(148,163,184,0.35)_25%,_transparent_25%,_transparent_50%,_rgba(148,163,184,0.35)_50%,_rgba(148,163,184,0.35)_75%,_transparent_75%,_transparent)] bg-[length:6px_6px]"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                   )}
                 >
                   <div className="text-sm">{day}</div>

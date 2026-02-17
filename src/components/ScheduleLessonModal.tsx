@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface Lesson {
   id: string;
@@ -227,7 +228,7 @@ export default function ScheduleLessonModal({ isOpen, onClose, onSuccess, lesson
                     <option value="">Select Group</option>
                     {groups.map((group) => (
                       <option key={group.id} value={group.id}>
-                        {group.name}
+                        {formatGroupNameDisplay(group.name)}
                       </option>
                     ))}
                   </select>

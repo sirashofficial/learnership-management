@@ -5,6 +5,7 @@ import { addDays, format, parseISO, startOfWeek } from 'date-fns';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/swr-config';
 import { useGroups } from '@/contexts/GroupsContext';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface TimetableSession {
   id: string;
@@ -110,7 +111,7 @@ export default function TimetableGroupView({
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-900">This week&apos;s sessions</h3>
           {activeGroup && (
-            <span className="text-xs text-slate-500">{activeGroup.name}</span>
+            <span className="text-xs text-slate-500">{formatGroupNameDisplay(activeGroup.name)}</span>
           )}
         </div>
 

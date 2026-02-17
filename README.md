@@ -1,8 +1,8 @@
-# YEHA - Youth Education & Skills Management System
+﻿# YEHA - Youth Education & Skills Management System
 
 A comprehensive SSETA NVC Level 2 Training Management Platform for facilitators to manage students, training sites, assessments, and curriculum delivery.
 
-## 🚀 Features
+## ðŸš€ Features
 
 - **Dashboard Overview** - Real-time statistics and cohort progress tracking
 - **Student Management** - Track student progress, attendance, and assessments
@@ -13,7 +13,7 @@ A comprehensive SSETA NVC Level 2 Training Management Platform for facilitators 
 - **AI Assistant** - Automated lesson planning and reporting assistance
 - **Compliance** - SSETA compliance tracking and reporting
 
-## 🛠️ Tech Stack
+## ðŸ› ï¸ Tech Stack
 
 - **Framework:** Next.js 14 (React)
 - **Language:** TypeScript
@@ -21,7 +21,7 @@ A comprehensive SSETA NVC Level 2 Training Management Platform for facilitators 
 - **Icons:** Lucide React
 - **Deployment:** Static Export (can be hosted anywhere)
 
-## 📦 Installation
+## ðŸ“¦ Installation
 
 ### Prerequisites
 - Node.js 18.0 or higher
@@ -50,30 +50,30 @@ A comprehensive SSETA NVC Level 2 Training Management Platform for facilitators 
 3. **Open in Browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🏗️ Project Structure
+## ðŸ—ï¸ Project Structure
 
 ```
 learnership-management/
-├── src/
-│   ├── app/                  # Next.js app router pages
-│   │   ├── layout.tsx       # Root layout with sidebar
-│   │   ├── page.tsx         # Dashboard page
-│   │   └── globals.css      # Global styles
-│   ├── components/          # Reusable React components
-│   │   ├── Sidebar.tsx      # Navigation sidebar
-│   │   └── Header.tsx       # Page header component
-│   └── lib/                 # Utility functions
-│       └── utils.ts         # Helper utilities
-├── public/                  # Static assets
-├── docs/                    # Documentation
-├── _next/                   # Old static build (backup)
-├── package.json            # Dependencies
-├── tsconfig.json           # TypeScript config
-├── tailwind.config.ts      # Tailwind CSS config
-└── next.config.mjs         # Next.js config
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ app/                  # Next.js app router pages
+â”‚   â”‚   â”œâ”€â”€ layout.tsx       # Root layout with sidebar
+â”‚   â”‚   â”œâ”€â”€ page.tsx         # Dashboard page
+â”‚   â”‚   â””â”€â”€ globals.css      # Global styles
+â”‚   â”œâ”€â”€ components/          # Reusable React components
+â”‚   â”‚   â”œâ”€â”€ Sidebar.tsx      # Navigation sidebar
+â”‚   â”‚   â””â”€â”€ Header.tsx       # Page header component
+â”‚   â””â”€â”€ lib/                 # Utility functions
+â”‚       â””â”€â”€ utils.ts         # Helper utilities
+â”œâ”€â”€ public/                  # Static assets
+â”œâ”€â”€ docs/                    # Documentation
+â”œâ”€â”€ _next/                   # Old static build (backup)
+â”œâ”€â”€ package.json            # Dependencies
+â”œâ”€â”€ tsconfig.json           # TypeScript config
+â”œâ”€â”€ tailwind.config.ts      # Tailwind CSS config
+â””â”€â”€ next.config.mjs         # Next.js config
 ```
 
-## 🔧 Available Scripts
+## ðŸ”§ Available Scripts
 
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Build for production
@@ -81,7 +81,7 @@ learnership-management/
 - `npm run lint` - Run ESLint
 - `npm run export` - Build and export as static HTML
 
-## 🎨 Customization
+## ðŸŽ¨ Customization
 
 ### Colors
 Main brand colors are defined in `tailwind.config.ts`:
@@ -96,7 +96,7 @@ Main brand colors are defined in `tailwind.config.ts`:
 ### Components
 Create reusable components in `src/components/` and import them as needed.
 
-## 🚀 Deployment
+## ðŸš€ Deployment
 
 ### Static Export (Current Setup)
 ```bash
@@ -113,12 +113,12 @@ To enable server-side features:
 1. Remove `output: 'export'` from `next.config.mjs`
 2. Deploy to Vercel, Netlify, or any Node.js hosting
 
-## 🔮 Future Enhancements
+## ðŸ”® Future Enhancements
 
 ### Phase 1 - Current (Static Frontend)
-- ✅ Dashboard interface
-- ✅ Component-based architecture
-- ✅ Responsive design
+- âœ… Dashboard interface
+- âœ… Component-based architecture
+- âœ… Responsive design
 
 ### Phase 2 - Backend Integration (Planned)
 - [ ] API routes for data management
@@ -134,7 +134,7 @@ To enable server-side features:
 - [ ] Automated reporting
 - [ ] Integration with SSETA systems
 
-## 📝 Development Notes
+## ðŸ“ Development Notes
 
 ### Adding a Backend
 When ready to add a backend:
@@ -159,24 +159,24 @@ When ready to add a backend:
    NEXTAUTH_SECRET="your-secret"
    ```
 
-## 🤝 Contributing
+## ðŸ¤ Contributing
 
 This is a private training management system. For internal development:
 1. Create feature branches from `main`
 2. Test thoroughly before merging
 3. Document any new features
 
-## 📄 License
+## ðŸ“„ License
 
 Proprietary - YEHA Training Management System
 
-## 👥 Support
+## ðŸ‘¥ Support
 
 For technical support or questions:
 - **Developer:** Created with KIMI AI assistance
 - **Platform:** SSETA NVC Level 2 Training Management
 
-## 🔍 Troubleshooting
+## ðŸ” Troubleshooting
 
 ### Common Issues
 
@@ -204,3 +204,4 @@ npx tsc --noEmit
 **Version:** 1.0.0  
 **Last Updated:** February 4, 2026  
 **Built with:** Next.js 14, TypeScript, Tailwind CSS
+

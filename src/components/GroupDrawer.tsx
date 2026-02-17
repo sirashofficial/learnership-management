@@ -8,6 +8,7 @@ import { fetcher } from "@/lib/swr-config";
 import StudentDetailsModal from "@/components/StudentDetailsModal";
 import Toast, { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
+import { formatGroupNameDisplay } from "@/lib/groupName";
 
 interface GroupDrawerProps {
   isOpen: boolean;
@@ -460,7 +461,7 @@ export default function GroupDrawer({
         <aside className="absolute right-0 top-0 h-full w-full sm:max-w-[60vw] bg-white shadow-2xl flex flex-col">
           <header className="p-5 border-b border-slate-200 flex items-start justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">{group.name}</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{formatGroupNameDisplay(group.name)}</h2>
               <p className="text-sm text-slate-600">
                 Start: {group.startDate ? format(new Date(group.startDate), "MMM d, yyyy") : "N/A"}
               </p>

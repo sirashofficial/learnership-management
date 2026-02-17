@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Search, BookOpen, AlertCircle, BarChart3, Eye, ArrowRight } from 'lucide-react';
+import useSWR from 'swr';
 
 interface SearchResult {
   id: string;
@@ -23,6 +24,18 @@ export default function CurriculumSearchPage() {
   const [searching, setSearching] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { data: indexData, error: indexError } = useSWR(
+    '/api/ai/index-documents/list',
+    (url: string) => fetch(url, { credentials: 'include' }).then((res) => res.json())
+  );
+
+  const indexedCount =
+    indexData?.count ??
+    indexData?.data?.count ??
+    indexData?.documents?.length ??
+    indexData?.data?.documents?.length ??
+    0;
+  const showIndexWarning = Boolean(indexError) || indexedCount === 0;
 
   const categories = [
     { value: 'all', label: 'All Categories' },
@@ -102,6 +115,20 @@ export default function CurriculumSearchPage() {
           <p className="text-slate-600 mt-1">Search through your indexed curriculum documents to find relevant content</p>
         </div>
       </div>
+
+      {showIndexWarning ? (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg px-4 py-3 flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 mt-0.5 text-yellow-600" />
+          <p className="text-sm">
+            No curriculum documents are indexed yet. Search results may be empty. Ask your administrator to index documents first.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-green-50 border border-green-200 text-green-900 rounded-lg px-4 py-2 flex items-center gap-2 text-sm">
+          <span className="w-2 h-2 rounded-full bg-green-500" />
+          <span>{indexedCount} curriculum documents indexed</span>
+        </div>
+      )}
 
       {/* Search Form */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">

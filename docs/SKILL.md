@@ -1,4 +1,4 @@
----
+﻿---
 name: edu-platform-wiring-agent
 description: >
   Use this skill when implementing, fixing, or wiring up frontend pages to
@@ -8,7 +8,7 @@ description: >
   work systematically, safely, and in plain language.
 ---
 
-# Education Platform — Frontend Wiring Agent
+# Education Platform â€” Frontend Wiring Agent
 
 ## Purpose
 
@@ -19,16 +19,16 @@ The backend API is largely complete. The problem is that frontend pages are
 either showing static/placeholder data, have broken form submissions, or are 
 not calling their corresponding API endpoints at all.
 
-The agent's job is to bridge that gap — safely, one page at a time.
+The agent's job is to bridge that gap â€” safely, one page at a time.
 
 ---
 
 ## Platform Context
 
 **Type**: Education & Youth Development Management System  
-**Stack**: Next.js (App Router) · React · Tailwind CSS · TypeScript/JavaScript  
+**Stack**: Next.js (App Router) Â· React Â· Tailwind CSS Â· TypeScript/JavaScript  
 **API base**: All endpoints under `src/app/api/` (Next.js route handlers)  
-**Auth**: Token-based — token stored in localStorage or cookie  
+**Auth**: Token-based â€” token stored in localStorage or cookie  
 
 **Who uses it**: Facilitators, assessors, programme managers  
 **What it manages**: Students, groups, attendance, assessments, curriculum, 
@@ -45,13 +45,13 @@ contains. State what you found before proposing changes.
 ### Rule 2: Surgical Edits Only
 Never rewrite a whole component. Find the specific broken/missing part and 
 fix only that. If data fetching already exists for some fields, don't replace 
-it — add alongside it.
+it â€” add alongside it.
 
 ### Rule 3: Match the Codebase Style
-- If the file uses TypeScript → use TypeScript
-- If there's a custom API client (e.g. `apiClient`, `useApi`, `fetcher`) → use it
-- If the project uses React Query → use useQuery/useMutation
-- If it uses plain fetch → use plain fetch
+- If the file uses TypeScript â†’ use TypeScript
+- If there's a custom API client (e.g. `apiClient`, `useApi`, `fetcher`) â†’ use it
+- If the project uses React Query â†’ use useQuery/useMutation
+- If it uses plain fetch â†’ use plain fetch
 - Match existing naming conventions (camelCase, PascalCase, etc.)
 
 ### Rule 4: Never Break Auth
@@ -75,17 +75,17 @@ unless the user has shown they understand it.
 
 ## Implementation Playbook
 
-### 🏠 TASK 1 — Dashboard (Home Page)
+### ðŸ  TASK 1 â€” Dashboard (Home Page)
 
 **Goal**: Replace hardcoded/placeholder data with real API responses.
 
 **APIs to call on mount**:
 ```
-GET /api/dashboard/summary          → totals: students, groups, attendance %
-GET /api/dashboard/today-classes    → list of today's sessions
-GET /api/dashboard/alerts           → warnings and flags
-GET /api/dashboard/recent-activity  → activity feed items
-GET /api/dashboard/charts           → chart series data (optional, do last)
+GET /api/dashboard/summary          â†’ totals: students, groups, attendance %
+GET /api/dashboard/today-classes    â†’ list of today's sessions
+GET /api/dashboard/alerts           â†’ warnings and flags
+GET /api/dashboard/recent-activity  â†’ activity feed items
+GET /api/dashboard/charts           â†’ chart series data (optional, do last)
 ```
 
 **Implementation pattern**:
@@ -123,26 +123,26 @@ useEffect(() => {
 
 ---
 
-### ✅ TASK 2 — Assessment Checklist
+### âœ… TASK 2 â€” Assessment Checklist
 
 **Goal**: Load a student's checklist state from the API and save checkbox changes.
 
 **APIs used**:
 ```
-GET  /api/groups                          → populate group dropdown
-GET  /api/students?groupId={id}           → populate student dropdown  
-GET  /api/assessments/{id}/complete       → load current checklist state
-POST /api/assessments/{id}/complete       → save a checkbox change
-GET  /api/formatives?studentId={id}       → load formative tasks
-POST /api/formatives/completion           → save formative completion
+GET  /api/groups                          â†’ populate group dropdown
+GET  /api/students?groupId={id}           â†’ populate student dropdown  
+GET  /api/assessments/{id}/complete       â†’ load current checklist state
+POST /api/assessments/{id}/complete       â†’ save a checkbox change
+GET  /api/formatives?studentId={id}       â†’ load formative tasks
+POST /api/formatives/completion           â†’ save formative completion
 ```
 
 **Key logic**:
-- Load groups on mount → user selects group
-- When group selected → load students for that group
-- When student selected → load their assessment completion state
-- Each checkbox `onChange` → debounce 300ms then POST the updated state
-- Show "Saving..." then "Saved ✓" feedback (auto-hide after 2 seconds)
+- Load groups on mount â†’ user selects group
+- When group selected â†’ load students for that group
+- When student selected â†’ load their assessment completion state
+- Each checkbox `onChange` â†’ debounce 300ms then POST the updated state
+- Show "Saving..." then "Saved âœ“" feedback (auto-hide after 2 seconds)
 
 **Gotcha to watch for**: The assessment ID likely comes from the URL params or 
 from the list of assessments loaded for that student's group. Make sure you're 
@@ -150,15 +150,15 @@ passing the correct ID to the complete endpoint.
 
 ---
 
-### 📈 TASK 3 — Progress Page
+### ðŸ“ˆ TASK 3 â€” Progress Page
 
 **Goal**: Show per-student progress against learning outcomes for a selected group.
 
 **APIs used**:
 ```
-GET /api/groups                           → group selector
-GET /api/reports/group-progress?groupId  → group-level progress data
-GET /api/students/{id}/progress          → individual student progress (on demand)
+GET /api/groups                           â†’ group selector
+GET /api/reports/group-progress?groupId  â†’ group-level progress data
+GET /api/students/{id}/progress          â†’ individual student progress (on demand)
 ```
 
 **Layout to build**:
@@ -171,26 +171,26 @@ GET /api/students/{id}/progress          → individual student progress (on dem
 4. Clicking a student expands a detail view with their individual breakdown
 
 **Colour logic**:
-- ≥ 75% complete → green (On Track)
-- 50–74% → yellow (Behind)
-- < 50% → red (At Risk)
+- â‰¥ 75% complete â†’ green (On Track)
+- 50â€“74% â†’ yellow (Behind)
+- < 50% â†’ red (At Risk)
 
 ---
 
-### 🏗️ TASK 4 — Curriculum Builder Save
+### ðŸ—ï¸ TASK 4 â€” Curriculum Builder Save
 
 **Goal**: Make the builder form actually save to the database.
 
 **APIs used**:
 ```
-POST /api/unit-standards              → create new unit standard
-PUT  /api/unit-standards/{id}         → update existing
-POST /api/unit-standards (with module context) → or POST /api/modules if building a module
+POST /api/unit-standards              â†’ create new unit standard
+PUT  /api/unit-standards/{id}         â†’ update existing
+POST /api/unit-standards (with module context) â†’ or POST /api/modules if building a module
 ```
 
 **Diagnosis steps**:
 1. Find the form's submit handler
-2. Check if it calls any API — if not, that's the bug
+2. Check if it calls any API â€” if not, that's the bug
 3. Map form fields to the API's expected request body
 4. Add the API call with proper error handling
 5. On success: show toast, then redirect to `/curriculum`
@@ -200,11 +200,11 @@ Fix: log the form data before sending and compare to what the API expects.
 
 ---
 
-### 📤 TASK 5 — Export Functions
+### ðŸ“¤ TASK 5 â€” Export Functions
 
 **Goal**: Enable CSV/file downloads from Attendance and Reports pages.
 
-**Reusable helper** — create once, use everywhere:
+**Reusable helper** â€” create once, use everywhere:
 ```typescript
 // src/lib/downloadExport.ts
 export async function downloadExport(
@@ -243,16 +243,16 @@ export async function downloadExport(
 
 ---
 
-### ⚖️ TASK 6 — Compliance Dashboard
+### âš–ï¸ TASK 6 â€” Compliance Dashboard
 
 **Goal**: Build compliance overview by aggregating 3 existing APIs. No new backend needed.
 
 **APIs used**:
 ```
-GET /api/attendance/stats                     → platform-wide attendance
-GET /api/groups                               → list of groups
-GET /api/groups/{id}/assessment-status        → per-group assessment completion
-GET /api/reports/unit-standards               → unit standards report
+GET /api/attendance/stats                     â†’ platform-wide attendance
+GET /api/groups                               â†’ list of groups
+GET /api/groups/{id}/assessment-status        â†’ per-group assessment completion
+GET /api/reports/unit-standards               â†’ unit standards report
 ```
 
 **Implementation approach**:
@@ -260,8 +260,8 @@ GET /api/reports/unit-standards               → unit standards report
 2. For each group, load their assessment-status in parallel (`Promise.all`)
 3. Cross-reference with attendance stats
 4. Assign RAG status (Red/Amber/Green) per group:
-   - Green: attendance ≥ 80% AND assessment completion ≥ 75%
-   - Amber: attendance 60–79% OR assessment completion 50–74%
+   - Green: attendance â‰¥ 80% AND assessment completion â‰¥ 75%
+   - Amber: attendance 60â€“79% OR assessment completion 50â€“74%
    - Red: attendance < 60% OR assessment completion < 50%
 5. Show summary: X groups compliant, Y at risk, Z non-compliant
 
@@ -339,7 +339,7 @@ After completing each task, verify:
 - [ ] Real data appears (not placeholder/hardcoded values)
 - [ ] Loading state shows while data is fetching
 - [ ] Error state shows if the API call fails (test by temporarily breaking the URL)
-- [ ] Forms save data to the database (check by refreshing — data should persist)
+- [ ] Forms save data to the database (check by refreshing â€” data should persist)
 - [ ] Auth token is included in all requests (check Network tab in DevTools)
 - [ ] Mobile layout not broken
 
@@ -348,7 +348,7 @@ After completing each task, verify:
 ## Common Bugs & Fixes
 
 **Bug**: Page shows data on first load, then goes blank on refresh  
-**Fix**: The auth token isn't being sent — add the Authorization header
+**Fix**: The auth token isn't being sent â€” add the Authorization header
 
 **Bug**: Form submit does nothing  
 **Fix**: Check for `e.preventDefault()` AND that the handler is actually attached 
@@ -379,14 +379,14 @@ After each task, report back with:
 2. **What was missing or broken** (in plain terms)
 3. **What you changed** (brief summary, not the whole code)
 4. **How to verify it works** (what the user should see or click)
-5. **Any concerns** — if something looks risky or unclear, flag it
+5. **Any concerns** â€” if something looks risky or unclear, flag it
 
 Example:
 > "I found the dashboard at `src/app/page.tsx`. It had hardcoded numbers 
 > like `totalStudents = 0` and no API calls at all. I added a `useEffect` 
 > that loads the summary, today's classes, and alerts on page load. 
-> To verify: refresh the dashboard — you should see your real student count.
-> One thing I noticed: there's no error handling if the database is offline — 
+> To verify: refresh the dashboard â€” you should see your real student count.
+> One thing I noticed: there's no error handling if the database is offline â€” 
 > want me to add that too?"
 
 ---
@@ -394,11 +394,11 @@ Example:
 ## Out of Scope (Don't Touch)
 
 - Database schema / migration files
-- Authentication logic (login/register) — already working
-- Backend API route handlers — only touch if a frontend fix requires it 
+- Authentication logic (login/register) â€” already working
+- Backend API route handlers â€” only touch if a frontend fix requires it 
   AND you have confirmed the backend endpoint is the problem
-- Settings page — already working
-- Groups page core list/create — already working
+- Settings page â€” already working
+- Groups page core list/create â€” already working
 
 ---
 
@@ -416,3 +416,4 @@ If an API endpoint isn't responding as expected, check:
 4. Is the auth token present and valid?
 
 If in doubt, ask. Don't guess and overwrite working code.
+

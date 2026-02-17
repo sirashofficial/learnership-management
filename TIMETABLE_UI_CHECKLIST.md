@@ -1,4 +1,4 @@
-# Timetable + Dashboard UI Smoke Checklist
+﻿# Timetable + Dashboard UI Smoke Checklist
 
 ## Dashboard right panel
 - [ ] Mini calendar shows current month with today highlighted
@@ -30,3 +30,4 @@
 - [ ] Table cells show venue when a session exists
 - [ ] This week's sessions list shows correct dates
 - [ ] Mark Attendance buttons navigate correctly
+

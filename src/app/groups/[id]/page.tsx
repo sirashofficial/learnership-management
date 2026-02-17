@@ -19,6 +19,7 @@ import {
 import { format } from 'date-fns';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { cn } from '@/lib/utils';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 import { generateRolloutPlan } from '@/lib/rolloutPlanGenerator';
 import { downloadRolloutDocx } from '@/lib/downloadRolloutDocx';
 import { TodayClassesDashboard } from '@/components/TodayClassesDashboard';
@@ -26,6 +27,8 @@ import Toast, { useToast } from '@/components/Toast';
 import { fetcher } from '@/lib/swr-config';
 import {
     extractRolloutPlan,
+    buildRolloutPlanFromUnitRollouts,
+    buildRolloutPlanFromGroupRollout,
     isCurrentlyActive,
     getTotalCredits,
     getProjectedCompletionDate,
@@ -61,7 +64,10 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
         earnedCredits: 0
     });
 
-    const planSummary = rolloutPlan || extractRolloutPlan(group?.notes);
+    const planSummary = rolloutPlan
+        || buildRolloutPlanFromUnitRollouts(group?.unitStandardRollouts)
+        || extractRolloutPlan(group?.notes)
+        || buildRolloutPlanFromGroupRollout(group?.rolloutPlan);
 
     const { data: assessmentsData, mutate: mutateAssessments } = useSWR(
         params.id ? `/api/assessments?groupId=${params.id}` : null,
@@ -422,7 +428,7 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{group.name}</h1>
+                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{formatGroupNameDisplay(group.name)}</h1>
                             <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
                                 <span className="flex items-center gap-1.5">
                                     <Users className="w-4 h-4 text-indigo-500" />
@@ -691,7 +697,11 @@ function ModuleSection({
 
     const workplaceStart = module.workplaceActivity?.startDate || module.workplaceActivityStartDate;
     const workplaceEnd = module.workplaceActivity?.endDate || module.workplaceActivityEndDate;
-    const hasWorkplace = !!workplaceStart;
+    const derivedWorkplace = !workplaceStart ? deriveWorkplaceActivity(units) : null;
+    const resolvedWorkplaceStart = workplaceStart || derivedWorkplace?.startDate;
+    const resolvedWorkplaceEnd = workplaceEnd || derivedWorkplace?.endDate;
+    const resolvedWorkplaceLabel = module.workplaceActivity?.label || derivedWorkplace?.label || 'Workplace Experience Component';
+    const hasWorkplace = !!resolvedWorkplaceStart;
     const resolveUnitStandardId = (unitId: string) => {
         if (!unitId) return '';
         const fromCode = unitStandardByCode.get(String(unitId))?.id;
@@ -861,7 +871,7 @@ function ModuleSection({
                 <>
                     <tr className="bg-amber-50 border-b border-amber-100 border-l-4 border-l-amber-400">
                         <td className="px-6 py-5 align-top text-sm font-semibold text-amber-900">
-                            {formatDateRange(workplaceStart, workplaceEnd)}
+                            {formatDateRange(resolvedWorkplaceStart, resolvedWorkplaceEnd)}
                         </td>
                         <td className="px-6 py-5 align-top">
                             <div className="flex flex-col gap-1">
@@ -869,7 +879,7 @@ function ModuleSection({
                                     Workplace Activity
                                 </span>
                                 <span className="text-sm font-medium text-amber-900 whitespace-normal">
-                                    {module.workplaceActivity?.label || 'Workplace Experience Component'}
+                                    {resolvedWorkplaceLabel}
                                 </span>
                             </div>
                         </td>
@@ -1160,6 +1170,57 @@ function normalizeDate(date: Date): Date {
     const normalized = new Date(date.getTime());
     normalized.setHours(0, 0, 0, 0);
     return normalized;
+}
+
+function formatPlanDate(date: Date): string {
+    return format(date, 'dd/MM/yyyy');
+}
+
+function isWorkingDay(date: Date): boolean {
+    const day = date.getDay();
+    return day !== 0 && day !== 6;
+}
+
+function addWorkingDays(date: Date, days: number): Date {
+    const result = new Date(date.getTime());
+    let remaining = days;
+    const step = days >= 0 ? 1 : -1;
+
+    while (remaining !== 0) {
+        result.setDate(result.getDate() + step);
+        if (isWorkingDay(result)) {
+            remaining -= step;
+        }
+    }
+
+    return result;
+}
+
+function nextMonday(date: Date): Date {
+    const result = new Date(date.getTime());
+    result.setDate(result.getDate() + 1);
+    while (result.getDay() !== 1 || !isWorkingDay(result)) {
+        result.setDate(result.getDate() + 1);
+    }
+    return result;
+}
+
+function deriveWorkplaceActivity(units: any[]) {
+    const dates = units
+        .map((unit) => parsePlanDate(unit.assessingDate || unit.summativeDate || unit.endDate || ''))
+        .filter((value): value is Date => Boolean(value));
+
+    if (dates.length === 0) return null;
+
+    const lastAssessing = dates.reduce((latest, current) => (current > latest ? current : latest), dates[0]);
+    const workplaceStart = nextMonday(lastAssessing);
+    const workplaceEnd = addWorkingDays(workplaceStart, 9);
+
+    return {
+        startDate: formatPlanDate(workplaceStart),
+        endDate: formatPlanDate(workplaceEnd),
+        label: `Workplace Activity - (${format(workplaceStart, 'dd MMM')} - ${format(workplaceEnd, 'dd MMM yyyy')})`,
+    };
 }
 
 function formatShortDate(value: string): string {

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Upload, X, Loader2, FileText, CheckCircle } from 'lucide-react';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface GroupUploadModalProps {
     isOpen: boolean;
@@ -185,7 +186,7 @@ export default function GroupUploadModal({ isOpen, onClose, onSuccess }: GroupUp
                                         <option value="">-- Select a group --</option>
                                         {groups.map((group) => (
                                             <option key={group.id} value={group.id}>
-                                                {group.name}
+                                                {formatGroupNameDisplay(group.name)}
                                             </option>
                                         ))}
                                     </select>

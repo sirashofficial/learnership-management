@@ -1,9 +1,8 @@
-'use client';
-
+"use client";
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 // Removed Sidebar and Header imports
+import { useRouter } from 'next/navigation';
 import { useGroups } from '@/contexts/GroupsContext';
 import GroupModal from '@/components/GroupModal';
 import GroupDrawer from '@/components/GroupDrawer';
@@ -31,6 +30,8 @@ import {
   Upload
 } from 'lucide-react';
 import { differenceInDays, format, isAfter, isBefore, startOfMonth } from 'date-fns';
+import { formatGroupNameDisplay } from '@/lib/groupName';
+import { buildRolloutPlanFromGroupRollout } from '@/lib/rolloutUtils';
 
 type PlanStatus = 'NO_PLAN' | 'NOT_STARTED' | 'ON_TRACK' | 'BEHIND' | 'AT_RISK' | 'COMPLETE';
 
@@ -66,9 +67,29 @@ const extractStoredPlan = (notes: string | null | undefined) => {
   }
 };
 
+const resolveRolloutPlan = (group: any) => {
+  const notesPlan = extractStoredPlan(group?.notes);
+  if (notesPlan?.modules?.length) return notesPlan;
+
+  if (group?.rolloutPlan?.modules?.length) return group.rolloutPlan;
+
+  const tablePlan = buildRolloutPlanFromGroupRollout(group?.rolloutPlan);
+  return tablePlan || notesPlan || null;
+};
+
 const parsePlanDate = (value: string) => {
-  const [day, month, year] = value.split('/').map((part) => Number(part));
-  return new Date(year, month - 1, day);
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.includes('/')) {
+    const [day, month, year] = trimmed.split('/').map((part) => Number(part));
+    const parsed = new Date(year, month - 1, day);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
 const normalizeDate = (date: Date) => {
@@ -81,14 +102,126 @@ const getUnitStandards = (plan: any) => {
   if (!plan?.modules) return [];
   return plan.modules
     .flatMap((module: any) =>
-      (module.unitStandards || []).map((unit: any) => ({
-        moduleNumber: module.moduleNumber ?? module.moduleIndex,
-        start: parsePlanDate(unit.startDate),
-        end: parsePlanDate(unit.endDate),
-        assessing: parsePlanDate(unit.assessingDate),
-      }))
+      (module.unitStandards || []).map((unit: any) => {
+        const start = parsePlanDate(unit.startDate);
+        const end = parsePlanDate(unit.endDate);
+        const assessing = parsePlanDate(unit.assessingDate);
+        if (!start || !end || !assessing) return null;
+        return {
+          moduleNumber: module.moduleNumber ?? module.moduleIndex,
+          start,
+          end,
+          assessing,
+        };
+      })
     )
+    .filter((unit: any) => Boolean(unit))
     .sort((a: any, b: any) => a.start.getTime() - b.start.getTime());
+};
+
+const getGroupStudentCount = (group: any) => {
+  const students = Array.isArray(group?.students) ? group.students : [];
+  if (students.length > 0) {
+    const keys = new Set<string>();
+    students.forEach((student: any) => {
+      const first = String(student?.firstName || '').trim().toLowerCase();
+      const last = String(student?.lastName || '').trim().toLowerCase();
+      if (first || last) {
+        keys.add(`name:${first} ${last}`.trim());
+        return;
+      }
+
+      const id = student?.id || student?.studentId;
+      if (id) keys.add(`id:${id}`);
+    });
+    return keys.size;
+  }
+
+  return group?._count?.students || 0;
+};
+
+const getUniqueStudentTotal = (groupList: any[]) => {
+  const keys = new Set<string>();
+  groupList.forEach((group) => {
+    const students = Array.isArray(group?.students) ? group.students : [];
+    if (students.length > 0) {
+      students.forEach((student: any) => {
+        const first = String(student?.firstName || '').trim().toLowerCase();
+        const last = String(student?.lastName || '').trim().toLowerCase();
+        if (first || last) {
+          keys.add(`name:${first} ${last}`.trim());
+          return;
+        }
+
+        const id = student?.id || student?.studentId;
+        if (id) keys.add(`id:${id}`);
+      });
+      return;
+    }
+
+    const fallback = group?._count?.students || 0;
+    for (let i = 0; i < fallback; i += 1) {
+      keys.add(`fallback:${group.id || 'group'}:${i}`);
+    }
+  });
+
+  return keys.size;
+};
+
+const getPlanStartDate = (plan: any, fallback?: string | Date | null) => {
+  if (plan?.startDate) {
+    const parsed = parsePlanDate(plan.startDate);
+    if (parsed) return parsed;
+  }
+
+  if (plan?.modules?.length) {
+    let earliest: Date | null = null;
+    plan.modules.forEach((module: any) => {
+      (module.unitStandards || []).forEach((unit: any) => {
+        if (!unit?.startDate) return;
+        const parsed = parsePlanDate(unit.startDate);
+        if (!parsed) return;
+        if (!earliest || parsed < earliest) earliest = parsed;
+      });
+    });
+    if (earliest) return earliest;
+  }
+
+  if (fallback instanceof Date) return fallback;
+  if (typeof fallback === 'string' && fallback) {
+    const parsed = new Date(fallback);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return null;
+};
+
+const getPlanEndDate = (plan: any, fallback?: string | Date | null) => {
+  if (plan?.endDate) {
+    const parsed = parsePlanDate(plan.endDate);
+    if (parsed) return parsed;
+  }
+
+  if (plan?.modules?.length) {
+    let latest: Date | null = null;
+    plan.modules.forEach((module: any) => {
+      (module.unitStandards || []).forEach((unit: any) => {
+        if (!unit?.endDate) return;
+        const parsed = parsePlanDate(unit.endDate);
+        if (!parsed) return;
+        if (!latest || parsed > latest) latest = parsed;
+      });
+    });
+    if (latest) return latest;
+  }
+
+  if (fallback instanceof Date) return fallback;
+  if (typeof fallback === 'string' && fallback) {
+    const parsed = new Date(fallback);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return null;
 };
 
 const getPlanStatus = (plan: any): PlanStatus => {
@@ -300,7 +433,7 @@ export default function GroupsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCompanies, setExpandedCompanies] = useState<string[]>([]);
-  const [expandedCollections, setExpandedCollections] = useState<string[]>(['montazility']);
+  const [expandedCollections, setExpandedCollections] = useState<string[]>(['montzelity']);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
@@ -334,23 +467,28 @@ export default function GroupsPage() {
   } | null>(null);
 
   // Define Collections (Dynamic)
-  const montazilityCollection = {
-    name: "Montazility 2026",
-    groups: (groups || []).filter((g: any) =>
-      g.status !== 'ARCHIVED' &&
-      (g.name.includes("26") || g.name.includes("2026") || g.name.includes("Montzelity") || g.name.includes("Montazility"))
-    )
+  const montzelityCollection = {
+    name: "Montzelity 2026",
+    groups: (groups || []).filter((g: any) => {
+      if (g.status === 'ARCHIVED') return false;
+      const name = String(g.name || '');
+      const normalizedName = name
+        .toLowerCase()
+        .replace('montazility', 'montzelity')
+        .replace('montezility', 'montzelity');
+      return name.includes("26") || name.includes("2026") || normalizedName.includes('montzelity');
+    })
   };
 
   // All other groups displayed flat (no company grouping)
   const allOtherGroups = (groups || []).filter((g: any) =>
-    g.status !== 'ARCHIVED' && !montazilityCollection.groups.some((mg: any) => mg.id === g.id)
+    g.status !== 'ARCHIVED' && !montzelityCollection.groups.some((mg: any) => mg.id === g.id)
   );
 
   // Filter groups by search
   const filteredCollection = {
-    ...montazilityCollection,
-    groups: montazilityCollection.groups.filter((g: any) =>
+    ...montzelityCollection,
+    groups: montzelityCollection.groups.filter((g: any) =>
       g.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
   };
@@ -361,12 +499,12 @@ export default function GroupsPage() {
 
   // Calculate statistics
   const activeGroups = (groups || []).filter((g: any) => g.status !== 'ARCHIVED');
-  const totalStudents = activeGroups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0);
+  const totalStudents = getUniqueStudentTotal(activeGroups);
   const avgAttendance = activeGroups.length > 0
     ? activeGroups.reduce((sum: number, g: any) => sum + (attendanceByGroup[g.id] ?? 0), 0) / activeGroups.length
     : 0;
   const programmeRows = activeGroups.map((group: any) => {
-    const storedPlan = extractStoredPlan(group.notes);
+    const storedPlan = resolveRolloutPlan(group);
     const creditProgress = getCreditCompletion(storedPlan);
     const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
     const actualPercent = actualProgress?.avgPercent || actualProgress?.avgProgressPercent || 0;
@@ -374,7 +512,7 @@ export default function GroupsPage() {
     return {
       id: group.id,
       name: group.name,
-      learners: group._count?.students || group.students?.length || 0,
+      learners: getGroupStudentCount(group),
       attendance: attendanceByGroup[group.id] ?? 0,
       currentModule: getCurrentModuleLabel(storedPlan),
       status,
@@ -457,7 +595,8 @@ export default function GroupsPage() {
   const handleArchiveGroup = async (group: any) => {
     // Build confirmation message
     const studentCount = group._count?.students || 0;
-    let confirmMessage = `Are you sure you want to delete "${group.name}"? This cannot be undone.`;
+    const displayName = formatGroupNameDisplay(group.name || '');
+    let confirmMessage = `Are you sure you want to delete "${displayName}"? This cannot be undone.`;
 
     if (studentCount > 0) {
       confirmMessage += `\n\nWarning: This group has ${studentCount} student${studentCount !== 1 ? 's' : ''}. Deleting it will unassign them from this group.`;
@@ -481,8 +620,8 @@ export default function GroupsPage() {
     setShowAddStudentModal(true);
   };
 
-  const handleViewGroup = (group: any) => {
-    const storedPlan = extractStoredPlan(group.notes);
+  const handleQuickViewGroup = (group: any) => {
+    const storedPlan = resolveRolloutPlan(group);
     const creditProgress = getCreditCompletion(storedPlan);
     const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
     const actualPercent = actualProgress?.avgPercent || actualProgress?.avgProgressPercent || 0;
@@ -498,6 +637,10 @@ export default function GroupsPage() {
       } : undefined,
     });
     setDrawerGroup(group);
+  };
+
+  const handleViewGroup = (group: any) => {
+    router.push(`/groups/${group.id}`);
   };
 
   if (isLoading) {
@@ -642,11 +785,11 @@ export default function GroupsPage() {
           </div>
         )}
 
-        {/* Montazility Collection */}
+        {/* Montzelity Collection */}
         {(searchQuery === '' || filteredCollection.groups.length > 0) && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
             <div
-              onClick={() => toggleCollection('montazility')}
+              onClick={() => toggleCollection('montzelity')}
               className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 cursor-pointer hover:from-purple-100 hover:to-indigo-100 dark:hover:from-purple-900/30 dark:hover:to-indigo-900/30 transition-colors border-b-2 border-purple-200 dark:border-purple-700"
             >
               <div className="flex items-center gap-4">
@@ -669,14 +812,14 @@ export default function GroupsPage() {
                   </p>
                 </div>
               </div>
-              {expandedCollections.includes('montazility') ? (
+              {expandedCollections.includes('montzelity') ? (
                 <ChevronUp className="w-6 h-6 text-slate-600 dark:text-slate-400" />
               ) : (
                 <ChevronDown className="w-6 h-6 text-slate-600 dark:text-slate-400" />
               )}
             </div>
 
-            {expandedCollections.includes('montazility') && (
+            {expandedCollections.includes('montzelity') && (
               <div className={`p-4 bg-purple-50/30 dark:bg-purple-900/10 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-3'}`}>
                 {filteredCollection.groups.map((group: any) => (
                   <GroupCard
@@ -687,6 +830,7 @@ export default function GroupsPage() {
                     onArchive={() => handleArchiveGroup(group)}
                     onAddStudents={() => handleAddStudentsToGroup(group)}
                     onView={() => handleViewGroup(group)}
+                    onQuickView={() => handleQuickViewGroup(group)}
                     isSelected={selectedForMerge.includes(group.id)}
                     onSelect={() => toggleSelectForMerge(group.id)}
                     actualProgress={actualProgressByGroup[group.id]}
@@ -708,6 +852,7 @@ export default function GroupsPage() {
               onArchive={() => handleArchiveGroup(group)}
               onAddStudents={() => handleAddStudentsToGroup(group)}
               onView={() => handleViewGroup(group)}
+              onQuickView={() => handleQuickViewGroup(group)}
               isSelected={selectedForMerge.includes(group.id)}
               onSelect={() => toggleSelectForMerge(group.id)}
               actualProgress={actualProgressByGroup[group.id]}
@@ -859,7 +1004,7 @@ export default function GroupsPage() {
               <tbody className="divide-y divide-slate-200 bg-white">
                 {programmeRows.map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{row.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{formatGroupNameDisplay(row.name || '')}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{row.learners}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">
                       {isAttendanceLoading ? '—' : `${row.attendance.toFixed(0)}%`}
@@ -910,7 +1055,7 @@ export default function GroupsPage() {
         <AddStudentModal
           isOpen={true}
           groupId={selectedGroup.id}
-          groupName={selectedGroup.name}
+          groupName={formatGroupNameDisplay(selectedGroup.name || '')}
           onClose={() => {
             setShowAddStudentModal(false);
             setSelectedGroup(null);
@@ -989,18 +1134,27 @@ interface GroupCardProps {
   onArchive: () => void;
   onAddStudents: () => void;
   onView: () => void;
+  onQuickView: () => void;
   isSelected?: boolean;
   onSelect?: () => void;
   actualProgress?: { avgCredits: number; avgPercent: number };
 }
 
-function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, isSelected, onSelect, actualProgress }: GroupCardProps) {
+function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, onQuickView, isSelected, onSelect, actualProgress }: GroupCardProps) {
   const router = useRouter();
-  const studentCount = group._count?.students || 0;
+  const studentCount = getGroupStudentCount(group);
   const attendanceRate = group.attendanceRate || 0;
+  const displayName = formatGroupNameDisplay(group.name || '');
+              <h4 className="font-semibold text-slate-900">{displayName}</h4>
+                  {displayName}
+                  {displayName}
+                  <span className="text-slate-700 dark:text-slate-300">• {formatGroupNameDisplay(group.name || '')}</span>
 
   // Extract rollout plan from notes
-  const rolloutPlan = extractStoredPlan(group.notes);
+  const rolloutPlan = resolveRolloutPlan(group);
+  const rolloutStartDate = getPlanStartDate(rolloutPlan, group.startDate);
+  const rolloutEndDate = getPlanEndDate(rolloutPlan, group.endDate);
+  const hasLegacyRolloutPlan = Boolean(group?.rolloutPlan);
 
   // Get current module info and credit completion
   const currentModule = getCurrentModuleInfo(rolloutPlan);
@@ -1052,7 +1206,20 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900">{group.name}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h4>
+              {!hasLegacyRolloutPlan && (
+                <span 
+                  className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onView();
+                  }}
+                >
+                  ⚠️ No rollout plan
+                </span>
+              )}
+            </div>
             {group.facilitator && (
               <p className="text-sm text-slate-600">Facilitator: {group.facilitator.name}</p>
             )}
@@ -1112,6 +1279,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <UserPlus className="w-5 h-5" />
             </button>
             <button
+              onClick={onQuickView}
+              className="p-2 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-colors"
+              title="Quick View"
+            >
+              <Info className="w-5 h-5" />
+            </button>
+            <button
               onClick={onEdit}
               className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
               title="Edit Group"
@@ -1160,17 +1334,31 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h4
-                className="font-semibold text-slate-900 dark:text-white hover:text-teal-600 cursor-pointer transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/groups/${group.id}`);
-                }}
-              >
-                {group.name}
-              </h4>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4
+                  className="font-semibold text-slate-900 dark:text-white hover:text-teal-600 cursor-pointer transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/groups/${group.id}`);
+                  }}
+                >
+                  {formatGroupNameDisplay(group.name)}
+                </h4>
+                {!hasLegacyRolloutPlan && (
+                  <span 
+                    className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onView();
+                    }}
+                  >
+                    ⚠️ No rollout plan
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Started {new Date(group.startDate).toLocaleDateString()}
+                {rolloutStartDate ? `Started ${rolloutStartDate.toLocaleDateString()}` : 'Start date not set'}
+                {rolloutEndDate ? ` • Ends ${rolloutEndDate.toLocaleDateString()}` : ''}
               </p>
               {/* Rollout Status Badge */}
               {renderStatusBadge(performanceStatus)}
@@ -1251,6 +1439,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
         >
           <UserPlus className="w-4 h-4" />
           Add
+        </button>
+        <button
+          onClick={onQuickView}
+          className="py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+          title="Quick View"
+        >
+          <Info className="w-4 h-4" />
         </button>
         <button
           onClick={onEdit}
@@ -1351,7 +1546,7 @@ function MergeGroupsModal({ selectedGroupIds, groups, onClose, onMerge }: MergeG
             <ul className="space-y-2">
               {selectedGroups.map(group => (
                 <li key={group.id} className="flex items-center justify-between">
-                  <span className="text-slate-700 dark:text-slate-300">• {group.name}</span>
+                  <span className="text-slate-700 dark:text-slate-300">• {formatGroupNameDisplay(group.name)}</span>
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     {group._count?.students || 0} student{(group._count?.students || 0) !== 1 ? 's' : ''}
                   </span>

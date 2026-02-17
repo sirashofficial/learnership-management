@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Integration Guide: Adding Module Progression to Student Details
  * 
  * This file shows how to integrate the ModuleProgressionPanel into StudentDetailsModal.
@@ -117,3 +117,4 @@ const [activeTab, setActiveTab] = useState<'overview' | 'modules' | 'assessments
 {activeTab === 'attendance' && (
   // Attendance history
 )}
+

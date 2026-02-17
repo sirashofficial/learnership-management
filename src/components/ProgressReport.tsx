@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CalendarDays, Users, BookOpen, TrendingUp, TrendingDown } from 'lucide-react';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface ProgressReportProps {
   groups: Array<{
@@ -109,7 +110,7 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900">{group.name}</h3>
+                  <h3 className="text-lg font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h3>
                 </div>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge.color}`}>
                   {statusBadge.label}
@@ -204,7 +205,7 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
               .filter(group => calculateVariance(group).variance < -5)
               .map(group => (
                 <div key={group.id} className="text-sm">
-                  <strong>{group.name}</strong> is {Math.abs(Math.round(calculateVariance(group).variance))}% behind schedule.
+                  <strong>{formatGroupNameDisplay(group.name)}</strong> is {Math.abs(Math.round(calculateVariance(group).variance))}% behind schedule.
                   Consider additional support or timeline adjustment.
                 </div>
               ))}

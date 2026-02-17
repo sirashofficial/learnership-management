@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 import { successResponse, handleApiError, errorResponse } from '@/lib/api-utils';
 import { format } from 'date-fns';
-import { calculateDetailedRolloutPlan } from '@/lib/rollout-utils';
+import { calculateDetailedRolloutPlan } from '@/lib/rolloutUtils';
 
 export async function POST(request: NextRequest) {
   try {

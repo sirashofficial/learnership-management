@@ -1,4 +1,4 @@
-# Site Map and Layout Summary
+﻿# Site Map and Layout Summary
 
 ## Global Shell
 - Root layout applies fonts, providers, error boundary, and AI chat overlay.
@@ -95,3 +95,4 @@
 - Settings: profile, notification, reminder, system, appearance, security
 - AI Assistant: chat, semantic search, assessment generation
 - Admin: admin overview and system cards
+

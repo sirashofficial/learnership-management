@@ -4,13 +4,10 @@ import { NextRequest } from 'next/server';
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be set in production environment');
-  }
+  throw new Error('JWT_SECRET environment variable is required. Add it to your .env.local file.');
 }
 
-const secretKey = JWT_SECRET || 'yeha-learnership-secret-key-2026';
-const key = new TextEncoder().encode(secretKey);
+const key = new TextEncoder().encode(JWT_SECRET);
 
 export interface JWTPayload {
   userId: string;
@@ -19,11 +16,14 @@ export interface JWTPayload {
   [key: string]: any; // Allow generic payload for jose compatibility
 }
 
-export async function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
+export async function generateToken(
+  payload: Omit<JWTPayload, 'iat' | 'exp'>,
+  expiresIn: string = '24h'
+): Promise<string> {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime(expiresIn)
     .sign(key);
 }
 

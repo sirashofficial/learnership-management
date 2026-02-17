@@ -1,4 +1,4 @@
----
+﻿---
 name: edu-platform-phase2-agent
 description: >
   Phase 2 implementation skill for the education management platform.
@@ -9,7 +9,7 @@ description: >
   exports, assessment checklist, progress, curriculum builder) is done.
 ---
 
-# Education Platform — Phase 2 Agent Skill
+# Education Platform â€” Phase 2 Agent Skill
 
 ## What Phase 1 Covered (Do NOT re-implement)
 - Dashboard API wiring (6 endpoints)
@@ -108,11 +108,11 @@ GET  /api/reports/unit-standards         req: filters
 
 The attendance marking UI follows this exact flow:
 ```
-Mount → load groups → user selects group + date 
-     → load students for group 
-     → render student list with Present/Absent/Late buttons
-     → onClick: POST single record OR collect all → POST bulk
-     → show per-row "Saved" confirmation
+Mount â†’ load groups â†’ user selects group + date 
+     â†’ load students for group 
+     â†’ render student list with Present/Absent/Late buttons
+     â†’ onClick: POST single record OR collect all â†’ POST bulk
+     â†’ show per-row "Saved" confirmation
 ```
 
 The key state shape:
@@ -121,7 +121,7 @@ type AttendanceRecord = {
   studentId: string
   studentName: string
   status: 'present' | 'absent' | 'late' | null  // null = not marked yet
-  saved: boolean  // shows the "✓ Saved" indicator
+  saved: boolean  // shows the "âœ“ Saved" indicator
 }
 const [records, setRecords] = useState<AttendanceRecord[]>([])
 ```
@@ -181,14 +181,14 @@ const spanSlots = duration / 30           // 60 mins = 2 slots
 style={{ gridRow: `${startSlot + 2} / span ${spanSlots}` }}
 ```
 
-If `react-big-calendar` or `@fullcalendar/react` is in package.json — USE IT.
+If `react-big-calendar` or `@fullcalendar/react` is in package.json â€” USE IT.
 Check with: `cat package.json | grep calendar`
 
 ---
 
 ### Pattern: AI Lesson Generator Loading State
 
-This should feel premium — the AI is doing something impressive:
+This should feel premium â€” the AI is doing something impressive:
 
 ```typescript
 const [generatingStep, setGeneratingStep] = useState<string | null>(null)
@@ -215,17 +215,17 @@ Show the step text with a spinner while loading. This makes the wait feel purpos
 
 The moderation queue is a two-panel layout:
 ```
-┌─────────────────────────┬───────────────────────────────────┐
-│ Queue (left panel)      │ Review Panel (right panel)        │
-│                         │                                   │
-│ [Student] Assessment    │  Student: John Doe                │
-│ Pending · 2 days ago    │  Assessment: Unit 3 Task 1        │
-│                         │  Marker: Jane Smith               │
-│ [Student] Assessment    │  Decision: Competent              │
-│ Pending · 1 day ago     │  Comments: "Good evidence..."     │
-│                         │                                   │
-│                         │  [Confirm] [Refer Back] [Override]│
-└─────────────────────────┴───────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Queue (left panel)      â”‚ Review Panel (right panel)        â”‚
+â”‚                         â”‚                                   â”‚
+â”‚ [Student] Assessment    â”‚  Student: John Doe                â”‚
+â”‚ Pending Â· 2 days ago    â”‚  Assessment: Unit 3 Task 1        â”‚
+â”‚                         â”‚  Marker: Jane Smith               â”‚
+â”‚ [Student] Assessment    â”‚  Decision: Competent              â”‚
+â”‚ Pending Â· 1 day ago     â”‚  Comments: "Good evidence..."     â”‚
+â”‚                         â”‚                                   â”‚
+â”‚                         â”‚  [Confirm] [Refer Back] [Override]â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 On mobile, queue is full width and review panel is a bottom sheet.
@@ -234,12 +234,12 @@ On mobile, queue is full width and review panel is a bottom sheet.
 
 ### Pattern: Student Profile Tabs
 
-Use a simple tab state — don't install a tabs library for this:
+Use a simple tab state â€” don't install a tabs library for this:
 ```typescript
 type Tab = 'progress' | 'attendance' | 'assessments' | 'poe'
 const [activeTab, setActiveTab] = useState<Tab>('progress')
 
-// Load data lazily — only fetch a tab's data when it's first opened
+// Load data lazily â€” only fetch a tab's data when it's first opened
 const [loadedTabs, setLoadedTabs] = useState<Set<Tab>>(new Set(['progress']))
 
 const switchTab = (tab: Tab) => {
@@ -334,15 +334,15 @@ If it's structured JSON, map to your display sections.
 
 ### Student profile 404
 The dynamic route `/students/[id]` needs `src/app/students/[id]/page.tsx`
-(not `src/app/students/[id].tsx` — must be a folder with page.tsx inside).
+(not `src/app/students/[id].tsx` â€” must be a folder with page.tsx inside).
 
 ### Moderation actions not updating queue
 After POST /api/assessments/moderate, you must manually remove the item
-from local state — the API won't push an update.
+from local state â€” the API won't push an update.
 Fix: Use `.filter()` to remove the moderated item from your queue state.
 
 ### POE saves but doesn't update the list
-PUT /api/poe returns the updated item — use it to update state directly
+PUT /api/poe returns the updated item â€” use it to update state directly
 instead of re-fetching the whole list.
 
 ---
@@ -360,11 +360,11 @@ Follow these when creating new files:
 | Type | PascalCase | AttendanceRecord.ts |
 
 Always place:
-- Reusable components → src/components/ui/ or src/components/shared/
-- Page-specific components → src/components/[feature]/
-- Hooks → src/hooks/
-- Utilities → src/lib/ or src/utils/
-- Types → src/types/
+- Reusable components â†’ src/components/ui/ or src/components/shared/
+- Page-specific components â†’ src/components/[feature]/
+- Hooks â†’ src/hooks/
+- Utilities â†’ src/lib/ or src/utils/
+- Types â†’ src/types/
 
 ---
 
@@ -441,10 +441,10 @@ After completing each task, tell the developer:
 
 **Format:**
 ```
-✅ TASK [N] COMPLETE — [Task Name]
+âœ… TASK [N] COMPLETE â€” [Task Name]
 
 Found: [what file/state you found when you started]
-Changed: [summary of what was added/fixed — plain language]
+Changed: [summary of what was added/fixed â€” plain language]
 Key files: [list of files changed]
 Verify by: [specific thing to click or check]
 Watch out for: [any known issues or things to test carefully]
@@ -452,7 +452,7 @@ Watch out for: [any known issues or things to test carefully]
 
 If a task is blocked or unclear:
 ```
-⚠️ TASK [N] BLOCKED — [Task Name]
+âš ï¸ TASK [N] BLOCKED â€” [Task Name]
 Reason: [what's stopping you]
 Need: [what info or decision is needed to proceed]
 Workaround: [if there's a way to proceed partially]
@@ -463,14 +463,14 @@ Workaround: [if there's a way to proceed partially]
 ## Out of Scope for Phase 2
 
 Do not touch:
-- Auth (login/register) — working
-- Dashboard data wiring — done in Phase 1
-- Compliance RAG status — done in Phase 1
-- Assessment Checklist core save — done in Phase 1
-- Progress page group view — done in Phase 1
-- Curriculum Builder form save — done in Phase 1
-- Export buttons (attendance/assessments CSV) — done in Phase 1
-- Backend API route handlers — only touch if you can prove the frontend 
+- Auth (login/register) â€” working
+- Dashboard data wiring â€” done in Phase 1
+- Compliance RAG status â€” done in Phase 1
+- Assessment Checklist core save â€” done in Phase 1
+- Progress page group view â€” done in Phase 1
+- Curriculum Builder form save â€” done in Phase 1
+- Export buttons (attendance/assessments CSV) â€” done in Phase 1
+- Backend API route handlers â€” only touch if you can prove the frontend 
   is correct and the backend is the issue
 - Database migrations or schema files
 
@@ -480,40 +480,41 @@ Do not touch:
 
 ```
 START HERE
-    │
-    ▼
-[Shared Utils]  ← Build Toast, ConfirmDialog, EmptyState, Skeleton FIRST
-    │
-    ▼
-Task 8 (Broken Button Audit)  ← Run grep, make a list, fix the easy ones
-    │
-    ▼
-Task 1 (Attendance)  ← Daily use, highest priority
-    │
-    ▼
-Task 3 (Lesson Generator)  ← Daily use, high priority
-    │
-    ▼
-Task 2 (Calendar)  ← Important, moderately complex
-    │
-    ▼
-Task 4 (Student Profile)  ← New page, medium complexity
-    │
-    ▼
-Task 10 (Reports Complete)  ← Builds on existing page
-    │
-    ▼
-Task 5 (Moderation)  ← Quality assurance feature
-    │
-    ▼
-Task 6 (POE)  ← Accreditation feature
-    │
-    ▼
-Task 7 (AI Context)  ← Enhancement layer
-    │
-    ▼
-Task 9 (UX Polish)  ← Final pass
-    │
-    ▼
+    â”‚
+    â–¼
+[Shared Utils]  â† Build Toast, ConfirmDialog, EmptyState, Skeleton FIRST
+    â”‚
+    â–¼
+Task 8 (Broken Button Audit)  â† Run grep, make a list, fix the easy ones
+    â”‚
+    â–¼
+Task 1 (Attendance)  â† Daily use, highest priority
+    â”‚
+    â–¼
+Task 3 (Lesson Generator)  â† Daily use, high priority
+    â”‚
+    â–¼
+Task 2 (Calendar)  â† Important, moderately complex
+    â”‚
+    â–¼
+Task 4 (Student Profile)  â† New page, medium complexity
+    â”‚
+    â–¼
+Task 10 (Reports Complete)  â† Builds on existing page
+    â”‚
+    â–¼
+Task 5 (Moderation)  â† Quality assurance feature
+    â”‚
+    â–¼
+Task 6 (POE)  â† Accreditation feature
+    â”‚
+    â–¼
+Task 7 (AI Context)  â† Enhancement layer
+    â”‚
+    â–¼
+Task 9 (UX Polish)  â† Final pass
+    â”‚
+    â–¼
 PHASE 2 COMPLETE
 ```
+

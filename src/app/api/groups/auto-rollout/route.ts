@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { requireAuth } from '@/lib/middleware';
-import { calculateRolloutPlan } from '@/lib/rollout-utils';
+import { calculateRolloutPlan } from '@/lib/rolloutUtils';
 
 // POST /api/groups/auto-rollout
 // Generate default 12-month rollout plans for all groups without plans

@@ -76,9 +76,15 @@ export default function TodaysSchedule() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
         </div>
       ) : schedule.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-          <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No lessons scheduled for the next 7 days</p>
+        <div className="text-center py-12">
+          <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-400" />
+          <p className="text-slate-500 dark:text-slate-400 mb-4">No classes scheduled for today</p>
+          <button
+            onClick={() => router.push('/timetable')}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            View full schedule
+          </button>
         </div>
       ) : (
         <div className="space-y-3 max-h-96 overflow-y-auto">

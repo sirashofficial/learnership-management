@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    rememberMe: false,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,9 +56,10 @@ export default function LoginPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, type, checked, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
@@ -123,6 +125,19 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={handleChange}
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="rememberMe"
+                name="rememberMe"
+                type="checkbox"
+                checked={formData.rememberMe}
+                onChange={handleChange}
+                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <label htmlFor="rememberMe" className="text-sm text-slate-600">
+                Remember me
+              </label>
             </div>
           </div>
 

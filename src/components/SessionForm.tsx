@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { format } from 'date-fns';
 import useSWR from 'swr';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface SessionFormProps {
   selectedDate?: Date;
@@ -127,7 +128,7 @@ export function SessionForm({
               <option value="">Select a group</option>
               {groups.map((group: any) => (
                 <option key={group.id} value={group.id}>
-                  {group.name}
+                  {formatGroupNameDisplay(group.name)}
                 </option>
               ))}
             </select>

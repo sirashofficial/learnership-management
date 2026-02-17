@@ -1,12 +1,12 @@
-# 🚀 PHASE 2 MASTER PROMPT
-# Education Platform — Complete Site-Wide Implementation
+﻿# ðŸš€ PHASE 2 MASTER PROMPT
+# Education Platform â€” Complete Site-Wide Implementation
 # ======================================================
 # PHASE 1 IS DONE. This prompt picks up everything still broken or incomplete.
 #
 # HOW TO USE:
 # Paste this entire file into Cursor AI chat, Claude Code, or any AI
 # assistant with access to your project files in VS Code.
-# Work through tasks in order — each one builds on the last.
+# Work through tasks in order â€” each one builds on the last.
 # ---------------------------------------------------------------
 
 ---
@@ -20,32 +20,32 @@ the remaining pages and fix broken buttons/features site-wide.
 
 ## NON-NEGOTIABLE BEHAVIOUR RULES
 1. Read every file before changing it. Tell me what you found first.
-2. Never rewrite a whole component — make surgical, targeted edits only.
+2. Never rewrite a whole component â€” make surgical, targeted edits only.
 3. Match the existing code style exactly (TypeScript, naming conventions, imports).
 4. Every API call needs: auth headers + try/catch + loading state + error state.
 5. Never break something that already works.
-6. Explain what you changed and how to verify it — in plain language.
+6. Explain what you changed and how to verify it â€” in plain language.
 7. If something is risky or unclear, ask before doing it.
 
 ## THE TECH STACK
 - Framework: Next.js 14+ with App Router
 - Frontend: React with hooks, Tailwind CSS
 - Backend: Next.js API routes under src/app/api/
-- Auth: Token in localStorage (key: 'token') — check existing working pages first
-- Language: TypeScript — match whatever the files use
+- Auth: Token in localStorage (key: 'token') â€” check existing working pages first
+- Language: TypeScript â€” match whatever the files use
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 1 — ATTENDANCE SYSTEM (Full Feature)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 1 â€” ATTENDANCE SYSTEM (Full Feature)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to find: src/app/attendance/page.tsx (or similar)
 
 ### What needs to work:
 
 **A) Mark Attendance**
-- Group selector dropdown → loads from GET /api/groups
+- Group selector dropdown â†’ loads from GET /api/groups
 - Date picker (defaults to today)
 - When group + date selected, load student list from GET /api/students?groupId={id}
 - Each student row shows: name, photo/avatar, and 3 buttons: Present / Absent / Late
@@ -53,7 +53,7 @@ File to find: src/app/attendance/page.tsx (or similar)
 - On click, call POST /api/attendance with body:
   { studentId, groupId, date, status: "present" | "absent" | "late" }
 - Show "Saved" confirmation inline (next to each student row, not a popup)
-- "Mark All Present" button at top → loops through all students and marks each present
+- "Mark All Present" button at top â†’ loops through all students and marks each present
 - Bulk submit: POST /api/attendance/bulk with array of all records at once
 
 **B) View Attendance History**
@@ -73,33 +73,33 @@ File to find: src/app/attendance/page.tsx (or similar)
 
 **D) Attendance Stats Bar**
 - At top of page, show 4 stat cards:
-  - Today's attendance % → from GET /api/attendance/stats?date=today
-  - This week % → same endpoint with week range
-  - Students below 80% → count from GET /api/attendance/rates
-  - Active alerts count → from GET /api/attendance/alerts
+  - Today's attendance % â†’ from GET /api/attendance/stats?date=today
+  - This week % â†’ same endpoint with week range
+  - Students below 80% â†’ count from GET /api/attendance/rates
+  - Active alerts count â†’ from GET /api/attendance/alerts
 
 **APIs used:**
-- GET  /api/attendance              → list records
-- POST /api/attendance              → single mark
-- POST /api/attendance/bulk         → mark all at once
-- GET  /api/attendance/history      → past records
-- GET  /api/attendance/stats        → aggregate stats
-- GET  /api/attendance/rates        → per-student rates
-- GET  /api/attendance/alerts       → low attendance flags
-- GET  /api/attendance/export       → already done in Phase 1
+- GET  /api/attendance              â†’ list records
+- POST /api/attendance              â†’ single mark
+- POST /api/attendance/bulk         â†’ mark all at once
+- GET  /api/attendance/history      â†’ past records
+- GET  /api/attendance/stats        â†’ aggregate stats
+- GET  /api/attendance/rates        â†’ per-student rates
+- GET  /api/attendance/alerts       â†’ low attendance flags
+- GET  /api/attendance/export       â†’ already done in Phase 1
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 2 — CALENDAR / TIMETABLE (Interactive)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 2 â€” CALENDAR / TIMETABLE (Interactive)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to find: src/app/timetable/page.tsx (or similar)
 
 ### What needs to work:
 
 **A) Calendar View**
-- Show a proper weekly calendar grid (Mon–Fri, time slots 07:00–18:00)
+- Show a proper weekly calendar grid (Monâ€“Fri, time slots 07:00â€“18:00)
 - Each session/class appears as a coloured block on the correct day + time
 - Sessions fetched from GET /api/timetable on page load
 - Each session block shows: Group name, subject/lesson title, facilitator name, venue
@@ -120,7 +120,7 @@ File to find: src/app/timetable/page.tsx (or similar)
 - In the session detail panel, "Edit" button opens same form pre-filled
 - Calls PATCH /api/timetable/{id}/reschedule for time changes
 - OR PUT/PATCH /api/timetable/{id} for full edit
-- "Delete" button with confirmation dialog → DELETE /api/timetable/{id}
+- "Delete" button with confirmation dialog â†’ DELETE /api/timetable/{id}
 
 **E) Today Indicator**
 - Current day highlighted in a different colour
@@ -134,22 +134,22 @@ File to find: src/app/timetable/page.tsx (or similar)
 **Implementation note:**
 Do NOT install a full calendar library unless one is already in package.json.
 Build a lightweight CSS Grid-based weekly calendar. It only needs to show 5 days
-and time slots — this is very achievable with basic CSS grid and JavaScript.
+and time slots â€” this is very achievable with basic CSS grid and JavaScript.
 If react-big-calendar or FullCalendar is already installed, use that instead.
 
 **APIs used:**
-- GET    /api/timetable                    → load all sessions
-- POST   /api/timetable                    → create session
-- PATCH  /api/timetable/{id}/reschedule    → update time/date
-- DELETE /api/timetable/{id}               → remove session
-- GET    /api/group-schedules              → group-level recurring schedule
-- GET    /api/dashboard/schedule           → today's schedule (for Today view)
+- GET    /api/timetable                    â†’ load all sessions
+- POST   /api/timetable                    â†’ create session
+- PATCH  /api/timetable/{id}/reschedule    â†’ update time/date
+- DELETE /api/timetable/{id}               â†’ remove session
+- GET    /api/group-schedules              â†’ group-level recurring schedule
+- GET    /api/dashboard/schedule           â†’ today's schedule (for Today view)
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 3 — LESSON PLAN GENERATOR (AI-Powered)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 3 â€” LESSON PLAN GENERATOR (AI-Powered)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to find: src/app/lessons/page.tsx (or similar)
 
@@ -160,20 +160,20 @@ File to find: src/app/lessons/page.tsx (or similar)
 - Each plan shows: title, group, date, duration, status (draft/published)
 - Click to view full lesson plan detail
 - Filter by group dropdown
-- "New Lesson Plan" button → goes to generator
+- "New Lesson Plan" button â†’ goes to generator
 
 **B) AI Lesson Plan Generator**
-- This is the most important feature — make it feel powerful
+- This is the most important feature â€” make it feel powerful
 
-Step 1 — Input form:
-- Group selector → GET /api/groups
-- Unit standard selector → GET /api/unit-standards (filtered by group's curriculum)
+Step 1 â€” Input form:
+- Group selector â†’ GET /api/groups
+- Unit standard selector â†’ GET /api/unit-standards (filtered by group's curriculum)
 - Duration (30 min / 60 min / 90 min / 2 hours)
 - Learning outcomes (auto-populated from selected unit standard, user can edit)
 - Special notes / accommodations field (optional free text)
 - "Generate Lesson Plan" button
 
-Step 2 — AI Generation:
+Step 2 â€” AI Generation:
 - On button click, show a loading state: animated spinner + "Generating your lesson plan..."
 - Call POST /api/groups/{id}/lessons/generate with:
   {
@@ -185,7 +185,7 @@ Step 2 — AI Generation:
   }
 - While loading, show skeleton placeholder of what the lesson plan will look like
 
-Step 3 — Display generated plan:
+Step 3 â€” Display generated plan:
 - Show the returned lesson plan in a structured, readable layout:
   * Header: Title, Group, Unit Standard, Duration, Date
   * Section: Learning Outcomes (numbered list)
@@ -196,86 +196,86 @@ Step 3 — Display generated plan:
   * Section: Resources needed
 - Each section should be editable inline (click to edit text)
 
-Step 4 — Save options:
-- "Save as Draft" → POST /api/lessons with status: "draft"
-- "Save & Publish" → POST /api/lessons with status: "published"
-- "Regenerate" → calls the generate endpoint again with same inputs
-- "Add to Timetable" → opens a mini modal to pick a date/time → POST /api/timetable
+Step 4 â€” Save options:
+- "Save as Draft" â†’ POST /api/lessons with status: "draft"
+- "Save & Publish" â†’ POST /api/lessons with status: "published"
+- "Regenerate" â†’ calls the generate endpoint again with same inputs
+- "Add to Timetable" â†’ opens a mini modal to pick a date/time â†’ POST /api/timetable
 
 **C) Existing Lesson Plan Detail View**
 - Route: /lessons/{id}
 - Load plan: GET /api/lessons/{id}
 - Full read view with all sections
-- Edit button → makes all sections inline-editable
-- Save changes → PUT /api/lessons/{id}
-- Delete → DELETE /api/lessons/{id} with confirmation
-- Print/Export button → opens browser print dialog with clean print styles
+- Edit button â†’ makes all sections inline-editable
+- Save changes â†’ PUT /api/lessons/{id}
+- Delete â†’ DELETE /api/lessons/{id} with confirmation
+- Print/Export button â†’ opens browser print dialog with clean print styles
 
 **APIs used:**
-- GET  /api/lessons                         → list all plans
-- POST /api/lessons                         → save new plan
-- GET  /api/lessons/{id}                    → load single plan
-- PUT  /api/lessons/{id}                    → update plan
-- DELETE /api/lessons/{id}                  → delete plan
-- POST /api/groups/{id}/lessons/generate    → AI generation ← KEY ENDPOINT
-- GET  /api/unit-standards                  → populate unit standard dropdown
-- GET  /api/groups                          → populate group dropdown
-- POST /api/timetable                       → add lesson to calendar
+- GET  /api/lessons                         â†’ list all plans
+- POST /api/lessons                         â†’ save new plan
+- GET  /api/lessons/{id}                    â†’ load single plan
+- PUT  /api/lessons/{id}                    â†’ update plan
+- DELETE /api/lessons/{id}                  â†’ delete plan
+- POST /api/groups/{id}/lessons/generate    â†’ AI generation â† KEY ENDPOINT
+- GET  /api/unit-standards                  â†’ populate unit standard dropdown
+- GET  /api/groups                          â†’ populate group dropdown
+- POST /api/timetable                       â†’ add lesson to calendar
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 4 — STUDENT PROFILE PAGE (Missing Feature)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 4 â€” STUDENT PROFILE PAGE (Missing Feature)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to create: src/app/students/[id]/page.tsx
 
 ### What needs to work:
 
-This page doesn't exist yet — build it from scratch.
+This page doesn't exist yet â€” build it from scratch.
 
 **Layout (3 sections):**
 
-Section 1 — Header card:
+Section 1 â€” Header card:
 - Student name, ID number, group name, enrolment date
 - Profile photo placeholder (initials avatar)
 - Status badge: Active / Inactive / Completed
 - Quick stats: Attendance %, Assessment completion %, Progress %
 - Load from GET /api/students/{id}
 
-Section 2 — Tabs:
-Tab A — Progress:
+Section 2 â€” Tabs:
+Tab A â€” Progress:
 - Load GET /api/students/{id}/progress
 - Show each unit standard with completion status
 - Progress bar per unit standard
 - Overall completion % at top
 
-Tab B — Attendance:
+Tab B â€” Attendance:
 - Load GET /api/attendance?studentId={id}
 - Monthly attendance calendar (small grid, colour-coded days)
 - Attendance rate chart (last 12 weeks)
 - List of absent days with dates
 
-Tab C — Assessments:
+Tab C â€” Assessments:
 - Load GET /api/assessments?studentId={id} (or by-group filtered to student)
 - Table: Assessment name | Date | Result | Status
 - Show passed/failed/pending badges
 
-Tab D — POE (Portfolio of Evidence):
+Tab D â€” POE (Portfolio of Evidence):
 - Load GET /api/poe?studentId={id}
 - List of POE items with completion status
 - Each item: Unit standard link, evidence description, status
 
-Section 3 — Notes / Actions:
+Section 3 â€” Notes / Actions:
 - Free text notes field (save on blur)
-- "Generate Progress Report" button → POST /api/reports/daily with student context
-- "View in Group" link → back to group detail page
+- "Generate Progress Report" button â†’ POST /api/reports/daily with student context
+- "View in Group" link â†’ back to group detail page
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 5 — MODERATION WORKFLOW (Currently Broken)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 5 â€” MODERATION WORKFLOW (Currently Broken)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to find: src/app/moderation/page.tsx (or similar)
 
@@ -299,38 +299,38 @@ File to find: src/app/moderation/page.tsx (or similar)
 
 **C) Moderation Actions**
 Three decision buttons:
-1. "Confirm Assessment" → green button
+1. "Confirm Assessment" â†’ green button
    - Calls POST /api/assessments/moderate with { assessmentId, decision: "confirmed", comments }
-2. "Refer Back" → yellow button  
+2. "Refer Back" â†’ yellow button  
    - Requires a comment explaining why
    - Calls POST /api/assessments/moderate with { decision: "referred", comments }
-3. "Override Decision" → red button
+3. "Override Decision" â†’ red button
    - Opens second confirmation step
    - Calls POST /api/assessments/moderate with { decision: "overridden", newResult, comments }
 
 **D) After Decision**
 - Remove the item from the queue immediately (optimistic update)
 - Show success toast: "Assessment confirmed for [Student Name]"
-- If queue is empty, show: "✓ All assessments moderated"
+- If queue is empty, show: "âœ“ All assessments moderated"
 
 **APIs used:**
-- GET  /api/assessments/marking       → queue of assessments to review
-- GET  /api/assessments/{id}          → load full assessment detail
-- POST /api/assessments/moderate      → submit moderation decision
-- GET  /api/assessments/stats         → show moderation stats at top
+- GET  /api/assessments/marking       â†’ queue of assessments to review
+- GET  /api/assessments/{id}          â†’ load full assessment detail
+- POST /api/assessments/moderate      â†’ submit moderation decision
+- GET  /api/assessments/stats         â†’ show moderation stats at top
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 6 — POE MANAGEMENT (Partially Working)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 6 â€” POE MANAGEMENT (Partially Working)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to find: src/app/poe/page.tsx (or similar)
 
 ### What needs to work:
 
 **A) POE Overview**
-- Student selector → GET /api/students
+- Student selector â†’ GET /api/students
 - When student selected, load their POE: GET /api/poe?studentId={id}
 - Show POE checklist grouped by unit standard
 - Each item shows: evidence description, status (pending/submitted/approved), date
@@ -338,13 +338,13 @@ File to find: src/app/poe/page.tsx (or similar)
 **B) Update POE Item**
 - Clicking an item opens an edit panel
 - Fields: Evidence description (text), Status (dropdown), Notes
-- Save → PUT /api/poe with updated item
+- Save â†’ PUT /api/poe with updated item
 - Status options: Not Started / In Progress / Submitted / Approved / Rejected
 
 **C) Add New POE Item**
 - "Add Evidence" button
 - Fields: Unit standard (dropdown from GET /api/unit-standards), Evidence type, Description
-- Submit → POST /api/poe
+- Submit â†’ POST /api/poe
 
 **D) POE Completion Summary**
 - At top of page: X of Y evidence items complete
@@ -352,19 +352,19 @@ File to find: src/app/poe/page.tsx (or similar)
 - Per unit standard: how many items done vs required
 
 **E) Delete POE Item**
-- Delete button with confirmation → DELETE /api/poe (with item id in body)
+- Delete button with confirmation â†’ DELETE /api/poe (with item id in body)
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 7 — AI ASSISTANT (Context-Aware)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 7 â€” AI ASSISTANT (Context-Aware)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to find: src/app/ai/page.tsx (or similar)
 
 ### What needs to work:
 
-The chat UI probably works already. What's missing is context — the AI doesn't
+The chat UI probably works already. What's missing is context â€” the AI doesn't
 know about your students, groups, or curriculum. Fix that.
 
 **A) Context Injection**
@@ -385,14 +385,14 @@ Before sending each message to POST /api/ai/chat, enrich the request body:
 
 **B) Quick Action Buttons**
 Add 4 shortcut buttons above the chat input:
-1. "Summarise Today's Attendance" → prefills prompt + calls POST /api/ai/chat
-2. "Generate Assessment for [group]" → routes to /lessons with AI tab active
-3. "List Students Falling Behind" → queries progress data + AI summary
-4. "Write Daily Report" → calls POST /api/reports/daily/generate-ai and displays result
+1. "Summarise Today's Attendance" â†’ prefills prompt + calls POST /api/ai/chat
+2. "Generate Assessment for [group]" â†’ routes to /lessons with AI tab active
+3. "List Students Falling Behind" â†’ queries progress data + AI summary
+4. "Write Daily Report" â†’ calls POST /api/reports/daily/generate-ai and displays result
 
 **C) Semantic Search Tab**
 - Second tab next to "Chat": "Search Curriculum"
-- Search input → calls GET /api/ai/semantic-search?q={query}
+- Search input â†’ calls GET /api/ai/semantic-search?q={query}
 - Results show matching unit standards, lessons, or curriculum items
 - Each result is clickable and links to the relevant page
 
@@ -404,9 +404,9 @@ Add 4 shortcut buttons above the chat input:
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 8 — BROKEN BUTTONS SITE-WIDE AUDIT
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 8 â€” BROKEN BUTTONS SITE-WIDE AUDIT
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 Before starting this task, do a sweep of the codebase.
 
@@ -425,17 +425,17 @@ For each result found:
 4. Move to the next one
 
 Common broken buttons to look for and fix:
-- Any "View Details" button that doesn't navigate anywhere → add router.push()
-- Any "Delete" button without a confirm dialog → add window.confirm() or a modal
+- Any "View Details" button that doesn't navigate anywhere â†’ add router.push()
+- Any "Delete" button without a confirm dialog â†’ add window.confirm() or a modal
 - Any "Save" button that logs to console instead of calling API
 - Any "Refresh" or "Reload" button that doesn't re-fetch data
 - Any "Send" or "Submit" button with empty onClick
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 9 — NAVIGATION & UX FIXES
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 9 â€” NAVIGATION & UX FIXES
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 **A) Breadcrumbs**
 - Add breadcrumb navigation to all detail pages
@@ -444,15 +444,15 @@ Common broken buttons to look for and fix:
 
 **B) Empty States**
 - Every list/table that can be empty needs a proper empty state
-- Not just a blank page — show an icon, message, and action button
+- Not just a blank page â€” show an icon, message, and action button
 - Examples:
-  - No students: "No students in this group yet. Add your first student →"
-  - No lessons: "No lesson plans yet. Generate your first one →"
-  - No attendance records: "No attendance marked yet. Mark today's attendance →"
+  - No students: "No students in this group yet. Add your first student â†’"
+  - No lessons: "No lesson plans yet. Generate your first one â†’"
+  - No attendance records: "No attendance marked yet. Mark today's attendance â†’"
 
 **C) Loading Skeletons**
 - Any page that fetches data on load should show skeleton loaders
-- Not just a spinner — show the shape of what's loading
+- Not just a spinner â€” show the shape of what's loading
 - Simple: grey animated boxes where content will appear
 
 **D) Success / Error Toasts**
@@ -463,14 +463,14 @@ Common broken buttons to look for and fix:
 - Place at top-right of screen
 
 **E) Back Navigation**
-- Every detail/sub-page needs a "← Back" button
+- Every detail/sub-page needs a "â† Back" button
 - Use router.back() or a specific href
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## TASK 10 — REPORTS PAGE (Complete the Feature)
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## TASK 10 â€” REPORTS PAGE (Complete the Feature)
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 File to find: src/app/reports/page.tsx
 
@@ -485,32 +485,32 @@ Phase 1 added export buttons. Now complete the rest:
 
 **B) Daily Attendance Report**
 - Date picker + group selector
-- "Generate" button → POST /api/reports/daily
+- "Generate" button â†’ POST /api/reports/daily
 - Display results in a formatted table
-- "Generate AI Summary" button → POST /api/reports/daily/generate-ai
+- "Generate AI Summary" button â†’ POST /api/reports/daily/generate-ai
 - Show AI-written narrative paragraph below the table
 - Export PDF button (already done) + Export CSV button (already done)
 
 **C) Group Progress Report**
 - Group selector + date range
-- "Generate" → GET /api/reports/group-progress?groupId={id}
+- "Generate" â†’ GET /api/reports/group-progress?groupId={id}
 - Show per-student progress table
 - Highlight students below target in red
 
 **D) Unit Standards Report**
 - Qualification/programme selector (if applicable)
-- "Generate" → GET /api/reports/unit-standards
+- "Generate" â†’ GET /api/reports/unit-standards
 - Show completion matrix: students vs unit standards
 - Green cell = completed, grey = not started, yellow = in progress
 
 ---
 
-## ═══════════════════════════════════════════════════════
-## SHARED UTILITIES — Build these ONCE, use everywhere
-## ═══════════════════════════════════════════════════════
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+## SHARED UTILITIES â€” Build these ONCE, use everywhere
+## â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 If these don't exist already, build them as shared components/utilities.
-Check src/components/ and src/lib/ first — don't duplicate what's there.
+Check src/components/ and src/lib/ first â€” don't duplicate what's there.
 
 **1. Toast Notification System**
 File: src/components/ui/Toast.tsx + src/hooks/useToast.ts
@@ -569,24 +569,25 @@ Work through tasks in this priority order:
 
 | Priority | Task | Why |
 |----------|------|-----|
-| 🔴 P1 | Task 1 — Attendance System | Used every single day by facilitators |
-| 🔴 P1 | Task 3 — Lesson Plan Generator | Core teaching tool, high daily use |
-| 🔴 P1 | Task 8 — Broken Buttons Audit | Quick wins across whole site |
-| 🟡 P2 | Task 2 — Calendar / Timetable | Important but complex — do after attendance |
-| 🟡 P2 | Task 4 — Student Profile Page | Needed for complete student view |
-| 🟡 P2 | Task 10 — Reports (Complete) | Needed for funder/management reporting |
-| 🟢 P3 | Task 5 — Moderation Workflow | Important for quality assurance |
-| 🟢 P3 | Task 6 — POE Management | Important for accreditation |
-| 🟢 P3 | Task 7 — AI Assistant Context | Makes AI useful, not just decorative |
-| 🟢 P3 | Task 9 — Navigation & UX Fixes | Polish — do last |
+| ðŸ”´ P1 | Task 1 â€” Attendance System | Used every single day by facilitators |
+| ðŸ”´ P1 | Task 3 â€” Lesson Plan Generator | Core teaching tool, high daily use |
+| ðŸ”´ P1 | Task 8 â€” Broken Buttons Audit | Quick wins across whole site |
+| ðŸŸ¡ P2 | Task 2 â€” Calendar / Timetable | Important but complex â€” do after attendance |
+| ðŸŸ¡ P2 | Task 4 â€” Student Profile Page | Needed for complete student view |
+| ðŸŸ¡ P2 | Task 10 â€” Reports (Complete) | Needed for funder/management reporting |
+| ðŸŸ¢ P3 | Task 5 â€” Moderation Workflow | Important for quality assurance |
+| ðŸŸ¢ P3 | Task 6 â€” POE Management | Important for accreditation |
+| ðŸŸ¢ P3 | Task 7 â€” AI Assistant Context | Makes AI useful, not just decorative |
+| ðŸŸ¢ P3 | Task 9 â€” Navigation & UX Fixes | Polish â€” do last |
 
 ---
 
 ## HOW TO START
 
-1. Run the broken button audit first (grep commands in Task 8) — this tells us the full scope
-2. Read src/app/attendance/page.tsx — tell me what's there
+1. Run the broken button audit first (grep commands in Task 8) â€” this tells us the full scope
+2. Read src/app/attendance/page.tsx â€” tell me what's there
 3. Then proceed with Task 1
 
 Tell me: which task you're starting, which file you found, and what's currently in it.
 Report back after EACH task before moving to the next.
+

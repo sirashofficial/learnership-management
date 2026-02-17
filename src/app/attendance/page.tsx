@@ -8,6 +8,7 @@ import {
   Download, Filter, BarChart3, Copy, CheckSquare, FileText, Bell, Settings
 } from "lucide-react";
 import { cn, downloadExport } from "@/lib/utils";
+import { formatGroupNameDisplay } from "@/lib/groupName";
 import { format, addDays, subDays, startOfWeek, endOfWeek, isToday } from "date-fns";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -40,7 +41,7 @@ export default function AttendancePage() {
   const { students: apiStudents, isLoading } = useStudents();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [expandedCollection, setExpandedCollection] = useState<string | null>("montazility");
+  const [expandedCollection, setExpandedCollection] = useState<string | null>("montzelity");
   const [attendanceData, setAttendanceData] = useState<{ [key: string]: string }>({});
   const [attendanceReasons, setAttendanceReasons] = useState<{ [key: string]: string }>({});
   const [savingAttendance, setSavingAttendance] = useState(false);
@@ -64,9 +65,14 @@ export default function AttendancePage() {
   // Group collections
   const groupCollections: GroupCollection[] = [
     {
-      id: "montazility",
-      name: "Montazility 26'",
-      subGroupNames: ["Azelis 26'", "Beyond Insights 26'", "City Logistics 26'", "Monteagle 26'"]
+      id: "montzelity",
+      name: "MONTZELITY (LP) - 2026",
+      subGroupNames: [
+        "AZELIS SA (LP) - 2026",
+        "BEYOND INSIGHTS (LP) - 2026",
+        "CITY LOGISTICS (LP) - 2026",
+        "MONTEAGLE (LP) - 2026"
+      ]
     }
   ];
 
@@ -517,7 +523,7 @@ export default function AttendancePage() {
             >
               <option value="">All Groups</option>
               {Object.values(groupedStudents).map((group: any) => (
-                <option key={group.id} value={group.id}>{group.name}</option>
+                <option key={group.id} value={group.id}>{formatGroupNameDisplay(group.name)}</option>
               ))}
             </select>
           </div>
@@ -998,7 +1004,7 @@ export default function AttendancePage() {
             </button>
           </div>
 
-          {/* Montazility Collection */}
+          {/* Montzelity Collection */}
           {groupCollections.map((collection) => {
             const subGroups = collection.subGroupNames
               .map(name => Object.values(groupedStudents).find(g => g.name === name))
@@ -1025,7 +1031,7 @@ export default function AttendancePage() {
                       </div>
                       <div className="text-left">
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {collection.name}
+                          {formatGroupNameDisplay(collection.name)}
                         </h3>
                         <p className="text-sm text-gray-500">
                           {totalStudents} students across {subGroups.length} groups
@@ -1061,7 +1067,7 @@ export default function AttendancePage() {
                               ) : (
                                 <ChevronRight className="w-4 h-4 text-gray-400" />
                               )}
-                              <h4 className="font-medium text-gray-900">{group.name}</h4>
+                              <h4 className="font-medium text-gray-900">{formatGroupNameDisplay(group.name)}</h4>
                               <span className="text-sm text-gray-500">
                                 ({group.students.length} students)
                               </span>
@@ -1135,7 +1141,7 @@ export default function AttendancePage() {
                           </div>
                           <div className="text-left">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              {group.name}
+                              {formatGroupNameDisplay(group.name)}
                             </h3>
                             <p className="text-sm text-gray-500">
                               {group.students.length} students

@@ -1,4 +1,4 @@
----
+﻿---
 name: edu-platform-document-rag-skill
 description: >
   Use this skill when implementing document ingestion, indexing, and 
@@ -10,7 +10,7 @@ description: >
 ---
 
 # Document Intelligence Skill
-## Education Platform — RAG Pipeline for Lesson Generation
+## Education Platform â€” RAG Pipeline for Lesson Generation
 
 ---
 
@@ -25,7 +25,7 @@ The education platform has ~30 PDFs and Word documents containing:
 The goal: when a facilitator generates a lesson plan, the AI uses content
 from THESE SPECIFIC DOCUMENTS rather than generic training knowledge.
 
-This is called RAG — Retrieval-Augmented Generation. In plain terms:
+This is called RAG â€” Retrieval-Augmented Generation. In plain terms:
 1. Documents are uploaded and stored as searchable text chunks
 2. When generating a lesson, the system searches for relevant chunks
 3. Those chunks are included in the AI prompt as context
@@ -35,7 +35,7 @@ This is called RAG — Retrieval-Augmented Generation. In plain terms:
 
 ## Existing Backend Infrastructure
 
-The backend already has these endpoints — we are WIRING them up, not
+The backend already has these endpoints â€” we are WIRING them up, not
 building new backend logic from scratch (unless the existing logic is
 incomplete):
 
@@ -58,11 +58,11 @@ cat package.json | grep -E "pdf|mammoth|openai|anthropic|pinecone|weaviate|qdran
 ```
 
 Common document processing libraries:
-- `pdf-parse` or `pdfjs-dist` — PDF text extraction
-- `mammoth` — Word (.docx) to text/HTML conversion
-- `langchain` — Document chunking and embedding pipeline
-- `openai` — Embeddings (text-embedding-ada-002) and chat
-- `@anthropic-ai/sdk` — Claude API
+- `pdf-parse` or `pdfjs-dist` â€” PDF text extraction
+- `mammoth` â€” Word (.docx) to text/HTML conversion
+- `langchain` â€” Document chunking and embedding pipeline
+- `openai` â€” Embeddings (text-embedding-ada-002) and chat
+- `@anthropic-ai/sdk` â€” Claude API
 - Vector DB: `pinecone`, `qdrant-client`, `@zilliz/milvus2-sdk-node`, 
   `chromadb`, or Postgres with pgvector extension
 
@@ -77,22 +77,22 @@ Read the package.json first and adapt accordingly.
 
 ```
 User uploads PDF/Word
-       ↓
+       â†“
 Extract text from file
   (pdf-parse for PDF, mammoth for .docx)
-       ↓
+       â†“
 Split into chunks
   (~500 tokens each, with 50-token overlap)
-       ↓
+       â†“
 Generate embeddings for each chunk
   (OpenAI text-embedding-ada-002 or similar)
-       ↓
+       â†“
 Store chunks + embeddings in vector DB
   (Pinecone, Qdrant, pgvector, etc.)
-       ↓
+       â†“
 Store document metadata in main DB
   (filename, category, chunk count, status)
-       ↓
+       â†“
 Return { success: true, chunksCreated: N, documentId }
 ```
 
@@ -100,13 +100,13 @@ Return { success: true, chunksCreated: N, documentId }
 
 ```
 User submits query string
-       ↓
+       â†“
 Generate embedding for the query
   (same model as used for chunks)
-       ↓
+       â†“
 Search vector DB for nearest chunks
   (cosine similarity, top K results)
-       ↓
+       â†“
 Return chunks with: content, filename, page, similarity score
 ```
 
@@ -114,18 +114,18 @@ Return chunks with: content, filename, page, similarity score
 
 ```
 User submits: unitStandardId + duration + outcomes
-       ↓
+       â†“
 Load unit standard from database
-       ↓
+       â†“
 Build search query from unit standard details
-       ↓
-Search documents → get top 5 relevant chunks
-       ↓
+       â†“
+Search documents â†’ get top 5 relevant chunks
+       â†“
 Build prompt: [unit standard info] + [document chunks] + [generation instructions]
-       ↓
+       â†“
 Send to AI (Claude/GPT)
-       ↓
-Parse response → return structured lesson plan JSON
+       â†“
+Parse response â†’ return structured lesson plan JSON
 ```
 
 ---
@@ -134,11 +134,11 @@ Parse response → return structured lesson plan JSON
 
 When the agent starts, read these files in order:
 
-1. `package.json` — what libraries are available
-2. `src/app/api/ai/index-documents/route.ts` — how indexing works now
-3. `src/app/api/ai/semantic-search/route.ts` — how search works now
-4. `src/app/api/groups/[id]/lessons/generate/route.ts` — the generator
-5. Any `.env` or `.env.local` — what AI keys/vector DB is configured
+1. `package.json` â€” what libraries are available
+2. `src/app/api/ai/index-documents/route.ts` â€” how indexing works now
+3. `src/app/api/ai/semantic-search/route.ts` â€” how search works now
+4. `src/app/api/groups/[id]/lessons/generate/route.ts` â€” the generator
+5. Any `.env` or `.env.local` â€” what AI keys/vector DB is configured
 
 This reading order tells you everything you need to know before writing
 a single line of code.
@@ -149,18 +149,18 @@ a single line of code.
 
 After reading the files, you'll find one of these situations:
 
-### State A — Fully Implemented (Just Wire the Frontend)
+### State A â€” Fully Implemented (Just Wire the Frontend)
 The index-documents and semantic-search endpoints work correctly.
 The generate endpoint already calls semantic-search before the AI.
 Action: Just build the upload UI and verify the pipeline works.
 
-### State B — Partially Implemented (Complete the Backend)
+### State B â€” Partially Implemented (Complete the Backend)
 The endpoints exist but have placeholder logic (e.g., they accept files
 but don't actually extract/embed/store).
 Action: Complete the missing parts using the architecture above.
 Most likely missing step: actually storing embeddings in a vector DB.
 
-### State C — Stub Only (Build the Pipeline)
+### State C â€” Stub Only (Build the Pipeline)
 The endpoints return mock data or { message: "not implemented" }.
 Action: Implement the full pipeline. Start by deciding which vector DB
 to use based on what's in package.json or .env.
@@ -184,7 +184,7 @@ The simplest option for getting started quickly:
 ```bash
 npm install chromadb @xenova/transformers
 ```
-ChromaDB runs locally with no external account needed — ideal for
+ChromaDB runs locally with no external account needed â€” ideal for
 getting the 30 documents indexed quickly during development.
 
 ---
@@ -298,10 +298,10 @@ const pollIndexingStatus = async (documentId: string) => {
 ```typescript
 const StatusBadge = ({ status }: { status: string }) => {
   const config = {
-    indexed:    { color: 'green', label: 'Indexed', icon: '✓' },
-    processing: { color: 'yellow', label: 'Processing...', icon: '⟳', animate: true },
-    failed:     { color: 'red', label: 'Failed', icon: '✗' },
-    pending:    { color: 'gray', label: 'Pending', icon: '○' },
+    indexed:    { color: 'green', label: 'Indexed', icon: 'âœ“' },
+    processing: { color: 'yellow', label: 'Processing...', icon: 'âŸ³', animate: true },
+    failed:     { color: 'red', label: 'Failed', icon: 'âœ—' },
+    pending:    { color: 'gray', label: 'Pending', icon: 'â—‹' },
   }
   const c = config[status] || config.pending
   return (
@@ -328,7 +328,7 @@ const buildLessonPrompt = (
 ) => {
   const context = documentChunks.length > 0
     ? documentChunks.map(c => `[${c.filename}]\n${c.content}`).join('\n\n---\n\n')
-    : 'No specific curriculum documents available — use general knowledge.'
+    : 'No specific curriculum documents available â€” use general knowledge.'
 
   return `You are creating a lesson plan for a South African learnership programme.
 
@@ -352,7 +352,7 @@ INSTRUCTIONS:
 - If documents reference specific activities or examples, include them
 - Structure timing proportionally: intro 15%, main content 45%, 
   activity 25%, assessment 10%, wrap-up 5%
-- Return ONLY valid JSON — no markdown, no extra text
+- Return ONLY valid JSON â€” no markdown, no extra text
 
 Required JSON format:
 {
@@ -428,12 +428,12 @@ empty string for these. Detection:
 ```typescript
 const text = await extractPDFText(buffer)
 if (text.trim().length < 100) {
-  // Likely a scanned image PDF — can't extract text without OCR
+  // Likely a scanned image PDF â€” can't extract text without OCR
   throw new Error(`${filename} appears to be a scanned image PDF. 
     Please re-export it as a text-based PDF from Word or a PDF editor.`)
 }
 ```
-Flag these files to the user — they need to be recreated as text PDFs.
+Flag these files to the user â€” they need to be recreated as text PDFs.
 
 ### Issue: Documents indexed but search returns empty
 Check that the embedding model used for search queries MATCHES the model
@@ -470,3 +470,4 @@ Word and saving as "Plain Text (.txt)" then uploading that instead.
 - [ ] Generated plan shows "sourceDocuments" list with actual filenames
 - [ ] If 0 documents indexed, lesson generator shows a clear warning
 - [ ] Document category filter works in search results
+

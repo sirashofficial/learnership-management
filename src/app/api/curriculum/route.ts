@@ -4,8 +4,9 @@ import prisma from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const modules = await prisma.module.findMany({
-      where: { 
+      where: {
         OR: [
+          { status: 'ACTIVE' },
           { status: 'NOT_STARTED' },
           { status: 'IN_PROGRESS' },
           { status: 'COMPLETED' }

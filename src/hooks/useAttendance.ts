@@ -35,7 +35,11 @@ export function useAttendance(sessionId?: string, studentId?: string, date?: str
   const { data, error, isLoading, mutate } = useSWR<{ data: Attendance[] }>(
     url,
     fetcher,
-    swrConfig.attendance
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 30000,
+    }
   );
 
   return {

@@ -1,4 +1,4 @@
-# COMPLETE SYSTEM ARCHITECTURE OVERVIEW
+﻿# COMPLETE SYSTEM ARCHITECTURE OVERVIEW
 
 ## EXECUTIVE SUMMARY
 
@@ -12,169 +12,169 @@
 
 ```
 Learnership Management/
-│
-├── 📁 src/                          # Source code (Next.js App Router)
-│   ├── 📁 app/                      # Frontend Pages (Route-based)
-│   │   ├── page.tsx                 # Dashboard (/)
-│   │   ├── layout.tsx               # Root layout with providers
-│   │   ├── loading.tsx              # Dashboard loading skeleton
-│   │   ├── globals.css              # Global styles
-│   │   │
-│   │   ├── 📁 students/             # Student management
-│   │   │   ├── page.tsx             # Students list page
-│   │   │   └── loading.tsx          # Loading skeleton
-│   │   │
-│   │   ├── 📁 groups/               # Group management
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 attendance/           # Attendance tracking
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 assessments/          # Assessment management
-│   │   │   ├── page.tsx
-│   │   │   └── loading.tsx
-│   │   │
-│   │   ├── 📁 timetable/            # Schedule/Calendar
-│   │   │   ├── page.tsx
-│   │   │   ├── page.tsx.backup      # Backup version
-│   │   │   └── loading.tsx
-│   │   │
-│   │   ├── 📁 progress/             # Progress tracking
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 curriculum/           # Curriculum library
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 lessons/              # Lesson planner
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 poe/                  # Portfolio of Evidence
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 compliance/           # Compliance tracking
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 settings/             # User settings
-│   │   │   └── page.tsx
-│   │   │
-│   │   ├── 📁 admin/                # Admin area
-│   │   │   ├── page.tsx             # Admin dashboard
-│   │   │   └── 📁 users/
-│   │   │       └── page.tsx         # User management
-│   │   │
-│   │   └── 📁 api/                  # **BACKEND API ROUTES**
-│   │       ├── 📁 students/         # Student CRUD
-│   │       │   ├── route.ts         # GET, POST students
-│   │       │   └── [id]/route.ts    # GET, PATCH, DELETE by ID
-│   │       ├── 📁 groups/           # Group CRUD
-│   │       │   ├── route.ts
-│   │       │   └── [id]/route.ts
-│   │       ├── 📁 attendance/       # Attendance API
-│   │       │   ├── route.ts
-│   │       │   └── history/route.ts
-│   │       ├── 📁 assessments/      # Assessment API
-│   │       │   └── route.ts
-│   │       ├── 📁 lessons/          # Lesson plans API
-│   │       │   └── route.ts
-│   │       ├── 📁 timetable/        # Schedule API
-│   │       │   ├── route.ts
-│   │       │   └── [id]/route.ts
-│   │       ├── 📁 poe/              # POE API
-│   │       │   └── route.ts
-│   │       ├── 📁 recurring-sessions/ # Recurring schedule
-│   │       │   └── route.ts
-│   │       ├── 📁 dashboard/        # Dashboard data
-│   │       │   ├── stats/route.ts
-│   │       │   └── schedule/route.ts
-│   │       ├── 📁 settings/         # User settings
-│   │       │   ├── profile/route.ts
-│   │       │   └── security/route.ts
-│   │       └── 📁 auth/             # Authentication
-│   │           ├── login/route.ts
-│   │           └── register/route.ts
-│   │
-│   ├── 📁 components/               # **REUSABLE UI COMPONENTS**
-│   │   ├── Sidebar.tsx              # Main navigation
-│   │   ├── Header.tsx               # Page headers
-│   │   ├── DashboardStats.tsx       # Stats cards
-│   │   ├── DashboardCharts.tsx      # Charts (lazy loaded)
-│   │   ├── DashboardAlerts.tsx      # Alert system (lazy loaded)
-│   │   ├── TodaysSchedule.tsx       # Today's lessons (lazy loaded)
-│   │   ├── RecentActivity.tsx       # Activity feed (lazy loaded)
-│   │   ├── QuickActions.tsx         # Quick action buttons
-│   │   ├── AddStudentModal.tsx      # Add/edit student
-│   │   ├── StudentDetailsModal.tsx  # Student details
-│   │   ├── StudentProgressModal.tsx # Progress tracking
-│   │   ├── GroupModal.tsx           # Add/edit group
-│   │   ├── GroupsManagement.tsx     # Group management UI
-│   │   ├── ScheduleLessonModal.tsx  # Schedule lesson
-│   │   ├── MarkAttendanceModal.tsx  # Quick attendance
-│   │   ├── AttendanceCalendar.tsx   # Calendar view
-│   │   ├── LessonDetailsModal.tsx   # Lesson details
-│   │   ├── AddLessonModal.tsx       # Add/edit lesson
-│   │   ├── MonthView.tsx            # Monthly calendar
-│   │   ├── ListView.tsx             # List view
-│   │   ├── TimelineView.tsx         # Timeline view
-│   │   ├── FilterPanel.tsx          # Filter controls
-│   │   └── ErrorBoundary.tsx        # Error handling
-│   │
-│   ├── 📁 contexts/                 # **STATE MANAGEMENT**
-│   │   ├── AuthContext.tsx          # Authentication state
-│   │   ├── GroupsContext.tsx        # Groups state
-│   │   ├── StudentContext.tsx       # Student state (full)
-│   │   └── StudentContextSimple.tsx # Student state (simple)
-│   │
-│   ├── 📁 hooks/                    # **CUSTOM HOOKS**
-│   │   ├── useStudents.ts           # Fetch students data
-│   │   ├── useGroups.ts             # Fetch groups data
-│   │   ├── useAttendance.ts         # Fetch attendance
-│   │   ├── useAssessmentStats.ts    # Assessment stats
-│   │   ├── useCurriculum.ts         # Curriculum data
-│   │   ├── useProgress.ts           # Progress tracking
-│   │   └── useDashboard.ts          # Dashboard data
-│   │
-│   └── 📁 lib/                      # **UTILITIES & HELPERS**
-│       ├── prisma.ts                # Database client singleton
-│       ├── auth.ts                  # JWT authentication
-│       ├── api-utils.ts             # API response helpers
-│       ├── validations.ts           # Zod validation schemas
-│       ├── logger.ts                # Structured logging
-│       ├── rate-limiter.ts          # Rate limiting
-│       ├── sanitize.ts              # Input sanitization
-│       └── utils.ts                 # General utilities
-│
-├── 📁 prisma/                       # **DATABASE**
-│   ├── schema.prisma                # Database schema (SQLite)
-│   ├── dev.db                       # SQLite database file
-│   ├── seed.ts                      # Sample data seeder
-│   ├── add-indexes.ts               # Performance indexes script
-│   ├── migrate-data.ts              # Migration script (Site→Group)
-│   └── 📁 migrations/
-│       └── add_performance_indexes.sql
-│
-├── 📁 docs/                         # Documentation
-│   ├── GETTING_STARTED.md
-│   └── BACKEND_SETUP.md
-│
-├── 📁 public/                       # Static assets
-│
-├── 📄 Configuration Files
-│   ├── package.json                 # Dependencies
-│   ├── tsconfig.json                # TypeScript config
-│   ├── next.config.mjs              # Next.js config
-│   ├── tailwind.config.ts           # Tailwind CSS
-│   ├── postcss.config.mjs           # PostCSS
-│   ├── .eslintrc.json               # ESLint rules
-│   ├── .env.example                 # Environment template
-│   ├── .env                         # Environment variables
-│   └── .env.local                   # Local overrides
-│
-└── 📄 Utility Scripts
-    ├── check-db.js                  # Database checker
-    ├── check-status.js              # System status
-    ├── check-groups.js              # Groups checker
-    ├── make-admin.js                # Make user admin
-    └── show-data-source.js          # Data source viewer
+â”‚
+â”œâ”€â”€ ðŸ“ src/                          # Source code (Next.js App Router)
+â”‚   â”œâ”€â”€ ðŸ“ app/                      # Frontend Pages (Route-based)
+â”‚   â”‚   â”œâ”€â”€ page.tsx                 # Dashboard (/)
+â”‚   â”‚   â”œâ”€â”€ layout.tsx               # Root layout with providers
+â”‚   â”‚   â”œâ”€â”€ loading.tsx              # Dashboard loading skeleton
+â”‚   â”‚   â”œâ”€â”€ globals.css              # Global styles
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ students/             # Student management
+â”‚   â”‚   â”‚   â”œâ”€â”€ page.tsx             # Students list page
+â”‚   â”‚   â”‚   â””â”€â”€ loading.tsx          # Loading skeleton
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ groups/               # Group management
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ attendance/           # Attendance tracking
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ assessments/          # Assessment management
+â”‚   â”‚   â”‚   â”œâ”€â”€ page.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ loading.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ timetable/            # Schedule/Calendar
+â”‚   â”‚   â”‚   â”œâ”€â”€ page.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ page.tsx.backup      # Backup version
+â”‚   â”‚   â”‚   â””â”€â”€ loading.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ progress/             # Progress tracking
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ curriculum/           # Curriculum library
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ lessons/              # Lesson planner
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ poe/                  # Portfolio of Evidence
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ compliance/           # Compliance tracking
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ settings/             # User settings
+â”‚   â”‚   â”‚   â””â”€â”€ page.tsx
+â”‚   â”‚   â”‚
+â”‚   â”‚   â”œâ”€â”€ ðŸ“ admin/                # Admin area
+â”‚   â”‚   â”‚   â”œâ”€â”€ page.tsx             # Admin dashboard
+â”‚   â”‚   â”‚   â””â”€â”€ ðŸ“ users/
+â”‚   â”‚   â”‚       â””â”€â”€ page.tsx         # User management
+â”‚   â”‚   â”‚
+â”‚   â”‚   â””â”€â”€ ðŸ“ api/                  # **BACKEND API ROUTES**
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ students/         # Student CRUD
+â”‚   â”‚       â”‚   â”œâ”€â”€ route.ts         # GET, POST students
+â”‚   â”‚       â”‚   â””â”€â”€ [id]/route.ts    # GET, PATCH, DELETE by ID
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ groups/           # Group CRUD
+â”‚   â”‚       â”‚   â”œâ”€â”€ route.ts
+â”‚   â”‚       â”‚   â””â”€â”€ [id]/route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ attendance/       # Attendance API
+â”‚   â”‚       â”‚   â”œâ”€â”€ route.ts
+â”‚   â”‚       â”‚   â””â”€â”€ history/route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ assessments/      # Assessment API
+â”‚   â”‚       â”‚   â””â”€â”€ route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ lessons/          # Lesson plans API
+â”‚   â”‚       â”‚   â””â”€â”€ route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ timetable/        # Schedule API
+â”‚   â”‚       â”‚   â”œâ”€â”€ route.ts
+â”‚   â”‚       â”‚   â””â”€â”€ [id]/route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ poe/              # POE API
+â”‚   â”‚       â”‚   â””â”€â”€ route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ recurring-sessions/ # Recurring schedule
+â”‚   â”‚       â”‚   â””â”€â”€ route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ dashboard/        # Dashboard data
+â”‚   â”‚       â”‚   â”œâ”€â”€ stats/route.ts
+â”‚   â”‚       â”‚   â””â”€â”€ schedule/route.ts
+â”‚   â”‚       â”œâ”€â”€ ðŸ“ settings/         # User settings
+â”‚   â”‚       â”‚   â”œâ”€â”€ profile/route.ts
+â”‚   â”‚       â”‚   â””â”€â”€ security/route.ts
+â”‚   â”‚       â””â”€â”€ ðŸ“ auth/             # Authentication
+â”‚   â”‚           â”œâ”€â”€ login/route.ts
+â”‚   â”‚           â””â”€â”€ register/route.ts
+â”‚   â”‚
+â”‚   â”œâ”€â”€ ðŸ“ components/               # **REUSABLE UI COMPONENTS**
+â”‚   â”‚   â”œâ”€â”€ Sidebar.tsx              # Main navigation
+â”‚   â”‚   â”œâ”€â”€ Header.tsx               # Page headers
+â”‚   â”‚   â”œâ”€â”€ DashboardStats.tsx       # Stats cards
+â”‚   â”‚   â”œâ”€â”€ DashboardCharts.tsx      # Charts (lazy loaded)
+â”‚   â”‚   â”œâ”€â”€ DashboardAlerts.tsx      # Alert system (lazy loaded)
+â”‚   â”‚   â”œâ”€â”€ TodaysSchedule.tsx       # Today's lessons (lazy loaded)
+â”‚   â”‚   â”œâ”€â”€ RecentActivity.tsx       # Activity feed (lazy loaded)
+â”‚   â”‚   â”œâ”€â”€ QuickActions.tsx         # Quick action buttons
+â”‚   â”‚   â”œâ”€â”€ AddStudentModal.tsx      # Add/edit student
+â”‚   â”‚   â”œâ”€â”€ StudentDetailsModal.tsx  # Student details
+â”‚   â”‚   â”œâ”€â”€ StudentProgressModal.tsx # Progress tracking
+â”‚   â”‚   â”œâ”€â”€ GroupModal.tsx           # Add/edit group
+â”‚   â”‚   â”œâ”€â”€ GroupsManagement.tsx     # Group management UI
+â”‚   â”‚   â”œâ”€â”€ ScheduleLessonModal.tsx  # Schedule lesson
+â”‚   â”‚   â”œâ”€â”€ MarkAttendanceModal.tsx  # Quick attendance
+â”‚   â”‚   â”œâ”€â”€ AttendanceCalendar.tsx   # Calendar view
+â”‚   â”‚   â”œâ”€â”€ LessonDetailsModal.tsx   # Lesson details
+â”‚   â”‚   â”œâ”€â”€ AddLessonModal.tsx       # Add/edit lesson
+â”‚   â”‚   â”œâ”€â”€ MonthView.tsx            # Monthly calendar
+â”‚   â”‚   â”œâ”€â”€ ListView.tsx             # List view
+â”‚   â”‚   â”œâ”€â”€ TimelineView.tsx         # Timeline view
+â”‚   â”‚   â”œâ”€â”€ FilterPanel.tsx          # Filter controls
+â”‚   â”‚   â””â”€â”€ ErrorBoundary.tsx        # Error handling
+â”‚   â”‚
+â”‚   â”œâ”€â”€ ðŸ“ contexts/                 # **STATE MANAGEMENT**
+â”‚   â”‚   â”œâ”€â”€ AuthContext.tsx          # Authentication state
+â”‚   â”‚   â”œâ”€â”€ GroupsContext.tsx        # Groups state
+â”‚   â”‚   â”œâ”€â”€ StudentContext.tsx       # Student state (full)
+â”‚   â”‚   â””â”€â”€ StudentContextSimple.tsx # Student state (simple)
+â”‚   â”‚
+â”‚   â”œâ”€â”€ ðŸ“ hooks/                    # **CUSTOM HOOKS**
+â”‚   â”‚   â”œâ”€â”€ useStudents.ts           # Fetch students data
+â”‚   â”‚   â”œâ”€â”€ useGroups.ts             # Fetch groups data
+â”‚   â”‚   â”œâ”€â”€ useAttendance.ts         # Fetch attendance
+â”‚   â”‚   â”œâ”€â”€ useAssessmentStats.ts    # Assessment stats
+â”‚   â”‚   â”œâ”€â”€ useCurriculum.ts         # Curriculum data
+â”‚   â”‚   â”œâ”€â”€ useProgress.ts           # Progress tracking
+â”‚   â”‚   â””â”€â”€ useDashboard.ts          # Dashboard data
+â”‚   â”‚
+â”‚   â””â”€â”€ ðŸ“ lib/                      # **UTILITIES & HELPERS**
+â”‚       â”œâ”€â”€ prisma.ts                # Database client singleton
+â”‚       â”œâ”€â”€ auth.ts                  # JWT authentication
+â”‚       â”œâ”€â”€ api-utils.ts             # API response helpers
+â”‚       â”œâ”€â”€ validations.ts           # Zod validation schemas
+â”‚       â”œâ”€â”€ logger.ts                # Structured logging
+â”‚       â”œâ”€â”€ rate-limiter.ts          # Rate limiting
+â”‚       â”œâ”€â”€ sanitize.ts              # Input sanitization
+â”‚       â””â”€â”€ utils.ts                 # General utilities
+â”‚
+â”œâ”€â”€ ðŸ“ prisma/                       # **DATABASE**
+â”‚   â”œâ”€â”€ schema.prisma                # Database schema (SQLite)
+â”‚   â”œâ”€â”€ dev.db                       # SQLite database file
+â”‚   â”œâ”€â”€ seed.ts                      # Sample data seeder
+â”‚   â”œâ”€â”€ add-indexes.ts               # Performance indexes script
+â”‚   â”œâ”€â”€ migrate-data.ts              # Migration script (Siteâ†’Group)
+â”‚   â””â”€â”€ ðŸ“ migrations/
+â”‚       â””â”€â”€ add_performance_indexes.sql
+â”‚
+â”œâ”€â”€ ðŸ“ docs/                         # Documentation
+â”‚   â”œâ”€â”€ GETTING_STARTED.md
+â”‚   â””â”€â”€ BACKEND_SETUP.md
+â”‚
+â”œâ”€â”€ ðŸ“ public/                       # Static assets
+â”‚
+â”œâ”€â”€ ðŸ“„ Configuration Files
+â”‚   â”œâ”€â”€ package.json                 # Dependencies
+â”‚   â”œâ”€â”€ tsconfig.json                # TypeScript config
+â”‚   â”œâ”€â”€ next.config.mjs              # Next.js config
+â”‚   â”œâ”€â”€ tailwind.config.ts           # Tailwind CSS
+â”‚   â”œâ”€â”€ postcss.config.mjs           # PostCSS
+â”‚   â”œâ”€â”€ .eslintrc.json               # ESLint rules
+â”‚   â”œâ”€â”€ .env.example                 # Environment template
+â”‚   â”œâ”€â”€ .env                         # Environment variables
+â”‚   â””â”€â”€ .env.local                   # Local overrides
+â”‚
+â””â”€â”€ ðŸ“„ Utility Scripts
+    â”œâ”€â”€ check-db.js                  # Database checker
+    â”œâ”€â”€ check-status.js              # System status
+    â”œâ”€â”€ check-groups.js              # Groups checker
+    â”œâ”€â”€ make-admin.js                # Make user admin
+    â””â”€â”€ show-data-source.js          # Data source viewer
 ```
 
 ---
@@ -241,30 +241,30 @@ Learnership Management/
 ### **Tables & Relationships**
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                     DATABASE SCHEMA DIAGRAM                       │
-└──────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                     DATABASE SCHEMA DIAGRAM                       â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│   Company   │◄──────│    Group    │──────►│   Student   │
-└─────────────┘       └─────────────┘       └─────────────┘
-                             │                      │
-                             │                      │
-                             ▼                      ▼
-                      ┌─────────────┐       ┌─────────────┐
-                      │   Session   │       │ Attendance  │
-                      └─────────────┘       └─────────────┘
-                             │                      │
-                             │                      │
-                             ▼                      ▼
-                      ┌─────────────┐       ┌─────────────┐
-                      │ LessonPlan  │       │ Assessment  │
-                      └─────────────┘       └─────────────┘
-                                                   │
-                                                   ▼
-                                            ┌─────────────┐
-                                            │POEChecklist │
-                                            └─────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚   Company   â”‚â—„â”€â”€â”€â”€â”€â”€â”‚    Group    â”‚â”€â”€â”€â”€â”€â”€â–ºâ”‚   Student   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚                      â”‚
+                             â”‚                      â”‚
+                             â–¼                      â–¼
+                      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                      â”‚   Session   â”‚       â”‚ Attendance  â”‚
+                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚                      â”‚
+                             â”‚                      â”‚
+                             â–¼                      â–¼
+                      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                      â”‚ LessonPlan  â”‚       â”‚ Assessment  â”‚
+                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                                   â”‚
+                                                   â–¼
+                                            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                                            â”‚POEChecklist â”‚
+                                            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### **Detailed Table Schemas**
@@ -780,20 +780,20 @@ CourseProgress {
 
 ```
 / (Dashboard)
-├── /students (Student Management)
-├── /groups (Group Management)
-├── /attendance (Attendance Tracking)
-├── /assessments (Assessment Management)
-├── /timetable (Schedule/Calendar)
-├── /progress (Progress Reports)
-├── /curriculum (Curriculum Library)
-├── /lessons (Lesson Planner)
-├── /poe (Portfolio of Evidence)
-├── /compliance (Compliance Tracking)
-├── /settings (User Settings)
-└── /admin
-    ├── / (Admin Dashboard)
-    └── /users (User Management)
+â”œâ”€â”€ /students (Student Management)
+â”œâ”€â”€ /groups (Group Management)
+â”œâ”€â”€ /attendance (Attendance Tracking)
+â”œâ”€â”€ /assessments (Assessment Management)
+â”œâ”€â”€ /timetable (Schedule/Calendar)
+â”œâ”€â”€ /progress (Progress Reports)
+â”œâ”€â”€ /curriculum (Curriculum Library)
+â”œâ”€â”€ /lessons (Lesson Planner)
+â”œâ”€â”€ /poe (Portfolio of Evidence)
+â”œâ”€â”€ /compliance (Compliance Tracking)
+â”œâ”€â”€ /settings (User Settings)
+â””â”€â”€ /admin
+    â”œâ”€â”€ / (Admin Dashboard)
+    â””â”€â”€ /users (User Management)
 ```
 
 ---
@@ -864,12 +864,12 @@ CourseProgress {
 
 ```
 Page
-├── Header (page title)
-├── Stats/Summary section
-├── Action buttons (Add, Filter, Export)
-├── Data table/grid
-│   └── Individual items with actions
-└── Modals (Add/Edit/View)
+â”œâ”€â”€ Header (page title)
+â”œâ”€â”€ Stats/Summary section
+â”œâ”€â”€ Action buttons (Add, Filter, Export)
+â”œâ”€â”€ Data table/grid
+â”‚   â””â”€â”€ Individual items with actions
+â””â”€â”€ Modals (Add/Edit/View)
 ```
 
 ---
@@ -879,48 +879,48 @@ Page
 ### **Student Management Flow**
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                    STUDENT MANAGEMENT                       │
-└────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    STUDENT MANAGEMENT                       â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
-User Action → Component → API → Database → Response → State → UI
+User Action â†’ Component â†’ API â†’ Database â†’ Response â†’ State â†’ UI
 
 1. ADD STUDENT:
    Students Page
-   └─► AddStudentModal
-       └─► POST /api/students
-           └─► INSERT INTO Student
-               └─► { success, data }
-                   └─► mutate('/api/students')
-                       └─► SWR cache updated
-                           └─► UI refreshes
+   â””â”€â–º AddStudentModal
+       â””â”€â–º POST /api/students
+           â””â”€â–º INSERT INTO Student
+               â””â”€â–º { success, data }
+                   â””â”€â–º mutate('/api/students')
+                       â””â”€â–º SWR cache updated
+                           â””â”€â–º UI refreshes
 
 2. VIEW STUDENTS:
    Students Page (mount)
-   └─► useStudents() hook
-       └─► SWR fetch('/api/students')
-           └─► GET /api/students
-               └─► SELECT * FROM Student JOIN Group
-                   └─► { data: Student[] }
-                       └─► Render table
+   â””â”€â–º useStudents() hook
+       â””â”€â–º SWR fetch('/api/students')
+           â””â”€â–º GET /api/students
+               â””â”€â–º SELECT * FROM Student JOIN Group
+                   â””â”€â–º { data: Student[] }
+                       â””â”€â–º Render table
 
 3. EDIT STUDENT:
    Student Details Modal
-   └─► onSave()
-       └─► PATCH /api/students/[id]
-           └─► UPDATE Student SET ...
-               └─► { success, data }
-                   └─► mutate('/api/students')
-                       └─► Close modal + refresh
+   â””â”€â–º onSave()
+       â””â”€â–º PATCH /api/students/[id]
+           â””â”€â–º UPDATE Student SET ...
+               â””â”€â–º { success, data }
+                   â””â”€â–º mutate('/api/students')
+                       â””â”€â–º Close modal + refresh
 
 4. DELETE STUDENT:
    Student Details Modal
-   └─► onDelete()
-       └─► DELETE /api/students/[id]
-           └─► DELETE FROM Student WHERE id=...
-               └─► { success: true }
-                   └─► mutate('/api/students')
-                       └─► Remove from UI
+   â””â”€â–º onDelete()
+       â””â”€â–º DELETE /api/students/[id]
+           â””â”€â–º DELETE FROM Student WHERE id=...
+               â””â”€â–º { success: true }
+                   â””â”€â–º mutate('/api/students')
+                       â””â”€â–º Remove from UI
 ```
 
 ---
@@ -928,32 +928,32 @@ User Action → Component → API → Database → Response → State → UI
 ### **Group Management Flow**
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                     GROUP MANAGEMENT                        │
-└────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                     GROUP MANAGEMENT                        â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 1. CREATE GROUP:
    Groups Page
-   └─► GroupModal
-       └─► POST /api/groups
-           └─► INSERT INTO Group (companyId, name, startDate, endDate)
-               └─► { data: Group }
-                   └─► GroupsContext.addGroup()
-                       └─► UI updates
+   â””â”€â–º GroupModal
+       â””â”€â–º POST /api/groups
+           â””â”€â–º INSERT INTO Group (companyId, name, startDate, endDate)
+               â””â”€â–º { data: Group }
+                   â””â”€â–º GroupsContext.addGroup()
+                       â””â”€â–º UI updates
 
 2. ASSIGN STUDENTS TO GROUP:
    Group Details
-   └─► AddStudentModal
-       └─► POST /api/students with groupId
-           └─► INSERT INTO Student (groupId, ...)
-               └─► Group student count updated
-                   └─► Refresh groups
+   â””â”€â–º AddStudentModal
+       â””â”€â–º POST /api/students with groupId
+           â””â”€â–º INSERT INTO Student (groupId, ...)
+               â””â”€â–º Group student count updated
+                   â””â”€â–º Refresh groups
 
 3. VIEW GROUP PROGRESS:
    Groups Page
-   └─► useGroups() + useStudents()
-       └─► Calculate: students.filter(s => s.groupId === group.id)
-           └─► Show count + progress
+   â””â”€â–º useGroups() + useStudents()
+       â””â”€â–º Calculate: students.filter(s => s.groupId === group.id)
+           â””â”€â–º Show count + progress
 ```
 
 ---
@@ -961,43 +961,43 @@ User Action → Component → API → Database → Response → State → UI
 ### **Attendance Tracking Flow**
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                   ATTENDANCE TRACKING                       │
-└────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                   ATTENDANCE TRACKING                       â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 1. MARK ATTENDANCE (Single):
    Attendance Page
-   └─► Select student + status
-       └─► POST /api/attendance
-           └─► INSERT INTO Attendance (studentId, date, status, reason)
-               └─► { data: Attendance }
-                   └─► Local state updated
-                       └─► Save button → persist all
+   â””â”€â–º Select student + status
+       â””â”€â–º POST /api/attendance
+           â””â”€â–º INSERT INTO Attendance (studentId, date, status, reason)
+               â””â”€â–º { data: Attendance }
+                   â””â”€â–º Local state updated
+                       â””â”€â–º Save button â†’ persist all
 
 2. BULK MARK:
    Attendance Page
-   └─► Select multiple students
-       └─► Set bulk action (e.g., "PRESENT")
-           └─► Multiple POST /api/attendance calls
-               └─► Promise.all([...])
-                   └─► Show success message
+   â””â”€â–º Select multiple students
+       â””â”€â–º Set bulk action (e.g., "PRESENT")
+           â””â”€â–º Multiple POST /api/attendance calls
+               â””â”€â–º Promise.all([...])
+                   â””â”€â–º Show success message
 
 3. VIEW HISTORY:
-   Attendance Page → History Tab
-   └─► GET /api/attendance/history?startDate=...&endDate=...
-       └─► SELECT * FROM Attendance 
+   Attendance Page â†’ History Tab
+   â””â”€â–º GET /api/attendance/history?startDate=...&endDate=...
+       â””â”€â–º SELECT * FROM Attendance 
            WHERE date BETWEEN ... 
            JOIN Student
-           └─► { data: AttendanceRecord[] }
-               └─► Render calendar/chart
+           â””â”€â–º { data: AttendanceRecord[] }
+               â””â”€â–º Render calendar/chart
 
 4. ATTENDANCE REPORTS:
    Dashboard / Compliance Page
-   └─► Calculate stats:
+   â””â”€â–º Calculate stats:
        - Total sessions
        - Present / Absent / Late counts
        - Attendance rate = (present / total) * 100
-       └─► Identify at-risk students (< 80%)
+       â””â”€â–º Identify at-risk students (< 80%)
 ```
 
 ---
@@ -1005,46 +1005,46 @@ User Action → Component → API → Database → Response → State → UI
 ### **Lesson Planning & Timetable Flow**
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│              LESSON PLANNING & TIMETABLE                    │
-└────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚              LESSON PLANNING & TIMETABLE                    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 1. CREATE SINGLE LESSON:
    Lessons Page / Timetable
-   └─► AddLessonModal
-       └─► POST /api/timetable
-           └─► INSERT INTO LessonPlan
+   â””â”€â–º AddLessonModal
+       â””â”€â–º POST /api/timetable
+           â””â”€â–º INSERT INTO LessonPlan
                (title, date, startTime, endTime, groupId, moduleId)
-               └─► { data: LessonPlan }
-                   └─► mutate('/api/timetable')
-                       └─► Show on calendar
+               â””â”€â–º { data: LessonPlan }
+                   â””â”€â–º mutate('/api/timetable')
+                       â””â”€â–º Show on calendar
 
 2. CREATE RECURRING SESSIONS:
-   Timetable → Recurring Modal
-   └─► POST /api/recurring-sessions
-       └─► For each week (startDate → endDate):
+   Timetable â†’ Recurring Modal
+   â””â”€â–º POST /api/recurring-sessions
+       â””â”€â–º For each week (startDate â†’ endDate):
            INSERT INTO Session
            (groupId, dayOfWeek, startTime, endTime)
-           └─► { data: Session[] }
-               └─► Show in schedule
+           â””â”€â–º { data: Session[] }
+               â””â”€â–º Show in schedule
 
 3. VIEW WEEKLY TIMETABLE:
    Timetable Page
-   └─► SWR fetch('/api/timetable?startDate=...&endDate=...')
-       └─► GET LessonPlans + Sessions for week
-           └─► Merge both types
-               └─► Group by day + venue
-                   └─► Render calendar grid
+   â””â”€â–º SWR fetch('/api/timetable?startDate=...&endDate=...')
+       â””â”€â–º GET LessonPlans + Sessions for week
+           â””â”€â–º Merge both types
+               â””â”€â–º Group by day + venue
+                   â””â”€â–º Render calendar grid
 
 4. TODAY'S SCHEDULE (Dashboard):
    Dashboard
-   └─► TodaysSchedule component
-       └─► GET /api/dashboard/schedule?date=today
-           └─► SELECT LessonPlans + Sessions
+   â””â”€â–º TodaysSchedule component
+       â””â”€â–º GET /api/dashboard/schedule?date=today
+           â””â”€â–º SELECT LessonPlans + Sessions
                WHERE date = today
                JOIN Group, User
-               └─► { schedule: ScheduleItem[] }
-                   └─► Show upcoming lessons
+               â””â”€â–º { schedule: ScheduleItem[] }
+                   â””â”€â–º Show upcoming lessons
 ```
 
 ---
@@ -1052,42 +1052,42 @@ User Action → Component → API → Database → Response → State → UI
 ### **Assessment Flow**
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                   ASSESSMENT MANAGEMENT                     │
-└────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                   ASSESSMENT MANAGEMENT                     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 1. CREATE ASSESSMENT:
    Assessments Page
-   └─► Select students + assessment details
-       └─► POST /api/assessments
-           └─► INSERT INTO Assessment
+   â””â”€â–º Select students + assessment details
+       â””â”€â–º POST /api/assessments
+           â””â”€â–º INSERT INTO Assessment
                (studentId, title, assessmentType, method, date)
-               └─► { data: Assessment }
-                   └─► Add to list
+               â””â”€â–º { data: Assessment }
+                   â””â”€â–º Add to list
 
 2. UPDATE RESULTS:
-   Assessments Page → Edit
-   └─► Enter score, result, feedback
-       └─► PATCH /api/assessments/[id]
-           └─► UPDATE Assessment SET score=..., result=...
-               └─► { data: Assessment }
-                   └─► Update UI
+   Assessments Page â†’ Edit
+   â””â”€â–º Enter score, result, feedback
+       â””â”€â–º PATCH /api/assessments/[id]
+           â””â”€â–º UPDATE Assessment SET score=..., result=...
+               â””â”€â–º { data: Assessment }
+                   â””â”€â–º Update UI
 
 3. MODERATION QUEUE:
-   Assessments → Moderation Tab
-   └─► Filter assessments WHERE result = 'PENDING'
-       └─► Moderator reviews
-           └─► Update result to 'PASS' or 'FAIL'
-               └─► PATCH /api/assessments/[id]
+   Assessments â†’ Moderation Tab
+   â””â”€â–º Filter assessments WHERE result = 'PENDING'
+       â””â”€â–º Moderator reviews
+           â””â”€â–º Update result to 'PASS' or 'FAIL'
+               â””â”€â–º PATCH /api/assessments/[id]
 
 4. ASSESSMENT STATS (Dashboard):
    Dashboard
-   └─► GET /api/dashboard/stats
-       └─► Calculate:
+   â””â”€â–º GET /api/dashboard/stats
+       â””â”€â–º Calculate:
            - Total assessments
            - Pending moderation count
            - Pass rate
-           └─► Show on dashboard
+           â””â”€â–º Show on dashboard
 ```
 
 ---
@@ -1095,37 +1095,37 @@ User Action → Component → API → Database → Response → State → UI
 ### **Dashboard Data Sources**
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                     DASHBOARD ASSEMBLY                      │
-└────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                     DASHBOARD ASSEMBLY                      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
 Dashboard Page
-├─► DashboardStats
-│   └─► useDashboardStats() → GET /api/dashboard/stats
-│       └─► Parallel queries:
-│           ├─► COUNT(*) FROM Student WHERE status='ACTIVE'
-│           ├─► COUNT(*) FROM Group WHERE status='ACTIVE'
-│           ├─► COUNT(*) FROM Assessment WHERE result='PENDING'
-│           ├─► AVG(progress) FROM Student
-│           ├─► Students with attendance < 80%
-│           └─► Sessions WHERE date > today LIMIT 5
-│
-├─► DashboardCharts
-│   └─► Same data + process for charts
-│       └─► Recharts renders LineChart, BarChart
-│
-├─► TodaysSchedule
-│   └─► GET /api/dashboard/schedule?date=today
-│       └─► LessonPlans + Sessions for today
-│
-├─► RecentActivity
-│   └─► Latest records:
-│       ├─► Recent students (ORDER BY createdAt DESC)
-│       ├─► Recent attendance (ORDER BY date DESC)
-│       └─► Recent assessments (ORDER BY date DESC)
-│
-└─► QuickActions
-    └─► Open modals for quick add (no API until save)
+â”œâ”€â–º DashboardStats
+â”‚   â””â”€â–º useDashboardStats() â†’ GET /api/dashboard/stats
+â”‚       â””â”€â–º Parallel queries:
+â”‚           â”œâ”€â–º COUNT(*) FROM Student WHERE status='ACTIVE'
+â”‚           â”œâ”€â–º COUNT(*) FROM Group WHERE status='ACTIVE'
+â”‚           â”œâ”€â–º COUNT(*) FROM Assessment WHERE result='PENDING'
+â”‚           â”œâ”€â–º AVG(progress) FROM Student
+â”‚           â”œâ”€â–º Students with attendance < 80%
+â”‚           â””â”€â–º Sessions WHERE date > today LIMIT 5
+â”‚
+â”œâ”€â–º DashboardCharts
+â”‚   â””â”€â–º Same data + process for charts
+â”‚       â””â”€â–º Recharts renders LineChart, BarChart
+â”‚
+â”œâ”€â–º TodaysSchedule
+â”‚   â””â”€â–º GET /api/dashboard/schedule?date=today
+â”‚       â””â”€â–º LessonPlans + Sessions for today
+â”‚
+â”œâ”€â–º RecentActivity
+â”‚   â””â”€â–º Latest records:
+â”‚       â”œâ”€â–º Recent students (ORDER BY createdAt DESC)
+â”‚       â”œâ”€â–º Recent attendance (ORDER BY date DESC)
+â”‚       â””â”€â–º Recent assessments (ORDER BY date DESC)
+â”‚
+â””â”€â–º QuickActions
+    â””â”€â–º Open modals for quick add (no API until save)
 ```
 
 ---
@@ -1227,22 +1227,22 @@ Note: Has mock data fallback for offline testing
 
 ```
 Global Context (Auth, Groups, Students)
-         │
-         ├─► Persistent across entire app
-         └─► localStorage sync for auth token
+         â”‚
+         â”œâ”€â–º Persistent across entire app
+         â””â”€â–º localStorage sync for auth token
 
 SWR Cache (API responses)
-         │
-         ├─► Automatic background refresh
-         ├─► Shared between components
-         └─► Manual revalidation via mutate()
+         â”‚
+         â”œâ”€â–º Automatic background refresh
+         â”œâ”€â–º Shared between components
+         â””â”€â–º Manual revalidation via mutate()
 
 Local Component State (useState)
-         │
-         ├─► Modal open/close
-         ├─► Form inputs
-         ├─► UI toggles (filters, views)
-         └─► Temporary selections
+         â”‚
+         â”œâ”€â–º Modal open/close
+         â”œâ”€â–º Form inputs
+         â”œâ”€â–º UI toggles (filters, views)
+         â””â”€â–º Temporary selections
 ```
 
 ---
@@ -1254,38 +1254,38 @@ Local Component State (useState)
 ```
 1. LOGIN:
    Login Page
-   └─► Enter email + password
-       └─► POST /api/auth/login
-           └─► Compare bcrypt hash
-               └─► Generate JWT token
-                   └─► Return { token, user }
-                       └─► Store in localStorage
-                           └─► AuthContext.setUser()
-                               └─► Redirect to Dashboard
+   â””â”€â–º Enter email + password
+       â””â”€â–º POST /api/auth/login
+           â””â”€â–º Compare bcrypt hash
+               â””â”€â–º Generate JWT token
+                   â””â”€â–º Return { token, user }
+                       â””â”€â–º Store in localStorage
+                           â””â”€â–º AuthContext.setUser()
+                               â””â”€â–º Redirect to Dashboard
 
 2. REGISTRATION:
    Register Page
-   └─► Enter details
-       └─► POST /api/auth/register
-           └─► Hash password with bcryptjs
-               └─► INSERT INTO User
-                   └─► Generate JWT token
-                       └─► Return { token, user }
-                           └─► Auto-login
+   â””â”€â–º Enter details
+       â””â”€â–º POST /api/auth/register
+           â””â”€â–º Hash password with bcryptjs
+               â””â”€â–º INSERT INTO User
+                   â””â”€â–º Generate JWT token
+                       â””â”€â–º Return { token, user }
+                           â””â”€â–º Auto-login
 
 3. PROTECTED ROUTES:
    Every page
-   └─► Check AuthContext.user
-       └─► If null → redirect to /login
-       └─► If present → render page
+   â””â”€â–º Check AuthContext.user
+       â””â”€â–º If null â†’ redirect to /login
+       â””â”€â–º If present â†’ render page
 
 4. API AUTHENTICATION:
    Every API request
-   └─► Check Authorization header
-       └─► Extract JWT token
-           └─► Verify with jsonwebtoken
-               └─► If valid → proceed
-               └─► If invalid → 401 Unauthorized
+   â””â”€â–º Check Authorization header
+       â””â”€â–º Extract JWT token
+           â””â”€â–º Verify with jsonwebtoken
+               â””â”€â–º If valid â†’ proceed
+               â””â”€â–º If invalid â†’ 401 Unauthorized
 ```
 
 ---
@@ -1328,18 +1328,18 @@ Auto-logout:
 
 ```
 User Profile:
-├─► Stored in User table
-├─► Editable via /settings/profile
-├─► Fields: name, email
-└─► Password change via /settings/security
+â”œâ”€â–º Stored in User table
+â”œâ”€â–º Editable via /settings/profile
+â”œâ”€â–º Fields: name, email
+â””â”€â–º Password change via /settings/security
 
 User Context:
-├─► Available globally via AuthContext
-├─► Used for:
-│   ├─► Display name in header
-│   ├─► Role-based UI rendering
-│   ├─► Filter data by facilitatorId
-│   └─► Audit trail (createdBy tracking)
+â”œâ”€â–º Available globally via AuthContext
+â”œâ”€â–º Used for:
+â”‚   â”œâ”€â–º Display name in header
+â”‚   â”œâ”€â–º Role-based UI rendering
+â”‚   â”œâ”€â–º Filter data by facilitatorId
+â”‚   â””â”€â–º Audit trail (createdBy tracking)
 ```
 
 ---
@@ -1350,43 +1350,43 @@ User Context:
 
 ```
 prisma/schema.prisma
-└─► Defines entire database structure
-    └─► Used by:
-        ├─► All API route handlers
-        ├─► src/lib/prisma.ts (client)
-        └─► Prisma generate command
+â””â”€â–º Defines entire database structure
+    â””â”€â–º Used by:
+        â”œâ”€â–º All API route handlers
+        â”œâ”€â–º src/lib/prisma.ts (client)
+        â””â”€â–º Prisma generate command
 
 src/lib/prisma.ts
-└─► Database client singleton
-    └─► Imported by:
-        └─► Every API route in src/app/api/**/route.ts
+â””â”€â–º Database client singleton
+    â””â”€â–º Imported by:
+        â””â”€â–º Every API route in src/app/api/**/route.ts
 
 src/lib/auth.ts
-└─► JWT verification & generation
-    └─► Used by:
-        ├─► /api/auth/login
-        ├─► /api/auth/register
-        └─► Middleware for protected routes
+â””â”€â–º JWT verification & generation
+    â””â”€â–º Used by:
+        â”œâ”€â–º /api/auth/login
+        â”œâ”€â–º /api/auth/register
+        â””â”€â–º Middleware for protected routes
 
 src/contexts/AuthContext.tsx
-└─► Global auth state
-    └─► Wraps entire app in layout.tsx
-        └─► Used by:
-            ├─► All pages for user data
-            ├─► Header component
-            └─► Protected route checks
+â””â”€â–º Global auth state
+    â””â”€â–º Wraps entire app in layout.tsx
+        â””â”€â–º Used by:
+            â”œâ”€â–º All pages for user data
+            â”œâ”€â–º Header component
+            â””â”€â–º Protected route checks
 
 src/app/layout.tsx
-└─► Root layout
-    ├─► Wraps with AuthProvider
-    ├─► Wraps with GroupsProvider
-    ├─► Wraps with SWRConfig
-    └─► Includes Sidebar on all pages
+â””â”€â–º Root layout
+    â”œâ”€â–º Wraps with AuthProvider
+    â”œâ”€â–º Wraps with GroupsProvider
+    â”œâ”€â–º Wraps with SWRConfig
+    â””â”€â–º Includes Sidebar on all pages
 
 src/components/Sidebar.tsx
-└─► Main navigation
-    └─► Used on every page via layout.tsx
-        └─► Links to all routes
+â””â”€â–º Main navigation
+    â””â”€â–º Used on every page via layout.tsx
+        â””â”€â–º Links to all routes
 ```
 
 ---
@@ -1395,45 +1395,45 @@ src/components/Sidebar.tsx
 
 ```
 Dashboard (/)
-├─► DashboardStats
-├─► DashboardCharts
-│   └─► Uses Recharts library
-├─► DashboardAlerts
-├─► TodaysSchedule
-├─► RecentActivity
-└─► QuickActions
-    ├─► Opens AddStudentModal
-    ├─► Opens GroupModal
-    ├─► Opens ScheduleLessonModal
-    └─► Opens MarkAttendanceModal
+â”œâ”€â–º DashboardStats
+â”œâ”€â–º DashboardCharts
+â”‚   â””â”€â–º Uses Recharts library
+â”œâ”€â–º DashboardAlerts
+â”œâ”€â–º TodaysSchedule
+â”œâ”€â–º RecentActivity
+â””â”€â–º QuickActions
+    â”œâ”€â–º Opens AddStudentModal
+    â”œâ”€â–º Opens GroupModal
+    â”œâ”€â–º Opens ScheduleLessonModal
+    â””â”€â–º Opens MarkAttendanceModal
 
 Students Page
-├─► useStudents() hook
-├─► AddStudentModal
-├─► StudentDetailsModal
-│   └─► StudentProgressModal (nested)
-└─► EditStudentModal
+â”œâ”€â–º useStudents() hook
+â”œâ”€â–º AddStudentModal
+â”œâ”€â–º StudentDetailsModal
+â”‚   â””â”€â–º StudentProgressModal (nested)
+â””â”€â–º EditStudentModal
 
 Groups Page
-├─► useGroups() hook
-├─► GroupsManagement component
-│   ├─► GroupModal
-│   └─► Confirmation dialogs
-└─► Student assignment
+â”œâ”€â–º useGroups() hook
+â”œâ”€â–º GroupsManagement component
+â”‚   â”œâ”€â–º GroupModal
+â”‚   â””â”€â–º Confirmation dialogs
+â””â”€â–º Student assignment
 
 Attendance Page
-├─► useAttendance() hook
-├─► AttendanceCalendar
-├─► MarkAttendanceModal
-└─► FilterPanel
+â”œâ”€â–º useAttendance() hook
+â”œâ”€â–º AttendanceCalendar
+â”œâ”€â–º MarkAttendanceModal
+â””â”€â–º FilterPanel
 
 Timetable Page
-├─► MonthView
-├─► ListView
-├─► TimelineView
-├─► AddLessonModal
-├─► LessonDetailsModal
-└─► FilterPanel
+â”œâ”€â–º MonthView
+â”œâ”€â–º ListView
+â”œâ”€â–º TimelineView
+â”œâ”€â–º AddLessonModal
+â”œâ”€â–º LessonDetailsModal
+â””â”€â–º FilterPanel
 ```
 
 ---
@@ -1442,31 +1442,31 @@ Timetable Page
 
 ```
 All API Routes
-└─► Import from:
-    ├─► src/lib/prisma.ts (database)
-    ├─► src/lib/auth.ts (authentication)
-    ├─► src/lib/validations.ts (Zod schemas)
-    └─► src/lib/api-utils.ts (response helpers)
+â””â”€â–º Import from:
+    â”œâ”€â–º src/lib/prisma.ts (database)
+    â”œâ”€â–º src/lib/auth.ts (authentication)
+    â”œâ”€â–º src/lib/validations.ts (Zod schemas)
+    â””â”€â–º src/lib/api-utils.ts (response helpers)
 
 /api/students/route.ts
-└─► Depends on:
-    ├─► User table (facilitatorId)
-    ├─► Group table (groupId)
-    └─► Called by useStudents() hook
+â””â”€â–º Depends on:
+    â”œâ”€â–º User table (facilitatorId)
+    â”œâ”€â–º Group table (groupId)
+    â””â”€â–º Called by useStudents() hook
 
 /api/groups/route.ts
-└─► Depends on:
-    ├─► Company table (companyId)
-    ├─► Student table (count)
-    └─► Called by useGroups() hook
+â””â”€â–º Depends on:
+    â”œâ”€â–º Company table (companyId)
+    â”œâ”€â–º Student table (count)
+    â””â”€â–º Called by useGroups() hook
 
 /api/dashboard/stats/route.ts
-└─► Aggregates from:
-    ├─► Student table
-    ├─► Group table
-    ├─► Assessment table
-    ├─► Attendance table
-    └─► Session table
+â””â”€â–º Aggregates from:
+    â”œâ”€â–º Student table
+    â”œâ”€â–º Group table
+    â”œâ”€â–º Assessment table
+    â”œâ”€â–º Attendance table
+    â””â”€â–º Session table
 ```
 
 ---
@@ -1475,30 +1475,30 @@ All API Routes
 
 ```
 src/lib/utils.ts
-└─► Common utilities
-    └─► Used by:
-        └─► Many components for formatting, calculations
+â””â”€â–º Common utilities
+    â””â”€â–º Used by:
+        â””â”€â–º Many components for formatting, calculations
 
 date-fns
-└─► Date manipulation
-    └─► Used by:
-        ├─► Timetable components
-        ├─► Attendance calendar
-        ├─► Dashboard schedule
-        └─► Date filters
+â””â”€â–º Date manipulation
+    â””â”€â–º Used by:
+        â”œâ”€â–º Timetable components
+        â”œâ”€â–º Attendance calendar
+        â”œâ”€â–º Dashboard schedule
+        â””â”€â–º Date filters
 
 Tailwind CSS
-└─► Styling
-    └─► Used by:
-        └─► All components via className
+â””â”€â–º Styling
+    â””â”€â–º Used by:
+        â””â”€â–º All components via className
 
 Lucide React
-└─► Icons
-    └─► Used by:
-        ├─► Sidebar navigation
-        ├─► Buttons
-        ├─► Status indicators
-        └─► Dashboard cards
+â””â”€â–º Icons
+    â””â”€â–º Used by:
+        â”œâ”€â–º Sidebar navigation
+        â”œâ”€â–º Buttons
+        â”œâ”€â–º Status indicators
+        â””â”€â–º Dashboard cards
 ```
 
 ---
@@ -1509,15 +1509,15 @@ Lucide React
 
 ```
 Database Layer (Prisma)
-    ↓
+    â†“
 API Layer (Route handlers)
-    ↓
+    â†“
 Data Hooks (SWR)
-    ↓
+    â†“
 Context Providers
-    ↓
+    â†“
 Components
-    ↓
+    â†“
 Pages
 ```
 
@@ -1666,56 +1666,56 @@ NEXT_PUBLIC_API_URL="http://localhost:3000"
 ## SYSTEM ARCHITECTURE DIAGRAM
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT BROWSER                          │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │               React Components (UI Layer)                 │   │
-│  │  Dashboard | Students | Groups | Attendance | Timetable  │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                               │                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │         State Management (Context + SWR)                  │   │
-│  │    AuthContext | GroupsContext | StudentContext          │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                               │                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │              Custom Hooks (Data Fetching)                 │   │
-│  │  useStudents | useGroups | useAttendance | useDashboard  │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                               │
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                         CLIENT BROWSER                          â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚               React Components (UI Layer)                 â”‚   â”‚
+â”‚  â”‚  Dashboard | Students | Groups | Attendance | Timetable  â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â”‚                               â”‚                                  â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚         State Management (Context + SWR)                  â”‚   â”‚
+â”‚  â”‚    AuthContext | GroupsContext | StudentContext          â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â”‚                               â”‚                                  â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚              Custom Hooks (Data Fetching)                 â”‚   â”‚
+â”‚  â”‚  useStudents | useGroups | useAttendance | useDashboard  â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                               â”‚
                            HTTP/HTTPS
-                               │
-┌─────────────────────────────────────────────────────────────────┐
-│                     NEXT.JS SERVER (PORT 3000)                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │            API Routes (Backend Logic)                     │   │
-│  │  /api/students | /api/groups | /api/attendance           │   │
-│  │  /api/assessments | /api/timetable | /api/dashboard      │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                               │                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │         Middleware & Utilities                            │   │
-│  │  Authentication | Validation | Rate Limiting              │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                               │                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │               Prisma ORM Client                           │   │
-│  │          (Database Abstraction Layer)                     │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                               │
+                               â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                     NEXT.JS SERVER (PORT 3000)                  â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚            API Routes (Backend Logic)                     â”‚   â”‚
+â”‚  â”‚  /api/students | /api/groups | /api/attendance           â”‚   â”‚
+â”‚  â”‚  /api/assessments | /api/timetable | /api/dashboard      â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â”‚                               â”‚                                  â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚         Middleware & Utilities                            â”‚   â”‚
+â”‚  â”‚  Authentication | Validation | Rate Limiting              â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â”‚                               â”‚                                  â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚               Prisma ORM Client                           â”‚   â”‚
+â”‚  â”‚          (Database Abstraction Layer)                     â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                               â”‚
                           SQL Queries
-                               │
-┌─────────────────────────────────────────────────────────────────┐
-│                      SQLite DATABASE                            │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  User | Student | Group | Company | Attendance           │   │
-│  │  Assessment | LessonPlan | Session | POEChecklist        │   │
-│  │  Module | Course | GroupCourse | CourseProgress          │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                         (dev.db file)                           │
-└─────────────────────────────────────────────────────────────────┘
+                               â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                      SQLite DATABASE                            â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚  User | Student | Group | Company | Attendance           â”‚   â”‚
+â”‚  â”‚  Assessment | LessonPlan | Session | POEChecklist        â”‚   â”‚
+â”‚  â”‚  Module | Course | GroupCourse | CourseProgress          â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â”‚                         (dev.db file)                           â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
@@ -1835,3 +1835,4 @@ npm start
 ---
 
 **END OF ARCHITECTURE DOCUMENTATION**
+

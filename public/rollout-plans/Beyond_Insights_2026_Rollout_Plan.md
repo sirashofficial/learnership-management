@@ -1,10 +1,10 @@
-# Beyond Insights 2026 Rollout Plan
+﻿# Beyond Insights 2026 Rollout Plan
 
 ## Programme Details
 
 **GROUP:** Beyond Insights  
 **NATIONAL CERTIFICATE:** NEW VENTURE CREATION (SMME)  
-**ID:** 49648 – NQF LEVEL 2  
+**ID:** 49648 â€“ NQF LEVEL 2  
 **START DATE:** 01/01/2026  
 **END DATE:** 31/12/2026  
 **LEARNERS:** 1  
@@ -49,7 +49,7 @@
 - **Assessing Date:** 16/02/2026
 - **Credits:** 3
 
-**Workplace Activity:** 17/02/2026 – 27/02/2026 (Monday – Friday)
+**Workplace Activity:** 17/02/2026 â€“ 27/02/2026 (Monday â€“ Friday)
 
 ---
 
@@ -76,7 +76,7 @@
 - **Assessing Date:** 07/04/2026
 - **Credits:** 10
 
-**Workplace Activity:** 08/04/2026 – 20/04/2026 (Monday – Friday)
+**Workplace Activity:** 08/04/2026 â€“ 20/04/2026 (Monday â€“ Friday)
 
 ---
 
@@ -110,7 +110,7 @@
 - **Assessing Date:** 27/05/2026
 - **Credits:** 2
 
-**Workplace Activity:** 28/05/2025 – 10/06/2025 (Monday – Friday)
+**Workplace Activity:** 28/05/2025 â€“ 10/06/2025 (Monday â€“ Friday)
 
 ---
 
@@ -137,7 +137,7 @@
 - **Assessing Date:** 14/07/2026
 - **Credits:** 10
 
-**Workplace Activity:** 15/07/2026 – 24/07/2026 (Monday – Friday)
+**Workplace Activity:** 15/07/2026 â€“ 24/07/2026 (Monday â€“ Friday)
 
 ---
 
@@ -164,7 +164,7 @@
 - **Assessing Date:** 01/09/2026
 - **Credits:** 10
 
-**Workplace Activity:** 02/09/2026 – 11/09/2026 (Monday – Friday)
+**Workplace Activity:** 02/09/2026 â€“ 11/09/2026 (Monday â€“ Friday)
 
 ---
 
@@ -212,7 +212,7 @@
 - **Assessing Date:** 29/10/2026
 - **Credits:** 2
 
-**Workplace Activity:** 30/10/2026 – 12/11/2026 (Monday – Friday)
+**Workplace Activity:** 30/10/2026 â€“ 12/11/2026 (Monday â€“ Friday)
 
 ---
 
@@ -222,3 +222,4 @@
 
 **TOTAL CREDITS:** 140  
 **REQUIRED:** 138
+

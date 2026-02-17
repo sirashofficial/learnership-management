@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, AlertCircle, Bell, BellOff, Calendar, MapPin, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface RecurringSessionModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export default function RecurringSessionModal({
         <div className="sticky top-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              {session.groupName}
+              {formatGroupNameDisplay(session.groupName)}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               Recurring Session Management
@@ -121,7 +122,7 @@ export default function RecurringSessionModal({
             {session.parentGroup && (
               <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 <Users className="w-4 h-4" />
-                <span>Part of <strong>{session.parentGroup}</strong></span>
+                <span>Part of <strong>{formatGroupNameDisplay(session.parentGroup)}</strong></span>
               </div>
             )}
           </div>

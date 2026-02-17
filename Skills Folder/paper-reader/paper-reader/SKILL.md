@@ -1,4 +1,4 @@
----
+﻿---
 name: paper-reader
 description: AI/CS paper reader - analyzes PDF papers and extracts key points, contributions, and methods
 argument-hint: <pdf_path> [focus_area]
@@ -30,7 +30,7 @@ When given a PDF paper path:
            text += page.extract_text() or ""
    ```
 3. **Analyze the extracted text** following the steps below
-4. **Write output to a markdown file** with the same name as the PDF (e.g., `paper.pdf` → `paper.md`) in the same directory
+4. **Write output to a markdown file** with the same name as the PDF (e.g., `paper.pdf` â†’ `paper.md`) in the same directory
    - If the `.md` file already exists, **append** to it (no separator needed)
    - Do NOT output the analysis in the conversation; only write to the file
 
@@ -125,7 +125,7 @@ Describe the novelty in terms of:
 - Architecture
 - Learning strategy
 - Inference or deployment
-- Human–AI interaction (if applicable)
+- Humanâ€“AI interaction (if applicable)
 
 ---
 
@@ -166,7 +166,7 @@ Explain why this method should perform better than previous ones.
 ## 10. Takeaway
 **One-sentence summary of the method:**
 
-> “This paper proposes ______ by ______ in order to ______.”
+> â€œThis paper proposes ______ by ______ in order to ______.â€
 ```
 
 ### Guidelines
@@ -178,3 +178,4 @@ Explain why this method should perform better than previous ones.
 - All analysis output should be in English
 - Always write to file, never output in conversation
 - Confirm file path after writing (e.g., "Saved at /path/to/paper.md")
+

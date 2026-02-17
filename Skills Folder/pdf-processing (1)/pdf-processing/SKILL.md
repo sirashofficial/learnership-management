@@ -1,4 +1,4 @@
----
+﻿---
 name: pdf-processing
 description: Process and extract information from PDF documents. Use this skill when the user asks to read, analyze, or extract data from PDF files.
 license: Apache-2.0
@@ -36,3 +36,4 @@ Activate this skill when:
 - Handle encrypted PDFs gracefully with appropriate error messages
 - For scanned PDFs, note that OCR may be required
 - Preserve important formatting like tables and lists
+

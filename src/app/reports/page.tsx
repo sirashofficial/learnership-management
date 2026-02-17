@@ -1,3 +1,4 @@
+import { formatGroupNameDisplay } from '@/lib/groupName';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -387,7 +388,9 @@ export default function ReportsPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const groupNames = selectedGroups.map(id => groups.find(g => g.id === id)?.name || 'Group').join('-');
+        const groupNames = selectedGroups
+            .map(id => formatGroupNameDisplay(groups.find(g => g.id === id)?.name || 'Group'))
+            .join('-');
         a.download = `Daily_Report_AI_${groupNames}_${selectedDate}.md`;
         document.body.appendChild(a);
         a.click();
@@ -457,7 +460,7 @@ export default function ReportsPage() {
             checkPageBreak();
 
             // Group heading
-            addHeading(`Group: ${groupData.groupName}`);
+            addHeading(`Group: ${formatGroupNameDisplay(groupData.groupName || '')}`);
             yPos += 5;
 
             // Attendance
@@ -546,7 +549,9 @@ export default function ReportsPage() {
         });
 
         // Save
-        const groupNames = selectedGroups.map(id => groups.find(g => g.id === id)?.name || 'Group').join('-');
+        const groupNames = selectedGroups
+            .map(id => formatGroupNameDisplay(groups.find(g => g.id === id)?.name || 'Group'))
+            .join('-');
         doc.save(`Daily_Report_${groupNames}_${format(new Date(data.meta.date), 'yyyy-MM-dd')}.pdf`);
     };
 
@@ -681,7 +686,7 @@ export default function ReportsPage() {
                                         <option value="">Select a group</option>
                                         {groups.map((group) => (
                                             <option key={group.id} value={group.id}>
-                                                {group.name}
+                                                {formatGroupNameDisplay(group.name)}
                                             </option>
                                         ))}
                                     </select>
@@ -798,7 +803,7 @@ export default function ReportsPage() {
                                         <option value="">Select a group</option>
                                         {groups.map((group) => (
                                             <option key={group.id} value={group.id}>
-                                                {group.name}
+                                                {formatGroupNameDisplay(group.name)}
                                             </option>
                                         ))}
                                     </select>
@@ -932,7 +937,7 @@ export default function ReportsPage() {
                                         <option value="">Select a group</option>
                                         {groups.map((group) => (
                                             <option key={group.id} value={group.id}>
-                                                {group.name}
+                                                {formatGroupNameDisplay(group.name)}
                                             </option>
                                         ))}
                                     </select>

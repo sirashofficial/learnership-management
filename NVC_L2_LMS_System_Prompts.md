@@ -1,4 +1,4 @@
-# NVC L2 Learner Management System - Complete Guide
+﻿# NVC L2 Learner Management System - Complete Guide
 
 ## Table of Contents
 1. [Group Creation & Auto-Calculation](#prompt-1-group-creation--auto-calculation)
@@ -41,7 +41,7 @@ When a user creates a new group, automatically generate the complete implementat
 
 ### 3. Date Calculations:
 - **End Date** = Start Date + 12 months
-- **Each unit standard:** Start Date → End Date (2-10 days based on credits)
+- **Each unit standard:** Start Date â†’ End Date (2-10 days based on credits)
 - **Summative Date** = End Date + 1 day
 - **Assessing Date** = Summative Date + 1-2 days
 - **Workplace Activity** = 1-2 weeks between modules (Monday-Friday)
@@ -49,19 +49,19 @@ When a user creates a new group, automatically generate the complete implementat
 
 ### 4. Notional Hours Calculation (Per Unit Standard):
 ```
-Notional Hours = Credits × 10
-Contact Session (30%) = Notional Hours × 0.30
-Experiential Learning (70%) = Notional Hours × 0.70
-Days = Notional Hours ÷ 8 (hours per day)
+Notional Hours = Credits Ã— 10
+Contact Session (30%) = Notional Hours Ã— 0.30
+Experiential Learning (70%) = Notional Hours Ã— 0.70
+Days = Notional Hours Ã· 8 (hours per day)
 ```
 
 ### 5. Output Format - Generate EXACT Table Structure:
 
 ```
-IMPLEMENTATION PLAN – (NVC) LEARNERSHIP
+IMPLEMENTATION PLAN â€“ (NVC) LEARNERSHIP
 GROUP: [Group Name]
 NATIONAL CERTIFICATE: NEW VENTURE CREATION (SMME)
-ID: 49648 – NQF LEVEL 2
+ID: 49648 â€“ NQF LEVEL 2
 START DATE: [DD/MM/YYYY]
 END DATE: [DD/MM/YYYY]
 LEARNERS: [Number]
@@ -72,7 +72,7 @@ LEARNERSHIP INDUCTION: [Date]
 |------------|----------|----------------|----------------|--------|---------------|---------------------|---------|
 | [dates] | [dates] | [date] | [date] | MODULE 1 | 7480 | Demonstrate understanding of rational and irrational numbers... | 3 |
 | ... | ... | ... | ... | ... | ... | ... | ... |
-| MONDAY - FRIDAY | | | | | | Workplace Activity – ([dates]) | |
+| MONDAY - FRIDAY | | | | | | Workplace Activity â€“ ([dates]) | |
 | ... continue all modules ... |
 
 ```
@@ -111,26 +111,26 @@ When a learner is loaded/selected, display their complete assessment journey wit
 For EACH unit standard, display tracking checkboxes for:
 
 ### FORMATIVES (Activities - Can be taken home, NOT for marks)
-- ☐ Formative Activity 1: [Brief description from workbook]
-- ☐ Formative Activity 2: [Brief description]
-- ☐ Formative Activity 3: [If applicable]
+- â˜ Formative Activity 1: [Brief description from workbook]
+- â˜ Formative Activity 2: [Brief description]
+- â˜ Formative Activity 3: [If applicable]
 
 *Note: Formatives are practice activities from the learner workbook. Must be completed before summative but not graded.*
 
 ### SUMMATIVES (In-class, FOR MARKS)
-- ☐ Summative Assessment Date: [Auto-populated from group schedule]
-- ☐ Summative Completed: [Date picker / checkbox]
-- ☐ Result: [Pass/Fail/Pending]
-- ☐ Marks: [__/100]
+- â˜ Summative Assessment Date: [Auto-populated from group schedule]
+- â˜ Summative Completed: [Date picker / checkbox]
+- â˜ Result: [Pass/Fail/Pending]
+- â˜ Marks: [__/100]
 
 *Note: Summatives are formal assessments conducted in class. Must be completed on scheduled date.*
 
 ### WORKPLACE ACTIVITY (End of Module - FOR MARKS)
-- ☐ Workplace Activity Period: [Auto-populated dates, e.g., "01/09/2025 - 12/09/2025"]
-- ☐ Workplace Activity Completed: [Checkbox]
-- ☐ Workplace Assessment Date: [Date picker]
-- ☐ Result: [Competent/Not Yet Competent]
-- ☐ Assessor Name: [Text field]
+- â˜ Workplace Activity Period: [Auto-populated dates, e.g., "01/09/2025 - 12/09/2025"]
+- â˜ Workplace Activity Completed: [Checkbox]
+- â˜ Workplace Assessment Date: [Date picker]
+- â˜ Result: [Competent/Not Yet Competent]
+- â˜ Assessor Name: [Text field]
 
 *Note: This is the FINAL MODULE TEST. Practical application in workplace setting.*
 
@@ -142,17 +142,17 @@ For EACH unit standard, display tracking checkboxes for:
 
 | US ID | Title | Credits | Formatives | Summative | Workplace |
 |-------|-------|---------|------------|-----------|-----------|
-| 7480 | Demonstrate understanding of rational and irrational numbers... | 3 | ☐ Act 1 ☐ Act 2 | ☐ Completed [Date] Result: [ ] | N/A - Part of module WA |
-| 9008 | Identify, describe, compare, classify shapes... | 3 | ☐ Act 1 ☐ Act 2 | ☐ Completed [Date] Result: [ ] | N/A |
-| 9007 | Work with patterns and functions... | 5 | ☐ Act 1 ☐ Act 2 ☐ Act 3 | ☐ Completed [Date] Result: [ ] | N/A |
-| 7469 | Use mathematics to investigate financial aspects... | 2 | ☐ Act 1 | ☐ Completed [Date] Result: [ ] | N/A |
-| 9009 | Apply basic knowledge of statistics... | 3 | ☐ Act 1 ☐ Act 2 | ☐ Completed [Date] Result: [ ] | N/A |
+| 7480 | Demonstrate understanding of rational and irrational numbers... | 3 | â˜ Act 1 â˜ Act 2 | â˜ Completed [Date] Result: [ ] | N/A - Part of module WA |
+| 9008 | Identify, describe, compare, classify shapes... | 3 | â˜ Act 1 â˜ Act 2 | â˜ Completed [Date] Result: [ ] | N/A |
+| 9007 | Work with patterns and functions... | 5 | â˜ Act 1 â˜ Act 2 â˜ Act 3 | â˜ Completed [Date] Result: [ ] | N/A |
+| 7469 | Use mathematics to investigate financial aspects... | 2 | â˜ Act 1 | â˜ Completed [Date] Result: [ ] | N/A |
+| 9009 | Apply basic knowledge of statistics... | 3 | â˜ Act 1 â˜ Act 2 | â˜ Completed [Date] Result: [ ] | N/A |
 
 ### MODULE 1 WORKPLACE ACTIVITY:
-- ☐ Period: [Auto-filled dates]
-- ☐ Completed: [Checkbox]
-- ☐ Assessor: [Dropdown/Text]
-- ☐ Result: [Competent/Not Yet Competent]
+- â˜ Period: [Auto-filled dates]
+- â˜ Completed: [Checkbox]
+- â˜ Assessor: [Dropdown/Text]
+- â˜ Result: [Competent/Not Yet Competent]
 
 ---
 
@@ -164,24 +164,24 @@ For EACH unit standard, display tracking checkboxes for:
 - **Remaining Credits:** [140 - earned]
 
 ### Completion Status Per Module:
-- ☐ Not Started
-- 🟡 In Progress (formatives started)
-- 🟠 Summatives Pending
-- 🟢 Module Complete (workplace activity done)
+- â˜ Not Started
+- ðŸŸ¡ In Progress (formatives started)
+- ðŸŸ  Summatives Pending
+- ðŸŸ¢ Module Complete (workplace activity done)
 
 ### Overall Qualification Progress Bar:
 ```
-[████████░░░░░░░░░░░░] 45% Complete (63/140 credits)
+[â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘] 45% Complete (63/140 credits)
 ```
 
 ---
 
 ## FISA (FINAL SUMMATIVE ASSESSMENT) TRACKING:
-- ☐ All modules completed
-- ☐ FISA Date Scheduled: [Date picker]
-- ☐ FISA Completed: [Checkbox]
-- ☐ Final Result: [Competent/Not Yet Competent]
-- ☐ Certificate Issued: [Checkbox]
+- â˜ All modules completed
+- â˜ FISA Date Scheduled: [Date picker]
+- â˜ FISA Completed: [Checkbox]
+- â˜ Final Result: [Competent/Not Yet Competent]
+- â˜ Certificate Issued: [Checkbox]
 
 ---
 
@@ -245,10 +245,10 @@ Generate printable report showing:
 
 | Type | Location | Graded? | When |
 |------|----------|---------|------|
-| Formative | Home/Class | ❌ No | Before summative |
-| Summative | In Class | ✅ Yes | Scheduled date |
-| Workplace Activity | Workplace | ✅ Yes | End of module |
-| FISA | Assessment Centre | ✅ Yes | End of program |
+| Formative | Home/Class | âŒ No | Before summative |
+| Summative | In Class | âœ… Yes | Scheduled date |
+| Workplace Activity | Workplace | âœ… Yes | End of module |
+| FISA | Assessment Centre | âœ… Yes | End of program |
 
 ---
 
@@ -281,3 +281,4 @@ Generate printable report showing:
 - Generate compliance reports
 - Schedule FISA assessments
 - Issue certificates upon completion
+

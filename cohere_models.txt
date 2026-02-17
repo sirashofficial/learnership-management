@@ -1,4 +1,4 @@
-embed-english-light-v3.0
+﻿embed-english-light-v3.0
 command-a-vision-07-2025
 embed-multilingual-v2.0
 rerank-v4.0-fast

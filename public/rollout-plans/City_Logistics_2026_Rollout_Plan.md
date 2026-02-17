@@ -1,10 +1,10 @@
-# City Logistics 2026 Rollout Plan
+﻿# City Logistics 2026 Rollout Plan
 
 ## Programme Details
 
 **GROUP:** City Logistics  
 **NATIONAL CERTIFICATE:** NEW VENTURE CREATION (SMME)  
-**ID:** 49648 – NQF LEVEL 2  
+**ID:** 49648 â€“ NQF LEVEL 2  
 **START DATE:** 01/12/2025  
 **END DATE:** 30/11/2026  
 **LEARNERS:** 8  
@@ -49,7 +49,7 @@
 - **Assessing Date:** 02/02/2026
 - **Credits:** 3
 
-**Workplace Activity:** 03/02/2026 – 13/02/2026 (Monday – Friday)
+**Workplace Activity:** 03/02/2026 â€“ 13/02/2026 (Monday â€“ Friday)
 
 ---
 
@@ -76,7 +76,7 @@
 - **Assessing Date:** 20/03/2026
 - **Credits:** 10
 
-**Workplace Activity:** 23/03/2026 – 02/04/2026 (Monday – Friday)
+**Workplace Activity:** 23/03/2026 â€“ 02/04/2026 (Monday â€“ Friday)
 
 ---
 
@@ -110,7 +110,7 @@
 - **Assessing Date:** 13/05/2026
 - **Credits:** 2
 
-**Workplace Activity:** 14/05/2026 – 27/05/2026 (Monday – Friday)
+**Workplace Activity:** 14/05/2026 â€“ 27/05/2026 (Monday â€“ Friday)
 
 ---
 
@@ -137,7 +137,7 @@
 - **Assessing Date:** 30/06/2026
 - **Credits:** 10
 
-**Workplace Activity:** 01/07/2026 – 10/07/2026 (Monday – Friday)
+**Workplace Activity:** 01/07/2026 â€“ 10/07/2026 (Monday â€“ Friday)
 
 ---
 
@@ -164,7 +164,7 @@
 - **Assessing Date:** 18/08/2026
 - **Credits:** 10
 
-**Workplace Activity:** 19/08/2026 – 31/08/2026 (Monday – Friday)
+**Workplace Activity:** 19/08/2026 â€“ 31/08/2026 (Monday â€“ Friday)
 
 ---
 
@@ -212,7 +212,7 @@
 - **Assessing Date:** 16/10/2026
 - **Credits:** 2
 
-**Workplace Activity:** 19/10/2026 – 30/10/2026 (Monday – Friday)
+**Workplace Activity:** 19/10/2026 â€“ 30/10/2026 (Monday â€“ Friday)
 
 ---
 
@@ -222,3 +222,4 @@
 
 **TOTAL CREDITS:** 140  
 **REQUIRED:** 138
+

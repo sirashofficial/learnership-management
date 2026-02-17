@@ -1,4 +1,4 @@
-# Learnership Management System Overview
+﻿# Learnership Management System Overview
 
 The Learnership Management System is a comprehensive platform designed for facilitators to manage students, training sites, assessments, and curriculum delivery for SSETA NVC Level 2 programs.
 
@@ -25,3 +25,4 @@ The Learnership Management System is a comprehensive platform designed for facil
 - **Timetable**: Lesson planning and recurring session management.
 - **AI Integration**: Analyzer for modules and assessment generation.
 - **Reporting**: Progress tracking and cohort management.
+

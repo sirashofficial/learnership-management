@@ -6,6 +6,7 @@ import { useCurriculum } from '@/hooks/useCurriculum';
 import { useStudents } from '@/hooks/useStudents';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGroups } from '@/contexts/GroupsContext';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 import {
   ChevronDown, ChevronRight, Plus, Trash2, Edit2, Check, X, Users, TrendingUp,
   BarChart3, AlertTriangle, Download, Filter, Search, Award, Target, Loader2,
@@ -61,10 +62,16 @@ export default function AssessmentsPage() {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [filterType, setFilterType] = useState<'FORMATIVE' | 'SUMMATIVE' | null>(null);
+  const [showNeedsModeration, setShowNeedsModeration] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [bulkPassing, setBulkPassing] = useState(false);
+
+  const pendingModerationCount = useMemo(
+    () => assessments.filter((assessment: any) => assessment.moderationStatus === 'PENDING').length,
+    [assessments]
+  );
 
   const filteredStudents = useMemo(() => {
     if (!selectedGroup) return students;
@@ -74,9 +81,15 @@ export default function AssessmentsPage() {
   const filteredStudentIds = useMemo(() => new Set(filteredStudents.map((student: any) => student.id)), [filteredStudents]);
 
   const filteredAssessments = useMemo(() => {
-    if (!selectedGroup) return assessments;
-    return assessments.filter((assessment: any) => filteredStudentIds.has(assessment.student?.id));
-  }, [assessments, filteredStudentIds, selectedGroup]);
+    let filtered = assessments;
+    if (selectedGroup) {
+      filtered = filtered.filter((assessment: any) => filteredStudentIds.has(assessment.student?.id));
+    }
+    if (showNeedsModeration) {
+      filtered = filtered.filter((assessment: any) => assessment.moderationStatus === 'PENDING');
+    }
+    return filtered;
+  }, [assessments, filteredStudentIds, selectedGroup, showNeedsModeration]);
 
   const scopedStudents = filteredStudents;
   const scopedAssessments = filteredAssessments;
@@ -1555,10 +1568,22 @@ export default function AssessmentsPage() {
               <option value="">All groups</option>
               {(groups || []).map((group: any) => (
                 <option key={group.id} value={group.id}>
-                  {group.name}
+                  {formatGroupNameDisplay(group.name)}
                 </option>
               ))}
             </select>
+            <button
+              onClick={() => setShowNeedsModeration((prev) => !prev)}
+              className={`px-3 py-2 rounded text-sm font-semibold flex items-center gap-2 ${showNeedsModeration
+                ? 'bg-orange-500 text-white'
+                : 'bg-orange-50 text-orange-700 border border-orange-200'
+                }`}
+            >
+              Needs Moderation
+              <span className={`px-2 py-0.5 rounded-full text-xs ${showNeedsModeration ? 'bg-white/20 text-white' : 'bg-orange-200 text-orange-800'}`}>
+                {pendingModerationCount}
+              </span>
+            </button>
             {selectedGroup && (
               <span className="text-xs text-gray-500">
                 {scopedStudents.length} students, {scopedAssessments.length} assessments

@@ -12,6 +12,7 @@ import TimetableSessionModal from '@/components/TimetableSessionModal';
 import Toast, { useToast } from '@/components/Toast';
 import { useSWRConfig } from 'swr';
 import { format } from 'date-fns';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 export default function TimetablePage() {
   const searchParams = useSearchParams();
@@ -83,7 +84,7 @@ export default function TimetablePage() {
                     <option value="all">All Groups</option>
                     {groups.map((group) => (
                       <option key={group.id} value={group.id}>
-                        {group.name}
+                        {formatGroupNameDisplay(group.name)}
                       </option>
                     ))}
                   </select>

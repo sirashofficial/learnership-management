@@ -6,6 +6,7 @@ import { Check, Loader2, X } from 'lucide-react';
 import { useSWRConfig } from 'swr';
 import { fetcher } from '@/lib/swr-config';
 import useSWR from 'swr';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface SessionAttendanceModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export default function SessionAttendanceModal({
   const headerLabel = useMemo(() => {
     if (!session) return 'Mark Attendance';
     const day = format(parseISO(session.date), 'd MMM yyyy');
-    return `Mark Attendance — ${session.groupName || 'Group'} — ${day}`;
+    return `Mark Attendance — ${formatGroupNameDisplay(session.groupName || 'Group')} — ${day}`;
   }, [session]);
 
   const handleMarkAll = () => {

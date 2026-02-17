@@ -13,6 +13,7 @@ import NextSessionPanel from '@/components/NextSessionPanel';
 import { getGroupColour } from '@/lib/groupColours';
 import SessionAttendanceModal from '@/components/SessionAttendanceModal';
 import Toast, { useToast } from '@/components/Toast';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface TimetableSession {
   id: string;
@@ -36,10 +37,8 @@ interface TimetableWeekViewProps {
 }
 
 function getShortGroupName(name: string) {
-  return name
-    .replace(/\s*\(LP\)\s*-\s*\d{4}/i, '')
-    .replace(/\s*\(\d{4}\)/i, '')
-    .trim();
+  const formatted = formatGroupNameDisplay(name || '');
+  return formatted.replace(/\s*\(\d{4}\)\s*$/, '').trim();
 }
 
 export default function TimetableWeekView({

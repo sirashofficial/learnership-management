@@ -4,15 +4,15 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // Optimized configuration for better performance
 const optimizedConfig = {
-  revalidateOnFocus: false, // Don't refetch on window focus
-  revalidateOnReconnect: false, // Don't refetch on reconnect
-  dedupingInterval: 5000, // Dedupe requests within 5 seconds
+  revalidateOnFocus: true,
+  revalidateOnReconnect: true,
+  dedupingInterval: 2000,
 };
 
 export function useDashboardStats() {
   const { data, error, isLoading, mutate } = useSWR('/api/dashboard/stats', fetcher, {
     ...optimizedConfig,
-    refreshInterval: 120000, // Reduced to every 2 minutes
+    refreshInterval: 15000,
   });
 
   return {

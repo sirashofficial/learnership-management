@@ -1,5 +1,7 @@
 'use client';
 
+import { formatGroupNameDisplay } from '@/lib/groupName';
+
 import { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, ChevronDown, ChevronRight, Users, BookOpen, Award, Loader2 } from 'lucide-react';
 
@@ -182,7 +184,7 @@ export default function AssessmentChecklistPage() {
                                 <option value="">-- Select a group --</option>
                                 {groups.map((group) => (
                                     <option key={group.id} value={group.id}>
-                                        {group.name}
+                                            {formatGroupNameDisplay(group.name)}
                                     </option>
                                 ))}
                             </select>

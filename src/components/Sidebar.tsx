@@ -30,6 +30,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import useSWR from "swr";
 
 const quickAccessItems = [
     { icon: LayoutDashboard, label: "Home", href: "/" },
@@ -68,6 +69,17 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     const [sidebarTheme, setSidebarTheme] = useState<'dark' | 'light'>('dark');
     const pathname = usePathname();
     const { user, logout } = useAuth();
+    const { data: assessmentStats } = useSWR(
+        '/api/assessments/stats',
+        (url: string) => fetch(url, { credentials: 'include' }).then((res) => res.json()),
+        { refreshInterval: 60000 }
+    );
+
+    const pendingModerationCount =
+        assessmentStats?.pending ??
+        assessmentStats?.data?.pending ??
+        assessmentStats?.stats?.pending ??
+        0;
 
     useEffect(() => {
         const saved = localStorage.getItem('sidebarTheme') as 'dark' | 'light' | null;
@@ -89,7 +101,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 key={item.label}
                 href={item.href}
                 className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150",
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 relative",
                     isActive
                         ? isDark
                             ? "bg-white/10 text-white"
@@ -107,6 +119,16 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                         : isDark ? "text-slate-500" : "text-slate-400"
                 )} />
                 {!isCollapsed && <span>{item.label}</span>}
+                {item.label === 'Assessments' && pendingModerationCount > 0 && (
+                    <span
+                        className={cn(
+                            "absolute bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center",
+                            isCollapsed ? "top-1 right-1" : "top-1 right-2"
+                        )}
+                    >
+                        {pendingModerationCount}
+                    </span>
+                )}
             </Link>
         );
     };

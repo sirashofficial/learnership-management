@@ -5,6 +5,7 @@ import { Building2, Users, Calendar, MapPin, Phone, Mail, User, Plus, Edit, Tras
 import { useStudents } from '@/contexts/StudentContextSimple';
 import { useGroups } from '@/contexts/GroupsContext';
 import { generateRolloutPlan } from '@/lib/rolloutPlanGenerator';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 export default function GroupsManagement() {
   const { getStudentCountByGroup, students } = useStudents();
@@ -144,7 +145,7 @@ export default function GroupsManagement() {
     const studentCount = group?._count?.students || 0;
 
     if (studentCount > 0) {
-      alert(`Cannot delete group "${group?.name}". There are ${studentCount} students assigned to this group. Please reassign students first.`);
+      alert(`Cannot delete group "${formatGroupNameDisplay(group?.name || '')}". There are ${studentCount} students assigned to this group. Please reassign students first.`);
       return;
     }
 
@@ -267,7 +268,7 @@ export default function GroupsManagement() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold text-slate-900">{group.name}</h4>
+                          <h4 className="font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h4>
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(group.status)}`}>
                             {getStatusIcon(group.status)}
                             {group.status}
@@ -353,7 +354,7 @@ export default function GroupsManagement() {
                 <div>
                   <h4 className="font-medium text-slate-900 mb-2">Group Information</h4>
                   <div className="space-y-2 text-sm">
-                    <div><strong>Name:</strong> {selectedGroup.name}</div>
+                    <div><strong>Name:</strong> {formatGroupNameDisplay(selectedGroup.name)}</div>
                     <div><strong>Status:</strong> {selectedGroup.status}</div>
                     <div><strong>Students:</strong> {selectedGroup._count?.students || 0}</div>
                     <div><strong>Location:</strong> {selectedGroup.location}</div>

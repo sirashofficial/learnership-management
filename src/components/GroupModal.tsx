@@ -122,7 +122,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="e.g., Azelis 26'"
+              placeholder="e.g., Azelis SA (2026)"
               required
             />
           </div>

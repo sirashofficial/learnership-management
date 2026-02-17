@@ -1,20 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Users, Building2, Calendar, TrendingUp, BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
 import StatCard from './StatCard';
 import { useDashboardStats } from '@/hooks/useDashboard';
 import StatDetailsModal from './StatDetailsModal';
+import { useGroups } from '@/contexts/GroupsContext';
 
 export default function DashboardStats() {
-  const { stats, isLoading } = useDashboardStats();
+  const { stats, isLoading, mutate } = useDashboardStats();
+  const { groups } = useGroups();
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
+
+  const totalStudentsFromGroups = useMemo(() => {
+    const groupList = groups || [];
+    const studentKeys = new Set<string>();
+
+    groupList.forEach((group: any) => {
+      (group.students || []).forEach((student: any) => {
+        const first = String(student?.firstName || '').trim().toLowerCase();
+        const last = String(student?.lastName || '').trim().toLowerCase();
+        if (first || last) {
+          studentKeys.add(`name:${first} ${last}`.trim());
+          return;
+        }
+
+        const id = student?.id || student?.studentId;
+        if (id) studentKeys.add(`id:${id}`);
+      });
+    });
+
+    if (studentKeys.size > 0) return studentKeys.size;
+
+    return groupList.reduce((sum: number, group: any) => sum + (group._count?.students || 0), 0);
+  }, [groups]);
+
+  const totalGroupsFromGroups = useMemo(() => (groups || []).length, [groups]);
+
+  const resolvedTotalStudents = totalGroupsFromGroups > 0
+    ? totalStudentsFromGroups
+    : stats?.totalStudents?.value || 0;
+
+  const resolvedTotalGroups = totalGroupsFromGroups > 0
+    ? totalGroupsFromGroups
+    : stats?.totalGroups?.value || 0;
+
+  useEffect(() => {
+    const handleFocus = () => mutate();
+    const handleVisibility = () => {
+      if (!document.hidden) mutate();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [mutate]);
 
   const statCards = [
     {
       id: 'students',
       title: 'Total Students',
-      value: stats?.totalStudents?.value || 0,
+      value: resolvedTotalStudents,
       trend: stats?.totalStudents?.trend,
       icon: Users,
       onClick: () => setSelectedStat('students'),
@@ -22,7 +72,7 @@ export default function DashboardStats() {
     {
       id: 'groups',
       title: 'Groups & Companies',
-      value: stats?.totalGroups?.value || 0,
+      value: resolvedTotalGroups,
       trend: stats?.totalGroups?.trend,
       icon: Building2,
       onClick: () => setSelectedStat('groups'),

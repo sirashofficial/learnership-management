@@ -13,7 +13,9 @@ import NextSessionPanel from '@/components/NextSessionPanel';
 import SessionAttendanceModal from '@/components/SessionAttendanceModal';
 import Toast, { useToast } from '@/components/Toast';
 import { fetcher } from '@/lib/swr-config';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 import useSWR from 'swr';
+import { useDashboardStats, useRecentActivity, useDashboardSchedule } from '@/hooks/useDashboard';
 import { Users, Building2, Calendar, BookOpen, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 // Dynamic load heavy components
@@ -31,6 +33,22 @@ function ComponentSkeleton({ height = 'h-48' }: { height?: string }) {
         <div className="space-y-2">
           <div className="h-3 bg-slate-200 rounded"></div>
           <div className="h-3 bg-slate-200 rounded w-5/6"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton card component for loading states
+function SkeletonCard({ height = 'h-48' }: { height?: string }) {
+  return (
+    <div className={`bg-white rounded-xl border border-slate-200 p-6 ${height}`}>
+      <div className="animate-pulse space-y-4">
+        <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+        <div className="space-y-3">
+          <div className="h-4 bg-gray-200 rounded"></div>
+          <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+          <div className="h-4 bg-gray-200 rounded w-4/5"></div>
         </div>
       </div>
     </div>
@@ -63,14 +81,18 @@ interface DashboardData {
   programmeHealth: ProgrammeHealth[];
 }
 
-function StatCard({ title, value, icon: Icon, suffix = '' }: { 
+function StatCard({ title, value, icon: Icon, suffix = '', onClick }: { 
   title: string; 
   value: number | string; 
   icon: any; 
   suffix?: string;
+  onClick?: () => void;
 }) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow">
+    <div 
+      className={`bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{title}</p>
@@ -122,6 +144,36 @@ export default function DashboardPage() {
   const dayCardRef = useRef<HTMLDivElement | null>(null);
   const [attendanceSession, setAttendanceSession] = useState<any | null>(null);
   const { toast, showToast, hideToast } = useToast();
+  
+  // SWR hooks for real-time data
+  const { stats: dashboardStats, isLoading: statsLoading } = useDashboardStats();
+  const { activities: recentActivities, isLoading: activitiesLoading } = useRecentActivity();
+  const { schedule: todaysSchedule, isLoading: scheduleLoading } = useDashboardSchedule();
+
+  const totalStudentsFromGroups = useMemo(() => {
+    const groupList = groups || [];
+    const studentKeys = new Set<string>();
+
+    groupList.forEach((group: any) => {
+      (group.students || []).forEach((student: any) => {
+        const first = String(student?.firstName || '').trim().toLowerCase();
+        const last = String(student?.lastName || '').trim().toLowerCase();
+        if (first || last) {
+          studentKeys.add(`name:${first} ${last}`.trim());
+          return;
+        }
+
+        const id = student?.id || student?.studentId;
+        if (id) studentKeys.add(`id:${id}`);
+      });
+    });
+
+    if (studentKeys.size > 0) return studentKeys.size;
+
+    return groupList.reduce((sum: number, group: any) => sum + (group._count?.students || 0), 0);
+  }, [groups]);
+
+  const totalGroupsFromGroups = useMemo(() => (groups || []).length, [groups]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -265,48 +317,55 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats */}
-        {loadingData ? (
+        {statsLoading || loadingData ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg border border-slate-200 p-4 animate-pulse">
-                <div className="h-4 bg-slate-200 rounded w-2/3 mb-2"></div>
-                <div className="h-8 bg-slate-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
               </div>
             ))}
           </div>
-        ) : dashboardData ? (
+        ) : (dashboardStats || dashboardData) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <StatCard
               title="Total Students"
-              value={dashboardData.stats.totalStudents}
+              value={totalGroupsFromGroups > 0
+                ? totalStudentsFromGroups
+                : (dashboardStats?.totalStudents?.value ?? dashboardStats?.totalStudents ?? dashboardData?.stats.totalStudents ?? 0)}
               icon={Users}
+              onClick={() => router.push('/students')}
             />
             <StatCard
               title="Groups & Companies"
-              value={dashboardData.stats.totalGroups}
+              value={totalGroupsFromGroups > 0
+                ? totalGroupsFromGroups
+                : (dashboardStats?.totalGroups?.value ?? dashboardStats?.totalGroups ?? dashboardData?.stats.totalGroups ?? 0)}
               icon={Building2}
             />
             <StatCard
               title="Attendance Rate"
-              value={dashboardData.stats.attendanceRate}
+              value={dashboardStats?.attendanceRate?.value ?? dashboardStats?.attendanceRate ?? dashboardData?.stats.attendanceRate ?? 0}
               icon={Calendar}
               suffix="%"
+              onClick={() => router.push('/attendance')}
             />
             <StatCard
               title="Active Courses"
-              value={dashboardData.stats.activeCourses}
+              value={dashboardStats?.activeCourses?.value ?? dashboardStats?.activeCourses ?? dashboardData?.stats.activeCourses ?? 0}
               icon={BookOpen}
             />
             <StatCard
               title="Completion Rate"
-              value={dashboardData.stats.completionRate}
+              value={dashboardStats?.completionRate?.value ?? dashboardStats?.completionRate ?? dashboardData?.stats.completionRate ?? 0}
               icon={CheckCircle}
               suffix="%"
             />
             <StatCard
               title="Pending Assessments"
-              value={dashboardData.stats.pendingAssessments}
+              value={dashboardStats?.pendingAssessments?.value ?? dashboardStats?.pendingAssessments ?? dashboardData?.stats.pendingAssessments ?? 0}
               icon={AlertCircle}
+              onClick={() => router.push('/assessments?status=PENDING')}
             />
           </div>
         ) : null}
@@ -352,7 +411,7 @@ export default function DashboardPage() {
                             href={`/groups/${group.groupId}`}
                             className="text-emerald-600 hover:text-emerald-700 font-medium"
                           >
-                            {group.groupName}
+                            {formatGroupNameDisplay(group.groupName || '')}
                           </Link>
                         </td>
                         <td className="py-3 text-sm text-slate-700">
@@ -399,18 +458,26 @@ export default function DashboardPage() {
 
         {/* Activity + Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Suspense fallback={<ComponentSkeleton />}>
-            <RecentActivity />
-          </Suspense>
+          {activitiesLoading ? (
+            <SkeletonCard />
+          ) : (
+            <Suspense fallback={<ComponentSkeleton />}>
+              <RecentActivity />
+            </Suspense>
+          )}
           <Suspense fallback={<ComponentSkeleton />}>
             <DashboardAlerts />
           </Suspense>
         </div>
 
         {/* Schedule */}
-        <Suspense fallback={<ComponentSkeleton height="h-96" />}>
-          <TodaysSchedule />
-        </Suspense>
+        {scheduleLoading ? (
+          <SkeletonCard height="h-96" />
+        ) : (
+          <Suspense fallback={<ComponentSkeleton height="h-96" />}>
+            <TodaysSchedule />
+          </Suspense>
+        )}
       </div>
 
       <aside className="w-full min-[1200px]:w-[300px] flex-shrink-0 space-y-4">
@@ -506,7 +573,7 @@ export default function DashboardPage() {
                           style={{ backgroundColor: session.group?.colour || '#10b981' }}
                         />
                         <span className="font-semibold text-slate-900">
-                          {session.group?.name || 'Group'}
+                          {formatGroupNameDisplay(session.group?.name || 'Group')}
                         </span>
                         <span>· {session.venue || 'Venue TBC'}</span>
                         <span>· {session.startTime}–{session.endTime}</span>
@@ -571,7 +638,7 @@ export default function DashboardPage() {
           onClose={() => setAttendanceSession(null)}
           onSaved={(summary) => {
             showToast(
-              `Attendance saved for ${attendanceSession.group?.name || 'group'} — ${summary.present} present, ${summary.absent} absent`,
+              `Attendance saved for ${formatGroupNameDisplay(attendanceSession.group?.name || 'group')} — ${summary.present} present, ${summary.absent} absent`,
               'success'
             );
             setAttendanceSession(null);

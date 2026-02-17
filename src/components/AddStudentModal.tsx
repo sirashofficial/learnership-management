@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useGroups } from "@/contexts/GroupsContext";
+import { formatGroupNameDisplay } from "@/lib/groupName";
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -141,7 +142,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
               </label>
               {groupId && groupName ? (
                 <div className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-900 font-medium">
-                  {groupName}
+                  {formatGroupNameDisplay(groupName)}
                 </div>
               ) : (
                 <select
@@ -153,7 +154,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                   <option value="">Select group...</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.name} - {group.location}
+                      {formatGroupNameDisplay(group.name)} - {group.location}
                     </option>
                   ))}
                 </select>

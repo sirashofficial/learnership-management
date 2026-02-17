@@ -8,6 +8,7 @@ import { BookOpen, CheckCircle, Clock, Calendar, TrendingUp, Award, ChevronRight
 import { cn } from "@/lib/utils";
 import { format, differenceInDays } from "date-fns";
 import Link from "next/link";
+import { formatGroupNameDisplay } from "@/lib/groupName";
 
 type ViewMode = 'individual' | 'group';
 
@@ -196,7 +197,7 @@ export default function ProgressPage() {
                     <option value="">-- Select a group --</option>
                     {groups.map((group) => (
                       <option key={group.id} value={group.id}>
-                        {group.name}
+                        {formatGroupNameDisplay(group.name)}
                       </option>
                     ))}
                   </select>

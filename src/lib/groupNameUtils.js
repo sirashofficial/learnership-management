@@ -8,7 +8,10 @@
 function normalizeGroupName(name) {
   if (!name) return [];
   const n = name.toLowerCase();
-  if (n.includes("montazility") || n.includes("montzelity") || n.includes("montezility")) {
+  const normalized = n
+    .replace("montazility", "montzelity")
+    .replace("montezility", "montzelity");
+  if (normalized.includes("montzelity")) {
     return [
       "CITY LOGISTICS (LP) - 2026",
       "AZELIS SA (LP) - 2026",

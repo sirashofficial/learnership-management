@@ -1,4 +1,4 @@
-# Module Tracking Migration Steps
+﻿# Module Tracking Migration Steps
 
 ## Quick Start Guide
 
@@ -21,14 +21,14 @@ npx tsx prisma/seed-modules.ts
 
 You should see:
 ```
-✅ Created Module 1: Numeracy with 5 unit standards
-✅ Created Module 2: Communication Skills with 5 unit standards
-✅ Created Module 3: Market Requirements with 4 unit standards
-✅ Created Module 4: Sector and Industry with 3 unit standards
-✅ Created Module 5: Financial Requirements with 3 unit standards
-✅ Created Module 6: Business Operations with 6 unit standards
+âœ… Created Module 1: Numeracy with 5 unit standards
+âœ… Created Module 2: Communication Skills with 5 unit standards
+âœ… Created Module 3: Market Requirements with 4 unit standards
+âœ… Created Module 4: Sector and Industry with 3 unit standards
+âœ… Created Module 5: Financial Requirements with 3 unit standards
+âœ… Created Module 6: Business Operations with 6 unit standards
 
-📊 Seed Summary:
+ðŸ“Š Seed Summary:
    Modules: 6
    Unit Standards: 27
    Total Credits: 137
@@ -69,3 +69,4 @@ Open your browser to `http://localhost:3001` and the modules should now be avail
 - Check the error message
 - Make sure you're in the correct directory
 - Verify `prisma/seed-modules.ts` exists
+

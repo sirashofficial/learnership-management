@@ -1,4 +1,4 @@
-**CRITICAL: You MUST complete these steps in order. Do not skip ahead to writing code.**
+﻿**CRITICAL: You MUST complete these steps in order. Do not skip ahead to writing code.**
 
 If you need to fill out a PDF form, first check to see if the PDF has fillable form fields. Run this script from this file's directory:
  `python scripts/check_fillable_fields <file.pdf>`, and depending on the result go to either the "Fillable fields" or "Non-fillable fields" and follow those instructions.
@@ -92,9 +92,9 @@ These are some examples of form structures that you might see:
 
 *Label inside box*
 ```
-┌────────────────────────┐
-│ Name:                  │
-└────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Name:                  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 The input area should be to the right of the "Name" label and extend to the edge of the box.
 
@@ -120,10 +120,10 @@ The input area should extend from the bottom of the label to the line, and shoul
 
 *Checkboxes*
 ```
-Are you a US citizen? Yes □  No □
+Are you a US citizen? Yes â–¡  No â–¡
 ```
 For checkboxes:
-- Look for small square boxes (□) - these are the actual checkboxes to target. They may be to the left or right of their labels.
+- Look for small square boxes (â–¡) - these are the actual checkboxes to target. They may be to the left or right of their labels.
 - Distinguish between label text ("Yes", "No") and the clickable checkbox squares.
 - The entry bounding box should cover ONLY the small square, not the text label.
 
@@ -203,3 +203,4 @@ If there are errors, reanalyze the relevant fields, adjust the bounding boxes, a
 ### Step 4: Add annotations to the PDF
 Run this script from this file's directory to create a filled-out PDF using the information in fields.json:
 `python scripts/fill_pdf_form_with_annotations.py <input_pdf_path> <path_to_fields.json> <output_pdf_path>
+

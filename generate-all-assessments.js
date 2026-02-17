@@ -42,11 +42,11 @@ async function generateAssessmentsForAllStudents() {
             // Check existing assessments
             const existingAssessments = await prisma.assessment.findMany({
                 where: { studentId: student.id },
-                select: { unitStandardId: true }
+                select: { unitStandardId: true, type: true }
             });
 
-            const existingUnitStandardIds = new Set(
-                existingAssessments.map(a => a.unitStandardId)
+            const existingAssessmentKeys = new Set(
+                existingAssessments.map(a => `${a.unitStandardId}:${a.type}`)
             );
 
             console.log(`   ✓ Already has ${existingAssessments.length} assessments`);
@@ -54,19 +54,29 @@ async function generateAssessmentsForAllStudents() {
             // Generate missing assessments
             const assessmentsToCreate = [];
 
+            const assessmentTypes = ['FORMATIVE', 'SUMMATIVE', 'WORKPLACE'];
+            const methodByType = {
+                FORMATIVE: 'KNOWLEDGE',
+                SUMMATIVE: 'PRACTICAL',
+                WORKPLACE: 'OBSERVATION'
+            };
+
             for (const module of modules) {
                 for (const unitStandard of module.unitStandards) {
-                    if (!existingUnitStandardIds.has(unitStandard.id)) {
-                        assessmentsToCreate.push({
-                            studentId: student.id,
-                            unitStandardId: unitStandard.id,
-                            type: 'FORMATIVE',
-                            method: 'KNOWLEDGE',
-                            result: 'PENDING',
-                            dueDate: new Date(),
-                            attemptNumber: 1,
-                            moderationStatus: 'PENDING'
-                        });
+                    for (const type of assessmentTypes) {
+                        const key = `${unitStandard.id}:${type}`;
+                        if (!existingAssessmentKeys.has(key)) {
+                            assessmentsToCreate.push({
+                                studentId: student.id,
+                                unitStandardId: unitStandard.id,
+                                type,
+                                method: methodByType[type],
+                                result: 'PENDING',
+                                dueDate: new Date(),
+                                attemptNumber: 1,
+                                moderationStatus: 'PENDING'
+                            });
+                        }
                     }
                 }
             }

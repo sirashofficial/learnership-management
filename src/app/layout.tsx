@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Providers } from "@/components/providers";
 import { AIChat } from "@/components/ai/AIChat";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ThemeInitializer from "@/components/ThemeInitializer";
 
 // Outfit - Modern, premium, distinctive sans-serif
 const outfit = Outfit({
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className={`${outfit.variable} ${lora.variable} font-sans antialiased bg-white text-slate-900`}>
         <ErrorBoundary>
           <Providers>
+            <ThemeInitializer />
             <MainLayout>
               {children}
               <AIChat />
