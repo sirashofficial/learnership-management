@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 
+// Force dynamic rendering for this route (requires request.url for query params)
+export const dynamic = 'force-dynamic';
+
 // GET /api/groups/progress — Returns actual assessment progress for each group
 // Used by Group Cards to show Projected vs Actual progress
 export async function GET(request: NextRequest) {
