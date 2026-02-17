@@ -8,6 +8,7 @@ import { fetcher } from "@/lib/swr-config";
 import StudentDetailsModal from "@/components/StudentDetailsModal";
 import Toast, { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/AccessibilityComponents";
 import { formatGroupNameDisplay } from "@/lib/groupName";
 
 interface GroupDrawerProps {
@@ -526,16 +527,6 @@ export default function GroupDrawer({
                 )}
                 {students.map((student: any) => {
                   const attendanceRateForStudent = attendanceRatesData?.data?.[student.id]?.rate ?? 0;
-                  const statusClasses =
-                    student.status === "AT_RISK"
-                      ? "bg-red-100 text-red-700"
-                      : student.status === "COMPLETED"
-                      ? "bg-blue-100 text-blue-700"
-                      : student.status === "ACTIVE"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : student.status === "WITHDRAWN"
-                      ? "bg-slate-200 text-slate-700"
-                      : "bg-amber-100 text-amber-700";
                   return (
                     <button
                       key={student.id}
@@ -555,9 +546,7 @@ export default function GroupDrawer({
                         <div>Attendance: {attendanceRateForStudent.toFixed(0)}%</div>
                         <div>Credits: {student.totalCreditsEarned || 0}</div>
                         <div>
-                          <span className={cn("px-2 py-0.5 rounded-full font-semibold", statusClasses)}>
-                            {student.status}
-                          </span>
+                          <StatusBadge status={student.status || 'ACTIVE'} />
                         </div>
                       </div>
                     </button>

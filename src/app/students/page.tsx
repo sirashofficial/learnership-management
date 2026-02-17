@@ -10,6 +10,7 @@ import { useStudents, type Student } from '@/hooks/useStudents';
 import { useGroups } from '@/contexts/GroupsContext';
 import { formatGroupNameDisplay } from '@/lib/groupName';
 import { getStudentAlert, getAlertColor, type StudentAlert } from '@/lib/progress-alerts';
+import { StatusBadge } from '@/components/ui/AccessibilityComponents';
 import {
   Search,
   Filter,
@@ -350,23 +351,6 @@ export default function StudentsPage() {
   const handleViewDetails = (student: Student) => {
     setSelectedStudent(student);
     setShowDetailsModal(true);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
-      case 'COMPLETED':
-        return 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400';
-      case 'SUSPENDED':
-        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
-      case 'WITHDRAWN':
-        return 'bg-red-500/10 text-red-600 dark:text-red-400';
-      case 'ARCHIVED':
-        return 'bg-slate-500/10 text-slate-600 dark:text-slate-400';
-      default:
-        return 'bg-slate-100 text-slate-500';
-    }
   };
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -841,9 +825,7 @@ export default function StudentsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(student.status)}`}>
-                          {student.status}
-                        </span>
+                        <StatusBadge status={student.status || 'ACTIVE'} />
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
                         {format(new Date(student.createdAt), 'MMM d, yyyy')}
@@ -946,9 +928,7 @@ export default function StudentsPage() {
                   <span className="text-sm text-slate-600">
                     Status
                   </span>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(student.status)}`}>
-                    {student.status}
-                  </span>
+                  <StatusBadge status={student.status || 'ACTIVE'} />
                 </div>
 
                 {/* Enrollment Date */}
