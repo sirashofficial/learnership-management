@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { requireAuth } from '@/lib/middleware';
 
 const prisma = new PrismaClient();
 
@@ -7,11 +8,15 @@ export const dynamic = 'force-dynamic';
 
 // GET - Fetch user profile
 export async function GET(request: NextRequest) {
+  const { error, user } = await requireAuth(request);
+  if (error) return error;
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
-    // In a real app, get userId from session/auth
-    const userId = request.headers.get('x-user-id') || 'default-user-id';
+    // Get userId from authenticated user
+    const userId = user.userId;
     
-    const user = await prisma.user.findUnique({
+    const userRecord = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -23,14 +28,14 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!userRecord) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json(userRecord);
   } catch (error) {
     console.error('Error fetching profile:', error);
     return NextResponse.json(
@@ -42,12 +47,14 @@ export async function GET(request: NextRequest) {
 
 // PUT - Update user profile
 export async function PUT(request: NextRequest) {
+  const { error, user } = await requireAuth(request);
+  if (error) return error;
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
+    const userId = user.userId;
     const body = await request.json();
     const { name, email, phone, organization, bio } = body;
-
-    // In a real app, get userId from session/auth
-    const userId = request.headers.get('x-user-id') || 'default-user-id';
 
     // Validation
     if (!name || name.trim().length === 0) {

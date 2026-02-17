@@ -2,10 +2,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { requireAuth } from '@/lib/middleware';
 
 // GET /api/attendance
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
     const studentId = searchParams.get('studentId');
@@ -65,6 +68,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   console.log('🔵 [ATTENDANCE POST] Handler called - method:', request.method);
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
     console.log('🔵 [ATTENDANCE POST] Parsed body, records count:', body.records?.length);
     
@@ -320,6 +326,9 @@ export async function POST(request: NextRequest) {
 // PUT /api/attendance - Update existing attendance
 export async function PUT(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
     const { id, status, notes, markedBy } = body;
 
@@ -350,6 +359,9 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/attendance - Delete attendance record
 export async function DELETE(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

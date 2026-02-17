@@ -307,10 +307,14 @@ const getCurrentModuleInfo = (plan: any) => {
 
     for (const unit of module.unitStandards) {
       if (!unit?.startDate || !unit?.endDate) continue;
-      const start = normalizeDate(parsePlanDate(unit.startDate));
-      const end = normalizeDate(parsePlanDate(unit.endDate));
+      const start = parsePlanDate(unit.startDate);
+      const end = parsePlanDate(unit.endDate);
+      if (!start || !end) continue;
+      
+      const startNorm = normalizeDate(start);
+      const endNorm = normalizeDate(end);
 
-      if (today >= start && today <= end) {
+      if (today >= startNorm && today <= endNorm) {
         const moduleNumber = module.moduleNumber ?? module.moduleIndex;
         const moduleInfo = MODULE_INFO.find((info) => info.number === moduleNumber);
         return {
@@ -324,9 +328,12 @@ const getCurrentModuleInfo = (plan: any) => {
   const lastModule = plan.modules[plan.modules.length - 1];
   const workplaceEndValue = lastModule?.workplaceActivityEndDate || lastModule?.workplaceActivity?.endDate;
   if (workplaceEndValue) {
-    const workplaceEnd = normalizeDate(parsePlanDate(workplaceEndValue));
-    if (today > workplaceEnd) {
-      return { label: 'Programme Complete', moduleNumber: null };
+    const parsed = parsePlanDate(workplaceEndValue);
+    if (parsed) {
+      const workplaceEnd = normalizeDate(parsed);
+      if (today > workplaceEnd) {
+        return { label: 'Programme Complete', moduleNumber: null };
+      }
     }
   }
 
@@ -356,7 +363,10 @@ const getCreditCompletion = (plan: any): { completed: number; percentage: number
   for (const module of plan.modules) {
     if (module.workplaceActivityEndDate || module.workplaceActivity?.endDate) {
       const endValue = module.workplaceActivityEndDate || module.workplaceActivity?.endDate;
-      const workplaceEnd = normalizeDate(parsePlanDate(endValue));
+      const parsed = parsePlanDate(endValue);
+      if (!parsed) continue;
+      
+      const workplaceEnd = normalizeDate(parsed);
 
       if (today > workplaceEnd) {
         // Find the module info to get its credit value
@@ -507,7 +517,7 @@ export default function GroupsPage() {
     const storedPlan = resolveRolloutPlan(group);
     const creditProgress = getCreditCompletion(storedPlan);
     const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
-    const actualPercent = actualProgress?.avgPercent || actualProgress?.avgProgressPercent || 0;
+    const actualPercent = actualProgress?.avgPercent || 0;
     const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan));
     return {
       id: group.id,
@@ -624,7 +634,7 @@ export default function GroupsPage() {
     const storedPlan = resolveRolloutPlan(group);
     const creditProgress = getCreditCompletion(storedPlan);
     const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
-    const actualPercent = actualProgress?.avgPercent || actualProgress?.avgProgressPercent || 0;
+    const actualPercent = actualProgress?.avgPercent || 0;
     const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan));
 
     setDrawerMeta({
@@ -632,7 +642,7 @@ export default function GroupsPage() {
       currentModuleLabel: getCurrentModuleLabel(storedPlan),
       attendanceRate: attendanceByGroup[group.id] ?? 0,
       actualProgress: actualProgress ? {
-        avgCredits: actualProgress.avgCredits || actualProgress.avgCreditsPerStudent || 0,
+        avgCredits: actualProgress.avgCredits || 0,
         avgPercent: actualPercent,
       } : undefined,
     });
@@ -1160,7 +1170,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
   const currentModule = getCurrentModuleInfo(rolloutPlan);
   const creditProgress = getCreditCompletion(rolloutPlan);
   const resolvedActualProgress = actualProgress || group.actualProgress;
-  const actualPercent = resolvedActualProgress?.avgPercent || resolvedActualProgress?.avgProgressPercent || 0;
+  const actualPercent = resolvedActualProgress?.avgPercent || 0;
   const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan));
 
   const handleExportReport = async (e: React.MouseEvent) => {
@@ -1265,7 +1275,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all" style={{ width: `${actualProgress?.avgPercent || 0}%` }} />
               </div>
               <span className="text-[10px] font-semibold text-blue-700 whitespace-nowrap w-20 text-right">
-                {actualPercent}% ({resolvedActualProgress?.avgCredits || resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
+                {actualPercent}% ({resolvedActualProgress?.avgCredits || 0}/{TOTAL_CREDITS})
               </span>
             </div>
           </div>
@@ -1420,7 +1430,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <CheckCircle2 className="w-3 h-3" /> Actual
             </span>
             <span className="font-semibold text-blue-700 dark:text-blue-300">
-              {actualPercent}% ({resolvedActualProgress?.avgCredits || resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
+              {actualPercent}% ({resolvedActualProgress?.avgCredits || 0}/{TOTAL_CREDITS})
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">

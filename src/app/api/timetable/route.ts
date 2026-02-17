@@ -8,10 +8,17 @@ async function getOrCreateDefaultModule() {
 
   return prisma.module.create({
     data: {
+      moduleNumber: 1,
       code: 'GEN001',
       name: 'General Training',
+      fullName: 'General Training Module',
+      purpose: 'General training and orientation',
       description: 'General training sessions',
       credits: 10,
+      notionalHours: 40,
+      classroomHours: 30,
+      workplaceHours: 10,
+      order: 1,
     },
   });
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import { User, Calendar, TrendingUp, AlertCircle, Edit, Trash2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,7 @@ interface StudentCardProps {
   onDelete: () => void;
 }
 
-export default function StudentCard({ 
+function StudentCard({ 
   student, 
   onMarkAttendance, 
   onUpdateProgress, 
@@ -73,6 +74,8 @@ export default function StudentCard({
               alt={student.name}
               width={56}
               height={56}
+              sizes="56px"
+              loading="lazy"
               className="w-14 h-14 rounded-full object-cover"
               unoptimized
             />
@@ -115,6 +118,7 @@ export default function StudentCard({
                 onClick={onEdit}
                 className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Edit student"
+                aria-label="Edit student"
               >
                 <Edit className="w-4 h-4 text-slate-600" />
               </button>
@@ -122,6 +126,7 @@ export default function StudentCard({
                 onClick={onDelete}
                 className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                 title="Delete student"
+                aria-label="Delete student"
               >
                 <Trash2 className="w-4 h-4 text-red-600" />
               </button>
@@ -211,3 +216,6 @@ export default function StudentCard({
     </div>
   );
 }
+
+// Memoize to prevent unnecessary re-renders
+export default memo(StudentCard);

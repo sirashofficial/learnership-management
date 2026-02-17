@@ -2,10 +2,15 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { normalizeGroupName } from '@/lib/groupNameUtils';
+import { requireAuth } from '@/lib/middleware';
+
 // GET /api/groups
 export async function GET(request: NextRequest) {
   console.log('API HIT: /api/groups');
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     console.log('GET /api/groups called');
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -145,6 +150,9 @@ export async function GET(request: NextRequest) {
 // POST /api/groups
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
 
     // Validate required fields
@@ -186,6 +194,9 @@ export async function POST(request: NextRequest) {
 // PUT /api/groups
 export async function PUT(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const body = await request.json();
     const { id, ...data } = body;
 
@@ -215,6 +226,9 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/groups
 export async function DELETE(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request);
+    if (error) return error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

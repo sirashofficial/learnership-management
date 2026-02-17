@@ -7,12 +7,12 @@ import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetcher } from '@/lib/swr-config';
 import { useGroups } from '@/contexts/GroupsContext';
 import MiniCalendar from '@/components/calendar/MiniCalendar';
-import SessionDetailPanel from '@/components/dashboard/SessionDetailPanel';
-import SessionHoverCard from '@/components/dashboard/SessionHoverCard';
+import SessionDetailPanel from '@/components/SessionDetailPanel';
+import SessionHoverCard from '@/components/SessionHoverCard';
 import NextSessionPanel from '@/components/dashboard/NextSessionPanel';
 import { getGroupColour } from '@/lib/groupColours';
 import SessionAttendanceModal from '@/components/modals/SessionAttendanceModal';
-import Toast, { useToast } from '@/components/ui/Toast';
+import Toast, { useToast } from '@/components/Toast';
 import { formatGroupNameDisplay } from '@/lib/groupName';
 
 interface TimetableSession {
