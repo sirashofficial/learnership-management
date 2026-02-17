@@ -1,5 +1,6 @@
-import { formatGroupNameDisplay } from '@/lib/groupName';
 "use client";
+
+import { formatGroupNameDisplay } from '@/lib/groupName';
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";

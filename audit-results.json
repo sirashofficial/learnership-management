@@ -1,0 +1,27 @@
+{
+  "pages": [],
+  "brokenLinks": [],
+  "missingAssets": [
+    {
+      "url": "http://localhost:3000/_next/static/chunks/pages/_error.js",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://localhost:3000/login",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://localhost:3000/login",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "accessibilityIssues": [],
+  "metaTags": {},
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "errors": [
+    "page.screenshot: Target page, context or browser has been closed\nCall log:\n  - taking page screenshot\n  - waiting for fonts to load...\n  - fonts loaded\n"
+  ]
+}

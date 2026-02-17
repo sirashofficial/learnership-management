@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import type { Metadata } from 'next';
+
+// Note: Since this is a client component, metadata must be set in layout.tsx
+// For dynamic titles, consider using next/head or document.title
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -19,10 +23,22 @@ import { useDashboardStats, useRecentActivity, useDashboardSchedule } from '@/ho
 import { Users, Building2, Calendar, BookOpen, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 // Dynamic load heavy components
-const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), { ssr: false });
-const RecentActivity = dynamic(() => import('@/components/RecentActivity'), { ssr: false });
-const DashboardAlerts = dynamic(() => import('@/components/DashboardAlerts'), { ssr: false });
-const TodaysSchedule = dynamic(() => import('@/components/TodaysSchedule'), { ssr: false });
+const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), { 
+  ssr: false,
+  loading: () => <ComponentSkeleton height="h-64" />
+});
+const RecentActivity = dynamic(() => import('@/components/RecentActivity'), { 
+  ssr: false,
+  loading: () => <ComponentSkeleton height="h-48" />
+});
+const DashboardAlerts = dynamic(() => import('@/components/DashboardAlerts'), { 
+  ssr: false,
+  loading: () => <ComponentSkeleton height="h-48" />
+});
+const TodaysSchedule = dynamic(() => import('@/components/TodaysSchedule'), { 
+  ssr: false,
+  loading: () => <ComponentSkeleton height="h-96" />
+});
 
 // Lightweight loading skeleton
 function ComponentSkeleton({ height = 'h-48' }: { height?: string }) {
@@ -181,6 +197,11 @@ export default function DashboardPage() {
     }
   }, [user, isLoading, router]);
 
+  // Set page title dynamically
+  useEffect(() => {
+    document.title = 'Dashboard | YEHA Training';
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchDashboardData();
@@ -305,16 +326,17 @@ export default function DashboardPage() {
 
   return (
     <div className="min-[1200px]:flex min-[1200px]:items-start gap-6">
-      <div className="flex-1 space-y-6">
-        {/* Welcome */}
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Welcome back, {user.name}
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Here&apos;s an overview of your learnership programme.
-          </p>
-        </div>
+    <div className="flex-1 space-y-6">
+      {/* Welcome */}
+      <div>
+        <h1 className="sr-only">Training Dashboard</h1>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          Welcome back, {user.name}
+        </h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Here&apos;s an overview of your learnership programme.
+        </p>
+      </div>
 
         {/* Stats */}
         {statsLoading || loadingData ? (

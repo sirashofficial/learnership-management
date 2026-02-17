@@ -39,8 +39,15 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
     return (
         <div className="min-h-screen bg-white">
+            <a 
+                href="#main-content" 
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:rounded-lg focus:shadow-lg"
+            >
+                Skip to main content
+            </a>
             <Sidebar isCollapsed={isSidebarCollapsed} onToggle={handleToggleSidebar} />
             <main
+                id="main-content"
                 className={`min-h-screen transition-all duration-300 ease-in-out ${
                     isSidebarCollapsed ? 'ml-[var(--sidebar-collapsed)]' : 'ml-[var(--sidebar-width)]'
                 }`}

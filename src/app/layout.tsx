@@ -31,9 +31,49 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "YEHA - Youth Education & Skills Management",
-  description: "Comprehensive SSETA NVC Level 2 Training Management Platform",
-  keywords: "SSETA,NVC,training,education,skills development",
+  title: {
+    default: "YEHA - Youth Education & Skills Management",
+    template: "%s | YEHA Training",
+  },
+  description: "Comprehensive SSETA NVC Level 2 Training Management Platform for facilitators to manage students, training sites, assessments, and curriculum delivery.",
+  keywords: "SSETA, NVC Level 2, training management, learnership, skills development, education, attendance tracking, assessment management, POE, South Africa",
+  authors: [{ name: "YEHA Training" }],
+  creator: "YEHA Training",
+  publisher: "YEHA Training",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_ZA',
+    url: 'https://yeha.training',
+    siteName: 'YEHA Training Management',
+    title: 'YEHA - Youth Education & Skills Management',
+    description: 'Comprehensive SSETA NVC Level 2 Training Management Platform',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'YEHA Training Management System',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'YEHA - Youth Education & Skills Management',
+    description: 'Comprehensive SSETA NVC Level 2 Training Management Platform',
+    images: ['/og-image.png'],
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://yeha.training'),
 };
 
 export default function RootLayout({

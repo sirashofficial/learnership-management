@@ -161,11 +161,13 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <div className="mt-6 border-t border-slate-200 pt-6">
-          <p className="text-xs text-center text-slate-500">
-            Demo credentials: ash@yeha.training / password123
-          </p>
-        </div>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-6 border-t border-slate-200 pt-6">
+            <p className="text-xs text-center text-slate-500">
+              Demo credentials: ash@yeha.training / password123
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
