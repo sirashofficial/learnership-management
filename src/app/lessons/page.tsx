@@ -1,7 +1,7 @@
-import { formatGroupNameDisplay } from '@/lib/groupName';
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatGroupNameDisplay } from '@/lib/groupName';
 import { useRouter } from "next/navigation";
 import { Lightbulb, Plus, Calendar, Clock, Users, BookOpen, Target, CheckCircle, X, Save, MapPin, Sparkles, RefreshCw, CalendarPlus, Edit2, Loader2, AlertCircle, FileText } from "lucide-react";
 import { mutate } from "swr";

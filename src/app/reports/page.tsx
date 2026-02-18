@@ -1,7 +1,7 @@
-import { formatGroupNameDisplay } from '@/lib/groupName';
 'use client';
 
 import { useState, useEffect } from 'react';
+import { formatGroupNameDisplay } from '@/lib/groupName';
 // ...existing code...
 import { useGroups } from '@/contexts/GroupsContext';
 import { format } from 'date-fns';
