@@ -338,6 +338,5 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
           </div>
         </form>
       </div>
-    </div>
   );
 }
