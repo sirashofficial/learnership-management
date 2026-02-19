@@ -54,12 +54,16 @@ export async function GET(request: NextRequest) {
         _count: {
           select: { students: true },
         },
+        company: {
+          select: { name: true },
+        },
       },
     });
 
     const groupDistribution = groupsWithCounts.map((group: any) => ({
       id: group.id,
       name: group.name,
+      companyName: group.company?.name || 'No Company',
       studentCount: group._count.students,
       percentage: 0, // Will calculate after getting total
     }));
