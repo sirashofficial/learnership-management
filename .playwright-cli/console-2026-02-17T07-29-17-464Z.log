@@ -1,0 +1,48 @@
+[    2332ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[    4817ms] Error: JWT_SECRET environment variable is required. Add it to your .env.local file.
+    at <unknown> (webpack-internal:///(middleware)/./src/lib/auth.ts:13)
+    at eval (webpack-internal:///(middleware)/./src/lib/auth.ts:13:11)
+    at (middleware)/./src/lib/auth.ts (file:///home/engine/project/.next/server/src/middleware.js:609:1)
+    at __webpack_require__ (file:///home/engine/project/.next/server/edge-runtime-webpack.js:37:33)
+    at fn (file:///home/engine/project/.next/server/edge-runtime-webpack.js:273:21)
+    at eval (webpack-internal:///(middleware)/./src/middleware.ts:7:67)
+    at (middleware)/./src/middleware.ts (file:///home/engine/project/.next/server/src/middleware.js:620:1)
+    at __webpack_require__ (file:///home/engine/project/.next/server/edge-runtime-webpack.js:37:33)
+    at fn (file:///home/engine/project/.next/server/edge-runtime-webpack.js:273:21)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fhome%2Fengine%2Fproject%2Fsrc%2Fmiddleware.ts&page=%2Fsrc%2Fmiddleware&rootDir=%2Fhome%2Fengine%2Fproject&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:76)
+    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fhome%2Fengine%2Fproject%2Fsrc%2Fmiddleware.ts&page=%2Fsrc%2Fmiddleware&rootDir=%2Fhome%2Fengine%2Fproject&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///home/engine/project/.next/server/src/middleware.js:40:1)
+[   10119ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/hot-reloader-client.js:349
+[   10531ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/hot-reloader-client.js:349
+[   10548ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[   10891ms] Error: JWT_SECRET environment variable is required. Add it to your .env.local file.
+    at <unknown> (webpack-internal:///(middleware)/./src/lib/auth.ts:13)
+    at eval (webpack-internal:///(middleware)/./src/lib/auth.ts:13:11)
+    at (middleware)/./src/lib/auth.ts (file:///home/engine/project/.next/server/src/middleware.js:609:1)
+    at __webpack_require__ (file:///home/engine/project/.next/server/edge-runtime-webpack.js:37:33)
+    at fn (file:///home/engine/project/.next/server/edge-runtime-webpack.js:273:21)
+    at eval (webpack-internal:///(middleware)/./src/middleware.ts:7:67)
+    at (middleware)/./src/middleware.ts (file:///home/engine/project/.next/server/src/middleware.js:620:1)
+    at __webpack_require__ (file:///home/engine/project/.next/server/edge-runtime-webpack.js:37:33)
+    at fn (file:///home/engine/project/.next/server/edge-runtime-webpack.js:273:21)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fhome%2Fengine%2Fproject%2Fsrc%2Fmiddleware.ts&page=%2Fsrc%2Fmiddleware&rootDir=%2Fhome%2Fengine%2Fproject&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:76)
+    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fhome%2Fengine%2Fproject%2Fsrc%2Fmiddleware.ts&page=%2Fsrc%2Fmiddleware&rootDir=%2Fhome%2Fengine%2Fproject&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///home/engine/project/.next/server/src/middleware.js:40:1)
+[   10902ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[   29988ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[   30482ms] Error: JWT_SECRET environment variable is required. Add it to your .env.local file.
+    at <unknown> (webpack-internal:///(middleware)/./src/lib/auth.ts:13)
+    at eval (webpack-internal:///(middleware)/./src/lib/auth.ts:13:11)
+    at (middleware)/./src/lib/auth.ts (file:///home/engine/project/.next/server/src/middleware.js:609:1)
+    at __webpack_require__ (file:///home/engine/project/.next/server/edge-runtime-webpack.js:37:33)
+    at fn (file:///home/engine/project/.next/server/edge-runtime-webpack.js:273:21)
+    at eval (webpack-internal:///(middleware)/./src/middleware.ts:7:67)
+    at (middleware)/./src/middleware.ts (file:///home/engine/project/.next/server/src/middleware.js:620:1)
+    at __webpack_require__ (file:///home/engine/project/.next/server/edge-runtime-webpack.js:37:33)
+    at fn (file:///home/engine/project/.next/server/edge-runtime-webpack.js:273:21)
+    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fhome%2Fengine%2Fproject%2Fsrc%2Fmiddleware.ts&page=%2Fsrc%2Fmiddleware&rootDir=%2Fhome%2Fengine%2Fproject&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:76)
+    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fhome%2Fengine%2Fproject%2Fsrc%2Fmiddleware.ts&page=%2Fsrc%2Fmiddleware&rootDir=%2Fhome%2Fengine%2Fproject&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///home/engine/project/.next/server/src/middleware.js:40:1)
+[   33862ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   34863ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   35865ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   36867ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   37868ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
+[   42870ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ webpack-internal:///./node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:63
