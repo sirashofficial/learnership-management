@@ -1234,7 +1234,30 @@ interface GroupCardProps {
 
 function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, onQuickView, isSelected, onSelect, actualProgress }: GroupCardProps) {
   const router = useRouter();
-  
+
+  const handleExportReport = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(`/api/reports/group-progress?groupId=${group.id}&format=csv`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `group-${group.name.replace(/[^a-z0-9]/gi, '_')}-progress.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Failed to export report');
+      }
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      alert('Failed to export report');
+    }
+  };
+
   try {
     // DEFENSIVE: Validate group is an object with required properties
     if (!group || typeof group !== 'object') {
@@ -1261,29 +1284,6 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
     const resolvedActualProgress = actualProgress || group.actualProgress;
     const actualPercent = typeof resolvedActualProgress?.avgPercent === 'number' ? resolvedActualProgress.avgPercent : 0;
     const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
-
-  const handleExportReport = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const response = await fetch(`/api/reports/group-progress?groupId=${group.id}&format=csv`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `group-${group.name.replace(/[^a-z0-9]/gi, '_')}-progress.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert('Failed to export report');
-      }
-    } catch (error) {
-      console.error('Error exporting report:', error);
-      alert('Failed to export report');
-    }
-  };
 
     if (viewMode === 'list') {
       return (
@@ -1363,10 +1363,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3" /> Real</span>
               <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all" style={{ width: `${actualProgress?.avgPercent || 0}%` }} />
+                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all" style={{ width: `${String(actualPercent)}%` }} />
               </div>
               <span className="text-[10px] font-semibold text-blue-700 whitespace-nowrap w-20 text-right">
-                {actualPercent}% ({resolvedActualProgress?.avgCredits || 0}/{TOTAL_CREDITS})
+                {String(actualPercent)}% ({String(typeof resolvedActualProgress?.avgCredits === 'number' ? resolvedActualProgress.avgCredits : 0)}/{String(TOTAL_CREDITS)})
               </span>
             </div>
           </div>
@@ -1616,12 +1616,22 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
       </div>
     </div>
   );
-  } catch (error) {
-    console.error('GroupCard render error:', error, { groupId: group?.id, groupName: group?.name });
+  } catch (error: any) {
+    console.error('===== GroupCard RENDER ERROR =====');
+    console.error('Error:', error?.message);
+    console.error('Stack:', error?.stack);
+    console.error('Group data:', { id: group?.id, name: group?.name });
+    if (typeof studentCount !== 'undefined') console.error('studentCount type:', typeof studentCount, 'value:', studentCount);
+    if (typeof displayName !== 'undefined') console.error('displayName type:', typeof displayName, 'value:', displayName);
+    if (typeof attendanceRate !== 'undefined') console.error('attendanceRate type:', typeof attendanceRate, 'value:', attendanceRate);
+    if (typeof performanceStatus !== 'undefined') console.error('performanceStatus type:', typeof performanceStatus, 'Å value:', performanceStatus);
+    if (typeof currentModule !== 'undefined') console.error('currentModule type:', typeof currentModule, 'value:', currentModule);
+    if (typeof creditProgress !== 'undefined') console.error('creditProgress type:', typeof creditProgress, 'value:', creditProgress);
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
         <p className="text-red-700 text-sm font-medium">Error rendering group card</p>
         <p className="text-red-600 text-xs mt-1">{String(group?.name || 'Unknown')}</p>
+        <p className="text-red-600 text-xs mt-1">Check browser console for details</p>
       </div>
     );
   }
