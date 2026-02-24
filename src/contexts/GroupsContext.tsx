@@ -3,6 +3,8 @@
 import { createContext, useContext, ReactNode } from "react";
 import useSWR, { mutate } from "swr";
 import { fetcher as globalFetcher } from "@/lib/swr-config";
+import { invalidateGroups } from "@/lib/cache-invalidation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Group {
   id: string;
@@ -35,6 +37,7 @@ export interface Group {
     totalUniqueUnitsPassed: number;
     totalCreditsRequired: number;
   };
+  unitStandardRollouts?: Array<any>;
 }
 
 interface GroupsContextType {
@@ -49,20 +52,49 @@ interface GroupsContextType {
 const GroupsContext = createContext<GroupsContextType | undefined>(undefined);
 
 export function GroupsProvider({ children }: { children: ReactNode }) {
-  // Fetch groups data
-  const { data: groupsData, error: groupsError, isLoading: groupsLoading } = useSWR('/api/groups', globalFetcher, {
-    revalidateOnFocus: true,
-    revalidateIfStale: true,
-    refreshInterval: 30000,
-    shouldRetryOnError: true,
-  });
+  const { user, isLoading: authLoading } = useAuth();
+  
+  // Only fetch groups if user is authenticated
+  const shouldFetch = Boolean(user && !authLoading);
+  
+  // Fetch groups data from UNIFIED endpoint (single source of truth)
+  const { data: unifiedResponse, error: groupsError, isLoading: groupsLoading } = useSWR(
+    shouldFetch ? '/api/data/groups' : null,
+    globalFetcher,
+    {
+      revalidateOnFocus: shouldFetch,
+      revalidateIfStale: shouldFetch,
+      refreshInterval: shouldFetch ? 30000 : 0,
+      shouldRetryOnError: false, // Don't retry on auth errors
+      dedupingInterval: 2000, // Prevent duplicate requests within 2 seconds
+    }
+  );
 
-  // Ensure groups is always an array - handle both wrapped and unwrapped responses
-  const groups = Array.isArray(groupsData) 
-    ? groupsData 
-    : Array.isArray(groupsData?.data) 
-      ? groupsData.data 
-      : [];
+  // Extract and map groups from unified response
+  const groups = (unifiedResponse?.data?.groups || []).map((unifiedGroup: any) => ({
+    id: unifiedGroup.id,
+    name: unifiedGroup.name,
+    startDate: unifiedGroup.startDate || '',
+    endDate: unifiedGroup.endDate,
+    location: unifiedGroup.location,
+    createdAt: unifiedGroup.createdAt,
+    status: unifiedGroup.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
+    rolloutPlan: unifiedGroup.rolloutPlan || null,
+    unitStandardRollouts: unifiedGroup.unitStandardRollouts || [],
+    actualProgress: {
+      avgCreditsPerStudent: unifiedGroup.metrics.avgCreditsPerStudent,
+      avgProgressPercent: unifiedGroup.metrics.avgProgressPercent,
+      totalCreditsEarned: unifiedGroup.metrics.totalCreditsEarned,
+      totalUniqueUnitsPassed: unifiedGroup.metrics.totalUniqueUnitsPassed,
+      totalCreditsRequired: unifiedGroup.totalCreditsRequired,
+      currentAssessmentModule: unifiedGroup.currentAssessmentModule || 0,
+    },
+    _count: {
+      students: unifiedGroup.metrics.studentCount,
+      sessions: 0,
+    },
+  }));
+  
   const isLoading = groupsLoading;
   const error = groupsError;
 
@@ -80,7 +112,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error('Failed to create group');
 
       const data = await response.json();
-      mutate('/api/groups');
+      await invalidateGroups(); // Invalidate all group-related caches
       return data.data || data;
     } catch (error) {
       console.error('Error adding group:', error);
@@ -101,7 +133,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) throw new Error('Failed to update group');
 
-      mutate('/api/groups');
+      await invalidateGroups(); // Invalidate all group-related caches
     } catch (error) {
       console.error('Error updating group:', error);
       throw error;
@@ -120,7 +152,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
         throw new Error(data.message || 'Failed to delete group');
       }
 
-      mutate('/api/groups');
+      await invalidateGroups(); // Invalidate all group-related caches
     } catch (error) {
       console.error('Error deleting group:', error);
       throw error;
