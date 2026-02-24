@@ -36,8 +36,21 @@ export interface Group {
     totalCreditsEarned: number;
     totalUniqueUnitsPassed: number;
     totalCreditsRequired: number;
+    currentAssessmentModule?: number;
+    atRiskCount?: number;
   };
   unitStandardRollouts?: Array<any>;
+  healthStatus?: string;
+  attendanceRate?: number;
+  totalRecorded?: number;
+  facilitatorMetrics?: {
+    totalUnits: number;
+    facilitatedUnits: number;
+    facilitatedPercent: number;
+    currentModule: number;
+  };
+  totalCreditsRequired?: number;
+  currentAssessmentModule?: number;
 }
 
 interface GroupsContextType {
@@ -81,6 +94,17 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     status: unifiedGroup.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
     rolloutPlan: unifiedGroup.rolloutPlan || null,
     unitStandardRollouts: unifiedGroup.unitStandardRollouts || [],
+    healthStatus: unifiedGroup.metrics?.healthStatus || 'NO_PLAN',
+    attendanceRate: unifiedGroup.metrics?.attendanceRate || 0,
+    totalRecorded: unifiedGroup.metrics?.totalRecorded || 0,
+    totalCreditsRequired: unifiedGroup.totalCreditsRequired || 0,
+    currentAssessmentModule: unifiedGroup.currentAssessmentModule || 0,
+    facilitatorMetrics: unifiedGroup.facilitatorMetrics || {
+      totalUnits: 0,
+      facilitatedUnits: 0,
+      facilitatedPercent: 0,
+      currentModule: 0,
+    },
     actualProgress: {
       avgCreditsPerStudent: unifiedGroup.metrics.avgCreditsPerStudent,
       avgProgressPercent: unifiedGroup.metrics.avgProgressPercent,
@@ -88,6 +112,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       totalUniqueUnitsPassed: unifiedGroup.metrics.totalUniqueUnitsPassed,
       totalCreditsRequired: unifiedGroup.totalCreditsRequired,
       currentAssessmentModule: unifiedGroup.currentAssessmentModule || 0,
+      atRiskCount: unifiedGroup.metrics?.atRiskCount || 0,
     },
     _count: {
       students: unifiedGroup.metrics.studentCount,

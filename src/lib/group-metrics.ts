@@ -387,26 +387,9 @@ export async function getCurrentAssessmentModule(groupId: string): Promise<numbe
       return studentWithHighestModule.currentModule.moduleNumber;
     }
 
-    // Fallback: Calculate from competent assessments only if needed
-    // This is more efficient than before as we're just finding the max module number
-    const maxModuleResult = await prisma.assessment.aggregate({
-      where: {
-        result: 'COMPETENT',
-        student: { groupId },
-      },
-      select: {
-        unitStandard: {
-          select: {
-            module: {
-              select: { moduleNumber: true }
-            }
-          },
-        },
-      },
-    });
-
-    return 0; // SQLite doesn't support complex aggregates on related fields
-    // For now, return 0 as a fallback
+    // Fallback: Return 0 if no competent assessments found
+    // SQLite doesn't support complex aggregates on related fields
+    return 0;
   } catch (error) {
     console.error(`Error getting current assessment module for group ${groupId}:`, error);
     return 0;
