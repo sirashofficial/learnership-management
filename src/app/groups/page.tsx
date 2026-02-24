@@ -486,8 +486,11 @@ const getPerformanceStatus = (
   );
 };
 
-const renderStatusBadge = (status: PlanStatus) => {
-  switch (status) {
+const renderStatusBadge = (status: any): JSX.Element => {
+  // DEFENSIVE: Ensure status is a string
+  const safeStatus = typeof status === 'string' ? status : 'NO_PLAN';
+  
+  switch (safeStatus) {
     case 'ON_TRACK':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
@@ -1454,9 +1457,9 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
         </div>
       </div>
 
-      {group.facilitator && (
+      {group.facilitator && typeof group.facilitator === 'object' && group.facilitator.name && (
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-          Facilitator: {group.facilitator.name}
+          Facilitator: {String(group.facilitator.name || 'Unknown')}
         </p>
       )}
 
@@ -1514,13 +1517,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <Users className="w-3 h-3 text-emerald-500" /> Facilitator
             </span>
             <span className="font-semibold text-emerald-700 dark:text-teal-300">
-              {group.facilitatorMetrics?.facilitatedPercent || 0}% ({group.facilitatorMetrics?.facilitatedUnits || 0}/{group.facilitatorMetrics?.totalUnits || 0} Units)
+              {String(typeof group.facilitatorMetrics?.facilitatedPercent === 'number' ? group.facilitatorMetrics.facilitatedPercent : 0)}% ({String(typeof group.facilitatorMetrics?.facilitatedUnits === 'number' ? group.facilitatorMetrics.facilitatedUnits : 0)}/{String(typeof group.facilitatorMetrics?.totalUnits === 'number' ? group.facilitatorMetrics.totalUnits : 0)} Units)
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300"
-              style={{ width: `${group.facilitatorMetrics?.facilitatedPercent || 0}%` }}
+              style={{ width: `${typeof group.facilitatorMetrics?.facilitatedPercent === 'number' ? group.facilitatorMetrics.facilitatedPercent : 0}%` }}
             />
           </div>
         </div>
@@ -1532,7 +1535,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <CheckCircle2 className="w-3 h-3 text-blue-500" /> Learner Avg
             </span>
             <span className="font-semibold text-blue-700 dark:text-blue-300">
-              {actualPercent}% ({resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
+              {String(typeof actualPercent === 'number' ? actualPercent : 0)}% ({String(typeof resolvedActualProgress?.avgCreditsPerStudent === 'number' ? resolvedActualProgress.avgCreditsPerStudent : 0)}/{TOTAL_CREDITS})
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
