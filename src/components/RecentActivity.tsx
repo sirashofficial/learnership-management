@@ -3,12 +3,10 @@
 import { useState } from 'react';
 import { Clock, Users, Building2, User } from 'lucide-react';
 import { useRecentActivity } from '@/hooks/useDashboard';
-import StudentDetailsModal from './StudentDetailsModal';
 import { useRouter } from 'next/navigation';
 
 export default function RecentActivity() {
   const { activities, isLoading } = useRecentActivity();
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const router = useRouter();
 
   const formatTimestamp = (dateString: string) => {
@@ -54,40 +52,27 @@ export default function RecentActivity() {
             {activities.map((activity: any) => (
               <div
                 key={activity.id}
-                onClick={() => setSelectedStudent(activity)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors duration-150"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors duration-150"
               >
                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-slate-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-900 truncate">
-                    {activity.firstName} {activity.lastName}
+                    {activity.data?.studentName || activity.title || 'Student'}
                   </p>
                   <p className="text-xs text-slate-400">
-                    {activity.group?.name || 'New enrollment'}
+                    {activity.data?.groupName || 'New enrollment'}
                   </p>
                 </div>
                 <span className="text-xs text-slate-400 flex-shrink-0">
-                  {formatTimestamp(activity.createdAt)}
+                  {formatTimestamp(activity.timestamp)}
                 </span>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* Student Details Modal */}
-      {selectedStudent && (
-        <StudentDetailsModal
-          isOpen={true}
-          student={selectedStudent}
-          onClose={() => setSelectedStudent(null)}
-          onSave={(updated) => {
-            setSelectedStudent(null);
-          }}
-        />
-      )}
     </>
   );
 }
