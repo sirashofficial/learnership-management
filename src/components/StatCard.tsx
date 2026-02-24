@@ -1,6 +1,6 @@
 'use client';
 
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StatCardProps {
@@ -13,6 +13,15 @@ interface StatCardProps {
   loading?: boolean;
 }
 
+/**
+ * REDESIGN: Stat Card with visual hierarchy and trend indicators
+ * Features:
+ * - Left accent border (brand green #16a34a)
+ * - Large, bold value display
+ * - Muted label above value
+ * - Trend arrow with color coding
+ * - Rounded 12px corners with subtle shadow
+ */
 export default function StatCard({
   title,
   value,
@@ -22,6 +31,11 @@ export default function StatCard({
   onClick,
   loading = false,
 }: StatCardProps) {
+  // Debug: log non-primitive values
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    console.error(`❌ StatCard "${title}" received non-primitive value:`, value, 'Type:', typeof value);
+  }
+  
   const isPositiveTrend = trend && trend > 0;
   const isNegativeTrend = trend && trend < 0;
 
@@ -29,37 +43,57 @@ export default function StatCard({
     <div
       onClick={onClick}
       className={cn(
-        "bg-white rounded-lg border border-slate-200 p-5 transition-colors duration-150",
-        onClick && "cursor-pointer hover:border-slate-300",
-        loading && "animate-pulse"
+        'stat-card',
+        onClick && 'cursor-pointer',
+        loading && 'animate-pulse'
       )}
     >
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
-          <Icon className="w-[18px] h-[18px] text-slate-600" />
+      {/* Header with icon and title */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+            {title}
+          </p>
         </div>
-        <span className="text-sm text-slate-500">{title}</span>
+        <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg ml-3">
+          <Icon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        </div>
       </div>
 
+      {/* Value display */}
       {loading ? (
-        <div className="h-8 bg-slate-100 rounded w-2/3"></div>
+        <div className="space-y-2">
+          <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+          <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+        </div>
       ) : (
         <div className="flex items-end justify-between">
-          <p className="text-2xl font-semibold text-slate-900">
-            {value}{suffix && <span className="text-base text-slate-400 ml-0.5">{suffix}</span>}
-          </p>
+          <div>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white">
+              {value}
+              {suffix && <span className="text-sm text-slate-500 dark:text-slate-400 ml-1">{suffix}</span>}
+            </p>
+          </div>
 
+          {/* Trend indicator */}
           {trend !== undefined && (
-            <span
+            <div
               className={cn(
-                "text-xs font-medium",
-                isPositiveTrend && "text-emerald-600",
-                isNegativeTrend && "text-red-500",
-                !isPositiveTrend && !isNegativeTrend && "text-slate-400"
+                'flex items-center gap-1 text-xs font-semibold ml-3',
+                isPositiveTrend && 'text-emerald-600 dark:text-emerald-400',
+                isNegativeTrend && 'text-red-600 dark:text-red-400',
+                !isPositiveTrend && !isNegativeTrend && 'text-slate-500 dark:text-slate-400'
               )}
             >
-              {isPositiveTrend && '+'}{trend}{suffix === '%' ? '' : '%'}
-            </span>
+              {isPositiveTrend ? (
+                <TrendingUp className="w-4 h-4" />
+              ) : isNegativeTrend ? (
+                <TrendingDown className="w-4 h-4" />
+              ) : null}
+              <span>
+                {isPositiveTrend && '+'}{trend}%
+              </span>
+            </div>
           )}
         </div>
       )}
