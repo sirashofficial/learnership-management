@@ -572,23 +572,17 @@ export default function GroupsPage() {
   } | null>(null);
 
   // Define Collections (Dynamic)
+  // Get all active groups (not archived)
+  const allActiveGroups = (groups || []).filter((g: any) => g.status !== 'ARCHIVED');
+
+  // Show all active groups in collection (don't filter by name pattern)  
   const montzelityCollection = {
-    name: "Montzelity 2026",
-    groups: (groups || []).filter((g: any) => {
-      if (g.status === 'ARCHIVED') return false;
-      const name = String(g.name || '');
-      const normalizedName = name
-        .toLowerCase()
-        .replace('montazility', 'montzelity')
-        .replace('montezility', 'montzelity');
-      return name.includes("26") || name.includes("2026") || normalizedName.includes('montzelity');
-    })
+    name: "All Groups",
+    groups: allActiveGroups
   };
 
-  // All other groups displayed flat (no company grouping)
-  const allOtherGroups = (groups || []).filter((g: any) =>
-    g.status !== 'ARCHIVED' && !montzelityCollection.groups.some((mg: any) => mg.id === g.id)
-  );
+  // All other groups displayed flat (no company grouping) - now empty since all are above
+  const allOtherGroups: any[] = [];
 
   // Filter groups by search
   const filteredCollection = {
