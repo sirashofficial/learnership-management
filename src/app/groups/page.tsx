@@ -1234,22 +1234,33 @@ interface GroupCardProps {
 
 function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, onQuickView, isSelected, onSelect, actualProgress }: GroupCardProps) {
   const router = useRouter();
-  const studentCount = getGroupStudentCount(group);
-  const attendanceRate = group.attendanceRate || 0;
-  const displayName = formatGroupNameDisplay(group.name || '');
+  
+  try {
+    // DEFENSIVE: Validate group is an object with required properties
+    if (!group || typeof group !== 'object') {
+      return (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">Invalid group data</p>
+        </div>
+      );
+    }
 
-  // Extract rollout plan from notes
-  const rolloutPlan = resolveRolloutPlan(group);
-  const rolloutStartDate = getPlanStartDate(rolloutPlan, group.startDate);
-  const rolloutEndDate = getPlanEndDate(rolloutPlan, group.endDate);
-  const hasLegacyRolloutPlan = Boolean(group?.rolloutPlan);
+    const studentCount = getGroupStudentCount(group);
+    const attendanceRate = typeof group.attendanceRate === 'number' ? group.attendanceRate : 0;
+    const displayName = formatGroupNameDisplay(String(group.name || 'Unnamed'));
 
-  // Get current module info and credit completion
-  const currentModule = getCurrentModuleInfo(rolloutPlan);
-  const creditProgress = getCreditCompletion(rolloutPlan);
-  const resolvedActualProgress = actualProgress || group.actualProgress;
-  const actualPercent = resolvedActualProgress?.avgPercent || 0;
-  const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
+    // Extract rollout plan from notes
+    const rolloutPlan = resolveRolloutPlan(group);
+    const rolloutStartDate = getPlanStartDate(rolloutPlan, group.startDate);
+    const rolloutEndDate = getPlanEndDate(rolloutPlan, group.endDate);
+    const hasLegacyRolloutPlan = Boolean(group?.rolloutPlan);
+
+    // Get current module info and credit completion
+    const currentModule = getCurrentModuleInfo(rolloutPlan);
+    const creditProgress = getCreditCompletion(rolloutPlan);
+    const resolvedActualProgress = actualProgress || group.actualProgress;
+    const actualPercent = typeof resolvedActualProgress?.avgPercent === 'number' ? resolvedActualProgress.avgPercent : 0;
+    const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
 
   const handleExportReport = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1274,47 +1285,47 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
     }
   };
 
-  if (viewMode === 'list') {
-    return (
-      <div
-        className={`flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-slate-200'}`}
-      >
-        {onSelect && (
-          <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={onSelect}
-              className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
-            />
-          </div>
-        )}
-        <div className="flex items-center gap-4 flex-1" onClick={onView}>
-          <div className="p-3 bg-teal-100 text-teal-600 rounded-lg">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h4>
-              {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
-                null
-              ) : (
-                <span
-                  className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onView();
-                  }}
-                >
-                  ⚠️ No rollout plan
-                </span>
+    if (viewMode === 'list') {
+      return (
+        <div
+          className={`flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-slate-200'}`}
+        >
+          {onSelect && (
+            <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={onSelect}
+                className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+              />
+            </div>
+          )}
+          <div className="flex items-center gap-4 flex-1" onClick={onView}>
+            <div className="p-3 bg-teal-100 text-teal-600 rounded-lg">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-semibold text-slate-900">{String(displayName)}</h4>
+                {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
+                  null
+                ) : (
+                  <span
+                    className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onView();
+                    }}
+                  >
+                    ⚠️ No rollout plan
+                  </span>
+                )}
+              </div>
+              {group.facilitator && typeof group.facilitator === 'object' && group.facilitator.name && (
+                <p className="text-sm text-slate-600">Facilitator: {String(group.facilitator.name)}</p>
               )}
             </div>
-            {group.facilitator && (
-              <p className="text-sm text-slate-600">Facilitator: {group.facilitator.name}</p>
-            )}
           </div>
-        </div>
 
         <div className="flex items-center gap-6">
           <div className="text-center">
@@ -1429,10 +1440,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                   className="font-semibold text-slate-900 dark:text-white hover:text-teal-600 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/groups/${group.id}`);
+                    router.push(`/groups/${String(group.id || '')}`);
                   }}
                 >
-                  {formatGroupNameDisplay(group.name)}
+                  {String(displayName || 'Unnamed')}
                 </h4>
                 {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
                   null
@@ -1449,8 +1460,8 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 )}
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                {rolloutStartDate ? `Started ${rolloutStartDate.toLocaleDateString()}` : 'Start date not set'}
-                {rolloutEndDate ? ` • Ends ${rolloutEndDate.toLocaleDateString()}` : ''}
+                {rolloutStartDate && typeof rolloutStartDate?.toLocaleDateString === 'function' ? `Started ${rolloutStartDate.toLocaleDateString()}` : 'Start date not set'}
+                {rolloutEndDate && typeof rolloutEndDate?.toLocaleDateString === 'function' ? ` • Ends ${rolloutEndDate.toLocaleDateString()}` : ''}
               </p>
               {/* Rollout Status Badge */}
               {renderStatusBadge(performanceStatus)}
@@ -1467,11 +1478,11 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{studentCount}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{String(typeof studentCount === 'number' ? studentCount : 0)}</p>
           <p className="text-xs text-slate-600 dark:text-slate-400">Students</p>
         </div>
         <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{attendanceRate}%</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{String(typeof attendanceRate === 'number' ? attendanceRate : 0)}%</p>
           <p className="text-xs text-slate-600 dark:text-slate-400">Attendance</p>
         </div>
       </div>
@@ -1480,14 +1491,14 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
       <div className="mb-4 space-y-3 px-4">
         {/* Module Label (Actual followed by Projected) */}
         <div className="flex flex-col gap-0.5">
-          {resolvedActualProgress?.currentAssessmentModule ? (
+          {typeof resolvedActualProgress?.currentAssessmentModule === 'number' ? (
             <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
-              Module {resolvedActualProgress.currentAssessmentModule} (Actual)
+              Module {String(resolvedActualProgress.currentAssessmentModule)} (Actual)
             </p>
           ) : null}
-          {rolloutPlan && currentModule.label && (
+          {rolloutPlan && currentModule.label && typeof currentModule.label === 'string' && (
             <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              Projected: {currentModule.label}
+              Projected: {String(currentModule.label)}
             </p>
           )}
         </div>
@@ -1500,7 +1511,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 <Calendar className="w-3 h-3" /> Projected
               </span>
               <span className="font-semibold text-teal-700 dark:text-teal-300">
-                {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
+                {String(typeof creditProgress?.percentage === 'number' ? creditProgress.percentage : 0)}% ({String(typeof creditProgress?.completed === 'number' ? creditProgress.completed : 0)}/{String(TOTAL_CREDITS)})
               </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
@@ -1605,6 +1616,15 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
       </div>
     </div>
   );
+  } catch (error) {
+    console.error('GroupCard render error:', error, { groupId: group?.id, groupName: group?.name });
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+        <p className="text-red-700 text-sm font-medium">Error rendering group card</p>
+        <p className="text-red-600 text-xs mt-1">{String(group?.name || 'Unknown')}</p>
+      </div>
+    );
+  }
 }
 
 interface MergeGroupsModalProps {
