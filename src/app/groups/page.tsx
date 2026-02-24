@@ -581,14 +581,16 @@ export default function GroupsPage() {
   // Filter groups by search
   const filteredCollection = {
     ...montzelityCollection,
-    groups: montzelityCollection.groups.filter((g: any) =>
-      g.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    groups: montzelityCollection.groups.filter((g: any) => {
+      const groupName = String(g?.name || '').toLowerCase();
+      return groupName.includes(searchQuery.toLowerCase());
+    })
   };
 
-  const filteredOtherGroups = allOtherGroups.filter((g: any) =>
-    g.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOtherGroups = allOtherGroups.filter((g: any) => {
+    const groupName = String(g?.name || '').toLowerCase();
+    return groupName.includes(searchQuery.toLowerCase());
+  });
 
   useEffect(() => {
     const handleOpenChecklist = (e: any) => {
@@ -870,9 +872,9 @@ export default function GroupsPage() {
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {filteredCollection.groups.length} group{filteredCollection.groups.length !== 1 ? 's' : ''} • {
-                      filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0)
-                    } student{filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0) !== 1 ? 's' : ''}
+                    {String(filteredCollection.groups.length)} group{filteredCollection.groups.length !== 1 ? 's' : ''} • {
+                      String(filteredCollection.groups.reduce((sum: number, g: any) => sum + (typeof g?._count?.students === 'number' ? g._count.students : 0), 0))
+                    } student{filteredCollection.groups.reduce((sum: number, g: any) => sum + (typeof g?._count?.students === 'number' ? g._count.students : 0), 0) !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
