@@ -580,113 +580,53 @@ export default function DashboardPage() {
                 />
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-700">
-                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
-                          Group Name
-                        </th>
-                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
-                          Learners
-                        </th>
-                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
-                          Attendance
-                        </th>
-                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
-                          Current Module
-                        </th>
-                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
-                          Status
-                        </th>
+                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Group</th>
+                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Learners</th>
+                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Attendance</th>
+                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Module</th>
+                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                      {!Array.isArray(groups) || groups.filter(g => g && (g.status === 'ACTIVE' || g.status === 'PLANNING')).length === 0 ? (
+                      {!Array.isArray(groups) || groups.filter(g => g && g.status && ['ACTIVE', 'PLANNING'].includes(String(g.status))).length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="py-4 px-3 text-center text-sm text-slate-500">
-                            No active groups
-                          </td>
+                          <td colSpan={5} className="py-4 px-3 text-center text-slate-500">No active groups</td>
                         </tr>
                       ) : (
                         groups
-                          .filter(g => g && (g.status === 'ACTIVE' || g.status === 'PLANNING'))
+                          .filter(g => g && g.status && ['ACTIVE', 'PLANNING'].includes(String(g.status)))
                           .map((group, index) => {
-                            // DEFENSIVE: Ensure group object exists and has required properties
-                            if (!group || typeof group !== 'object' || !group.id) {
-                              console.warn('Invalid group object:', group);
-                              return null;
-                            }
-
+                            if (!group || typeof group !== 'object')  return null;
                             try {
-                              // DEFENSIVE: Ensure all values are primitives, NEVER objects
-                              const groupId = String(group.id || 'unknown');
-                              const groupName = String((group.name || 'Unnamed Group') || 'Unnamed Group');
-                              const learnerCount = typeof group._count?.students === 'number' ? group._count.students : typeof group.students?.length === 'number' ? group.students.length : 0;
-                              const rawAttendance = group.attendanceRate ?? 0;
-                              const attendance = typeof rawAttendance === 'number' ? rawAttendance : 0;
-                              const totalRecorded = typeof group.totalRecorded === 'number' ? group.totalRecorded : 0;
-                              const hasPlan = Boolean(group.unitStandardRollouts?.length);
-                              const moduleLabel = String(getModuleLabel(group) || 'No Plan');
-                              
-                              const atRiskCount = group.actualProgress && typeof group.actualProgress.atRiskCount === 'number' 
-                                ? group.actualProgress.atRiskCount 
-                                : 0;
+                              // DEFENSIVE: Everything converted to primitives before rendering
+                              const gId = String(group.id || '');
+                              const gName = String(group.name || 'Unnamed');
+                              const  gCount = String((group._count?.students ?? group.students?.length ?? 0) || '0');
+                              const gAttendance = String((typeof group.attendanceRate === 'number' ? group.attendanceRate : 0) || '0');
+                              const gModule = String(getModuleLabel(group) || 'No Plan');
+                              const gStatus = String(group.healthStatus || 'On Track');
 
                               return (
-                                <tr
-                                  key={groupId}
-                                  className={`transition-colors ${index % 2 === 0
-                                    ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                                    : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                    }`}
-                                >
-                                  <td className="py-4 px-3">
-                                    <Link
-                                      href={`/groups/${groupId}`}
-                                      className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors text-sm"
-                                    >
-                                      {String(formatGroupNameDisplay(groupName) || 'Unnamed')}
-                                    </Link>
+                                <tr key={gId} className={index % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800/30'}>
+                                  <td className="py-3 px-3">
+                                    <a href={`/groups/${gId}`} className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
+                                      {gName}
+                                    </a>
                                   </td>
-                                  <td className="py-4 px-3">
-                                    <div className="flex flex-col">
-                                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                                        {String(learnerCount)} Learners
-                                      </span>
-                                      {atRiskCount > 0 && (
-                                        <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
-                                          <AlertTriangle className="w-2.5 h-2.5" />
-                                          {String(atRiskCount)} At Risk
-                                        </span>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="py-4 px-3">
-                                    {attendance === 0 && totalRecorded === 0 ? (
-                                      <span className="text-sm text-slate-400">—</span>
-                                    ) : attendance === 0 ? (
-                                      <span className="text-sm font-semibold text-rose-500">0%</span>
-                                    ) : (
-                                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{String(attendance.toFixed(0))}%</span>
-                                    )}
-                                  </td>
-                                  <td className="py-4 px-3">
-                                    <span className="text-sm text-slate-700 dark:text-slate-300">
-                                      {String(moduleLabel)}
-                                    </span>
-                                  </td>
-                                  <td className="py-4 px-3">
-                                    {renderProgrammeStatus(attendance, hasPlan, group)}
-                                  </td>
+                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gCount} Learners</td>
+                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gAttendance}%</td>
+                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gModule}</td>
+                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gStatus}</td>
                                 </tr>
                               );
-                            } catch (error) {
-                              console.error('Error rendering group row:', error, 'Group:', group);
+                            } catch (e) {
+                              console.error('Group row error:', e);
                               return (
-                                <tr key={String(group?.id || 'error')}>
-                                  <td colSpan={5} className="py-4 px-3 text-sm text-red-600">
-                                    Error: {String(error instanceof Error ? error.message : 'Unknown error')}
-                                  </td>
+                                <tr key={String(group?.id || 'err')}>
+                                  <td colSpan={5} className="py-3 px-3 text-red-600">Error rendering group</td>
                                 </tr>
                               );
                             }
