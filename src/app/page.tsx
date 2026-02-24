@@ -174,28 +174,37 @@ const getModuleLabel = (group: any) => {
 
 // Render programme health status badge using unified logic
 const renderProgrammeStatus = (attendanceRate: number, hasPlan: boolean, group: any) => {
-  // Use pre-calculated status from context/API if available
-  if (group.healthStatus) {
-    return renderStatusBadge(group.healthStatus as PlanStatus);
+  try {
+    // DEFENSIVE: Ensure healthStatus is a string before using it
+    const healthStatus = String(group?.healthStatus || '').trim();
+    
+    if (healthStatus && ['ON_TRACK', 'BEHIND', 'AT_RISK', 'OVERDUE', 'COMPLETE', 'NOT_STARTED'].includes(healthStatus)) {
+      return renderStatusBadge(healthStatus as PlanStatus);
+    }
+
+    // Fallback to calculation if status is missing (legacy compatibility)
+    const status = calculatePerformanceStatus(
+      80,
+      typeof attendanceRate === 'number' ? attendanceRate : 0,
+      hasPlan === true,
+      typeof attendanceRate === 'number' ? attendanceRate : 0,
+      0,
+      0,
+      'ON_TRACK'
+    );
+
+    return renderStatusBadge(status);
+  } catch (error) {
+    console.error('Error in renderProgrammeStatus:', error);
+    return renderStatusBadge('ON_TRACK');
   }
-
-  // Fallback to calculation if status is missing (legacy compatibility)
-  const status = calculatePerformanceStatus(
-    80,
-    attendanceRate,
-    hasPlan,
-    attendanceRate,
-    0,
-    0,
-    'ON_TRACK'
-  );
-
-  return renderStatusBadge(status);
 };
 
 // Helper to render the actual badge UI
-const renderStatusBadge = (status: PlanStatus) => {
-  switch (status) {
+const renderStatusBadge = (status: PlanStatus | string) => {
+  const safeStatus = String(status || 'ON_TRACK').toUpperCase();
+  
+  switch (safeStatus) {
     case 'ON_TRACK':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
