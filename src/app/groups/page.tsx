@@ -1280,10 +1280,23 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
 
     // Get current module info and credit completion
     const currentModule = getCurrentModuleInfo(rolloutPlan);
+    // DEFENSIVE: Ensure currentModule is safe
+    const safeCurrentModule = (currentModule && typeof currentModule === 'object' && typeof currentModule.label === 'string') 
+      ? currentModule 
+      : { label: '', moduleNumber: null };
+    
     const creditProgress = getCreditCompletion(rolloutPlan);
+    // DEFENSIVE: Ensure creditProgress is safe
+    const safeCreditProgress = (creditProgress && typeof creditProgress === 'object' && typeof creditProgress.percentage === 'number' && typeof creditProgress.completed === 'number')
+      ? creditProgress
+      : { percentage: 0, completed: 0 };
+    
     const resolvedActualProgress = actualProgress || group.actualProgress;
     const actualPercent = typeof resolvedActualProgress?.avgPercent === 'number' ? resolvedActualProgress.avgPercent : 0;
-    const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
+    const performanceStatus = getPerformanceStatus(safeCreditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
+    
+    // DEFENSIVE: Ensure performanceStatus is a string
+    const safePerformanceStatus = typeof performanceStatus === 'string' ? performanceStatus : 'NO_PLAN';
 
     if (viewMode === 'list') {
       return (
@@ -1340,9 +1353,9 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           {/* Dual Progress Bars (Projected + Actual) */}
           <div className="flex flex-col gap-1.5 flex-1 max-w-xs">
             {/* Current Module Label */}
-            {rolloutPlan && currentModule.label && (
+            {rolloutPlan && safeCurrentModule.label && (
               <p className="text-xs font-medium text-slate-700">
-                {currentModule.label}
+                {safeCurrentModule.label}
               </p>
             )}
 
@@ -1351,10 +1364,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><Calendar className="w-3 h-3" /> Proj</span>
                 <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all" style={{ width: `${creditProgress.percentage}%` }} />
+                  <div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all" style={{ width: `${safeCreditProgress.percentage}%` }} />
                 </div>
                 <span className="text-[10px] font-semibold text-teal-700 whitespace-nowrap w-20 text-right">
-                  {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
+                  {safeCreditProgress.percentage}% ({safeCreditProgress.completed}/{TOTAL_CREDITS})
                 </span>
               </div>
             )}
@@ -1464,7 +1477,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 {rolloutEndDate && typeof rolloutEndDate?.toLocaleDateString === 'function' ? ` • Ends ${rolloutEndDate.toLocaleDateString()}` : ''}
               </p>
               {/* Rollout Status Badge */}
-              {renderStatusBadge(performanceStatus)}
+              {renderStatusBadge(safePerformanceStatus)}
             </div>
           </div>
         </div>
@@ -1496,9 +1509,9 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               Module {String(resolvedActualProgress.currentAssessmentModule)} (Actual)
             </p>
           ) : null}
-          {rolloutPlan && currentModule.label && typeof currentModule.label === 'string' && (
+          {rolloutPlan && safeCurrentModule.label && typeof safeCurrentModule.label === 'string' && (
             <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              Projected: {String(currentModule.label)}
+              Projected: {String(safeCurrentModule.label)}
             </p>
           )}
         </div>
@@ -1511,13 +1524,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 <Calendar className="w-3 h-3" /> Projected
               </span>
               <span className="font-semibold text-teal-700 dark:text-teal-300">
-                {String(typeof creditProgress?.percentage === 'number' ? creditProgress.percentage : 0)}% ({String(typeof creditProgress?.completed === 'number' ? creditProgress.completed : 0)}/{String(TOTAL_CREDITS)})
+                {String(typeof safeCreditProgress?.percentage === 'number' ? safeCreditProgress.percentage : 0)}% ({String(typeof safeCreditProgress?.completed === 'number' ? safeCreditProgress.completed : 0)}/{String(TOTAL_CREDITS)})
               </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-300"
-                style={{ width: `${creditProgress.percentage}%` }}
+                style={{ width: `${safeCreditProgress.percentage}%` }}
               />
             </div>
           </div>
