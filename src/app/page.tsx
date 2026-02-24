@@ -592,88 +592,96 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                      {groups.filter(g => g.status === 'ACTIVE' || g.status === 'PLANNING').length === 0 ? (
+                      {!Array.isArray(groups) || groups.filter(g => g && (g.status === 'ACTIVE' || g.status === 'PLANNING')).length === 0 ? (
                         <tr>
                           <td colSpan={5} className="py-4 px-3 text-center text-sm text-slate-500">
                             No active groups
                           </td>
                         </tr>
                       ) : (
-                        groups.filter(g => g.status === 'ACTIVE' || g.status === 'PLANNING').map((group, index) => {
-                          // Helper: Parse group.notes to extract rollout plan structure
-                          const parseGroupRolloutPlan = (notes: string | null | undefined) => {
-                            if (!notes) return null;
-                            try {
-                              const parsed = JSON.parse(notes);
-                              return parsed?.rolloutPlan || null;
-                            } catch (error) {
-                              console.warn(`Failed to parse notes for group ${group.id}:`, error);
+                        groups
+                          .filter(g => g && (g.status === 'ACTIVE' || g.status === 'PLANNING'))
+                          .map((group, index) => {
+                            // DEFENSIVE: Ensure group object exists and has required properties
+                            if (!group || typeof group !== 'object' || !group.id) {
+                              console.warn('Invalid group object:', group);
                               return null;
                             }
-                          };
 
-                          // DEFENSIVE: Ensure all values are primitives
-                          const learnerCount = typeof group._count?.students === 'number' ? group._count.students : typeof group.students?.length === 'number' ? group.students.length : 0;
-                          const rawAttendance = group.attendanceRate ?? group.attendanceRate ?? 0;
-                          const attendance = typeof rawAttendance === 'number' ? rawAttendance : 0;
-                          const totalRecorded = typeof group.totalRecorded === 'number' ? group.totalRecorded : 0;
+                            try {
+                              // DEFENSIVE: Ensure all values are primitives, NEVER objects
+                              const groupId = String(group.id || 'unknown');
+                              const groupName = String((group.name || 'Unnamed Group') || 'Unnamed Group');
+                              const learnerCount = typeof group._count?.students === 'number' ? group._count.students : typeof group.students?.length === 'number' ? group.students.length : 0;
+                              const rawAttendance = group.attendanceRate ?? 0;
+                              const attendance = typeof rawAttendance === 'number' ? rawAttendance : 0;
+                              const totalRecorded = typeof group.totalRecorded === 'number' ? group.totalRecorded : 0;
+                              const hasPlan = Boolean(group.unitStandardRollouts?.length);
+                              const moduleLabel = String(getModuleLabel(group) || 'No Plan');
+                              
+                              const atRiskCount = group.actualProgress && typeof group.actualProgress.atRiskCount === 'number' 
+                                ? group.actualProgress.atRiskCount 
+                                : 0;
 
-                          const hasPlan = Boolean(group.unitStandardRollouts?.length);
-
-                          // Use the refined module label logic
-                          const moduleLabel = String(getModuleLabel(group) || 'No Plan');
-
-                          return (
-                            <tr
-                              key={group.id}
-                              className={`transition-colors ${index % 2 === 0
-                                ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                                : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                }`}
-                            >
-                              <td className="py-4 px-3">
-                                <Link
-                                  href={`/groups/${group.id}`}
-                                  className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors text-sm"
+                              return (
+                                <tr
+                                  key={groupId}
+                                  className={`transition-colors ${index % 2 === 0
+                                    ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                    : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    }`}
                                 >
-                                  {formatGroupNameDisplay(group.name || '')}
-                                </Link>
-                              </td>
-                              <td className="py-4 px-3">
-                                <div className="flex flex-col">
-                                  <span className="text-sm text-slate-700 dark:text-slate-300">
-                                    {typeof learnerCount === 'number' ? learnerCount : 0} Learners
-                                  </span>
-                                  {group.actualProgress && typeof group.actualProgress.atRiskCount === 'number' && group.actualProgress.atRiskCount > 0 && (
-                                    <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
-                                      <AlertTriangle className="w-2.5 h-2.5" />
-                                      {group.actualProgress.atRiskCount} At Risk
+                                  <td className="py-4 px-3">
+                                    <Link
+                                      href={`/groups/${groupId}`}
+                                      className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors text-sm"
+                                    >
+                                      {String(formatGroupNameDisplay(groupName) || 'Unnamed')}
+                                    </Link>
+                                  </td>
+                                  <td className="py-4 px-3">
+                                    <div className="flex flex-col">
+                                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                                        {String(learnerCount)} Learners
+                                      </span>
+                                      {atRiskCount > 0 && (
+                                        <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
+                                          <AlertTriangle className="w-2.5 h-2.5" />
+                                          {String(atRiskCount)} At Risk
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-3">
+                                    {attendance === 0 && totalRecorded === 0 ? (
+                                      <span className="text-sm text-slate-400">—</span>
+                                    ) : attendance === 0 ? (
+                                      <span className="text-sm font-semibold text-rose-500">0%</span>
+                                    ) : (
+                                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{String(attendance.toFixed(0))}%</span>
+                                    )}
+                                  </td>
+                                  <td className="py-4 px-3">
+                                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                                      {String(moduleLabel)}
                                     </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="py-4 px-3">
-                                {typeof attendance === 'number' && attendance === 0 && (typeof totalRecorded === 'number' && totalRecorded === 0 || !totalRecorded) ? (
-                                  <span className="text-sm text-slate-400">—</span>
-                                ) : typeof attendance === 'number' && attendance === 0 ? (
-                                  <span className="text-sm font-semibold text-rose-500">0%</span>
-                                ) : typeof attendance === 'number' ? (
-                                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{attendance.toFixed(0)}%</span>
-                                ) : (
-                                  <span className="text-sm text-slate-400">—</span>
-                                )}
-                              </td>
-                              <td className="py-4 px-3">
-                                <span className="text-sm text-slate-700 dark:text-slate-300">
-                                  {typeof moduleLabel === 'string' ? moduleLabel : 'No Plan'}
-                                </span>
-                              </td>
-                              <td className="py-4 px-3">
-                                {typeof attendance === 'number' && Boolean(hasPlan) ? renderProgrammeStatus(attendance, hasPlan, group) : renderProgrammeStatus(0, false, group)}
-                              </td>
-                            </tr>
-                          );
-                        })
+                                  </td>
+                                  <td className="py-4 px-3">
+                                    {renderProgrammeStatus(attendance, hasPlan, group)}
+                                  </td>
+                                </tr>
+                              );
+                            } catch (error) {
+                              console.error('Error rendering group row:', error, 'Group:', group);
+                              return (
+                                <tr key={String(group?.id || 'error')}>
+                                  <td colSpan={5} className="py-4 px-3 text-sm text-red-600">
+                                    Error: {String(error instanceof Error ? error.message : 'Unknown error')}
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          })
                       )}
                     </tbody>
                   </table>
