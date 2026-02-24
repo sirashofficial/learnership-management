@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -12,17 +12,29 @@ import MiniCalendar from '@/components/MiniCalendar';
 import NextSessionPanel from '@/components/NextSessionPanel';
 import SessionAttendanceModal from '@/components/SessionAttendanceModal';
 import Toast, { useToast } from '@/components/Toast';
+import EmptyState from '@/components/EmptyState';
 import { fetcher } from '@/lib/swr-config';
 import { formatGroupNameDisplay } from '@/lib/groupName';
 import useSWR from 'swr';
 import { useDashboardStats, useRecentActivity, useDashboardSchedule } from '@/hooks/useDashboard';
-import { Users, Building2, Calendar, BookOpen, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useDashboardLite } from '@/hooks/useSummaryAPIs';
+import { Users, Building2, Calendar, BookOpen, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, X, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
+import DashboardLayout from '@/components/DashboardLayout';
+import AlertZone from '@/components/AlertZone';
+import KanbanView from '@/components/views/KanbanView';
+import TimelineView from '@/components/views/TimelineView';
+import AnalyticsView from '@/components/views/AnalyticsView';
+import CollaborationView from '@/components/views/CollaborationView';
+import { calculatePerformanceStatus } from '@/lib/statusUtils';
+import { PlanStatus } from '@/types/rollout';
 
 // Dynamic load heavy components
 const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), { ssr: false });
 const RecentActivity = dynamic(() => import('@/components/RecentActivity'), { ssr: false });
 const DashboardAlerts = dynamic(() => import('@/components/DashboardAlerts'), { ssr: false });
 const TodaysSchedule = dynamic(() => import('@/components/TodaysSchedule'), { ssr: false });
+const StatCard = dynamic(() => import('@/components/StatCard'), { ssr: false });
+const TeachingNotifications = dynamic(() => import('@/components/TeachingNotifications'), { ssr: false });
 
 // Lightweight loading skeleton
 function ComponentSkeleton({ height = 'h-48' }: { height?: string }) {
@@ -81,54 +93,153 @@ interface DashboardData {
   programmeHealth: ProgrammeHealth[];
 }
 
-function StatCard({ title, value, icon: Icon, suffix = '', onClick }: { 
-  title: string; 
-  value: number | string; 
-  icon: any; 
-  suffix?: string;
-  onClick?: () => void;
-}) {
-  return (
-    <div 
-      className={`bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">
-            {value}{suffix}
-          </p>
-        </div>
-        <div className="bg-emerald-50 p-3 rounded-lg">
-          <Icon className="w-6 h-6 text-emerald-600" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function getStatusBadge(status: string, weeksAhead: number) {
-  if (status === 'AHEAD') {
+  if (status === 'NO_PLAN') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-        🚀 Ahead {Math.abs(weeksAhead)}w
+      <span className="status-pill bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+        <span className="text-sm">📋</span>
+        No Plan
+      </span>
+    );
+  } else if (status === 'AHEAD') {
+    return (
+      <span className="status-pill bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+        <span className="text-sm">🚀</span>
+        Ahead {Math.abs(weeksAhead)}w
       </span>
     );
   } else if (status === 'BEHIND') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
-        ⚠️ Behind {Math.abs(weeksAhead)}w
+      <span className="status-pill bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+        <span className="text-sm">⚠️</span>
+        Behind {Math.abs(weeksAhead)}w
+      </span>
+    );
+  } else if (status === 'AT_RISK') {
+    return (
+      <span className="status-at-risk">
+        <span className="text-sm">🔴</span>
+        At Risk
       </span>
     );
   } else {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-        ✅ On Track
+      <span className="status-on-track">
+        <span className="text-sm">✅</span>
+        On Track
       </span>
     );
   }
 }
+
+// Get current module label from rollout plan
+const getModuleLabel = (group: any) => {
+  const rollouts = group.unitStandardRollouts || [];
+  if (rollouts.length === 0) return 'No Plan';
+
+  const now = new Date();
+
+  // Find current active module by date
+  const activeRollout = rollouts.find((r: any) => {
+    const start = r.startDate ? new Date(r.startDate) : null;
+    const end = r.assessingDate ? new Date(r.assessingDate) : null;
+    return start && end && now >= start && now <= end;
+  });
+
+  if (activeRollout?.unitStandard?.module?.moduleNumber) {
+    return `Module ${activeRollout.unitStandard.module.moduleNumber}`;
+  }
+
+  // Fallback to latest module if all passed
+  const sorted = [...rollouts].sort((a, b) => {
+    const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+    const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+    return dateB - dateA;
+  });
+
+  const latest = sorted.find(r => r.startDate && new Date(r.startDate) <= now) || sorted[0];
+  if (latest?.unitStandard?.module?.moduleNumber) {
+    return `Module ${latest.unitStandard.module.moduleNumber}`;
+  }
+
+  return 'No Plan';
+};
+
+// Render programme health status badge using unified logic
+const renderProgrammeStatus = (attendanceRate: number, hasPlan: boolean, group: any) => {
+  // Use pre-calculated status from context/API if available
+  if (group.healthStatus) {
+    return renderStatusBadge(group.healthStatus as PlanStatus);
+  }
+
+  // Fallback to calculation if status is missing (legacy compatibility)
+  const status = calculatePerformanceStatus(
+    80,
+    attendanceRate,
+    hasPlan,
+    attendanceRate,
+    0,
+    0,
+    'ON_TRACK'
+  );
+
+  return renderStatusBadge(status);
+};
+
+// Helper to render the actual badge UI
+const renderStatusBadge = (status: PlanStatus) => {
+  switch (status) {
+    case 'ON_TRACK':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
+          <CheckCircle2 className="w-3 h-3" />
+          On Track
+        </span>
+      );
+    case 'BEHIND':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700">
+          <AlertTriangle className="w-3 h-3" />
+          Behind
+        </span>
+      );
+    case 'AT_RISK':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-red-50 text-red-700">
+          <AlertTriangle className="w-3 h-3" />
+          At Risk
+        </span>
+      );
+    case 'OVERDUE':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700">
+          <Clock className="w-3 h-3" />
+          Overdue
+        </span>
+      );
+    case 'COMPLETE':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-teal-50 text-teal-700">
+          <CheckCircle2 className="w-3 h-3" />
+          Complete
+        </span>
+      );
+    case 'NOT_STARTED':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+          <Clock className="w-3 h-3" />
+          Not Started
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+          <Clock className="w-3 h-3" />
+          No Plan
+        </span>
+      );
+  }
+};
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
@@ -144,36 +255,29 @@ export default function DashboardPage() {
   const dayCardRef = useRef<HTMLDivElement | null>(null);
   const [attendanceSession, setAttendanceSession] = useState<any | null>(null);
   const { toast, showToast, hideToast } = useToast();
-  
+  const isFetchingRef = useRef(false);
+
+  // View switching for enhanced dashboard (moved before early returns)
+  const [currentView, setCurrentView] = useState<'dashboard' | 'kanban' | 'timeline' | 'collaboration' | 'analytics'>('dashboard');
+
   // SWR hooks for real-time data
   const { stats: dashboardStats, isLoading: statsLoading } = useDashboardStats();
+  const { summary: dashboardLite, isLoading: liteLoading } = useDashboardLite(); // New lightweight API
   const { activities: recentActivities, isLoading: activitiesLoading } = useRecentActivity();
   const { schedule: todaysSchedule, isLoading: scheduleLoading } = useDashboardSchedule();
 
-  const totalStudentsFromGroups = useMemo(() => {
-    const groupList = groups || [];
-    const studentKeys = new Set<string>();
-
-    groupList.forEach((group: any) => {
-      (group.students || []).forEach((student: any) => {
-        const first = String(student?.firstName || '').trim().toLowerCase();
-        const last = String(student?.lastName || '').trim().toLowerCase();
-        if (first || last) {
-          studentKeys.add(`name:${first} ${last}`.trim());
-          return;
-        }
-
-        const id = student?.id || student?.studentId;
-        if (id) studentKeys.add(`id:${id}`);
-      });
-    });
-
-    if (studentKeys.size > 0) return studentKeys.size;
-
-    return groupList.reduce((sum: number, group: any) => sum + (group._count?.students || 0), 0);
-  }, [groups]);
-
-  const totalGroupsFromGroups = useMemo(() => (groups || []).length, [groups]);
+  // Use lightweight API data for faster loading - fallback to old API if needed
+  // CRITICAL: Ensure only primitives are passed, never objects
+  const totalStudents = typeof dashboardLite?.totalStudents === 'number' 
+    ? dashboardLite.totalStudents 
+    : typeof dashboardStats?.totalStudents?.value === 'number'
+      ? dashboardStats.totalStudents.value
+      : 0;
+  const totalGroups = typeof dashboardLite?.totalGroups === 'number'
+    ? dashboardLite.totalGroups
+    : typeof dashboardStats?.totalGroups?.value === 'number'
+      ? dashboardStats.totalGroups.value
+      : 0;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -181,11 +285,63 @@ export default function DashboardPage() {
     }
   }, [user, isLoading, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
+  const fetchDashboardData = useCallback(async () => {
+    // Prevent duplicate calls
+    if (isFetchingRef.current) {
+      console.log('Already fetching, skipping...');
+      return;
     }
-  }, [user]);
+    
+    isFetchingRef.current = true;
+    try {
+      // Use unified endpoint (single source of truth)
+      const response = await fetch('/api/data/groups', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const unifiedData = await response.json();
+        // Map unified response to dashboard format
+        if (unifiedData.success && unifiedData.data) {
+          const dashboardData = {
+            stats: {
+              totalStudents: unifiedData.data.summary.totalStudents,
+              totalGroups: unifiedData.data.summary.totalGroups,
+              attendanceRate: 0, // Fetched separately
+              activeCourses: unifiedData.data.summary.totalGroups,
+              completionRate: unifiedData.data.summary.averageProgress,
+              pendingAssessments: 0,
+            },
+            programmeHealth: unifiedData.data.groups.map((group: any) => ({
+              groupId: group.id,
+              groupName: group.name,
+              currentModule: 1,
+              currentModuleName: 'Module 1',
+              projectedCompletionDate: group.endDate || new Date().toISOString(),
+              earnedCredits: group.metrics.avgCreditsPerStudent,
+              totalCredits: group.totalCreditsRequired,
+              weeksAhead: 0,
+              status: group.metrics.healthStatus,
+            })),
+          };
+          setDashboardData(dashboardData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoadingData(false);
+      isFetchingRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user && !isFetchingRef.current) {
+      // Data is now fetched via GroupsContext and custom hooks (useDashboardStats, etc.)
+      // No need for manual fetchDashboardData call here
+      // fetchDashboardData();
+      setLoadingData(false);
+    }
+  }, [user, fetchDashboardData]);
 
   useEffect(() => {
     if (!selectedDay) return;
@@ -202,19 +358,19 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [selectedDay]);
 
-  const fetchDashboardData = async () => {
-    try {
-      const response = await fetch('/api/dashboard/summary');
-      if (response.ok) {
-        const data = await response.json();
-        setDashboardData(data);
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoadingData(false);
+
+  // Memoize group IDs to avoid infinite loops
+  const groupIds = useMemo(() => 
+    groups?.map((g: any) => g.id).join(',') || '', 
+    [groups]
+  );
+
+  useEffect(() => {
+    if (groups && groups.length > 0) {
+      // Logic for refreshing dashboard statistics when groups change can go here
     }
-  };
+  }, [groupIds]);
+
 
   const shouldLoad = Boolean(user);
   const monthStart = startOfMonth(calendarMonth);
@@ -239,12 +395,23 @@ export default function DashboardPage() {
   const selectedDayKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : '';
   const selectedSessions = selectedDay ? sessionsByDay.get(selectedDayKey) || [] : [];
 
-  const { data: alertsData } = useSWR(shouldLoad ? '/api/dashboard/alerts' : null, fetcher);
+  const { data: alertsData } = useSWR(
+    shouldLoad ? '/api/dashboard/alerts' : null,
+    fetcher,
+    {
+      refreshInterval: 30000, // Auto-refresh every 30 seconds
+      revalidateOnFocus: true // Refresh when user returns to tab
+    }
+  );
   const alerts = alertsData?.data?.alerts || [];
 
   const { data: attendanceData } = useSWR(
     shouldLoad && selectedDay ? `/api/attendance?date=${format(selectedDay, 'yyyy-MM-dd')}` : null,
-    fetcher
+    fetcher,
+    {
+      refreshInterval: 30000, // Auto-refresh every 30 seconds
+      revalidateOnFocus: true // Refresh when user returns to tab
+    }
   );
 
   const attendanceRecorded = (attendanceData?.data || []).length > 0;
@@ -279,7 +446,7 @@ export default function DashboardPage() {
     return match?._count?.students || match?.students?.length || 0;
   };
 
-  const totalStudents = selectedSessions.reduce((sum: number, session: any) => {
+  const selectedDayTotalStudents = selectedSessions.reduce((sum: number, session: any) => {
     return sum + getStudentCount(session.groupId);
   }, 0);
 
@@ -303,328 +470,244 @@ export default function DashboardPage() {
     setHoverInfo(null);
   };
 
-  return (
-    <div className="min-[1200px]:flex min-[1200px]:items-start gap-6">
-      <div className="flex-1 space-y-6">
-        {/* Welcome */}
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Welcome back, {user.name}
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Here&apos;s an overview of your learnership programme.
-          </p>
-        </div>
-
-        {/* Stats */}
-        {statsLoading || loadingData ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border border-slate-200 p-4 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+  // Render different views based on selection
+  const renderMainContent = () => {
+    switch (currentView) {
+      case 'kanban':
+        return <KanbanView />;
+      case 'timeline':
+        return <TimelineView />;
+      case 'collaboration':
+        return <CollaborationView />;
+      case 'analytics':
+        return <AnalyticsView />;
+      case 'dashboard':
+      default:
+        return (
+          <div className="flex-1 space-y-6">
+            {/* Stats Row */}
+            {statsLoading || loadingData ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="dashboard-card p-5 animate-pulse">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-3"></div>
+                    <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (dashboardStats || dashboardData) ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <StatCard
-              title="Total Students"
-              value={totalGroupsFromGroups > 0
-                ? totalStudentsFromGroups
-                : (dashboardStats?.totalStudents?.value ?? dashboardStats?.totalStudents ?? dashboardData?.stats.totalStudents ?? 0)}
-              icon={Users}
-              onClick={() => router.push('/students')}
-            />
-            <StatCard
-              title="Groups & Companies"
-              value={totalGroupsFromGroups > 0
-                ? totalGroupsFromGroups
-                : (dashboardStats?.totalGroups?.value ?? dashboardStats?.totalGroups ?? dashboardData?.stats.totalGroups ?? 0)}
-              icon={Building2}
-            />
-            <StatCard
-              title="Attendance Rate"
-              value={dashboardStats?.attendanceRate?.value ?? dashboardStats?.attendanceRate ?? dashboardData?.stats.attendanceRate ?? 0}
-              icon={Calendar}
-              suffix="%"
-              onClick={() => router.push('/attendance')}
-            />
-            <StatCard
-              title="Active Courses"
-              value={dashboardStats?.activeCourses?.value ?? dashboardStats?.activeCourses ?? dashboardData?.stats.activeCourses ?? 0}
-              icon={BookOpen}
-            />
-            <StatCard
-              title="Completion Rate"
-              value={dashboardStats?.completionRate?.value ?? dashboardStats?.completionRate ?? dashboardData?.stats.completionRate ?? 0}
-              icon={CheckCircle}
-              suffix="%"
-            />
-            <StatCard
-              title="Pending Assessments"
-              value={dashboardStats?.pendingAssessments?.value ?? dashboardStats?.pendingAssessments ?? dashboardData?.stats.pendingAssessments ?? 0}
-              icon={AlertCircle}
-              onClick={() => router.push('/assessments?status=PENDING')}
-            />
-          </div>
-        ) : null}
-
-        {/* Quick Actions */}
-        <QuickActions />
-
-        {/* Programme Health */}
-        {!loadingData && dashboardData && dashboardData.programmeHealth.length > 0 && (
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Programme Health</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider pb-3">
-                      Group
-                    </th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider pb-3">
-                      Current Module
-                    </th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider pb-3">
-                      Credit Progress
-                    </th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider pb-3">
-                      Projected Completion
-                    </th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider pb-3">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {dashboardData.programmeHealth.map((group) => {
-                    const progressPercent = group.totalCredits > 0 
-                      ? Math.round((group.earnedCredits / group.totalCredits) * 100) 
-                      : 0;
-                    
-                    return (
-                      <tr key={group.groupId} className="hover:bg-slate-50">
-                        <td className="py-3">
-                          <Link 
-                            href={`/groups/${group.groupId}`}
-                            className="text-emerald-600 hover:text-emerald-700 font-medium"
-                          >
-                            {formatGroupNameDisplay(group.groupName || '')}
-                          </Link>
-                        </td>
-                        <td className="py-3 text-sm text-slate-700">
-                          Module {group.currentModule}: {group.currentModuleName}
-                        </td>
-                        <td className="py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-slate-100 rounded-full h-2 max-w-[120px]">
-                              <div 
-                                className="bg-emerald-500 h-2 rounded-full transition-all"
-                                style={{ width: `${progressPercent}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-xs text-slate-600 min-w-[60px]">
-                              {group.earnedCredits}/{group.totalCredits}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 text-sm text-slate-700">
-                          {group.projectedCompletionDate 
-                            ? new Date(group.projectedCompletionDate).toLocaleDateString('en-ZA', { 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric' 
-                              })
-                            : 'N/A'}
-                        </td>
-                        <td className="py-3">
-                          {getStatusBadge(group.status, group.weeksAhead)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Charts */}
-        <Suspense fallback={<ComponentSkeleton height="h-64" />}>
-          <DashboardCharts />
-        </Suspense>
-
-        {/* Activity + Alerts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {activitiesLoading ? (
-            <SkeletonCard />
-          ) : (
-            <Suspense fallback={<ComponentSkeleton />}>
-              <RecentActivity />
-            </Suspense>
-          )}
-          <Suspense fallback={<ComponentSkeleton />}>
-            <DashboardAlerts />
-          </Suspense>
-        </div>
-
-        {/* Schedule */}
-        {scheduleLoading ? (
-          <SkeletonCard height="h-96" />
-        ) : (
-          <Suspense fallback={<ComponentSkeleton height="h-96" />}>
-            <TodaysSchedule />
-          </Suspense>
-        )}
-      </div>
-
-      <aside className="w-full min-[1200px]:w-[300px] flex-shrink-0 space-y-4">
-        <div ref={calendarRef}>
-          <MiniCalendar
-            displayMonth={calendarMonth}
-            onMonthChange={setCalendarMonth}
-            onDayClick={(day) => setSelectedDay(day)}
-            onDayHover={handleDayHover}
-            onDayLeave={handleDayLeave}
-            sessions={monthSessions}
-            isSessionsLoading={monthSessionsLoading}
-          />
-        </div>
-
-        {hoverInfo && (
-          <div
-            className="fixed z-50 w-64 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700 shadow-xl"
-            style={{ top: hoverInfo.top, left: hoverInfo.left, transform: 'translateX(-50%)' }}
-          >
-            <p className="text-sm font-semibold text-slate-900">
-              {format(hoverInfo.day, 'EEEE, d MMM')}
-            </p>
-            <div className="mt-2 space-y-1">
-              {(sessionsByDay.get(format(hoverInfo.day, 'yyyy-MM-dd')) || []).map((session: any) => (
-                <div key={session.id} className="text-slate-600">
-                  {session.group?.name || 'Group'} — {session.venue || 'Venue TBC'} — {session.startTime}–{session.endTime}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selectedDay && (
-          <div ref={dayCardRef} className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">
-                  {format(selectedDay, 'EEEE, d MMMM yyyy')}
-                </h3>
+            ) : (dashboardStats || dashboardData) ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <StatCard
+                  title="Total Students"
+                  value={totalStudents}
+                  icon={Users}
+                  onClick={() => router.push('/students')}
+                />
+                <StatCard
+                  title="Groups & Companies"
+                  value={totalGroups}
+                  icon={Building2}
+                />
+                <StatCard
+                  title="Attendance Rate"
+                  value={typeof dashboardStats?.attendanceRate?.value === 'number' ? dashboardStats.attendanceRate.value : typeof dashboardStats?.attendanceRate === 'number' ? dashboardStats.attendanceRate : typeof dashboardData?.stats.attendanceRate === 'number' ? dashboardData.stats.attendanceRate : 0}
+                  icon={Calendar}
+                  suffix="%"
+                  onClick={() => router.push('/attendance')}
+                />
+                <StatCard
+                  title="Active Courses"
+                  value={typeof dashboardStats?.activeCourses?.value === 'number' ? dashboardStats.activeCourses.value : typeof dashboardStats?.activeCourses === 'number' ? dashboardStats.activeCourses : typeof dashboardData?.stats.activeCourses === 'number' ? dashboardData.stats.activeCourses : 0}
+                  icon={BookOpen}
+                />
+                <StatCard
+                  title="Completion Rate"
+                  value={typeof dashboardStats?.completionRate?.value === 'number' ? dashboardStats.completionRate.value : typeof dashboardStats?.completionRate === 'number' ? dashboardStats.completionRate : typeof dashboardData?.stats.completionRate === 'number' ? dashboardData.stats.completionRate : 0}
+                  icon={CheckCircle}
+                  suffix="%"
+                />
+                <StatCard
+                  title="Pending Assessments"
+                  value={typeof dashboardStats?.pendingAssessments?.value === 'number' ? dashboardStats.pendingAssessments.value : typeof dashboardStats?.pendingAssessments === 'number' ? dashboardStats.pendingAssessments : typeof dashboardData?.stats.pendingAssessments === 'number' ? dashboardData.stats.pendingAssessments : 0}
+                  icon={AlertCircle}
+                  onClick={() => router.push('/assessments?status=PENDING')}
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedDay(null)}
-                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
+            ) : null}
+
+            {/* Facilitator Teaching Assistant */}
+            <div className="mb-6">
+              <TeachingNotifications />
             </div>
 
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const next = addDays(selectedDay, -1);
-                  setSelectedDay(next);
-                  setCalendarMonth(startOfMonth(next));
-                }}
-                className="rounded-lg border border-slate-200 p-1 text-slate-500 hover:bg-slate-50"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = addDays(selectedDay, 1);
-                  setSelectedDay(next);
-                  setCalendarMonth(startOfMonth(next));
-                }}
-                className="rounded-lg border border-slate-200 p-1 text-slate-500 hover:bg-slate-50"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            {/* Quick Actions */}
+            <QuickActions />
 
-            <div className="mt-4 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Sessions
-              </p>
-              {selectedSessions.length === 0 ? (
-                <p className="text-sm text-slate-500">No training sessions scheduled</p>
-              ) : (
-                <div className="space-y-2">
-                  {selectedSessions.map((session: any) => (
-                    <div
-                      key={session.id}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-                    >
-                      <div className="flex items-center gap-2 text-xs text-slate-700">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: session.group?.colour || '#10b981' }}
-                        />
-                        <span className="font-semibold text-slate-900">
-                          {formatGroupNameDisplay(session.group?.name || 'Group')}
-                        </span>
-                        <span>· {session.venue || 'Venue TBC'}</span>
-                        <span>· {session.startTime}–{session.endTime}</span>
-                        <span>· {getStudentCount(session.groupId)} students</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceSession(session)}
-                        className="rounded-lg border border-emerald-200 bg-white px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-                      >
-                        Mark Attendance
-                      </button>
-                    </div>
+            {/* PROGRAMME HEALTH TABLE - Pulls from Groups context (same source as Groups page) */}
+            <div className="dashboard-card p-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">Programme Health</h3>
+              {isLoading || !groups ? (
+                <div className="animate-pulse space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-14 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
                   ))}
+                </div>
+              ) : !groups || groups.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No Programme Data"
+                  description="Create groups and assign rollout plans to track programme health"
+                  action={{
+                    label: "Go to Groups",
+                    onClick: () => router.push('/groups')
+                  }}
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-700">
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Group Name
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Learners
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Attendance
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Current Module
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                      {groups.filter(g => g.status === 'ACTIVE' || g.status === 'PLANNING').length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-4 px-3 text-center text-sm text-slate-500">
+                            No active groups
+                          </td>
+                        </tr>
+                      ) : (
+                        groups.filter(g => g.status === 'ACTIVE' || g.status === 'PLANNING').map((group, index) => {
+                          // Helper: Parse group.notes to extract rollout plan structure
+                          const parseGroupRolloutPlan = (notes: string | null | undefined) => {
+                            if (!notes) return null;
+                            try {
+                              const parsed = JSON.parse(notes);
+                              return parsed?.rolloutPlan || null;
+                            } catch (error) {
+                              console.warn(`Failed to parse notes for group ${group.id}:`, error);
+                              return null;
+                            }
+                          };
+
+                          const learnerCount = group._count?.students || group.students?.length || 0;
+                          const attendance = group.attendanceRate ?? 0;
+
+                          const hasPlan = Boolean(group.unitStandardRollouts?.length);
+
+                          // Use the refined module label logic
+                          const moduleLabel = getModuleLabel(group);
+
+                          return (
+                            <tr
+                              key={group.id}
+                              className={`transition-colors ${index % 2 === 0
+                                ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                }`}
+                            >
+                              <td className="py-4 px-3">
+                                <Link
+                                  href={`/groups/${group.id}`}
+                                  className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors text-sm"
+                                >
+                                  {formatGroupNameDisplay(group.name || '')}
+                                </Link>
+                              </td>
+                              <td className="py-4 px-3">
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                                    {learnerCount} Learners
+                                  </span>
+                                  {group.actualProgress && group.actualProgress.atRiskCount !== undefined && group.actualProgress.atRiskCount > 0 && (
+                                    <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
+                                      <AlertTriangle className="w-2.5 h-2.5" />
+                                      {group.actualProgress.atRiskCount} At Risk
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-4 px-3">
+                                {attendance === 0 && (group.totalRecorded === 0 || !group.totalRecorded) ? (
+                                  <span className="text-sm text-slate-400">—</span>
+                                ) : attendance === 0 ? (
+                                  <span className="text-sm font-semibold text-rose-500">0%</span>
+                                ) : (
+                                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{attendance.toFixed(0)}%</span>
+                                )}
+                              </td>
+                              <td className="py-4 px-3">
+                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                                  {moduleLabel}
+                                </span>
+                              </td>
+                              <td className="py-4 px-3">
+                                {renderProgrammeStatus(attendance, hasPlan, group)}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Quick Stats
-              </p>
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                Groups attending: {dayGroupNames.size} | Total students: {totalStudents} | Attendance recorded: {attendanceRecorded ? 'Yes' : 'No'}
-              </div>
+            {/* Charts */}
+            <Suspense fallback={<ComponentSkeleton height="h-64" />}>
+              <DashboardCharts />
+            </Suspense>
+
+            {/* Activity + Alerts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {activitiesLoading ? (
+                <SkeletonCard />
+              ) : (
+                <Suspense fallback={<ComponentSkeleton />}>
+                  <RecentActivity />
+                </Suspense>
+              )}
+              <Suspense fallback={<ComponentSkeleton />}>
+                <DashboardAlerts />
+              </Suspense>
             </div>
 
-            {dayAlerts.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Alerts
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {dayAlerts.map((alert: any) => (
-                    <span
-                      key={alert.id}
-                      className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700"
-                    >
-                      {alert.data?.studentName || alert.message}
-                    </span>
-                  ))}
-                </div>
-              </div>
+            {/* Schedule */}
+            {scheduleLoading ? (
+              <SkeletonCard height="h-96" />
+            ) : (
+              <Suspense fallback={<ComponentSkeleton height="h-96" />}>
+                <TodaysSchedule />
+              </Suspense>
             )}
           </div>
-        )}
+        );
+    }
+  };
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <NextSessionPanel variant="list" limit={3} showFooterLink />
-        </div>
-      </aside>
+  return (
+    <DashboardLayout
+      currentView={currentView}
+      onViewChange={setCurrentView}
+      alertSidebar={<AlertZone />}
+    >
+      {renderMainContent()}
 
       {attendanceSession && (
         <SessionAttendanceModal
@@ -647,6 +730,6 @@ export default function DashboardPage() {
       )}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-    </div>
+    </DashboardLayout>
   );
 }
