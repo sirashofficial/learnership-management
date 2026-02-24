@@ -144,24 +144,28 @@ const getUnitStandards = (plan: any) => {
 };
 
 const getGroupStudentCount = (group: any) => {
-  const students = Array.isArray(group?.students) ? group.students : [];
-  if (students.length > 0) {
-    const keys = new Set<string>();
-    students.forEach((student: any) => {
-      const first = String(student?.firstName || '').trim().toLowerCase();
-      const last = String(student?.lastName || '').trim().toLowerCase();
-      if (first || last) {
-        keys.add(`name:${first} ${last}`.trim());
-        return;
-      }
+  try {
+    const students = Array.isArray(group?.students) ? group.students : [];
+    if (students.length > 0) {
+      const keys = new Set<string>();
+      students.forEach((student: any) => {
+        const first = String(student?.firstName || '').trim().toLowerCase();
+        const last = String(student?.lastName || '').trim().toLowerCase();
+        if (first || last) {
+          keys.add(`name:${first} ${last}`.trim());
+          return;
+        }
 
-      const id = student?.id || student?.studentId;
-      if (id) keys.add(`id:${id}`);
-    });
-    return keys.size;
+        const id = student?.id || student?.studentId;
+        if (id) keys.add(`id:${id}`);
+      });
+      return keys.size;
+    }
+
+    return group?._count?.students || 0;
+  } catch (e) {
+    return 0;
   }
-
-  return group?._count?.students || 0;
 };
 
 const getUniqueStudentTotal = (groupList: any[]) => {
@@ -291,29 +295,33 @@ const getPlanStatus = (plan: any): PlanStatus => {
 };
 
 const getCurrentModuleLabel = (plan: any) => {
-  if (!plan) return 'No Plan';
-  const standards = getUnitStandards(plan);
-  if (standards.length === 0) return 'No Plan';
+  try {
+    if (!plan) return 'No Plan';
+    const standards = getUnitStandards(plan);
+    if (standards.length === 0) return 'No Plan';
 
-  const today = normalizeDate(new Date());
-  const firstStart = normalizeDate(standards[0].start);
-  const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
-  const planEndDate = getPlanEndDate(plan);
-  const planEnd = planEndDate ? normalizeDate(planEndDate) : null;
-  const completionBoundary = planEnd && planEnd > lastAssess ? planEnd : lastAssess;
+    const today = normalizeDate(new Date());
+    const firstStart = normalizeDate(standards[0].start);
+    const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
+    const planEndDate = getPlanEndDate(plan);
+    const planEnd = planEndDate ? normalizeDate(planEndDate) : null;
+    const completionBoundary = planEnd && planEnd > lastAssess ? planEnd : lastAssess;
 
-  if (today < firstStart) return 'Not Started';
-  if (today > completionBoundary) return 'Complete';
+    if (today < firstStart) return 'Not Started';
+    if (today > completionBoundary) return 'Complete';
 
-  const active = standards.find((unit: any) => {
-    const start = normalizeDate(unit.start);
-    const end = normalizeDate(unit.end);
-    return start <= today && end >= today;
-  });
+    const active = standards.find((unit: any) => {
+      const start = normalizeDate(unit.start);
+      const end = normalizeDate(unit.end);
+      return start <= today && end >= today;
+    });
 
-  if (active) return `Module ${active.moduleNumber}`;
+    if (active) return `Module ${active.moduleNumber}`;
 
-  return 'Between Modules';
+    return 'Between Modules';
+  } catch (e) {
+    return 'No Plan';
+  }
 };
 
 // Module names and credits for the NVC L2 qualification
@@ -469,21 +477,25 @@ const getPerformanceStatus = (
   attendanceRate: number = 0,
   currentAssessmentModule: number = 0
 ): PlanStatus => {
-  if (!hasPlan) return 'NO_PLAN';
+  try {
+    if (!hasPlan || !plan) return 'NO_PLAN';
 
-  const dateStatus = getPlanStatus(plan);
-  const totalModules = plan?.modules?.length ?? 0;
-  const expectedModule = getExpectedModuleFromPlan(plan);
+    const dateStatus = getPlanStatus(plan);
+    const totalModules = plan?.modules?.length ?? 0;
+    const expectedModule = getExpectedModuleFromPlan(plan);
 
-  return calculatePerformanceStatus(
-    projectedPercent,
-    actualPercent,
-    hasPlan,
-    attendanceRate,
-    currentAssessmentModule,
-    expectedModule,
-    dateStatus
-  );
+    return calculatePerformanceStatus(
+      projectedPercent,
+      actualPercent,
+      hasPlan,
+      attendanceRate,
+      currentAssessmentModule,
+      expectedModule,
+      dateStatus
+    );
+  } catch (e) {
+    return 'NO_PLAN';
+  }
 };
 
 const renderStatusBadge = (status: any): JSX.Element => {
@@ -607,21 +619,67 @@ export default function GroupsPage() {
     ? activeGroups.reduce((sum: number, g: any) => sum + (g.attendanceRate ?? 0), 0) / activeGroups.length
     : 0;
   const programmeRows = activeGroups.map((group: any) => {
-    const storedPlan = resolveRolloutPlan(group);
-    const creditProgress = getCreditCompletion(storedPlan);
-    const actualProgress = group.actualProgress;
-    const actualPercent = actualProgress?.avgPercent || 0;
-    const groupAttendance = group.attendanceRate;
-    const currentAssessmentModule = actualProgress?.currentAssessmentModule;
-    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan), storedPlan, groupAttendance, currentAssessmentModule);
-    return {
-      id: group.id,
-      name: group.name,
-      learners: getGroupStudentCount(group),
-      attendance: group.attendanceRate ?? 0,
-      currentModule: getCurrentModuleLabel(storedPlan),
-      status,
-    };
+    try {
+      const storedPlan = resolveRolloutPlan(group);
+      const creditProgress = getCreditCompletion(storedPlan);
+      const actualProgress = group?.actualProgress;
+      const actualPercent = typeof actualProgress?.avgProgressPercent === 'number' ? actualProgress.avgProgressPercent : 0;
+      const groupAttendance = typeof group?.attendanceRate === 'number' ? group.attendanceRate : 0;
+      const currentAssessmentModule = typeof actualProgress?.currentAssessmentModule === 'number' ? actualProgress.currentAssessmentModule : 0;
+      
+      // Safely get status with fallback
+      let status = 'NO_PLAN';
+      try {
+        const computedStatus = getPerformanceStatus(
+          creditProgress.percentage, 
+          actualPercent, 
+          Boolean(storedPlan), 
+          storedPlan, 
+          groupAttendance, 
+          currentAssessmentModule
+        );
+        status = typeof computedStatus === 'string' ? computedStatus : 'NO_PLAN';
+      } catch (e) {
+        status = 'NO_PLAN';
+      }
+      
+      // Safely get student count
+      let learners = 0;
+      try {
+        const count = getGroupStudentCount(group);
+        learners = typeof count === 'number' ? count : 0;
+      } catch (e) {
+        learners = 0;
+      }
+      
+      // Safely get module label
+      let currentModule = 'No Plan';
+      try {
+        const label = getCurrentModuleLabel(storedPlan);
+        currentModule = typeof label === 'string' ? label : 'No Plan';
+      } catch (e) {
+        currentModule = 'No Plan';
+      }
+      
+      return {
+        id: String(group?.id || 'unknown'),
+        name: String(group?.name || 'Unnamed'),
+        learners: Number(learners) || 0,
+        attendance: Number(groupAttendance) || 0,
+        currentModule: String(currentModule),
+        status: String(status),
+      };
+    } catch (err) {
+      // Fallback row for any unmapped group
+      return {
+        id: String(group?.id || 'error'),
+        name: String(group?.name || 'Error'),
+        learners: 0,
+        attendance: 0,
+        currentModule: 'Error',
+        status: 'NO_PLAN',
+      };
+    }
   });
   const onTrackCount = programmeRows.filter((row) => row.status === 'ON_TRACK').length;
   const behindCount = programmeRows.filter((row) => row.status === 'BEHIND').length;
@@ -1069,29 +1127,39 @@ export default function GroupsPage() {
               </thead>
               {/* GROUPS TABLE REDESIGN: Alternating row colors + improved badges */}
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {programmeRows.map((row, index) => (
-                  <tr
-                    key={row.id}
-                    className={`transition-colors ${index % 2 === 0
-                      ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                      : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{formatGroupNameDisplay(row.name || '')}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{row.learners}</td>
-                    {/* ATTENDANCE COLUMN REDESIGN: Show "No data" instead of 0% */}
-                    <td className="px-4 py-3 text-sm">
-                      {row.attendance === 0 || row.attendance === undefined ? (
-                        <span className="text-slate-400 dark:text-slate-500 text-xs">No data</span>
-                      ) : (
-                        <span className="text-slate-600 dark:text-slate-400 font-semibold">{row.attendance.toFixed(0)}%</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{row.currentModule}</td>
-                    {/* STATUS BADGES: Solid colored pills with proper styling */}
-                    <td className="px-4 py-3 text-sm">{renderStatusBadge(row.status)}</td>
-                  </tr>
-                ))}
+                {programmeRows.map((row, index) => {
+                  // Defensive rendering: ensure all row properties are primitives
+                  const safeId = typeof row.id === 'string' ? row.id : String(row.id || 'unknown');
+                  const safeName = typeof row.name === 'string' ? row.name : String(row.name || '');
+                  const safeLearners = typeof row.learners === 'number' ? row.learners : Number(row.learners) || 0;
+                  const safeAttendance = typeof row.attendance === 'number' ? row.attendance : Number(row.attendance) || 0;
+                  const safeModule = typeof row.currentModule === 'string' ? row.currentModule : String(row.currentModule || 'No Plan');
+                  const safeStatus = typeof row.status === 'string' ? row.status : String(row.status || 'NO_PLAN');
+                  
+                  return (
+                    <tr
+                      key={safeId}
+                      className={`transition-colors ${index % 2 === 0
+                        ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                        : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                    >
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{formatGroupNameDisplay(safeName)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{String(safeLearners)}</td>
+                      {/* ATTENDANCE COLUMN REDESIGN: Show "No data" instead of 0% */}
+                      <td className="px-4 py-3 text-sm">
+                        {safeAttendance === 0 || safeAttendance === undefined ? (
+                          <span className="text-slate-400 dark:text-slate-500 text-xs">No data</span>
+                        ) : (
+                          <span className="text-slate-600 dark:text-slate-400 font-semibold">{safeAttendance.toFixed(0)}%</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{String(safeModule)}</td>
+                      {/* STATUS BADGES: Solid colored pills with proper styling */}
+                      <td className="px-4 py-3 text-sm">{renderStatusBadge(safeStatus)}</td>
+                    </tr>
+                  );
+                })}
                 {programmeRows.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
