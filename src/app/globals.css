@@ -85,6 +85,119 @@ body {
 }
 
 @layer components {
+  /* ========== DASHBOARD REDESIGN — NEW DESIGN TOKENS ========== */
+  /* 
+   * YEHA Dashboard Visual Identity
+   * Color Palette: Navy (#0f172a), Green (#16a34a), Off-white (#f8fafc), Light Grey (#f1f5f9)
+   * Card Styling: 12px radius, subtle shadows, clean hierarchy
+   * Typography: Bold headings, muted labels, consistent spacing
+   */
+  
+  /* Dashboard card with accent left border */
+  .dashboard-card {
+    @apply bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 
+      transition-all duration-200 hover:shadow-lg dark:hover:shadow-lg;
+  }
+
+  /* Stat card with left accent border */
+  .stat-card {
+    @apply dashboard-card relative overflow-hidden backdrop-blur-sm
+      hover:border-slate-300 dark:hover:border-slate-600 p-5;
+  }
+  
+  /* Left accent border for stat cards */
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #16a34a;
+  }
+
+  /* Alert badge styles */
+  .alert-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
+      transition-colors duration-200;
+  }
+
+  .alert-badge-critical {
+    @apply alert-badge bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 
+      border border-red-200 dark:border-red-800;
+  }
+
+  .alert-badge-warning {
+    @apply alert-badge bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 
+      border border-amber-200 dark:border-amber-800;
+  }
+
+  .alert-badge-info {
+    @apply alert-badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 
+      border border-blue-200 dark:border-blue-800;
+  }
+
+  /* Status pill badges */
+  .status-pill {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .status-on-track {
+    @apply status-pill bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300;
+  }
+
+  .status-at-risk {
+    @apply status-pill bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300;
+  }
+
+  .status-behind {
+    @apply status-pill bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300;
+  }
+
+  /* Quick action button with icon */
+  .quick-action-btn {
+    @apply flex flex-col items-center justify-center gap-2 px-4 py-3 
+      bg-emerald-600 dark:bg-emerald-700 text-white text-xs font-semibold rounded-xl
+      transition-all duration-200 hover:bg-emerald-700 dark:hover:bg-emerald-600 
+      hover:shadow-lg hover:scale-105 active:scale-95
+      focus-visible:ring-2 focus-visible:ring-emerald-500;
+  }
+
+  /* Empty state container */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 px-4 text-center;
+  }
+
+  .empty-state-icon {
+    @apply mb-4 p-4 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-400 dark:text-slate-500;
+  }
+
+  .empty-state-title {
+    @apply text-lg font-semibold text-slate-900 dark:text-white mb-1;
+  }
+
+  .empty-state-description {
+    @apply text-sm text-slate-600 dark:text-slate-400;
+  }
+
+  /* Progress bar with fill */
+  .progress-bar {
+    @apply w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full bg-emerald-600 dark:bg-emerald-500 transition-all duration-300;
+  }
+
+  /* Zebra striping for tables */
+  .table-zebra tbody tr:nth-child(odd) {
+    @apply bg-white dark:bg-slate-800;
+  }
+
+  .table-zebra tbody tr:nth-child(even) {
+    @apply bg-slate-50 dark:bg-slate-700/50;
+  }
+
   /* ========== CARD COMPONENTS ========== */
   
   /* Card — clean, bordered, no shadow by default */

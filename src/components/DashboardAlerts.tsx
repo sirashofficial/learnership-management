@@ -10,17 +10,36 @@ import {
   CheckCircle2,
   X,
   Calendar,
-  UserX
+  UserX,
+  Bell,
+  ArrowRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
+/**
+ * REDESIGN: Dashboard Alerts Panel
+ * Features:
+ * - Compact summary badge row (Critical / Warning / Info)
+ * - Clean scrollable alert list with student names
+ * - No raw UUIDs visible to user
+ * - Truncated assessment titles with proper styling
+ * - Priority-colored left borders
+ * - "View all" link for full alert list
+ */
 export default function DashboardAlerts() {
   const { alerts, isLoading } = useDashboardAlerts();
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
   const router = useRouter();
 
   const visibleAlerts = alerts.filter((alert: any) => !dismissedAlerts.includes(alert.id));
+  
+  // Count alerts by priority
+  const alertCounts = {
+    critical: visibleAlerts.filter((a: any) => a.priority === 'URGENT').length,
+    warning: visibleAlerts.filter((a: any) => a.priority === 'WARNING').length,
+    info: visibleAlerts.filter((a: any) => a.priority === 'INFO').length,
+  };
 
   const handleDismiss = (alertId: string) => {
     setDismissedAlerts([...dismissedAlerts, alertId]);
@@ -53,19 +72,19 @@ export default function DashboardAlerts() {
   const getAlertIcon = (type: string) => {
     switch (type) {
       case 'assessment_deadline':
-        return <Clock className="w-5 h-5" />;
+        return <Clock className="w-4 h-4" />;
       case 'low_attendance':
-        return <UserX className="w-5 h-5" />;
+        return <UserX className="w-4 h-4" />;
       case 'pending_moderation':
-        return <FileText className="w-5 h-5" />;
+        return <FileText className="w-4 h-4" />;
       case 'at_risk_student':
-        return <AlertTriangle className="w-5 h-5" />;
+        return <AlertTriangle className="w-4 h-4" />;
       case 'missing_documents':
-        return <FileText className="w-5 h-5" />;
+        return <FileText className="w-4 h-4" />;
       case 'course_ending':
-        return <Calendar className="w-5 h-5" />;
+        return <Calendar className="w-4 h-4" />;
       default:
-        return <AlertTriangle className="w-5 h-5" />;
+        return <Bell className="w-4 h-4" />;
     }
   };
 
@@ -73,35 +92,35 @@ export default function DashboardAlerts() {
     switch (priority) {
       case 'URGENT':
         return {
-          bg: 'bg-red-50 dark:bg-red-900/20',
-          border: 'border-l-red-500',
+          borderColor: '#ef4444',
+          bgColor: 'bg-red-50 dark:bg-red-900/10',
+          iconBg: 'bg-red-100/80 dark:bg-red-900/20',
           icon: 'text-red-600 dark:text-red-400',
-          text: 'text-red-900 dark:text-red-100',
-          subtext: 'text-red-700 dark:text-red-300',
+          badge: 'alert-badge-critical',
         };
       case 'WARNING':
         return {
-          bg: 'bg-amber-50 dark:bg-amber-900/20',
-          border: 'border-l-amber-500',
+          borderColor: '#f59e0b',
+          bgColor: 'bg-amber-50 dark:bg-amber-900/10',
+          iconBg: 'bg-amber-100/80 dark:bg-amber-900/20',
           icon: 'text-amber-600 dark:text-amber-400',
-          text: 'text-amber-900 dark:text-amber-100',
-          subtext: 'text-amber-700 dark:text-amber-300',
+          badge: 'alert-badge-warning',
         };
       case 'INFO':
         return {
-          bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-          border: 'border-l-emerald-500',
+          borderColor: '#10b981',
+          bgColor: 'bg-emerald-50 dark:bg-emerald-900/10',
+          iconBg: 'bg-emerald-100/80 dark:bg-emerald-900/20',
           icon: 'text-emerald-600 dark:text-emerald-400',
-          text: 'text-emerald-900 dark:text-emerald-100',
-          subtext: 'text-emerald-700 dark:text-emerald-300',
+          badge: 'alert-badge-info',
         };
       default:
         return {
-          bg: 'bg-slate-50 dark:bg-slate-800',
-          border: 'border-l-slate-500',
+          borderColor: '#cbd5e1',
+          bgColor: 'bg-slate-50 dark:bg-slate-800',
+          iconBg: 'bg-slate-100 dark:bg-slate-700',
           icon: 'text-slate-600 dark:text-slate-400',
-          text: 'text-slate-900 dark:text-slate-100',
-          subtext: 'text-slate-700 dark:text-slate-300',
+          badge: '',
         };
     }
   };
@@ -111,70 +130,174 @@ export default function DashboardAlerts() {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    if (diffInMinutes < 1) return 'Now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
 
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  // Helper to check if text looks like a UUID or internal ID
+  const isUuidOrId = (text: string) => {
+    if (!text) return false;
+    // UUID pattern: 8-4-4-4-12 hex chars
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text)) return true;
+    // Short ID pattern: 6-8 hex chars without dashes
+    if (/^[0-9a-f]{6,}$/.test(text) && text.length <= 12) return true;
+    return false;
+  };
+
+  // Truncate text to specific length, removing any UUIDs
+  const truncateText = (text: string, maxLength: number = 40) => {
+    if (!text) return 'Untitled';
+    // Filter out sections that look like UUIDs
+    let cleaned = text.replace(/[0-9a-f]{6,}/gi, (match) => isUuidOrId(match) ? '' : match).trim();
+    if (!cleaned) return 'Assessment';
+    return cleaned.length > maxLength ? cleaned.substring(0, maxLength) + '...' : cleaned;
+  };
+
+  // Get clean alert title (student name or group name, filtering out IDs)
+  const getAlertTitle = (alert: any) => {
+    const studentName = alert.data?.studentName;
+    const groupName = alert.data?.groupName;
+    const studentId = alert.data?.studentId;
+    
+    if (studentName && !isUuidOrId(studentName)) {
+      return studentName;
+    }
+    if (groupName && !isUuidOrId(groupName)) {
+      return groupName;
+    }
+    // Fallback: show first letter of type
+    return alert.type?.replace(/_/g, ' ').toUpperCase() || 'Alert';
+  };
+
+  // Get clean assessment title (filtering out IDs)
+  const getAssessmentTitle = (alert: any) => {
+    const title = alert.data?.assessmentTitle || alert.message || '';
+    if (!title || isUuidOrId(title)) {
+      return alert.type?.replace(/_/g, ' ').toUpperCase() || 'Assessment';
+    }
+    return truncateText(title);
+  };
+
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-5">
+    <div className="dashboard-card p-5 flex flex-col h-full">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-900">Alerts</h3>
-        {visibleAlerts.length > 0 && (
-          <span className="text-xs text-red-500 font-medium">
-            {visibleAlerts.length} active
-          </span>
-        )}
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <Bell className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          Alerts
+        </h3>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-600 border-t-transparent"></div>
         </div>
       ) : visibleAlerts.length === 0 ? (
-        <div className="text-center py-12">
-          <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">All clear</p>
-          <p className="text-xs text-slate-400 mt-0.5">No pending alerts</p>
+        <div className="empty-state py-8">
+          <div className="empty-state-icon">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div className="empty-state-title">All Clear</div>
+          <div className="empty-state-description">No pending alerts</div>
         </div>
       ) : (
-        <div className="space-y-1 max-h-96 overflow-y-auto">
-          {visibleAlerts.slice(0, 10).map((alert: any) => {
-            const styles = getPriorityStyles(alert.priority);
-            return (
-              <div
-                key={alert.id}
-                className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors duration-150 border-l-2 border-transparent"
-                style={{ borderLeftColor: alert.priority === 'URGENT' ? '#ef4444' : alert.priority === 'WARNING' ? '#f59e0b' : '#10b981' }}
-                onClick={() => handleAlertClick(alert)}
-              >
-                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5", styles.bg, styles.icon)}>
-                  {getAlertIcon(alert.type)}
-                </div>
+        <>
+          {/* Summary Badge Row */}
+          <div className="flex gap-2 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+            {alertCounts.critical > 0 && (
+              <div className="alert-badge-critical">
+                <span className="font-bold">{alertCounts.critical}</span>
+                <span className="text-xs">Critical</span>
+              </div>
+            )}
+            {alertCounts.warning > 0 && (
+              <div className="alert-badge-warning">
+                <span className="font-bold">{alertCounts.warning}</span>
+                <span className="text-xs">Warning</span>
+              </div>
+            )}
+            {alertCounts.info > 0 && (
+              <div className="alert-badge-info">
+                <span className="font-bold">{alertCounts.info}</span>
+                <span className="text-xs">Info</span>
+              </div>
+            )}
+          </div>
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-900 leading-snug">{alert.message}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={cn("text-xs font-medium", styles.icon)}>{alert.priority}</span>
-                    <span className="text-xs text-slate-400">{formatTimestamp(alert.timestamp)}</span>
+          {/* Alert List */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+            {visibleAlerts.slice(0, 8).map((alert: any) => {
+              const styles = getPriorityStyles(alert.priority);
+              return (
+                <div
+                  key={alert.id}
+                  onClick={() => handleAlertClick(alert)}
+                  className={cn(
+                    'relative p-3 rounded-lg border-l-4 cursor-pointer transition-all duration-150',
+                    'hover:shadow-md hover:bg-opacity-100',
+                    styles.bgColor
+                  )}
+                  style={{ borderLeftColor: styles.borderColor }}
+                >
+                  <div className="flex gap-3">
+                    {/* Icon */}
+                    <div className={cn('p-2 rounded-lg flex-shrink-0 mt-0.5', styles.iconBg)}>
+                      <div className={styles.icon}>
+                        {getAlertIcon(alert.type)}
+                      </div>
+                    </div>
+
+                    {/* Content - ALERTS REDESIGN: Hide UUIDs, show only meaningful data */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white mb-0.5">
+                        {getAlertTitle(alert)}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-1.5">
+                        {getAssessmentTitle(alert)}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-500 dark:text-slate-500">
+                          {formatTimestamp(alert.timestamp)}
+                        </span>
+                        <ArrowRight className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                      </div>
+                    </div>
+
+                    {/* Dismiss Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDismiss(alert.id);
+                      }}
+                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex-shrink-0"
+                      title="Dismiss"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDismiss(alert.id);
-                  }}
-                  className="p-1 hover:bg-slate-200 rounded transition-colors text-slate-300 hover:text-slate-500 flex-shrink-0"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
+          {/* View All Link */}
+          {visibleAlerts.length > 8 && (
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => router.push('/alerts')}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg 
+                  text-xs font-semibold text-emerald-600 dark:text-emerald-400
+                  hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+              >
+                View all {visibleAlerts.length} alerts
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

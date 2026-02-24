@@ -14,12 +14,17 @@ export async function POST(request: NextRequest) {
     if (error) return error;
 
     const body = await request.json();
-    const { unitStandardId, assessmentType, groupId, studentIds } = body as {
+    const { unitStandardId, assessmentType, groupId, studentIds, result: bodyResult } = body as {
       unitStandardId?: string;
       assessmentType?: AssessmentType;
       groupId?: string;
       studentIds?: string[];
+      result?: string;
     };
+
+    // Support COMPETENT (default) or NOT_YET_COMPETENT
+    const markResult: string =
+      bodyResult === 'NOT_YET_COMPETENT' ? 'NOT_YET_COMPETENT' : 'COMPETENT';
 
     if (!unitStandardId) {
       return errorResponse('unitStandardId is required', 400);
@@ -73,15 +78,11 @@ export async function POST(request: NextRequest) {
       const existing = existingByStudent.get(studentId);
 
       if (existing) {
-        if (existing.result === 'NOT_YET_COMPETENT' || existing.result === 'COMPETENT') {
-          skipped += 1;
-          continue;
-        }
-
+        // Update existing assessment (allows overwriting any previous result)
         const updatedAssessment = await prisma.assessment.update({
           where: { id: existing.id },
           data: {
-            result: 'COMPETENT',
+            result: markResult,
             assessedDate: now,
             moderationStatus: 'PENDING',
           },
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
           type: assessmentType,
           method: 'PRACTICAL',
           dueDate,
-          result: 'COMPETENT',
+          result: markResult,
           assessedDate: now,
           attemptNumber: 1,
           moderationStatus: 'PENDING',

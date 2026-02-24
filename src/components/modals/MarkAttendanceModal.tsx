@@ -13,6 +13,8 @@ interface MarkAttendanceModalProps {
 export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: MarkAttendanceModalProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
   const [groups, setGroups] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -22,11 +24,30 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
 
   const fetchGroups = useCallback(async () => {
     try {
+      console.log('📋 Fetching groups from /api/groups');
+      setGroupsLoading(true);
+      setGroupsError(null);
       const response = await fetch('/api/groups');
+      if (!response.ok) {
+        console.error('❌ Groups API error:', response.status, response.statusText);
+        setGroupsError(`Failed to load groups (${response.status})`);
+        return;
+      }
       const data = await response.json();
-      setGroups(data.data || []);
+      console.log('✅ Groups data received:', data);
+      // Handle both paginated and non-paginated response formats
+      const groupsList = data.data || data || [];
+      console.log('📊 Setting groups:', groupsList.length, 'groups');
+      setGroups(Array.isArray(groupsList) ? groupsList : []);
+      if (groupsList.length === 0) {
+        setGroupsError('No groups available. Create a group first.');
+      }
     } catch (error) {
-      console.error('Error fetching groups:', error);
+      console.error('❌ Error fetching groups:', error);
+      setGroupsError(error instanceof Error ? error.message : 'Failed to load groups');
+      setGroups([]);
+    } finally {
+      setGroupsLoading(false);
     }
   }, []);
 
@@ -147,21 +168,33 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Select Group *
                 </label>
-                <select
-                  value={selectedGroup}
-                  onChange={(e) => {
-                    setSelectedGroup(e.target.value);
-                    setSelectedSession('');
-                  }}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
-                >
-                  <option value="">Choose a group</option>
-                  {groups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {formatGroupNameDisplay(group.name)}
-                    </option>
-                  ))}
-                </select>
+                {groupsLoading ? (
+                  <div className="flex items-center justify-center py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600 mr-2" />
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Loading groups...</span>
+                  </div>
+                ) : groupsError ? (
+                  <div className="p-3 border border-red-300 rounded-lg bg-red-50 dark:bg-red-900/20">
+                    <p className="text-sm text-red-700 dark:text-red-400">⚠️ {groupsError}</p>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedGroup}
+                    onChange={(e) => {
+                      setSelectedGroup(e.target.value);
+                      setSelectedSession('');
+                    }}
+                    disabled={groups.length === 0}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{groups.length === 0 ? 'No groups available' : 'Choose a group'}</option>
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {formatGroupNameDisplay(group.name)}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {selectedGroup && (

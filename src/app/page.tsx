@@ -134,35 +134,42 @@ function getStatusBadge(status: string, weeksAhead: number) {
 
 // Get current module label from rollout plan
 const getModuleLabel = (group: any) => {
-  const rollouts = group.unitStandardRollouts || [];
-  if (rollouts.length === 0) return 'No Plan';
+  try {
+    const rollouts = Array.isArray(group.unitStandardRollouts) ? group.unitStandardRollouts : [];
+    if (rollouts.length === 0) return 'No Plan';
 
-  const now = new Date();
+    const now = new Date();
 
-  // Find current active module by date
-  const activeRollout = rollouts.find((r: any) => {
-    const start = r.startDate ? new Date(r.startDate) : null;
-    const end = r.assessingDate ? new Date(r.assessingDate) : null;
-    return start && end && now >= start && now <= end;
-  });
+    // Find current active module by date
+    const activeRollout = rollouts.find((r: any) => {
+      const start = r.startDate ? new Date(r.startDate) : null;
+      const end = r.assessingDate ? new Date(r.assessingDate) : null;
+      return start && end && now >= start && now <= end;
+    });
 
-  if (activeRollout?.unitStandard?.module?.moduleNumber) {
-    return `Module ${activeRollout.unitStandard.module.moduleNumber}`;
+    if (activeRollout?.unitStandard?.module?.moduleNumber) {
+      const moduleNum = activeRollout.unitStandard.module.moduleNumber;
+      return `Module ${typeof moduleNum === 'number' ? moduleNum : '?'}`;
+    }
+
+    // Fallback to latest module if all passed
+    const sorted = [...rollouts].sort((a, b) => {
+      const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+      const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    const latest = sorted.find(r => r.startDate && new Date(r.startDate) <= now) || sorted[0];
+    if (latest?.unitStandard?.module?.moduleNumber) {
+      const moduleNum = latest.unitStandard.module.moduleNumber;
+      return `Module ${typeof moduleNum === 'number' ? moduleNum : '?'}`;
+    }
+
+    return 'No Plan';
+  } catch (error) {
+    console.error('Error in getModuleLabel:', error);
+    return 'No Plan';
   }
-
-  // Fallback to latest module if all passed
-  const sorted = [...rollouts].sort((a, b) => {
-    const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
-    const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
-    return dateB - dateA;
-  });
-
-  const latest = sorted.find(r => r.startDate && new Date(r.startDate) <= now) || sorted[0];
-  if (latest?.unitStandard?.module?.moduleNumber) {
-    return `Module ${latest.unitStandard.module.moduleNumber}`;
-  }
-
-  return 'No Plan';
 };
 
 // Render programme health status badge using unified logic
@@ -605,13 +612,16 @@ export default function DashboardPage() {
                             }
                           };
 
-                          const learnerCount = group._count?.students || group.students?.length || 0;
-                          const attendance = group.attendanceRate ?? 0;
+                          // DEFENSIVE: Ensure all values are primitives
+                          const learnerCount = typeof group._count?.students === 'number' ? group._count.students : typeof group.students?.length === 'number' ? group.students.length : 0;
+                          const rawAttendance = group.attendanceRate ?? group.attendanceRate ?? 0;
+                          const attendance = typeof rawAttendance === 'number' ? rawAttendance : 0;
+                          const totalRecorded = typeof group.totalRecorded === 'number' ? group.totalRecorded : 0;
 
                           const hasPlan = Boolean(group.unitStandardRollouts?.length);
 
                           // Use the refined module label logic
-                          const moduleLabel = getModuleLabel(group);
+                          const moduleLabel = String(getModuleLabel(group) || 'No Plan');
 
                           return (
                             <tr
@@ -632,9 +642,9 @@ export default function DashboardPage() {
                               <td className="py-4 px-3">
                                 <div className="flex flex-col">
                                   <span className="text-sm text-slate-700 dark:text-slate-300">
-                                    {learnerCount} Learners
+                                    {typeof learnerCount === 'number' ? learnerCount : 0} Learners
                                   </span>
-                                  {group.actualProgress && group.actualProgress.atRiskCount !== undefined && group.actualProgress.atRiskCount > 0 && (
+                                  {group.actualProgress && typeof group.actualProgress.atRiskCount === 'number' && group.actualProgress.atRiskCount > 0 && (
                                     <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
                                       <AlertTriangle className="w-2.5 h-2.5" />
                                       {group.actualProgress.atRiskCount} At Risk
@@ -643,21 +653,23 @@ export default function DashboardPage() {
                                 </div>
                               </td>
                               <td className="py-4 px-3">
-                                {attendance === 0 && (group.totalRecorded === 0 || !group.totalRecorded) ? (
+                                {typeof attendance === 'number' && attendance === 0 && (typeof totalRecorded === 'number' && totalRecorded === 0 || !totalRecorded) ? (
                                   <span className="text-sm text-slate-400">—</span>
-                                ) : attendance === 0 ? (
+                                ) : typeof attendance === 'number' && attendance === 0 ? (
                                   <span className="text-sm font-semibold text-rose-500">0%</span>
-                                ) : (
+                                ) : typeof attendance === 'number' ? (
                                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{attendance.toFixed(0)}%</span>
+                                ) : (
+                                  <span className="text-sm text-slate-400">—</span>
                                 )}
                               </td>
                               <td className="py-4 px-3">
                                 <span className="text-sm text-slate-700 dark:text-slate-300">
-                                  {moduleLabel}
+                                  {typeof moduleLabel === 'string' ? moduleLabel : 'No Plan'}
                                 </span>
                               </td>
                               <td className="py-4 px-3">
-                                {renderProgrammeStatus(attendance, hasPlan, group)}
+                                {typeof attendance === 'number' && Boolean(hasPlan) ? renderProgrammeStatus(attendance, hasPlan, group) : renderProgrammeStatus(0, false, group)}
                               </td>
                             </tr>
                           );

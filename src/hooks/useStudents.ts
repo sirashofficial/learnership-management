@@ -26,14 +26,30 @@ export interface Student {
   };
 }
 
+export interface StudentsResponse {
+  data: Student[];
+  pagination?: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+  summary?: {
+    total: number;
+    active: number;
+    averageProgress: number;
+  };
+}
+
 export function useStudents(groupId?: string, status?: string) {
   const params = new URLSearchParams();
-  if (groupId) params.append('groupId', groupId);
-  if (status) params.append('status', status);
+  if (groupId && groupId !== 'all') params.append('groupId', groupId);
+  if (status && status !== 'all') params.append('status', status);
 
   const url = `/api/students${params.toString() ? `?${params.toString()}` : ''}`;
 
-  const { data, error, isLoading, mutate } = useSWR<{ data: Student[] }>(
+  const { data, error, isLoading, mutate } = useSWR<StudentsResponse>(
     url,
     fetcher,
     swrConfig.students
@@ -41,6 +57,8 @@ export function useStudents(groupId?: string, status?: string) {
 
   return {
     students: data?.data || [],
+    totalCount: data?.pagination?.total || 0,
+    summary: data?.summary || { total: 0, active: 0, averageProgress: 0 },
     isLoading,
     isError: error,
     mutate,

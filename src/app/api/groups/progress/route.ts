@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         // Build query filter
         const groupFilter = groupId ? { id: groupId } : { status: { not: 'ARCHIVED' } };
 
-        // Fetch all active groups with their students and competent assessments
+        // Fetch all active groups with their students and assessments
         const groups = await prisma.group.findMany({
             where: groupFilter,
             select: {
@@ -27,14 +27,21 @@ export async function GET(request: NextRequest) {
                         totalCreditsEarned: true,
                         progress: true,
                         assessments: {
-                            where: {
-                                result: 'COMPETENT',
-                            },
                             select: {
+                                result: true,
+                                assessedDate: true,
+                                createdAt: true,
+                                updatedAt: true,
+                                score: true,
                                 unitStandard: {
                                     select: {
                                         id: true,
                                         credits: true,
+                                        module: {
+                                            select: {
+                                                moduleNumber: true,
+                                            },
+                                        },
                                     },
                                 },
                             },
@@ -49,12 +56,27 @@ export async function GET(request: NextRequest) {
             const totalStudents = group.students.length;
             let totalCreditsEarned = 0;
             let totalUniqueUnitsPassed = 0;
+            let latestAssessmentModule = 0;
+            let latestAssessmentAt: Date | null = null;
 
             for (const student of group.students) {
-                // Deduplicate assessments by unit standard
+                // Deduplicate COMPETENT assessments by unit standard for credit counting
                 const uniqueUnits = new Map<string, number>();
                 for (const assessment of student.assessments) {
-                    if (assessment.unitStandard) {
+                    if (!assessment.unitStandard) continue;
+
+                    // Track the HIGHEST module number that has any marked assessment
+                    // This prevents "flickering" if an older assessment is updated/synced
+                    const isMarked = Boolean(assessment.assessedDate) || assessment.result != null || assessment.score != null;
+                    if (isMarked) {
+                        const modNum = assessment.unitStandard.module?.moduleNumber ?? 0;
+                        if (modNum > latestAssessmentModule) {
+                            latestAssessmentModule = modNum;
+                        }
+                    }
+
+                    // Credits only from COMPETENT results
+                    if (assessment.result === 'COMPETENT') {
                         uniqueUnits.set(assessment.unitStandard.id, assessment.unitStandard.credits || 0);
                     }
                 }
@@ -79,6 +101,7 @@ export async function GET(request: NextRequest) {
                 avgProgressPercent,
                 totalCreditsEarned,
                 totalUniqueUnitsPassed,
+                currentAssessmentModule: latestAssessmentModule, // 0 = no assessments yet
             };
         });
 

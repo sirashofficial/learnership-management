@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, CheckCircle, Calendar, Users, AlertCircle } from 'lucide-react';
+import { invalidateAssessments } from '@/lib/cache-invalidation';
 
 interface Module {
     id: string;
@@ -91,6 +92,9 @@ export default function BulkAssessmentModal({
                 const data = await response.json();
                 throw new Error(data.message || 'Failed to award bulk credits');
             }
+
+            // Invalidate assessment caches to sync data across views
+            await invalidateAssessments();
 
             if (onSuccess) onSuccess();
             onClose();

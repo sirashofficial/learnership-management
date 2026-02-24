@@ -12,7 +12,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { getApiError } from '@/lib/apiResponseHandler';
 
-interface UseApiOptions {
+export interface UseApiOptions {
   cache?: boolean;
   cacheTime?: number;
   retries?: number;

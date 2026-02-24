@@ -15,7 +15,8 @@ import {
     AlertCircle,
     Download,
     ChevronUp,
-    Trash2
+    Trash2,
+    BarChart3
 } from 'lucide-react';
 import { format } from 'date-fns';
 import useSWR, { mutate as globalMutate } from 'swr';
@@ -27,6 +28,7 @@ import { downloadRolloutDocx } from '@/lib/downloadRolloutDocx';
 import { TodayClassesDashboard } from '@/components/TodayClassesDashboard';
 import Toast, { useToast } from '@/components/Toast';
 import { fetcher } from '@/lib/swr-config';
+import ProgressDashboard from '@/components/ProgressDashboard';
 import {
     extractRolloutPlan,
     buildRolloutPlanFromUnitRollouts,
@@ -36,6 +38,7 @@ import {
     getProjectedCompletionDate,
     calculateProjectedVsActual
 } from '@/lib/rolloutUtils';
+import { invalidateAssessments } from '@/lib/cache-invalidation';
 
 interface GroupDetailProps {
     params: {
@@ -65,6 +68,7 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
         completedIds: [],
         earnedCredits: 0
     });
+    const [progressRefreshKey, setProgressRefreshKey] = useState(0);
 
     const planSummary = rolloutPlan
         || buildRolloutPlanFromUnitRollouts(group?.unitStandardRollouts)
@@ -206,10 +210,8 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
             }
 
             refreshAssessmentStats();
-            globalMutate('/api/assessments');
-            globalMutate('/api/students');
-            globalMutate('/api/groups');
-            globalMutate(`/api/groups/${params.id}`);
+            setProgressRefreshKey(k => k + 1); // refresh ProgressDashboard
+            await invalidateAssessments(); // refresh dashboard, groups list, all SWR keys
         } catch (error) {
             console.error('Failed to update assessment', error);
             showToast('Failed to update assessment', 'error');
@@ -251,10 +253,8 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
 
             mutateAssessments();
             refreshAssessmentStats();
-            globalMutate('/api/assessments');
-            globalMutate('/api/students');
-            globalMutate('/api/groups');
-            globalMutate(`/api/groups/${params.id}`);
+            setProgressRefreshKey(k => k + 1); // refresh ProgressDashboard
+            await invalidateAssessments(); // refresh dashboard, groups list, all SWR keys
         } catch (error: any) {
             console.error('Failed to bulk pass assessments', error);
             showToast(error?.message || 'Failed to bulk pass assessments', 'error');
@@ -420,12 +420,12 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
         <div className="min-h-screen bg-slate-50 pb-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Breadcrumb Navigation */}
-                <Breadcrumb 
+                <Breadcrumb
                     items={[
                         { label: 'Dashboard', href: '/' },
                         { label: 'Groups', href: '/groups' },
                         { label: group?.name ? formatGroupNameDisplay(group.name) : 'Group' }
-                    ]} 
+                    ]}
                 />
 
                 {/* Back Button */}
@@ -441,11 +441,10 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                             <span className="flex items-center gap-1.5">
                                 <Users className="w-4 h-4 text-indigo-500" />
                                 {group._count?.students || 0} Learners
-                                </span>
-                                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium">
-                                    {group.company?.name || 'Independent Group'}
-                                </span>
-                            </div>
+                            </span>
+                            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium">
+                                {group.company?.name || 'Independent Group'}
+                            </span>
                         </div>
                     </div>
 
@@ -460,6 +459,13 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                                 {isGeneratingLessons ? 'Generating...' : 'Generate Lessons'}
                             </button>
                         )}
+                        <button
+                            onClick={() => router.push(`/groups/${params.id}/rollout`)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium border border-slate-200 shadow-sm"
+                        >
+                            <BarChart3 className="w-4 h-4" />
+                            Rollout Calendar
+                        </button>
                         <button
                             onClick={handleGenerateRollout}
                             className="inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium border border-slate-200 shadow-sm"
@@ -630,7 +636,17 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                     </div>
                 </div>
 
-            </div>
+                {/* Student Progress Dashboard */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-slate-200">
+                        <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-indigo-500" />
+                            Student Progress
+                        </h2>
+                    </div>
+                    <ProgressDashboard groupId={params.id} groupName={group?.name || ''} refreshKey={progressRefreshKey} />
+
+                </div>
 
             </div>
 

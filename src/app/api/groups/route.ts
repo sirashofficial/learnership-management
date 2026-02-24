@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { 
-  successPaginatedResponse, 
-  successResponse, 
-  errorResponse, 
+import {
+  successPaginatedResponse,
+  successResponse,
+  errorResponse,
   handleApiError,
   getPaginationParams,
   createPagination,
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     console.log('GET /api/groups called');
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    
+
     // Extract pagination parameters
     const { page, pageSize, skip } = getPaginationParams(request);
 
@@ -49,6 +49,12 @@ export async function GET(request: NextRequest) {
           select: { students: true, sessions: true },
         },
         rolloutPlan: true,
+        Company: true,
+        unitStandardRollouts: {
+          include: {
+            unitStandard: true,
+          },
+        },
       },
       orderBy: { name: 'asc' },
       skip,
@@ -60,19 +66,19 @@ export async function GET(request: NextRequest) {
 
     const competentAssessments = groupIds.length > 0
       ? await prisma.assessment.findMany({
-          where: {
-            result: 'COMPETENT',
-            student: {
-              groupId: { in: groupIds },
-            },
+        where: {
+          result: 'COMPETENT',
+          student: {
+            groupId: { in: groupIds },
           },
-          select: {
-            studentId: true,
-            unitStandardId: true,
-            unitStandard: { select: { credits: true } },
-            student: { select: { groupId: true } },
-          },
-        })
+        },
+        select: {
+          studentId: true,
+          unitStandardId: true,
+          unitStandard: { select: { credits: true } },
+          student: { select: { groupId: true } },
+        },
+      })
       : [];
 
     const progressMap = new Map<
@@ -136,7 +142,7 @@ export async function GET(request: NextRequest) {
     });
 
     console.log('GET /api/groups success:', groupsWithProgress.length, 'groups');
-    
+
     // DEBUG: Log group.notes for each group to verify rollout plan data
     console.log('\n📋 DEBUG: Group Notes (Rollout Plans):');
     groups.forEach((group: any) => {
@@ -156,7 +162,7 @@ export async function GET(request: NextRequest) {
       }
     });
     console.log('\n');
-    
+
     const pagination = createPagination(page, pageSize, total);
     return successPaginatedResponse(groupsWithProgress, pagination);
   } catch (error) {

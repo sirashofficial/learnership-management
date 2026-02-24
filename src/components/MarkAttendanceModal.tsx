@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Loader2, Check } from 'lucide-react';
+import { X, Loader2, Check, Calendar } from 'lucide-react';
 import { formatGroupNameDisplay } from '@/lib/groupName';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-config';
+import { invalidateAttendance } from '@/lib/cache-invalidation';
 
 interface MarkAttendanceModalProps {
   isOpen: boolean;
@@ -13,49 +16,41 @@ interface MarkAttendanceModalProps {
 export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: MarkAttendanceModalProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [groups, setGroups] = useState<any[]>([]);
-  const [sessions, setSessions] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState('');
-  const [selectedSession, setSelectedSession] = useState('');
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Default to today's date in YYYY-MM-DD format
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [attendance, setAttendance] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchGroups();
-    }
-  }, [isOpen]);
+  // Use SWR for groups to prevent duplicate requests and enable caching
+  const { data: groupsData, error: groupsError, isLoading: groupsLoading } = useSWR(
+    isOpen ? '/api/groups' : null,
+    fetcher
+  );
+
+  const groups = groupsData?.data || [];
 
   useEffect(() => {
     if (selectedGroup) {
-      fetchSessions();
       fetchStudents();
+    } else {
+      setStudents([]);
     }
   }, [selectedGroup]);
 
-  const fetchGroups = async () => {
-    try {
-      const response = await fetch('/api/groups');
-      const data = await response.json();
-      setGroups(data.data || []);
-    } catch (error) {
-      console.error('Error fetching groups:', error);
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedGroup('');
+      // Reset to today's date when modal closes
+      const today = new Date();
+      setSelectedDate(today.toISOString().split('T')[0]);
+      setStudents([]);
+      setAttendance({});
     }
-  };
-
-  const fetchSessions = async () => {
-    setLoading(true);
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`/api/sessions?groupId=${selectedGroup}&date=${today}`);
-      const data = await response.json();
-      setSessions(data.data || []);
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isOpen]);
 
   const fetchStudents = async () => {
     try {
@@ -83,8 +78,13 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
   };
 
   const handleSubmit = async () => {
-    if (!selectedSession) {
-      alert('Please select a session');
+    if (!selectedGroup) {
+      alert('Please select a group');
+      return;
+    }
+
+    if (!selectedDate) {
+      alert('Please select a date');
       return;
     }
 
@@ -101,9 +101,9 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
         .filter(([_, status]) => status)
         .map(([studentId, status]) => ({
           studentId,
-          sessionId: selectedSession,
+          groupId: selectedGroup,
           status,
-          date: new Date().toISOString(),
+          date: new Date(selectedDate).toISOString(),
         }));
 
       const response = await fetch('/api/attendance', {
@@ -113,7 +113,11 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
       });
 
       if (response.ok) {
+        // Invalidate all attendance-related caches to sync data across views
+        await invalidateAttendance();
+        alert('Attendance saved successfully!');
         onSuccess();
+        onClose();
       } else {
         const error = await response.json();
         alert(error.error || 'Failed to save attendance');
@@ -147,50 +151,56 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Select Group *
                 </label>
-                <select
-                  value={selectedGroup}
-                  onChange={(e) => {
-                    setSelectedGroup(e.target.value);
-                    setSelectedSession('');
-                  }}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
-                >
-                  <option value="">Choose a group</option>
-                  {groups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {formatGroupNameDisplay(group.name)}
-                    </option>
-                  ))}
-                </select>
+                {groupsLoading ? (
+                  <div className="flex items-center justify-center py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600 mr-2" />
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Loading groups...</span>
+                  </div>
+                ) : groupsError ? (
+                  <div className="p-3 border border-red-300 rounded-lg bg-red-50 dark:bg-red-900/20">
+                    <p className="text-sm text-red-700 dark:text-red-400">⚠️ {groupsError}</p>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedGroup}
+                    onChange={(e) => {
+                      setSelectedGroup(e.target.value);
+                      setAttendance({}); // Clear attendance when group changes
+                    }}
+                    disabled={groups.length === 0}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{groups.length === 0 ? 'No groups available' : 'Choose a group'}</option>
+                    {groups.map((group: any) => (
+                      <option key={group.id} value={group.id}>
+                        {formatGroupNameDisplay(group.name)}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
-              {selectedGroup && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Select Session *
-                  </label>
-                  {loading ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                    </div>
-                  ) : sessions.length === 0 ? (
-                    <p className="text-sm text-slate-600 dark:text-slate-400 py-2">
-                      No sessions scheduled for today
-                    </p>
-                  ) : (
-                    <select
-                      value={selectedSession}
-                      onChange={(e) => setSelectedSession(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
-                    >
-                      <option value="">Choose a session</option>
-                      {sessions.map((session) => (
-                        <option key={session.id} value={session.id}>
-                          {session.title} ({session.startTime} - {session.endTime})
-                        </option>
-                      ))}
-                    </select>
-                  )}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Attendance Date *
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]} // Prevent future dates
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+                />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Select the date for which you want to mark attendance
+                </p>
+              </div>
+
+              {selectedGroup && loading && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                  <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">Loading students...</span>
                 </div>
               )}
             </div>
@@ -282,8 +292,8 @@ export default function MarkAttendanceModal({ isOpen, onClose, onSuccess }: Mark
             </button>
             <button
               onClick={handleSubmit}
-              disabled={saving || !selectedSession || students.length === 0}
-              className="px-4 py-2 bg-orange-600 text-white hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              disabled={saving || !selectedGroup || !selectedDate || students.length === 0}
+              className="px-4 py-2 bg-orange-600 text-white hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Save Attendance

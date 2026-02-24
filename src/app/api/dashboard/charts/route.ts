@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         _count: {
           select: { students: true },
         },
-        company: {
+        Company: {
           select: { name: true },
         },
       },

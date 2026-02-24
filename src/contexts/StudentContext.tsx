@@ -2,6 +2,7 @@
 
 import { createContext, useContext, ReactNode } from "react";
 import useSWR, { mutate } from "swr";
+import { mutate as globalMutate } from "swr";
 
 export interface Student {
   id: string;
@@ -159,6 +160,11 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
       // Also refresh dashboard stats
       mutate('/api/dashboard/stats');
+      
+      // Refresh groups (student count changes) and group progress
+      globalMutate('/api/groups');
+      globalMutate('/api/groups/progress');
+      globalMutate('/api/dashboard/alerts');
     } catch (error) {
       console.error('Error adding student:', error);
       throw error;
@@ -182,6 +188,11 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
       mutate('/api/students');
       mutate('/api/dashboard/stats');
+      
+      // Refresh groups and group progress
+      globalMutate('/api/groups');
+      globalMutate('/api/groups/progress');
+      globalMutate('/api/dashboard/alerts');
     } catch (error) {
       console.error('Error updating student:', error);
       throw error;
@@ -201,6 +212,11 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
       mutate('/api/students');
       mutate('/api/dashboard/stats');
+      
+      // Refresh groups and group progress
+      globalMutate('/api/groups');
+      globalMutate('/api/groups/progress');
+      globalMutate('/api/dashboard/alerts');
     } catch (error) {
       console.error('Error deleting student:', error);
       throw error;

@@ -50,7 +50,9 @@ export default function CreditAdjustmentModal({
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    totalCreditsEarned: newCredits
+                    // totalCreditsEarned is now READ-ONLY
+                    // Update credentials by marking assessments as COMPETENT instead
+                    status: 'ACTIVE'
                 })
             });
 

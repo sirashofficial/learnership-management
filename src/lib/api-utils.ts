@@ -26,6 +26,7 @@ export interface ApiResponse<T = any> {
 
 export interface PaginatedResponse<T = any> extends ApiResponse<T[]> {
   pagination?: Pagination;
+  summary?: any;
 }
 
 export interface ValidationError {
@@ -64,6 +65,7 @@ export function successResponse<T>(
 export function successPaginatedResponse<T>(
   data: T[],
   pagination: Pagination,
+  summary?: any,
   message?: string,
   status: number = 200
 ): NextResponse<PaginatedResponse<T>> {
@@ -72,6 +74,7 @@ export function successPaginatedResponse<T>(
       success: true,
       data,
       pagination,
+      summary,
       message: message || 'Request successful',
       timestamp: new Date().toISOString(),
     },

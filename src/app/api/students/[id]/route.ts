@@ -61,7 +61,7 @@ export async function PUT(
         groupId: validatedData.groupId,
         status: validatedData.status,
         progress: validatedData.progress,
-        totalCreditsEarned: validatedData.totalCreditsEarned,
+        // totalCreditsEarned is READ-ONLY - managed only via assessment marking
       },
       include: {
         group: true,

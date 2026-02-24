@@ -2,6 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useStudents } from "@/hooks/useStudents";
+import BulkAttendanceModal from "@/components/BulkAttendanceModal";
+import UndoToast, { useUndoToast } from "@/components/UndoToast";
+import { invalidateAttendance } from "@/lib/cache-invalidation";
 import {
   Calendar, Users, TrendingUp, ChevronDown, ChevronRight, Check, X,
   ChevronLeft, ChevronRight as ChevronRightIcon, Clock, AlertCircle,
@@ -61,6 +64,8 @@ export default function AttendancePage() {
   const [weekStats, setWeekStats] = useState<any>(null);
   const [lowAttendanceCount, setLowAttendanceCount] = useState<number>(0);
   const [selectedHistoryGroup, setSelectedHistoryGroup] = useState<string | null>(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const { toasts, showUndoToast, dismissToast } = useUndoToast();
 
   // Group collections
   const groupCollections: GroupCollection[] = [
@@ -155,12 +160,12 @@ export default function AttendancePage() {
       // Get all student IDs
       const studentIds = apiStudents.map(s => s.id).join(',');
       if (!studentIds) return;
-      
+
       const response = await fetch(`/api/attendance/rates?studentIds=${studentIds}`);
       const data = await response.json();
       if (data.success) {
         // Count students with attendance rate below 80%
-        const lowCount = Object.values(data.data as any).filter((stats: any) => 
+        const lowCount = Object.values(data.data as any).filter((stats: any) =>
           stats.attendanceRate < 80
         ).length;
         setLowAttendanceCount(lowCount);
@@ -249,6 +254,9 @@ export default function AttendancePage() {
         setAttendanceData(prev => ({ ...prev, ...updates }));
         setSelectedForBulk(new Set());
         setBulkAction(null);
+
+        // Sync all dependent caches (dashboard, groups list, attendance views)
+        await invalidateAttendance();
       }
     } catch (error) {
       console.error('Error bulk marking attendance:', error);
@@ -300,7 +308,7 @@ export default function AttendancePage() {
         };
       });
 
-      console.log(`📝 Extracted and prepared ${attendanceRecords.length} attendance records:`, 
+      console.log(`📝 Extracted and prepared ${attendanceRecords.length} attendance records:`,
         attendanceRecords.map(r => ({ studentId: r.studentId, status: r.status }))
       );
 
@@ -353,6 +361,9 @@ export default function AttendancePage() {
       }
 
       setLastSaved(new Date());
+
+      // Sync all dependent caches (dashboard, groups list, attendance views)
+      await invalidateAttendance();
 
       // Show appropriate message based on results
       if (failedCount === 0 && successCount > 0) {
@@ -537,70 +548,70 @@ export default function AttendancePage() {
           </div>
         ) : (
           Object.entries(groupedByDate).map(([date, records]: [string, any]) => {
-          const stats = {
-            present: records.filter((r: any) => r.status === 'PRESENT').length,
-            late: records.filter((r: any) => r.status === 'LATE').length,
-            absent: records.filter((r: any) => r.status === 'ABSENT').length,
-          };
+            const stats = {
+              present: records.filter((r: any) => r.status === 'PRESENT').length,
+              late: records.filter((r: any) => r.status === 'LATE').length,
+              absent: records.filter((r: any) => r.status === 'ABSENT').length,
+            };
 
-          return (
-            <div key={date} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {format(new Date(date), 'EEEE, MMMM d, yyyy')}
-                </h3>
-                <div className="flex gap-4 text-sm">
-                  <span className="text-green-600 dark:text-green-400">Present: {stats.present}</span>
-                  <span className="text-yellow-600 dark:text-yellow-400">Late: {stats.late}</span>
-                  <span className="text-red-600 dark:text-red-400">Absent: {stats.absent}</span>
+            return (
+              <div key={date} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+                  </h3>
+                  <div className="flex gap-4 text-sm">
+                    <span className="text-green-600 dark:text-green-400">Present: {stats.present}</span>
+                    <span className="text-yellow-600 dark:text-yellow-400">Late: {stats.late}</span>
+                    <span className="text-red-600 dark:text-red-400">Absent: {stats.absent}</span>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Student</th>
+                        <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Group</th>
+                        <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                        <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Marked By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {records.map((record: any) => (
+                        <tr key={record.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                          <td className="py-3 px-3">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {record.student?.firstName} {record.student?.lastName}
+                            </p>
+                          </td>
+                          <td className="py-3 px-3">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {record.student?.group?.name || 'N/A'}
+                            </p>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className={cn(
+                              "px-3 py-1 rounded-full text-sm font-medium",
+                              record.status === 'PRESENT' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                              record.status === 'LATE' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+                              record.status === 'ABSENT' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            )}>
+                              {record.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {record.markedBy || 'System'}
+                            </p>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Student</th>
-                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Group</th>
-                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                      <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Marked By</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {records.map((record: any) => (
-                      <tr key={record.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                        <td className="py-3 px-3">
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {record.student?.firstName} {record.student?.lastName}
-                          </p>
-                        </td>
-                        <td className="py-3 px-3">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {record.student?.group?.name || 'N/A'}
-                          </p>
-                        </td>
-                        <td className="py-3 px-3">
-                          <span className={cn(
-                            "px-3 py-1 rounded-full text-sm font-medium",
-                            record.status === 'PRESENT' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                            record.status === 'LATE' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-                            record.status === 'ABSENT' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          )}>
-                            {record.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {record.markedBy || 'System'}
-                          </p>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        })
+            );
+          })
         )}
       </div>
     );
@@ -812,32 +823,41 @@ export default function AttendancePage() {
             Analytics
           </button>
         </div>
-        <div className="relative">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowExportMenu(!showExportMenu)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+            onClick={() => setShowBulkModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
           >
-            <Download className="w-4 h-4" />
-            Export CSV
+            <CheckSquare className="w-4 h-4" />
+            Bulk Session
           </button>
-          {showExportMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
-              <button
-                onClick={() => exportAttendance('csv')}
-                className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
-              >
-                <FileText className="w-4 h-4" />
-                Export as CSV
-              </button>
-              <button
-                onClick={() => exportAttendance('json')}
-                className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
-              >
-                <FileText className="w-4 h-4" />
-                Export as JSON
-              </button>
-            </div>
-          )}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+                <button
+                  onClick={() => exportAttendance('csv')}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Export as CSV
+                </button>
+                <button
+                  onClick={() => exportAttendance('json')}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Export as JSON
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1183,6 +1203,28 @@ export default function AttendancePage() {
 
       {activeView === 'history' && renderHistoryView()}
       {activeView === 'analytics' && renderAnalyticsView()}
+
+      {showBulkModal && (
+        <BulkAttendanceModal
+          isOpen={showBulkModal}
+          onClose={() => setShowBulkModal(false)}
+          onSuccess={(undoId, count) => {
+            setShowBulkModal(false);
+            if (undoId) {
+              showUndoToast(undoId, `Attendance marked for ${count} student${count !== 1 ? 's' : ''}`);
+            }
+          }}
+        />
+      )}
+
+      {toasts.map((t) => (
+        <UndoToast
+          key={t.id}
+          undoId={t.undoId}
+          message={t.message}
+          onDismiss={() => dismissToast(t.id)}
+        />
+      ))}
     </div>
   );
 }

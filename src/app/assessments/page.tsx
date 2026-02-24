@@ -7,6 +7,7 @@ import { useStudents } from '@/hooks/useStudents';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGroups } from '@/contexts/GroupsContext';
 import { formatGroupNameDisplay } from '@/lib/groupName';
+import { invalidateRelatedCache } from '@/lib/cache-invalidation';
 import {
   ChevronDown, ChevronRight, Plus, Trash2, Edit2, Check, X, Users, TrendingUp,
   BarChart3, AlertTriangle, Download, Filter, Search, Award, Target, Loader2,
@@ -16,6 +17,7 @@ import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { mutate as globalMutate } from 'swr';
 import Toast, { useToast } from '@/components/Toast';
+import BulkMarkingModal, { type AssessmentResult, type AssessmentType as BulkAssessmentType } from '@/components/BulkMarkingModal';
 
 interface Assessment {
   id: string;
@@ -67,6 +69,14 @@ export default function AssessmentsPage() {
   const [editData, setEditData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [bulkPassing, setBulkPassing] = useState(false);
+
+  // Bulk Marking Modal state
+  const [bulkModal, setBulkModal] = useState<{
+    open: boolean;
+    unitStandard: { id: string; code: string; title: string };
+    assessmentType: BulkAssessmentType;
+    defaultResult: AssessmentResult;
+  } | null>(null);
 
   const pendingModerationCount = useMemo(
     () => assessments.filter((assessment: any) => assessment.moderationStatus === 'PENDING').length,
@@ -232,6 +242,7 @@ export default function AssessmentsPage() {
           });
 
           if (res.ok) {
+            await invalidateRelatedCache('assessment:mark');
             fetchAssessments();
           }
         } else {
@@ -257,6 +268,7 @@ export default function AssessmentsPage() {
           });
 
           if (res.ok) {
+            await invalidateRelatedCache('assessment:mark');
             fetchAssessments();
           }
         }
@@ -528,7 +540,9 @@ export default function AssessmentsPage() {
                             assessments={scopedAssessments.filter(a => a.unitStandard?.id === unit.id)}
                             onMarkAssessment={handleMarkAssessment}
                             onBulkMark={handleBulkMark}
-                            onBulkPassAll={handleBulkPassAll}
+                            onOpenBulkModal={(us: any, type: BulkAssessmentType, result: AssessmentResult) => {
+                              setBulkModal({ open: true, unitStandard: us, assessmentType: type, defaultResult: result });
+                            }}
                             loading={loading}
                             bulkPassing={bulkPassing}
                           />
@@ -548,10 +562,9 @@ export default function AssessmentsPage() {
   // ====================
   // ASSESSMENT TABS COMPONENT
   // ====================
-  const AssessmentTabs = ({ unitStandard, students, assessments, onMarkAssessment, onBulkMark, onBulkPassAll, loading, bulkPassing }: any) => {
+  const AssessmentTabs = ({ unitStandard, students, assessments, onMarkAssessment, onBulkMark, onOpenBulkModal, loading, bulkPassing }: any) => {
     const [activeTab, setActiveTab] = useState<'FORMATIVE' | 'SUMMATIVE' | 'WORKPLACE'>('FORMATIVE');
     const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
-    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
     const formativeAssessments = assessments.filter((a: any) => a.type === 'FORMATIVE');
     const summativeAssessments = assessments.filter((a: any) => a.type === 'SUMMATIVE');
@@ -651,44 +664,14 @@ export default function AssessmentsPage() {
             {unitStandard.code} — {unitStandard.title}
           </div>
           <button
-            onClick={() => setShowBulkConfirm(true)}
+            onClick={() => onOpenBulkModal(unitStandard, activeTab, 'COMPETENT')}
             disabled={bulkPassing || students.length === 0}
             className="px-3 py-1.5 rounded text-sm font-semibold border-2 border-green-600 text-green-700 hover:bg-green-50 disabled:opacity-50"
           >
+            {bulkPassing ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}
             ✓ Mark All as Passed
           </button>
         </div>
-
-        {showBulkConfirm && (
-          <div className="bg-green-50 border border-green-200 rounded p-3 mb-3 flex items-center justify-between">
-            <div className="text-sm text-green-800">
-              Mark all {students.length} students as PASSED for {unitStandard.code} — {unitStandard.title}?
-              You can still update individual students after.
-            </div>
-            <div className="flex gap-2 ml-4">
-              <button
-                onClick={() => setShowBulkConfirm(false)}
-                className="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowBulkConfirm(false);
-                  onBulkPassAll(
-                    unitStandard.id,
-                    activeTab,
-                    students.map((s: any) => s.id)
-                  );
-                }}
-                disabled={bulkPassing}
-                className="px-3 py-1.5 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-              >
-                {bulkPassing ? 'Working...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {students.map((student: any) => {
@@ -1652,6 +1635,66 @@ export default function AssessmentsPage() {
           {activeView === 'analytics' && <AnalyticsView />}
         </div>
         {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+
+        {/* Bulk Marking Modal */}
+        {bulkModal?.open && (
+          <BulkMarkingModal
+            isOpen={bulkModal.open}
+            onClose={() => setBulkModal(null)}
+            onConfirm={async (studentIds, result, assessmentType) => {
+              setBulkPassing(true);
+              try {
+                const res = await fetch('/api/assessments/bulk-pass', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    unitStandardId: bulkModal.unitStandard.id,
+                    assessmentType,
+                    studentIds,
+                    result,
+                  }),
+                });
+                if (!res.ok) {
+                  const err = await res.json();
+                  throw new Error(err.error || 'Failed to bulk mark assessments');
+                }
+                const data = await res.json();
+                const updated = data?.data?.updated ?? data?.updated ?? 0;
+                showToast(
+                  `✓ ${updated} student${updated !== 1 ? 's' : ''} marked as ${
+                    result === 'COMPETENT' ? 'Competent' : 'Not Yet Competent'
+                  }.`,
+                  'success'
+                );
+                await fetchAssessments();
+                globalMutate('/api/assessments');
+                globalMutate('/api/students');
+                globalMutate('/api/groups');
+                globalMutate('/api/groups/progress');
+              } catch (error: any) {
+                showToast(error?.message || 'Failed to bulk mark', 'error');
+                throw error; // keeps modal open on error
+              } finally {
+                setBulkPassing(false);
+              }
+            }}
+            unitStandard={bulkModal.unitStandard}
+            students={scopedStudents.map((s: any) => ({
+              id: s.id,
+              firstName: s.firstName,
+              lastName: s.lastName,
+              studentId: s.studentId,
+              currentStatus: scopedAssessments.find(
+                (a: any) => a.student?.id === s.id &&
+                  a.unitStandard?.id === bulkModal.unitStandard.id &&
+                  a.type === bulkModal.assessmentType
+              )?.result,
+            }))}
+            assessmentType={bulkModal.assessmentType}
+            defaultResult={bulkModal.defaultResult}
+          />
+        )}
       </div>
     </div>
   );

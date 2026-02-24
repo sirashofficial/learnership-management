@@ -1,0 +1,74 @@
+[
+  {
+    "id": "CITY_LOGISTICS_LP_2026",
+    "name": "CITY LOGISTICS (LP) - 2026",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 8
+    }
+  },
+  {
+    "id": "AZELIS_SA_LP_2026",
+    "name": "AZELIS SA (LP) - 2026",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 4
+    }
+  },
+  {
+    "id": "MONTEAGLE_LP_2026",
+    "name": "MONTEAGLE (LP) - 2026",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 2
+    }
+  },
+  {
+    "id": "BEYOND_INSIGHTS_LP_2026",
+    "name": "BEYOND INSIGHTS (LP) - 2026",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 1
+    }
+  },
+  {
+    "id": "AZELIS_LP_2025",
+    "name": "[DEPRECATED] AZELIS LP (2025)",
+    "status": "ARCHIVED",
+    "_count": {
+      "students": 6
+    }
+  },
+  {
+    "id": "PACKAGING_WORLD_LP_2025",
+    "name": "PACKAGING WORLD (LP) - 2025",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 3
+    }
+  },
+  {
+    "id": "FLINT_GROUP_LP_2025",
+    "name": "FLINT GROUP (LP) - 2025",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 12
+    }
+  },
+  {
+    "id": "WAHL_CLIPPERS_LP_2025",
+    "name": "WAHL CLIPPERS (LP) - 2025",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 6
+    }
+  },
+  {
+    "id": "MONTEAGLE_LP_2025",
+    "name": "MONTEAGLE (LP) - 2025",
+    "status": "ACTIVE",
+    "_count": {
+      "students": 4
+    }
+  }
+]

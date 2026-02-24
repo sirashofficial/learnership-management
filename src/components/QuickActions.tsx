@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus, Users, Users2, Calendar, CheckSquare } from 'lucide-react';
 import AddStudentModal from './AddStudentModal';
 import GroupModal from './GroupModal';
 import ScheduleLessonModal from './ScheduleLessonModal';
@@ -9,6 +10,14 @@ import MarkAttendanceModal from './MarkAttendanceModal';
 import Toast, { useToast } from './Toast';
 import { cn } from '@/lib/utils';
 
+/**
+ * REDESIGN: Quick Actions with icons and refined styling
+ * Features:
+ * - Icon + label for each action
+ * - Refined green buttons with hover states
+ * - Compact grid layout
+ * - Clear visual hierarchy
+ */
 export default function QuickActions() {
   const router = useRouter();
   const { toast, showToast, hideToast } = useToast();
@@ -75,39 +84,55 @@ export default function QuickActions() {
     }
   };
 
+  const actions = [
+    {
+      id: 'add-student',
+      label: 'Add Student',
+      icon: Plus,
+      onClick: () => setShowAddStudent(true),
+    },
+    {
+      id: 'create-group',
+      label: 'Create Group',
+      icon: Users2,
+      onClick: () => setShowCreateGroup(true),
+    },
+    {
+      id: 'schedule-lesson',
+      label: 'Schedule',
+      icon: Calendar,
+      onClick: () => setShowScheduleLesson(true),
+    },
+    {
+      id: 'mark-attendance',
+      label: 'Attendance',
+      icon: CheckSquare,
+      onClick: () => setShowMarkAttendance(true),
+    },
+  ];
+
   return (
     <>
-      <div className="bg-white rounded-lg border border-slate-200 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-4">Quick actions</h3>
+      {/* Quick Actions Card */}
+      <div className="dashboard-card p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Quick Actions</h3>
 
+        {/* Actions Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button
-            onClick={() => setShowAddStudent(true)}
-            className="btn-primary text-sm py-2.5"
-          >
-            Add Student
-          </button>
-
-          <button
-            onClick={() => setShowCreateGroup(true)}
-            className="btn-secondary text-sm py-2.5"
-          >
-            Create Group
-          </button>
-
-          <button
-            onClick={() => setShowScheduleLesson(true)}
-            className="btn-secondary text-sm py-2.5"
-          >
-            Schedule Lesson
-          </button>
-
-          <button
-            onClick={() => setShowMarkAttendance(true)}
-            className="btn-secondary text-sm py-2.5"
-          >
-            Mark Attendance
-          </button>
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.id}
+                onClick={action.onClick}
+                className="quick-action-btn group"
+                title={action.label}
+              >
+                <Icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
+                <span className="text-xs font-medium whitespace-nowrap">{action.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

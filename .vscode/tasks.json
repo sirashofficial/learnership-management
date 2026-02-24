@@ -16,6 +16,13 @@
 			"label": "Push to GitHub SSH",
 			"type": "shell",
 			"command": "powershell -NoProfile -Command Set-Location 'c:\\Users\\LATITUDE 5400\\Downloads\\Learnership Management'; & { git push origin main }"
+		},
+		{
+			"label": "Run Dev Server",
+			"type": "shell",
+			"command": "npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
 		}
 	]
 }

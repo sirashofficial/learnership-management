@@ -1,6 +1,6 @@
 'use client';
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface GroupDistributionChartProps {
   data: Array<{
@@ -12,7 +12,19 @@ interface GroupDistributionChartProps {
   }>;
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+/**
+ * GROUP DISTRIBUTION CHART - REDESIGNED
+ * Horizontal bar chart showing student count per group
+ * Uses 2-3 brand green shades for clean, professional appearance
+ * Fully readable labels, no overlapping text
+ */
+const COLORS = [
+  '#059669', // emerald-600
+  '#10b981', // emerald-500
+  '#34d399', // emerald-400
+  '#6ee7b7', // emerald-300
+  '#a7f3d0', // emerald-200
+];
 
 export default function GroupDistributionChart({ data }: GroupDistributionChartProps) {
   if (!data || data.length === 0) {
@@ -23,72 +35,80 @@ export default function GroupDistributionChart({ data }: GroupDistributionChartP
     );
   }
 
-  // Only show groups with students
-  const filteredData = data.filter(item => item.studentCount > 0);
+  // Filter and sort by student count (descending)
+  const filteredData = data
+    .filter(item => item.studentCount > 0)
+    .sort((a, b) => b.studentCount - a.studentCount)
+    .slice(0, 10); // Show top 10 groups
 
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage }: any) => {
-    if (percentage < 5) return null; // Don't show label for small slices
-    
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-
+  if (filteredData.length === 0) {
     return (
-      <text 
-        x={x} 
-        y={y} 
-        fill="white" 
-        textAnchor={x > cx ? 'start' : 'end'} 
-        dominantBaseline="central"
-        className="text-sm font-semibold"
-      >
-        {`${percentage}%`}
-      </text>
+      <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
+        No groups with students
+      </div>
     );
-  };
+  }
+
+  const maxStudents = Math.max(...filteredData.map(d => d.studentCount));
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
+    <div className="w-full h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
           data={filteredData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={renderCustomLabel}
-          outerRadius={100}
-          fill="#8884d8"
-          dataKey="studentCount"
-        >
-          {filteredData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip 
-          contentStyle={{
-            backgroundColor: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            padding: '8px 12px',
-          }}
-          formatter={(value: number | undefined, name: string | undefined, props: any) => {
-            if (!value || !props?.payload) return ['0', 'Unknown'];
-            return [
-              `${value} students (${props.payload.percentage}%)`,
-              props.payload.name
-            ];
-          }}
-        />
-        <Legend 
           layout="vertical"
-          align="right"
-          verticalAlign="middle"
-          wrapperStyle={{ paddingLeft: '20px', fontSize: '12px' }}
-          formatter={(value, entry: any) => {
-            return `${entry.payload.name} (${entry.payload.studentCount})`;
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+          margin={{ top: 5, right: 30, left: 200, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <XAxis type="number" stroke="#64748b" />
+          <YAxis 
+            dataKey="name" 
+            type="category" 
+            stroke="#64748b"
+            width={190}
+            tick={{ fontSize: 12 }}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '8px 12px',
+            }}
+            formatter={(value: any) => [`${value} students`, 'Count']}
+            cursor={{ fill: 'rgba(16, 185, 129, 0.1)' }}
+          />
+          <Bar
+            dataKey="studentCount"
+            fill="#059669"
+            radius={[0, 8, 8, 0]}
+            isAnimationActive={true}
+          >
+            {filteredData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+      
+      {/* Legend below chart - shows all groups with counts */}
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+        {filteredData.map((item, index) => (
+          <div key={item.id} className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded-sm flex-shrink-0"
+              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+              title={`${item.name}: ${item.studentCount} students`}
+            />
+            <span className="text-slate-600 dark:text-slate-400 truncate">
+              {item.name}: <span className="font-semibold">{item.studentCount}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

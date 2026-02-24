@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useCurriculum } from "@/hooks/useCurriculum";
 import { format } from "date-fns";
+import { TOTAL_CREDITS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import useSWR, { mutate as globalMutate } from "swr";
@@ -101,14 +102,13 @@ export default function StudentDetailsModal({ isOpen, student, onClose, onSave }
       }
     });
     const creditsEarned = Array.from(uniqueCompetentUnits.values()).reduce((sum, c) => sum + c, 0);
-    const totalCredits = 138; // NVC Level 2 total
 
     // Assessments passed
     const totalUnits = unitStandards.length;
     const passedCount = uniqueCompetentUnits.size;
 
     // Status logic: compare actual vs projected
-    const progressPercent = totalCredits > 0 ? Math.round((creditsEarned / totalCredits) * 100) : 0;
+    const progressPercent = TOTAL_CREDITS > 0 ? Math.round((creditsEarned / TOTAL_CREDITS) * 100) : 0;
     let statusLabel = 'On Track';
     let statusColor = 'bg-green-100 text-green-700 border-green-200';
     // Use student's stored progress or fallback to calculated
@@ -125,7 +125,7 @@ export default function StudentDetailsModal({ isOpen, student, onClose, onSave }
     return {
       attendancePercent,
       creditsEarned,
-      totalCredits,
+      totalCredits: TOTAL_CREDITS,
       passedCount,
       totalUnits,
       progressPercent,
@@ -355,125 +355,125 @@ export default function StudentDetailsModal({ isOpen, student, onClose, onSave }
 
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
-            {/* ============ INLINE PANELS ============ */}
+              {/* ============ INLINE PANELS ============ */}
 
-            {/* Progress Panel */}
-            {activePanel === 'progress' && (
-              <section className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-teal-500" />
-                  Module Progression
-                </h3>
-                <ModuleProgressionPanel
+              {/* Progress Panel */}
+              {activePanel === 'progress' && (
+                <section className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-teal-500" />
+                    Module Progression
+                  </h3>
+                  <ModuleProgressionPanel
+                    studentId={student.id}
+                    onModuleChange={() => {
+                      mutateAssessments();
+                      globalMutate('/api/groups');
+                    }}
+                  />
+                </section>
+              )}
+
+              {/* Edit Assessments Panel */}
+              {activePanel === 'assessments' && (
+                <InlineAssessmentEditor
                   studentId={student.id}
-                  onModuleChange={() => {
-                    mutateAssessments();
+                  assessments={assessments}
+                  unitStandards={unitStandards}
+                  modules={modules}
+                  onToggle={handleAssessmentToggle}
+                  creditsEarned={stats.creditsEarned}
+                  totalCredits={stats.totalCredits}
+                />
+              )}
+
+              {/* Attendance Panel */}
+              {activePanel === 'attendance' && (
+                <InlineAttendanceEditor
+                  studentId={student.id}
+                  groupId={student.groupId}
+                  attendanceRecords={attendanceRecords}
+                  attendancePercent={stats.attendancePercent}
+                  onSaved={() => {
+                    mutateAttendance();
+                    globalMutate('/api/students');
+                    globalMutate(`/api/students/${student.id}`);
                     globalMutate('/api/groups');
+                    globalMutate('/api/groups/progress');
+                    globalMutate((key: any) => typeof key === 'string' && key.startsWith('/api/attendance/rates'));
+                    globalMutate((key: any) => typeof key === 'string' && key.startsWith('/api/attendance'));
                   }}
                 />
-              </section>
-            )}
+              )}
 
-            {/* Edit Assessments Panel */}
-            {activePanel === 'assessments' && (
-              <InlineAssessmentEditor
-                studentId={student.id}
-                assessments={assessments}
-                unitStandards={unitStandards}
-                modules={modules}
-                onToggle={handleAssessmentToggle}
-                creditsEarned={stats.creditsEarned}
-                totalCredits={stats.totalCredits}
-              />
-            )}
-
-            {/* Attendance Panel */}
-            {activePanel === 'attendance' && (
-              <InlineAttendanceEditor
-                studentId={student.id}
-                groupId={student.groupId}
-                attendanceRecords={attendanceRecords}
-                attendancePercent={stats.attendancePercent}
-                onSaved={() => {
-                  mutateAttendance();
-                  globalMutate('/api/students');
-                  globalMutate(`/api/students/${student.id}`);
-                  globalMutate('/api/groups');
-                  globalMutate('/api/groups/progress');
-                  globalMutate((key: any) => typeof key === 'string' && key.startsWith('/api/attendance/rates'));
-                  globalMutate((key: any) => typeof key === 'string' && key.startsWith('/api/attendance'));
-                }}
-              />
-            )}
-
-            {/* ============ PERSONAL INFORMATION ============ */}
-            <section>
-              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-500" />
-                Personal Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
-                {[
-                  { label: "First Name", key: "firstName", type: "text" },
-                  { label: "Last Name", key: "lastName", type: "text" },
-                  { label: "Student ID", key: "studentId", type: "text" },
-                  { label: "ID Number", key: "idNumber", type: "text" },
-                  { label: "Email", key: "email", type: "email" },
-                  { label: "Phone", key: "phone", type: "tel" },
-                ].map(field => (
-                  <div key={field.key}>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
-                    {isEditing ? (
-                      <input
-                        type={field.type}
-                        value={(formData as any)[field.key]}
-                        onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    ) : (
-                      <p className="text-slate-900">{(formData as any)[field.key] || "Not provided"}</p>
-                    )}
+              {/* ============ PERSONAL INFORMATION ============ */}
+              <section>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-500" />
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
+                  {[
+                    { label: "First Name", key: "firstName", type: "text" },
+                    { label: "Last Name", key: "lastName", type: "text" },
+                    { label: "Student ID", key: "studentId", type: "text" },
+                    { label: "ID Number", key: "idNumber", type: "text" },
+                    { label: "Email", key: "email", type: "email" },
+                    { label: "Phone", key: "phone", type: "tel" },
+                  ].map(field => (
+                    <div key={field.key}>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
+                      {isEditing ? (
+                        <input
+                          type={field.type}
+                          value={(formData as any)[field.key]}
+                          onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <p className="text-slate-900">{(formData as any)[field.key] || "Not provided"}</p>
+                      )}
+                    </div>
+                  ))}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Group</label>
+                    <p className="text-slate-900">{student.group?.name || "No group"}</p>
                   </div>
-                ))}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Group</label>
-                  <p className="text-slate-900">{student.group?.name || "No group"}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                  {isEditing ? (
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="ACTIVE">Active</option>
-                      <option value="AT_RISK">At Risk</option>
-                      <option value="COMPLETED">Completed</option>
-                      <option value="WITHDRAWN">Withdrawn</option>
-                    </select>
-                  ) : (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${formData.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                    {isEditing ? (
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="ACTIVE">Active</option>
+                        <option value="AT_RISK">At Risk</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="WITHDRAWN">Withdrawn</option>
+                      </select>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${formData.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
                         formData.status === 'AT_RISK' ? 'bg-yellow-100 text-yellow-800' :
                           formData.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
                             'bg-slate-100 text-slate-800'
-                      }`}>
-                      {formData.status}
-                    </span>
-                  )}
+                        }`}>
+                        {formData.status}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            {/* Close button */}
-            <div className="flex gap-3 pt-4 border-t border-slate-200">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
-              >
-                Close
-              </button>
-            </div>
+              {/* Close button */}
+              <div className="flex gap-3 pt-4 border-t border-slate-200">
+                <button
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

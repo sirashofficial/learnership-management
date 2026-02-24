@@ -8,6 +8,7 @@ import GroupModal from '@/components/GroupModal';
 import GroupDrawer from '@/components/GroupDrawer';
 import GroupUploadModal from '@/components/GroupUploadModal';
 import AddStudentModal from '@/components/AddStudentModal';
+import FacilitatorChecklistModal from '@/components/FacilitatorChecklistModal';
 import {
   Building2,
   Users,
@@ -29,11 +30,16 @@ import {
   Download,
   Upload
 } from 'lucide-react';
+import { TOTAL_CREDITS } from '@/lib/constants';
 import { differenceInDays, format, isAfter, isBefore, startOfMonth } from 'date-fns';
 import { formatGroupNameDisplay } from '@/lib/groupName';
-import { buildRolloutPlanFromGroupRollout } from '@/lib/rolloutUtils';
+import {
+  buildRolloutPlanFromGroupRollout,
+  buildRolloutPlanFromUnitRollouts
+} from '@/lib/rolloutUtils';
+import { calculatePerformanceStatus } from '@/lib/statusUtils';
+import { PlanStatus } from '@/types/rollout';
 
-type PlanStatus = 'NO_PLAN' | 'NOT_STARTED' | 'ON_TRACK' | 'BEHIND' | 'AT_RISK' | 'COMPLETE';
 
 // Rollout Status Helper
 const getRolloutStatus = (rolloutPlan: any) => {
@@ -73,6 +79,12 @@ const resolveRolloutPlan = (group: any) => {
 
   if (group?.rolloutPlan?.modules?.length) return group.rolloutPlan;
 
+  // Check the NEW unitStandardRollouts data
+  if (Array.isArray(group?.unitStandardRollouts) && group.unitStandardRollouts.length > 0) {
+    const unitPlan = buildRolloutPlanFromUnitRollouts(group.unitStandardRollouts);
+    if (unitPlan) return unitPlan;
+  }
+
   const tablePlan = buildRolloutPlanFromGroupRollout(group?.rolloutPlan);
   return tablePlan || notesPlan || null;
 };
@@ -83,8 +95,18 @@ const parsePlanDate = (value: string) => {
   if (!trimmed) return null;
 
   if (trimmed.includes('/')) {
-    const [day, month, year] = trimmed.split('/').map((part) => Number(part));
-    const parsed = new Date(year, month - 1, day);
+    const [part1, part2, part3] = trimmed.split('/').map((part) => Number(part));
+    if (!part1 || !part2 || !part3) return null;
+
+    // Support both DD/MM/YYYY and MM/DD/YYYY, fall back to DD/MM/YYYY when ambiguous
+    let day = part1;
+    let month = part2;
+    if (part2 > 12 && part1 <= 12) {
+      day = part2;
+      month = part1;
+    }
+
+    const parsed = new Date(part3, month - 1, day);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
@@ -105,8 +127,10 @@ const getUnitStandards = (plan: any) => {
       (module.unitStandards || []).map((unit: any) => {
         const start = parsePlanDate(unit.startDate);
         const end = parsePlanDate(unit.endDate);
-        const assessing = parsePlanDate(unit.assessingDate);
-        if (!start || !end || !assessing) return null;
+        const assessing = parsePlanDate(unit.assessingDate) || end; // Fallback to end date
+
+        if (!start || !end) return null;
+
         return {
           moduleNumber: module.moduleNumber ?? module.moduleIndex,
           start,
@@ -231,10 +255,16 @@ const getPlanStatus = (plan: any): PlanStatus => {
 
   const today = normalizeDate(new Date());
   const firstStart = normalizeDate(standards[0].start);
-  const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
+  const lastAssess = standards[standards.length - 1].assessing
+    ? normalizeDate(standards[standards.length - 1].assessing)
+    : normalizeDate(standards[standards.length - 1].end);
+
+  const planEndDate = getPlanEndDate(plan);
+  const planEnd = planEndDate ? normalizeDate(planEndDate) : null;
+  const completionBoundary = planEnd && planEnd > lastAssess ? planEnd : lastAssess;
 
   if (today < firstStart) return 'NOT_STARTED';
-  if (today > lastAssess) return 'COMPLETE';
+  if (today > completionBoundary) return 'COMPLETE';
 
   const active = standards.find((unit: any) => {
     const start = normalizeDate(unit.start);
@@ -268,9 +298,12 @@ const getCurrentModuleLabel = (plan: any) => {
   const today = normalizeDate(new Date());
   const firstStart = normalizeDate(standards[0].start);
   const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
+  const planEndDate = getPlanEndDate(plan);
+  const planEnd = planEndDate ? normalizeDate(planEndDate) : null;
+  const completionBoundary = planEnd && planEnd > lastAssess ? planEnd : lastAssess;
 
   if (today < firstStart) return 'Not Started';
-  if (today > lastAssess) return 'Complete';
+  if (today > completionBoundary) return 'Complete';
 
   const active = standards.find((unit: any) => {
     const start = normalizeDate(unit.start);
@@ -286,14 +319,12 @@ const getCurrentModuleLabel = (plan: any) => {
 // Module names and credits for the NVC L2 qualification
 const MODULE_INFO = [
   { number: 1, name: 'Numeracy', credits: 16 },
-  { number: 2, name: 'HIV/AIDS & Communications', credits: 24 },
+  { number: 2, name: 'HIV/AIDS & Communications', credits: 22 },
   { number: 3, name: 'Market Requirements', credits: 22 },
   { number: 4, name: 'Business Sector & Industry', credits: 26 },
   { number: 5, name: 'Financial Requirements', credits: 26 },
   { number: 6, name: 'Business Operations', credits: 26 },
 ];
-
-const TOTAL_CREDITS = MODULE_INFO.reduce((total, module) => total + module.credits, 0);
 
 const getCurrentModuleInfo = (plan: any) => {
   if (!plan?.modules || plan.modules.length === 0) {
@@ -310,7 +341,7 @@ const getCurrentModuleInfo = (plan: any) => {
       const start = parsePlanDate(unit.startDate);
       const end = parsePlanDate(unit.endDate);
       if (!start || !end) continue;
-      
+
       const startNorm = normalizeDate(start);
       const endNorm = normalizeDate(end);
 
@@ -365,7 +396,7 @@ const getCreditCompletion = (plan: any): { completed: number; percentage: number
       const endValue = module.workplaceActivityEndDate || module.workplaceActivity?.endDate;
       const parsed = parsePlanDate(endValue);
       if (!parsed) continue;
-      
+
       const workplaceEnd = normalizeDate(parsed);
 
       if (today > workplaceEnd) {
@@ -383,11 +414,76 @@ const getCreditCompletion = (plan: any): { completed: number; percentage: number
   return { completed: completedCredits, percentage };
 };
 
-const getPerformanceStatus = (projectedPercent: number, actualPercent: number, hasPlan: boolean): PlanStatus => {
+// Returns the module number that the plan expects to be active (or already done) by today (1-6, or 0)
+const getExpectedModuleFromPlan = (plan: any): number => {
+  if (!plan?.modules) return 0;
+  const today = normalizeDate(new Date());
+
+  let latestStartedModule = 0; // highest module whose first unit has started
+
+  for (const module of plan.modules) {
+    const unitStandards = module.unitStandards || [];
+    if (unitStandards.length === 0) continue;
+    const modNum = module.moduleNumber ?? module.moduleIndex ?? 0;
+
+    const firstUnit = unitStandards[0];
+    const firstStart = firstUnit?.startDate ? parsePlanDate(firstUnit.startDate) : null;
+
+    // Track the latest module that has already started (first unit startDate ≤ today)
+    if (firstStart && normalizeDate(firstStart) <= today) {
+      latestStartedModule = Math.max(latestStartedModule, modNum);
+    }
+
+    // Check if today falls squarely inside any unit in this module
+    for (const unit of unitStandards) {
+      const start = unit.startDate ? parsePlanDate(unit.startDate) : null;
+      const end = unit.endDate ? parsePlanDate(unit.endDate) : null;
+      if (!start || !end) continue;
+      if (today >= normalizeDate(start) && today <= normalizeDate(end)) {
+        return modNum;
+      }
+    }
+
+    // Also check workplace activity end — if today is past last unit but before workplace end, still this module
+    const workEnd = module.workplaceActivityEndDate || module.workplaceActivity?.endDate;
+    if (workEnd) {
+      const lastUnit = unitStandards[unitStandards.length - 1];
+      const lastUnitEnd = lastUnit?.endDate ? parsePlanDate(lastUnit.endDate) : null;
+      const wpEnd = parsePlanDate(workEnd);
+      if (lastUnitEnd && wpEnd && today > normalizeDate(lastUnitEnd) && today <= normalizeDate(wpEnd)) {
+        return modNum;
+      }
+    }
+  }
+
+  // Today falls in a gap between modules (or before any module starts):
+  // return the latest module that has already started — group should be AT LEAST there by now
+  return latestStartedModule;
+};
+
+const getPerformanceStatus = (
+  projectedPercent: number,
+  actualPercent: number,
+  hasPlan: boolean,
+  plan?: any,
+  attendanceRate: number = 0,
+  currentAssessmentModule: number = 0
+): PlanStatus => {
   if (!hasPlan) return 'NO_PLAN';
-  if (actualPercent >= projectedPercent) return 'ON_TRACK';
-  if (projectedPercent - actualPercent <= 10) return 'BEHIND';
-  return 'AT_RISK';
+
+  const dateStatus = getPlanStatus(plan);
+  const totalModules = plan?.modules?.length ?? 0;
+  const expectedModule = getExpectedModuleFromPlan(plan);
+
+  return calculatePerformanceStatus(
+    projectedPercent,
+    actualPercent,
+    hasPlan,
+    attendanceRate,
+    currentAssessmentModule,
+    expectedModule,
+    dateStatus
+  );
 };
 
 const renderStatusBadge = (status: PlanStatus) => {
@@ -439,9 +535,10 @@ const renderStatusBadge = (status: PlanStatus) => {
 
 export default function GroupsPage() {
   const router = useRouter();
-  const { groups, isLoading, deleteGroup } = useGroups();
+  const { groups, isLoading, deleteGroup, invalidateGroups } = useGroups();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [checklistGroup, setChecklistGroup] = useState<{ id: string, name: string } | null>(null);
   const [expandedCompanies, setExpandedCompanies] = useState<string[]>([]);
   const [expandedCollections, setExpandedCollections] = useState<string[]>(['montzelity']);
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -450,24 +547,7 @@ export default function GroupsPage() {
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [selectedForMerge, setSelectedForMerge] = useState<string[]>([]);
-  const [attendanceByGroup, setAttendanceByGroup] = useState<Record<string, number>>({});
-  const { data: actualProgressData } = useSWR(
-    '/api/groups/progress',
-    (url: string) => fetch(url, { credentials: 'include' }).then((res) => res.json()),
-    { revalidateOnFocus: false }
-  );
-  const actualProgressByGroup = useMemo(() => {
-    const payload = actualProgressData?.data || actualProgressData || [];
-    const progressMap: Record<string, { avgCredits: number; avgPercent: number }> = {};
-    for (const item of payload) {
-      progressMap[item.groupId] = {
-        avgCredits: item.avgCreditsPerStudent || 0,
-        avgPercent: item.avgProgressPercent || 0,
-      };
-    }
-    return progressMap;
-  }, [actualProgressData]);
-  const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
+  // No longer needed: attendance and progress are now part of the unified GroupsContext
   const [drawerGroup, setDrawerGroup] = useState<any | null>(null);
   const [drawerMeta, setDrawerMeta] = useState<{
     statusLabel: string;
@@ -507,23 +587,33 @@ export default function GroupsPage() {
     g.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  useEffect(() => {
+    const handleOpenChecklist = (e: any) => {
+      setChecklistGroup(e.detail);
+    };
+    window.addEventListener('open-facilitator-checklist', handleOpenChecklist);
+    return () => window.removeEventListener('open-facilitator-checklist', handleOpenChecklist);
+  }, []);
+
   // Calculate statistics
   const activeGroups = (groups || []).filter((g: any) => g.status !== 'ARCHIVED');
   const totalStudents = getUniqueStudentTotal(activeGroups);
   const avgAttendance = activeGroups.length > 0
-    ? activeGroups.reduce((sum: number, g: any) => sum + (attendanceByGroup[g.id] ?? 0), 0) / activeGroups.length
+    ? activeGroups.reduce((sum: number, g: any) => sum + (g.attendanceRate ?? 0), 0) / activeGroups.length
     : 0;
   const programmeRows = activeGroups.map((group: any) => {
     const storedPlan = resolveRolloutPlan(group);
     const creditProgress = getCreditCompletion(storedPlan);
-    const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
+    const actualProgress = group.actualProgress;
     const actualPercent = actualProgress?.avgPercent || 0;
-    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan));
+    const groupAttendance = group.attendanceRate;
+    const currentAssessmentModule = actualProgress?.currentAssessmentModule;
+    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan), storedPlan, groupAttendance, currentAssessmentModule);
     return {
       id: group.id,
       name: group.name,
       learners: getGroupStudentCount(group),
-      attendance: attendanceByGroup[group.id] ?? 0,
+      attendance: group.attendanceRate ?? 0,
       currentModule: getCurrentModuleLabel(storedPlan),
       status,
     };
@@ -532,46 +622,6 @@ export default function GroupsPage() {
   const behindCount = programmeRows.filter((row) => row.status === 'BEHIND').length;
   const atRiskCount = programmeRows.filter((row) => row.status === 'AT_RISK').length;
   const attendanceTone = avgAttendance >= 80 ? 'emerald' : avgAttendance >= 60 ? 'amber' : 'red';
-
-  useEffect(() => {
-    if (activeGroups.length === 0) {
-      setAttendanceByGroup({});
-      return;
-    }
-
-    const fetchAttendance = async () => {
-      setIsAttendanceLoading(true);
-      try {
-        const startDate = startOfMonth(new Date()).toISOString();
-        const endDate = new Date().toISOString();
-        const responses = await Promise.all(
-          activeGroups.map((group: any) =>
-            fetch(`/api/attendance/stats?groupId=${group.id}&startDate=${startDate}&endDate=${endDate}`)
-          )
-        );
-
-        const payloads = await Promise.all(
-          responses.map(async (response) => (response.ok ? response.json() : null))
-        );
-
-        const nextMap: Record<string, number> = {};
-        payloads.forEach((payload, index) => {
-          const groupId = activeGroups[index]?.id;
-          if (!groupId) return;
-          const attendanceRate = payload?.data?.attendanceRate ?? payload?.attendanceRate ?? 0;
-          nextMap[groupId] = Number.isFinite(attendanceRate) ? Number(attendanceRate) : 0;
-        });
-
-        setAttendanceByGroup(nextMap);
-      } catch (error) {
-        console.error('Failed to fetch attendance stats:', error);
-      } finally {
-        setIsAttendanceLoading(false);
-      }
-    };
-
-    fetchAttendance();
-  }, [activeGroups.map((group: any) => group.id).join(',')]);
 
   const toggleCompany = (companyName: string) => {
     setExpandedCompanies(prev =>
@@ -633,16 +683,17 @@ export default function GroupsPage() {
   const handleQuickViewGroup = (group: any) => {
     const storedPlan = resolveRolloutPlan(group);
     const creditProgress = getCreditCompletion(storedPlan);
-    const actualProgress = actualProgressByGroup[group.id] || group.actualProgress;
+    const actualProgress = group.actualProgress;
     const actualPercent = actualProgress?.avgPercent || 0;
-    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan));
+    const currentAssessmentModule = actualProgress?.currentAssessmentModule;
+    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan), storedPlan, group.attendanceRate, currentAssessmentModule);
 
     setDrawerMeta({
       statusLabel: status === 'AT_RISK' ? 'At Risk' : status === 'BEHIND' ? 'Behind' : status === 'ON_TRACK' ? 'On Track' : 'No Plan',
       currentModuleLabel: getCurrentModuleLabel(storedPlan),
-      attendanceRate: attendanceByGroup[group.id] ?? 0,
+      attendanceRate: group.attendanceRate ?? 0,
       actualProgress: actualProgress ? {
-        avgCredits: actualProgress.avgCredits || 0,
+        avgCredits: actualProgress.avgCreditsPerStudent || 0,
         avgPercent: actualPercent,
       } : undefined,
     });
@@ -843,7 +894,7 @@ export default function GroupsPage() {
                     onQuickView={() => handleQuickViewGroup(group)}
                     isSelected={selectedForMerge.includes(group.id)}
                     onSelect={() => toggleSelectForMerge(group.id)}
-                    actualProgress={actualProgressByGroup[group.id]}
+                    actualProgress={group.actualProgress}
                   />
                 ))}
               </div>
@@ -865,7 +916,7 @@ export default function GroupsPage() {
               onQuickView={() => handleQuickViewGroup(group)}
               isSelected={selectedForMerge.includes(group.id)}
               onSelect={() => toggleSelectForMerge(group.id)}
-              actualProgress={actualProgressByGroup[group.id]}
+              actualProgress={group.actualProgress}
             />
           ))}
         </div>
@@ -917,7 +968,7 @@ export default function GroupsPage() {
               <div>
                 <p className="text-sm text-slate-600">Average Attendance</p>
                 <p className="text-2xl font-semibold text-slate-900">
-                  {isAttendanceLoading ? '...' : `${avgAttendance.toFixed(0)}%`}
+                  {avgAttendance.toFixed(0)}%
                 </p>
                 <p className="text-xs text-slate-500">This month</p>
               </div>
@@ -992,40 +1043,53 @@ export default function GroupsPage() {
           </div>
           <div className="overflow-x-auto border border-slate-200 rounded-lg">
             <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
+              <thead className="bg-slate-50 dark:bg-slate-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Group Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Learners</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Attendance</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Group Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Learners</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Attendance</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-1">
                       Current Module
                       <span className="relative group">
-                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                        <Info className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         <span className="absolute z-10 left-1/2 -translate-x-1/2 top-6 w-56 rounded-md bg-slate-900 text-white text-xs px-2 py-1 opacity-0 pointer-events-none group-hover:opacity-100">
                           Between Modules means today sits between unit standard date ranges.
                         </span>
                       </span>
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
-                {programmeRows.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{formatGroupNameDisplay(row.name || '')}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{row.learners}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {isAttendanceLoading ? '—' : `${row.attendance.toFixed(0)}%`}
+              {/* GROUPS TABLE REDESIGN: Alternating row colors + improved badges */}
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {programmeRows.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    className={`transition-colors ${index % 2 === 0
+                      ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{formatGroupNameDisplay(row.name || '')}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{row.learners}</td>
+                    {/* ATTENDANCE COLUMN REDESIGN: Show "No data" instead of 0% */}
+                    <td className="px-4 py-3 text-sm">
+                      {row.attendance === 0 || row.attendance === undefined ? (
+                        <span className="text-slate-400 dark:text-slate-500 text-xs">No data</span>
+                      ) : (
+                        <span className="text-slate-600 dark:text-slate-400 font-semibold">{row.attendance.toFixed(0)}%</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{row.currentModule}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{row.currentModule}</td>
+                    {/* STATUS BADGES: Solid colored pills with proper styling */}
                     <td className="px-4 py-3 text-sm">{renderStatusBadge(row.status)}</td>
                   </tr>
                 ))}
                 {programmeRows.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                       No groups available for performance reporting.
                     </td>
                   </tr>
@@ -1133,6 +1197,19 @@ export default function GroupsPage() {
         statusLabel={drawerMeta?.statusLabel}
         currentModuleLabel={drawerMeta?.currentModuleLabel}
       />
+
+      {/* Facilitator Checklist Modal */}
+      {checklistGroup && (
+        <FacilitatorChecklistModal
+          groupId={checklistGroup.id}
+          groupName={checklistGroup.name}
+          onClose={() => setChecklistGroup(null)}
+          onUpdate={() => {
+            // Mutate to refresh progress metrics
+            invalidateGroups();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1147,7 +1224,7 @@ interface GroupCardProps {
   onQuickView: () => void;
   isSelected?: boolean;
   onSelect?: () => void;
-  actualProgress?: { avgCredits: number; avgPercent: number };
+  actualProgress?: { avgCredits: number; avgPercent: number; currentAssessmentModule?: number };
 }
 
 function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, onQuickView, isSelected, onSelect, actualProgress }: GroupCardProps) {
@@ -1155,10 +1232,6 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
   const studentCount = getGroupStudentCount(group);
   const attendanceRate = group.attendanceRate || 0;
   const displayName = formatGroupNameDisplay(group.name || '');
-              <h4 className="font-semibold text-slate-900">{displayName}</h4>
-                  {displayName}
-                  {displayName}
-                  <span className="text-slate-700 dark:text-slate-300">• {formatGroupNameDisplay(group.name || '')}</span>
 
   // Extract rollout plan from notes
   const rolloutPlan = resolveRolloutPlan(group);
@@ -1171,7 +1244,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
   const creditProgress = getCreditCompletion(rolloutPlan);
   const resolvedActualProgress = actualProgress || group.actualProgress;
   const actualPercent = resolvedActualProgress?.avgPercent || 0;
-  const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan));
+  const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
 
   const handleExportReport = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1218,8 +1291,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           <div>
             <div className="flex items-center gap-2">
               <h4 className="font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h4>
-              {!hasLegacyRolloutPlan && (
-                <span 
+              {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
+                null
+              ) : (
+                <span
                   className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1354,8 +1429,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 >
                   {formatGroupNameDisplay(group.name)}
                 </h4>
-                {!hasLegacyRolloutPlan && (
-                  <span 
+                {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
+                  null
+                ) : (
+                  <span
                     className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1396,12 +1473,19 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
 
       {/* Current Module & Progress Bars */}
       <div className="mb-4 space-y-3 px-4">
-        {/* Current Module Label */}
-        {rolloutPlan && currentModule.label && (
-          <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-            {currentModule.label}
-          </p>
-        )}
+        {/* Module Label (Actual followed by Projected) */}
+        <div className="flex flex-col gap-0.5">
+          {resolvedActualProgress?.currentAssessmentModule ? (
+            <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
+              Module {resolvedActualProgress.currentAssessmentModule} (Actual)
+            </p>
+          ) : null}
+          {rolloutPlan && currentModule.label && (
+            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+              Projected: {currentModule.label}
+            </p>
+          )}
+        </div>
 
         {/* Projected Progress Bar (from rollout plan dates) */}
         {rolloutPlan && (
@@ -1423,14 +1507,32 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           </div>
         )}
 
+        {/* Facilitator Progress Bar (Taught vs Total) */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <Users className="w-3 h-3 text-emerald-500" /> Facilitator
+            </span>
+            <span className="font-semibold text-emerald-700 dark:text-teal-300">
+              {group.facilitatorMetrics?.facilitatedPercent || 0}% ({group.facilitatorMetrics?.facilitatedUnits || 0}/{group.facilitatorMetrics?.totalUnits || 0} Units)
+            </span>
+          </div>
+          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300"
+              style={{ width: `${group.facilitatorMetrics?.facilitatedPercent || 0}%` }}
+            />
+          </div>
+        </div>
+
         {/* Actual Progress Bar (from real assessment data) */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Actual
+              <CheckCircle2 className="w-3 h-3 text-blue-500" /> Learner Avg
             </span>
             <span className="font-semibold text-blue-700 dark:text-blue-300">
-              {actualPercent}% ({resolvedActualProgress?.avgCredits || 0}/{TOTAL_CREDITS})
+              {actualPercent}% ({resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
@@ -1442,47 +1544,61 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
         </div>
       </div>
 
-      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <div className="flex flex-wrap gap-2 p-4 pt-0" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onAddStudents}
-          className="flex-1 py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-1"
+          className="flex-1 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"
         >
-          <UserPlus className="w-4 h-4" />
-          Add
+          <UserPlus className="w-3.5 h-3.5" />
+          + Add Students
         </button>
-        <button
-          onClick={onQuickView}
-          className="py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-          title="Quick View"
-        >
-          <Info className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onEdit}
-          className="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-          title="Edit"
-        >
-          <Edit2 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onArchive}
-          className="py-2 px-3 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium rounded-lg transition-colors"
-          title="Archive"
-        >
-          <Archive className="w-4 h-4" />
-        </button>
-        <button
-          onClick={handleExportReport}
-          className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
-          title="Export Report"
-        >
-          <Download className="w-4 h-4" />
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('open-facilitator-checklist', {
+                detail: { groupId: group.id, groupName: group.name }
+              }));
+            }}
+            className="p-1.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 rounded-lg transition-colors"
+            title="Facilitator Checklist"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onQuickView}
+            className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg transition-colors"
+            title="Group Info"
+          >
+            <Info className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onEdit}
+            className="p-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors"
+            title="Edit Group"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleExportReport}
+            className="p-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors"
+            title="Export Report"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to archive this group?')) {
+                onArchive();
+              }
+            }}
+            className="p-1.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors"
+            title="Archive Group"
+          >
+            <Archive className="w-4 h-4" />
+          </button>
+        </div>
       </div>
-
-
-      {/* Drawer handles student drill-down */}
-    </div >
+    </div>
   );
 }
 

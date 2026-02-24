@@ -8,6 +8,7 @@ import {
   getPaginationParams,
   createPagination,
 } from '@/lib/api-utils';
+import { updateStudentProgressUnified } from '@/lib/progress-calculator';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/middleware';
 
@@ -31,10 +32,14 @@ export async function GET(request: NextRequest) {
 
     // Extract pagination parameters
     const { page, pageSize, skip } = getPaginationParams(request);
+    
+    // Limit pageSize to 50 for performance
+    const limit = Math.min(pageSize, 50);
 
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
     const groupId = searchParams.get('groupId');
+    const all = searchParams.get('all') === 'true';
     const result = searchParams.get('result');
     const type = searchParams.get('type');
     const method = searchParams.get('method');
@@ -53,24 +58,54 @@ export async function GET(request: NextRequest) {
 
     const assessments = await prisma.assessment.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        type: true,
+        method: true,
+        result: true,
+        score: true,
+        dueDate: true,
+        assessedDate: true,
+        notes: true,
+        feedback: true,
+        moderationStatus: true,
+        attemptNumber: true,
+        createdAt: true,
+        studentId: true,
+        unitStandardId: true,
         student: {
-          include: {
-            group: true,
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            studentId: true,
           },
         },
         unitStandard: {
-          include: {
-            module: true,
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            credits: true,
+            moduleId: true,
+            module: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
-      orderBy: { dueDate: 'asc' },
-      skip,
-      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+      ...(all ? {} : { skip, take: limit }),
     });
 
-    const pagination = createPagination(page, pageSize, total);
+    if (all) {
+      return successResponse(assessments);
+    }
+
+    const pagination = createPagination(page, limit, total);
     return successPaginatedResponse(assessments, pagination);
   } catch (error) {
     return handleApiError(error);
@@ -174,12 +209,16 @@ export async function PUT(request: NextRequest) {
 
     console.log('✅ Assessment marked:', { assessmentId: id, result, score });
 
-    // Update student progress when assessments change
+    // Atomically update student progress when assessments change
     if (result === 'COMPETENT' && assessment.moderationStatus === 'APPROVED') {
-      await updateStudentProgress(assessment.studentId, assessment.unitStandardId);
+      await prisma.$transaction(async (tx) => {
+        await updateStudentProgressUnified(tx, assessment.studentId, assessment.unitStandardId);
+      });
     }
     if (isReset || result === 'NOT_YET_COMPETENT') {
-      await updateStudentProgress(assessment.studentId, assessment.unitStandardId);
+      await prisma.$transaction(async (tx) => {
+        await updateStudentProgressUnified(tx, assessment.studentId, assessment.unitStandardId);
+      });
     }
 
     return successResponse(assessment, 'Assessment marked successfully');
@@ -206,128 +245,5 @@ export async function DELETE(request: NextRequest) {
     return successResponse(null, 'Assessment deleted successfully');
   } catch (error) {
     return handleApiError(error);
-  }
-}
-
-// Helper function to update student progress based on NVC Level 2 credits
-async function updateStudentProgress(studentId: string, unitStandardId?: string | null) {
-  try {
-    // 1. Mark Unit Standard as COMPLETED if it wasn't already
-    if (unitStandardId) {
-      await prisma.unitStandardProgress.upsert({
-        where: {
-          studentId_unitStandardId: {
-            studentId,
-            unitStandardId
-          }
-        },
-        create: {
-          studentId,
-          unitStandardId,
-          status: 'COMPLETED',
-          completionDate: new Date(),
-          summativePassed: true
-        },
-        update: {
-          status: 'COMPLETED',
-          completionDate: new Date(),
-          summativePassed: true
-        }
-      });
-    }
-
-    // 2. Get all competent/approved assessments for this student
-    const approvedAssessments = await prisma.assessment.findMany({
-      where: {
-        studentId,
-        result: 'COMPETENT',
-        moderationStatus: 'APPROVED',
-      },
-      include: {
-        unitStandard: true
-      }
-    });
-
-    // 3. Calculate total credits earned (deduplicate by unit standard)
-    const uniqueUnitStandards = new Set<string>();
-    let totalCreditsEarned = 0;
-
-    for (const assessment of approvedAssessments) {
-      if (assessment.unitStandard && !uniqueUnitStandards.has(assessment.unitStandardId!)) {
-        uniqueUnitStandards.add(assessment.unitStandardId!);
-        totalCreditsEarned += assessment.unitStandard.credits || 0;
-      }
-    }
-
-    // 4. Update student record
-    const totalCreditsRequired = 138;
-    const progressPercentage = Math.round((totalCreditsEarned / totalCreditsRequired) * 100);
-
-    await prisma.student.update({
-      where: { id: studentId },
-      data: {
-        totalCreditsEarned,
-        progress: progressPercentage // Keep 'progress' for legacy UI support
-      }
-    });
-
-    // 5. Update Module Progress for affected modules
-    // Fetch unique modules involved
-    const affectedModuleIds = new Set<string>();
-    for (const assessment of approvedAssessments) {
-      if (assessment.unitStandard) {
-        affectedModuleIds.add(assessment.unitStandard.moduleId);
-      }
-    }
-
-    for (const moduleId of affectedModuleIds) {
-      const module = await prisma.module.findUnique({
-        where: { id: moduleId },
-        include: { unitStandards: true }
-      });
-
-      if (!module) continue;
-
-      // Calculate credits for this module
-      let moduleCreditsEarned = 0;
-      let completedCount = 0;
-
-      for (const us of module.unitStandards) {
-        if (uniqueUnitStandards.has(us.id)) {
-          moduleCreditsEarned += us.credits;
-          completedCount++;
-        }
-      }
-
-      const modulePercentage = Math.round((moduleCreditsEarned / module.credits) * 100);
-      const isCompleted = completedCount === module.unitStandards.length;
-
-      await prisma.moduleProgress.upsert({
-        where: {
-          studentId_moduleId: {
-            studentId,
-            moduleId
-          }
-        },
-        create: {
-          studentId,
-          moduleId,
-          creditsEarned: moduleCreditsEarned,
-          progress: modulePercentage,
-          status: isCompleted ? 'COMPLETED' : 'IN_PROGRESS',
-          startDate: new Date(),
-          completionDate: isCompleted ? new Date() : null
-        },
-        update: {
-          creditsEarned: moduleCreditsEarned,
-          progress: modulePercentage,
-          status: isCompleted ? 'COMPLETED' : 'IN_PROGRESS',
-          completionDate: isCompleted ? new Date() : null
-        }
-      });
-    }
-
-  } catch (error) {
-    console.error('Error in updateStudentProgress:', error);
   }
 }

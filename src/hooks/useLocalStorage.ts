@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-interface UseLocalStorageOptions {
+export interface UseLocalStorageOptions {
   serializer?: (value: any) => string;
   deserializer?: (value: string) => any;
   initializeFromStorage?: boolean;

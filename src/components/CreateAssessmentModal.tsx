@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Plus, Calendar, FileText } from 'lucide-react';
+import { invalidateAssessments } from '@/lib/cache-invalidation';
 
 interface Module {
     id: string;
@@ -102,6 +103,9 @@ export default function CreateAssessmentModal({
             }
 
             const data = await response.json();
+
+            // Invalidate assessment caches to sync data across views
+            await invalidateAssessments();
 
             // Reset form
             setSelectedModuleId('');

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { updateStudentProgressUnified } from '@/lib/progress-calculator';
 
 // GET /api/assessments/[id]
 export async function GET(
@@ -63,26 +64,31 @@ export async function PUT(
             update.moderationStatus = 'PENDING';
         }
 
-        const assessment = await prisma.assessment.update({
-            where: { id: params.id },
-            data: update,
-            include: {
-                student: { include: { group: true } },
-                unitStandard: {
-                    include: { module: true },
+        // Atomically update assessment and student progress
+        const assessment = await prisma.$transaction(async (tx) => {
+            const updatedAssessment = await tx.assessment.update({
+                where: { id: params.id },
+                data: update,
+                include: {
+                    student: { include: { group: true } },
+                    unitStandard: {
+                        include: { module: true },
+                    },
                 },
-            },
+            });
+
+            // Update student progress when marked competent (inside transaction)
+            if (result === 'COMPETENT' && updatedAssessment.unitStandardId) {
+                await updateStudentProgressUnified(tx, updatedAssessment.studentId, updatedAssessment.unitStandardId);
+            }
+
+            // If reset from COMPETENT, recalculate student progress
+            if ((result === 'PENDING' || result === null) && updatedAssessment.unitStandardId) {
+                await updateStudentProgressUnified(tx, updatedAssessment.studentId, updatedAssessment.unitStandardId);
+            }
+
+            return updatedAssessment;
         });
-
-        // Update student progress when marked competent
-        if (result === 'COMPETENT' && assessment.unitStandardId) {
-            await updateStudentProgress(assessment.studentId, assessment.unitStandardId);
-        }
-
-        // If reset from COMPETENT, recalculate student progress
-        if ((result === 'PENDING' || result === null) && assessment.unitStandardId) {
-            await updateStudentProgress(assessment.studentId, assessment.unitStandardId);
-        }
 
         return successResponse(assessment, 'Assessment updated successfully');
     } catch (error) {
@@ -112,91 +118,5 @@ export async function DELETE(
         return successResponse(null, 'Assessment deleted successfully');
     } catch (error) {
         return handleApiError(error);
-    }
-}
-
-// Helper: recalculate student progress from actual assessment data
-async function updateStudentProgress(studentId: string, unitStandardId?: string | null) {
-    try {
-        // Mark unit standard progress
-        if (unitStandardId) {
-            const isCompetent = await prisma.assessment.findFirst({
-                where: {
-                    studentId,
-                    unitStandardId,
-                    result: 'COMPETENT',
-                },
-            });
-
-            if (isCompetent) {
-                await prisma.unitStandardProgress.upsert({
-                    where: {
-                        studentId_unitStandardId: { studentId, unitStandardId },
-                    },
-                    create: {
-                        studentId,
-                        unitStandardId,
-                        status: 'COMPLETED',
-                        completionDate: new Date(),
-                        summativePassed: true,
-                    },
-                    update: {
-                        status: 'COMPLETED',
-                        completionDate: new Date(),
-                        summativePassed: true,
-                    },
-                });
-            } else {
-                // Reset unit standard progress if no longer competent
-                await prisma.unitStandardProgress.upsert({
-                    where: {
-                        studentId_unitStandardId: { studentId, unitStandardId },
-                    },
-                    create: {
-                        studentId,
-                        unitStandardId,
-                        status: 'IN_PROGRESS',
-                        summativePassed: false,
-                    },
-                    update: {
-                        status: 'IN_PROGRESS',
-                        completionDate: null,
-                        summativePassed: false,
-                    },
-                });
-            }
-        }
-
-        // Recalculate total credits from all competent assessments
-        const competentAssessments = await prisma.assessment.findMany({
-            where: {
-                studentId,
-                result: 'COMPETENT',
-            },
-            include: { unitStandard: true },
-        });
-
-        const uniqueUnitStandards = new Set<string>();
-        let totalCreditsEarned = 0;
-
-        for (const assessment of competentAssessments) {
-            if (assessment.unitStandard && !uniqueUnitStandards.has(assessment.unitStandardId!)) {
-                uniqueUnitStandards.add(assessment.unitStandardId!);
-                totalCreditsEarned += assessment.unitStandard.credits || 0;
-            }
-        }
-
-        const totalCreditsRequired = 138;
-        const progressPercentage = Math.round((totalCreditsEarned / totalCreditsRequired) * 100);
-
-        await prisma.student.update({
-            where: { id: studentId },
-            data: {
-                totalCreditsEarned,
-                progress: progressPercentage,
-            },
-        });
-    } catch (error) {
-        console.error('Error in updateStudentProgress:', error);
     }
 }

@@ -150,5 +150,6 @@ export const responseMatchers = {
 
 // Clean up after tests
 afterAll(() => {
-  jest.clearAllMocks();
+  // Vitest doesn't need explicit mock cleanup
+  // Mocks are automatically cleared between test files
 });

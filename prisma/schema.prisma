@@ -40,11 +40,15 @@ model Group {
   Company              Company?              @relation(fields: [companyId], references: [id])
   courses              GroupCourse[]
   rolloutPlan          GroupRolloutPlan?
+  rolloutPlans         RolloutPlan[]
   schedules            GroupSchedule[]
   lessonPlans          LessonPlan[]
   sessions             Session[]
   students             Student[]
   unitStandardRollouts UnitStandardRollout[]
+  facilitatorTasks     FacilitatorTask[]
+  currentFacilitatedModuleId String?
+  currentFacilitatedModule   Module?                @relation("GroupFacilitatedModule", fields: [currentFacilitatedModuleId], references: [id])
   
   // Calendar feature relations
   plans                Plan[]     // Lesson plans for calendar
@@ -69,14 +73,92 @@ model GroupRolloutPlan {
   group            Group     @relation(fields: [groupId], references: [id])
 }
 
+// Enhanced rollout plan with projected vs actual tracking per module
+model RolloutPlan {
+  id                      String    @id @default(uuid())
+  groupId                 String
+  moduleId                String
+  moduleNumber            Int
+  // Projected dates (auto-calculated from start date + duration)
+  projectedStartDate      DateTime
+  projectedEndDate        DateTime
+  projectedSummativeDate  DateTime?
+  projectedAssessmentDate DateTime?
+  // Actual dates (set when activities are completed)
+  actualStartDate         DateTime?
+  actualEndDate           DateTime?
+  actualSummativeDate     DateTime?
+  actualAssessmentDate    DateTime?
+  // Status is auto-calculated based on dates (NOT_STARTED | IN_PROGRESS | BEHIND | COMPLETED | AT_RISK)
+  credits                 Int       @default(0)
+  notes                   String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  group                   Group     @relation(fields: [groupId], references: [id])
+  module                  Module    @relation(fields: [moduleId], references: [id])
+
+  @@unique([groupId, moduleId])
+  @@index([groupId])
+}
+
+// Undo history for bulk operations (30-minute undo window)
+model UndoHistory {
+  id            String    @id @default(uuid())
+  userId        String
+  action        String    // BULK_ATTENDANCE | BULK_ASSESSMENT | etc.
+  entityType    String    // Assessment | Attendance | etc.
+  entityIds     String    // JSON array of affected record IDs
+  previousState String    // JSON: previous values
+  newState      String    // JSON: new values
+  description   String?   // Human-readable description
+  canUndo       Boolean   @default(true)
+  undoneAt      DateTime?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([canUndo])
+}
+
+model FacilitatorTask {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  dueDate     DateTime
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  groupId     String
+  group       Group    @relation(fields: [groupId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([groupId])
+}
+
 model UnitStandardRollout {
   id             String       @id @default(uuid())
   groupId        String
   unitStandardId String
+  // Projected dates (planned schedule)
   startDate      DateTime?
   endDate        DateTime?
   summativeDate  DateTime?
   assessingDate  DateTime?
+  // Actual dates (what really happened)
+  actualStartDate     DateTime?
+  actualEndDate       DateTime?
+  actualSummativeDate DateTime?
+  actualAssessmentDate DateTime?
+  // Status tracking
+  status         String       @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED | BEHIND | AHEAD | OVERDUE
+  completedPercent Int        @default(0)
+  
+  // Facilitator tracking
+  facilitated         Boolean   @default(false)
+  facilitatedAt       DateTime?
+  facilitatorNotes    String?
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   unitStandard   UnitStandard @relation(fields: [unitStandardId], references: [id])
@@ -107,10 +189,16 @@ model Student {
   formativeCompletions FormativeCompletion[]
   moduleProgress       ModuleProgress[]
   poeChecklists        POEChecklist?
+  attendanceAlerts     AttendanceAlert[]
   currentModule        Module?                @relation(fields: [currentModuleId], references: [id])
   facilitator          User                   @relation(fields: [facilitatorId], references: [id])
   group                Group                  @relation(fields: [groupId], references: [id])
   unitStandardProgress UnitStandardProgress[]
+
+  @@index([groupId])
+  @@index([status])
+  @@index([progress])
+  @@index([facilitatorId])
 }
 
 model FormativeAssessment {
@@ -146,7 +234,7 @@ model FormativeCompletion {
   studentId        String
   formativeId      String
   formative        FormativeAssessment @relation(fields: [formativeId], references: [id])
-  student          Student             @relation(fields: [studentId], references: [id])
+  student          Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, formativeId])
   @@index([studentId])
@@ -184,7 +272,7 @@ model Attendance {
   sessionId  String?
   groupId    String?
   session    Session?  @relation(fields: [sessionId], references: [id])
-  student    Student   @relation(fields: [studentId], references: [id])
+  student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, date, groupId])
   @@index([date])
@@ -219,6 +307,7 @@ model AttendanceAlert {
   resolvedBy       String?
   notificationSent Boolean   @default(false)
   studentId        String
+  student          Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -260,11 +349,14 @@ model Assessment {
   studentId        String
   unitStandardId   String
   unitStandard     UnitStandard @relation(fields: [unitStandardId], references: [id])
-  student          Student      @relation(fields: [studentId], references: [id])
+  student          Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
+  @@index([studentId])
+  @@index([createdAt])
+  @@index([studentId, createdAt])
   @@index([unitStandardId])
   @@index([studentId, unitStandardId])
-  @@index([studentId, result])
+  @@index([result])
 }
 
 model ModuleProgress {
@@ -279,7 +371,7 @@ model ModuleProgress {
   studentId      String
   moduleId       String
   module         Module    @relation(fields: [moduleId], references: [id])
-  student        Student   @relation(fields: [studentId], references: [id])
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, moduleId])
 }
@@ -296,7 +388,7 @@ model UnitStandardProgress {
   studentId        String
   unitStandardId   String
   unitStandard     UnitStandard @relation(fields: [unitStandardId], references: [id])
-  student          Student      @relation(fields: [studentId], references: [id])
+  student          Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, unitStandardId])
 }
@@ -332,7 +424,7 @@ model POEChecklist {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   studentId         String    @unique
-  student           Student   @relation(fields: [studentId], references: [id])
+  student           Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model POEFile {
@@ -368,6 +460,8 @@ model Module {
   progress             ModuleProgress[]
   students             Student[]
   unitStandards        UnitStandard[]
+  rolloutPlans         RolloutPlan[]
+  facilitatedGroups    Group[]               @relation("GroupFacilitatedModule")
 }
 
 model CurriculumEmbedding {
@@ -478,7 +572,7 @@ model CourseProgress {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model RecurringSessionOverride {

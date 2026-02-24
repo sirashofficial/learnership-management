@@ -9,19 +9,19 @@ import { NextRequest, NextResponse } from 'next/server';
 export const securityHeaders: Record<string, string> = {
   // Prevent clickjacking attacks
   'X-Frame-Options': 'DENY',
-  
+
   // Prevent MIME type sniffing
   'X-Content-Type-Options': 'nosniff',
-  
+
   // Enable XSS protection in older browsers
   'X-XSS-Protection': '1; mode=block',
-  
+
   // Referrer policy
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
+
   // Permissions policy (formerly Feature-Policy)
   'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-  
+
   // Content Security Policy
   'Content-Security-Policy': [
     "default-src 'self'",
@@ -32,7 +32,7 @@ export const securityHeaders: Record<string, string> = {
     "connect-src 'self'",
     "frame-ancestors 'none'",
   ].join('; '),
-  
+
   // Strict transport security (HTTPS only)
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
 };
@@ -124,7 +124,7 @@ export function handleCorsPreFlight(
 
   const origin = request.headers.get('origin');
   const response = new NextResponse(null, { status: 200 });
-  
+
   return applyCorsHeaders(response, origin, options);
 }
 
@@ -222,7 +222,7 @@ export const globalRateLimiter = new RateLimiter();
  */
 export const rateLimitPresets = {
   strict: { limit: 10, windowMs: 60 * 1000 }, // 10 requests per minute
-  moderate: { limit: 30, windowMs: 60 * 1000 }, // 30 requests per minute
+  moderate: { limit: 150, windowMs: 60 * 1000 }, // 150 requests per minute
   relaxed: { limit: 100, windowMs: 60 * 1000 }, // 100 requests per minute
   auth: { limit: 5, windowMs: 15 * 60 * 1000 }, // 5 requests per 15 minutes
   upload: { limit: 20, windowMs: 60 * 60 * 1000 }, // 20 uploads per hour

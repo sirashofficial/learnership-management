@@ -95,7 +95,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     const isDark = sidebarTheme === 'dark';
 
     const renderNavItem = (item: typeof quickAccessItems[0]) => {
-        const isActive = pathname === item.href;
+        const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
         return (
             <Link
                 key={item.label}
@@ -104,19 +104,19 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 relative",
                     isActive
                         ? isDark
-                            ? "bg-white/10 text-white"
-                            : "bg-emerald-50 text-emerald-700"
+                            ? "bg-emerald-500/15 text-emerald-400 border-l-2 border-emerald-500 shadow-[0_0_15px_-3px_rgba(16,185,129,0.1)]"
+                            : "bg-emerald-50 text-emerald-800 border-l-2 border-emerald-600 shadow-sm"
                         : isDark
-                            ? "text-slate-400 hover:text-white hover:bg-white/5"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100",
-                    isCollapsed && "justify-center px-2"
+                            ? "text-slate-400 hover:text-white hover:bg-slate-800/80"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
+                    isCollapsed && "justify-center px-2 border-l-0"
                 )}
             >
                 <item.icon className={cn(
-                    "w-[18px] h-[18px] flex-shrink-0",
+                    "w-[18px] h-[18px] flex-shrink-0 transition-all duration-200",
                     isActive
-                        ? isDark ? "text-emerald-400" : "text-emerald-600"
-                        : isDark ? "text-slate-500" : "text-slate-400"
+                        ? isDark ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-emerald-600"
+                        : isDark ? "text-slate-500 group-hover:text-slate-300" : "text-slate-400 group-hover:text-slate-600"
                 )} />
                 {!isCollapsed && <span>{item.label}</span>}
                 {item.label === 'Assessments' && pendingModerationCount > 0 && (

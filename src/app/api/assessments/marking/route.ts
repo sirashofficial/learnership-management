@@ -127,46 +127,72 @@ export async function PUT(request: NextRequest) {
 
     const isReset = result === 'PENDING' || result === null;
 
-    const assessment = await prisma.assessment.update({
-      where: { id: assessmentId },
-      data: {
-        score,
-        result: result || 'PENDING',
-        feedback,
-        type,
-        method,
-        assessedDate: isReset ? null : new Date(),
-        moderationStatus: result === 'COMPETENT' ? 'APPROVED' : 'PENDING'
-      },
-      include: {
-        student: { select: { id: true, firstName: true, lastName: true } },
-        unitStandard: { select: { code: true, title: true, credits: true } }
-      }
-    });
-
-    // If marked as competent, update student progress
-    if (result === 'COMPETENT') {
-      await prisma.unitStandardProgress.upsert({
-        where: {
-          studentId_unitStandardId: {
-            studentId: assessment.studentId,
-            unitStandardId: assessment.unitStandardId
+    // Atomically update assessment and unit standard progress in transaction
+    const assessment = await prisma.$transaction(async (tx) => {
+        const updated = await tx.assessment.update({
+          where: { id: assessmentId },
+          data: {
+            score,
+            result: result || 'PENDING',
+            feedback,
+            type,
+            method,
+            assessedDate: isReset ? null : new Date(),
+            moderationStatus: result === 'COMPETENT' ? 'APPROVED' : 'PENDING'
+          },
+          include: {
+            student: { select: { id: true, firstName: true, lastName: true } },
+            unitStandard: { select: { code: true, title: true, credits: true, id: true } }
           }
-        },
-        create: {
-          studentId: assessment.studentId,
-          unitStandardId: assessment.unitStandardId,
-          status: 'COMPLETED',
-          completionDate: new Date(),
-          summativePassed: true
-        },
-        update: {
-          status: 'COMPLETED',
-          completionDate: new Date(),
-          summativePassed: true
+        });
+
+        // If marked as competent, atomically update unit standard progress
+        if (result === 'COMPETENT') {
+          await tx.unitStandardProgress.upsert({
+            where: {
+              studentId_unitStandardId: {
+                studentId: updated.studentId,
+                unitStandardId: updated.unitStandard?.id || ''
+              }
+            },
+            create: {
+              studentId: updated.studentId,
+              unitStandardId: updated.unitStandard?.id || '',
+              status: 'COMPLETED',
+              completionDate: new Date(),
+              summativePassed: true
+            },
+            update: {
+              status: 'COMPLETED',
+              completionDate: new Date(),
+              summativePassed: true
+            }
+          });
+        } else if (result === 'NOT_YET_COMPETENT' || isReset) {
+          // Reset unit standard progress if not competent
+          await tx.unitStandardProgress.upsert({
+            where: {
+              studentId_unitStandardId: {
+                studentId: updated.studentId,
+                unitStandardId: updated.unitStandard?.id || ''
+              }
+            },
+            create: {
+              studentId: updated.studentId,
+              unitStandardId: updated.unitStandard?.id || '',
+              status: 'IN_PROGRESS',
+              summativePassed: false
+            },
+            update: {
+              status: 'IN_PROGRESS',
+              summativePassed: false,
+              completionDate: null
+            }
+          });
         }
-      });
-    }
+
+        return updated;
+    });
 
     return NextResponse.json({
       success: true,
@@ -174,7 +200,7 @@ export async function PUT(request: NextRequest) {
       assessment: {
         id: assessment.id,
         studentName: `${assessment.student.firstName} ${assessment.student.lastName}`,
-        unitStandard: assessment.unitStandard.code,
+        unitStandard: assessment.unitStandard?.code,
         score: assessment.score,
         result: assessment.result,
         feedback: assessment.feedback,

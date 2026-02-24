@@ -1,12 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, BarChart3 } from 'lucide-react';
 import { useDashboardCharts } from '@/hooks/useDashboard';
 import AttendanceTrendChart from './AttendanceTrendChart';
 import GroupDistributionChart from './GroupDistributionChart';
 import CourseProgressChart from './CourseProgressChart';
+import EmptyState from './EmptyState';
 
+/**
+ * REDESIGN: Dashboard Charts Section
+ * Features:
+ * - Better visual hierarchy and spacing
+ * - Proper chart titles and padding
+ * - Loading states that don't look broken
+ * - Empty state messages
+ * - Export functionality with icons
+ */
 export default function DashboardCharts() {
   const [timeRange, setTimeRange] = useState('30');
   const { attendanceTrend, groupDistribution, courseProgress, isLoading } = useDashboardCharts(timeRange);
@@ -43,11 +53,18 @@ export default function DashboardCharts() {
   return (
     <div className="space-y-6">
       {/* Time Range Filter */}
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          Analytics
+        </h2>
         <select
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value)}
-          className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          className="px-3 py-2 text-xs sm:text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 
+            rounded-lg text-slate-900 dark:text-white
+            focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 
+            hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
         >
           <option value="7">Last 7 Days</option>
           <option value="30">Last 30 Days</option>
@@ -57,66 +74,97 @@ export default function DashboardCharts() {
       </div>
 
       {/* Attendance Trend Chart */}
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-900">Attendance Trend</h3>
+      <div className="dashboard-card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Attendance Trend</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Attendance rate over time</p>
+          </div>
           <button
             onClick={() => handleExport('Attendance Trend', attendanceTrend)}
-            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Export"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Export as CSV"
           >
-            <Download className="w-4 h-4 text-slate-400" />
+            <Download className="w-4 h-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300" />
           </button>
         </div>
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+          <div className="flex items-center justify-center h-64 bg-slate-50 dark:bg-slate-700/20 rounded-lg">
+            <div className="animate-spin rounded-full h-8 w-8 border-3 border-emerald-600 border-t-transparent"></div>
+          </div>
+        ) : attendanceTrend && attendanceTrend.length > 0 ? (
+          <div className="h-64">
+            <AttendanceTrendChart data={attendanceTrend} />
           </div>
         ) : (
-          <AttendanceTrendChart data={attendanceTrend} />
+          <EmptyState
+            title="No Attendance Data Yet"
+            description="Data will appear once attendance sessions are logged"
+          />
         )}
       </div>
 
+      {/* Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Group Distribution */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-900">Group Distribution</h3>
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Group Distribution</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Students across groups</p>
+            </div>
             <button
               onClick={() => handleExport('Group Distribution', groupDistribution)}
-              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Export"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              title="Export as CSV"
             >
-              <Download className="w-4 h-4 text-slate-400" />
+              <Download className="w-4 h-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300" />
             </button>
           </div>
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+            <div className="flex items-center justify-center h-64 bg-slate-50 dark:bg-slate-700/20 rounded-lg">
+              <div className="animate-spin rounded-full h-8 w-8 border-3 border-emerald-600 border-t-transparent"></div>
+            </div>
+          ) : groupDistribution && groupDistribution.length > 0 ? (
+            <div className="h-64">
+              <GroupDistributionChart data={groupDistribution} />
             </div>
           ) : (
-            <GroupDistributionChart data={groupDistribution} />
+            <EmptyState
+              title="No Group Data Yet"
+              description="Data will appear once groups are created"
+            />
           )}
         </div>
 
         {/* Course Progress */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-900">Course Progress</h3>
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Course Progress</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Completion status by course</p>
+            </div>
             <button
               onClick={() => handleExport('Course Progress', courseProgress)}
-              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Export"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              title="Export as CSV"
             >
-              <Download className="w-4 h-4 text-slate-400" />
+              <Download className="w-4 h-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300" />
             </button>
           </div>
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+            <div className="flex items-center justify-center h-64 bg-slate-50 dark:bg-slate-700/20 rounded-lg">
+              <div className="animate-spin rounded-full h-8 w-8 border-3 border-emerald-600 border-t-transparent"></div>
+            </div>
+          ) : courseProgress && courseProgress.length > 0 ? (
+            <div className="h-64">
+              <CourseProgressChart data={courseProgress} />
             </div>
           ) : (
-            <CourseProgressChart data={courseProgress} />
+            <EmptyState
+              title="No Course Data Yet"
+              description="Data will appear once courses are started"
+            />
           )}
         </div>
       </div>

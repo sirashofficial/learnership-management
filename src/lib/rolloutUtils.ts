@@ -178,12 +178,26 @@ export function buildRolloutPlanFromUnitRollouts(
   }
 
   const modules = Array.from(modulesMap.values())
-    .map((module) => ({
-      ...module,
-      unitStandards: module.unitStandards
+    .map((module) => {
+      const sortedUnits = module.unitStandards
         .filter((unit) => unit.startDate || unit.endDate)
-        .sort((a, b) => a.startDate.localeCompare(b.startDate)),
-    }))
+        .sort((a, b) => {
+          // Robust sorting with fallbacks
+          const aDate = a.startDate || a.endDate || '';
+          const bDate = b.startDate || b.endDate || '';
+          return aDate.localeCompare(bDate);
+        });
+
+      const lastUnit = sortedUnits[sortedUnits.length - 1];
+
+      return {
+        ...module,
+        unitStandards: sortedUnits,
+        // Default workplace activity dates if not explicitly provided
+        workplaceActivityStartDate: module.workplaceActivityStartDate || lastUnit?.endDate || undefined,
+        workplaceActivityEndDate: module.workplaceActivityEndDate || lastUnit?.assessingDate || lastUnit?.endDate || undefined,
+      };
+    })
     .sort((a, b) => a.moduleNumber - b.moduleNumber);
 
   if (modules.length === 0) return null;
@@ -198,7 +212,7 @@ export function buildRolloutPlanFromUnitRollouts(
  */
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '';
-  
+
   try {
     const parts = dateStr.split('-');
     if (parts.length === 3) {
@@ -226,10 +240,10 @@ export function isCurrentlyActive(
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
-    
+
     const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
 
@@ -249,11 +263,11 @@ export function getTotalCredits(plan: RolloutPlan | null): number {
 
   return plan.modules.reduce((total, module) => {
     if (!module.unitStandards) return total;
-    
+
     const moduleCredits = module.unitStandards.reduce((sum, us) => {
       return sum + (us.credits || 0);
     }, 0);
-    
+
     return total + moduleCredits;
   }, 0);
 }
@@ -271,14 +285,14 @@ export function getEarnedCredits(plan: RolloutPlan | null, completedIds: string[
 
   return plan.modules.reduce((total, module) => {
     if (!module.unitStandards) return total;
-    
+
     const moduleEarned = module.unitStandards.reduce((sum, us) => {
       if (completedSet.has(us.id)) {
         return sum + (us.credits || 0);
       }
       return sum;
     }, 0);
-    
+
     return total + moduleEarned;
   }, 0);
 }
@@ -343,7 +357,7 @@ export function calculateProjectedVsActual(
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const completedSet = new Set(completedIds || []);
 
   // Find where learners SHOULD be (projected)
@@ -408,12 +422,12 @@ export function calculateProjectedVsActual(
     for (const us of module.unitStandards) {
       if (completedSet.has(us.id)) {
         lastCompletedModule = module.moduleNumber;
-        
+
         if (us.endDate) {
           try {
             const endDate = new Date(us.endDate);
             endDate.setHours(0, 0, 0, 0);
-            
+
             if (!lastCompletedEndDate || endDate > lastCompletedEndDate) {
               lastCompletedEndDate = endDate;
             }
@@ -431,13 +445,13 @@ export function calculateProjectedVsActual(
   if (result.projectedModule && result.actualModule) {
     if (result.actualModule > result.projectedModule) {
       result.status = "ahead";
-      
+
       // Calculate weeks ahead
       if (result.projectedDate && lastCompletedEndDate) {
         try {
           const projectedDate = new Date(result.projectedDate);
           projectedDate.setHours(0, 0, 0, 0);
-          
+
           const daysDiff = Math.floor(
             (lastCompletedEndDate.getTime() - projectedDate.getTime()) / (1000 * 60 * 60 * 24)
           );
@@ -448,13 +462,13 @@ export function calculateProjectedVsActual(
       }
     } else if (result.actualModule < result.projectedModule) {
       result.status = "behind";
-      
+
       // Calculate weeks behind (negative)
       if (result.projectedDate && lastCompletedEndDate) {
         try {
           const projectedDate = new Date(result.projectedDate);
           projectedDate.setHours(0, 0, 0, 0);
-          
+
           const daysDiff = Math.floor(
             (lastCompletedEndDate.getTime() - projectedDate.getTime()) / (1000 * 60 * 60 * 24)
           );

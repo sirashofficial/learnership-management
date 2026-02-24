@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, Shield, Settings, Database, FileText, BookOpen, RefreshCw } from 'lucide-react';
+import { Users, Shield, Settings, Database, FileText, BookOpen, RefreshCw, CheckSquare } from 'lucide-react';
 
 export default function AdminPage() {
   const { user, isLoading } = useAuth();
@@ -63,6 +63,13 @@ export default function AdminPage() {
       icon: FileText,
       href: '/admin/documents',
       color: 'bg-emerald-500',
+    },
+    {
+      title: 'Data Validation',
+      description: 'Monitor and fix data integrity issues across the system',
+      icon: CheckSquare,
+      href: '/admin/validation',
+      color: 'bg-cyan-500',
     },
     {
       title: 'System Settings',

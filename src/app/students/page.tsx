@@ -8,9 +8,11 @@ import StudentDetailsModal from '@/components/StudentDetailsModal';
 import BulkAssessmentModal from '@/components/BulkAssessmentModal';
 import { useStudents, type Student } from '@/hooks/useStudents';
 import { useGroups } from '@/contexts/GroupsContext';
+import GroupFilterSidebar from '@/components/GroupFilterSidebar';
 import { formatGroupNameDisplay } from '@/lib/groupName';
 import { getStudentAlert, getAlertColor, type StudentAlert } from '@/lib/progress-alerts';
 import { StatusBadge } from '@/components/ui/AccessibilityComponents';
+import { invalidateRelatedCache } from '@/lib/cache-invalidation';
 import {
   Search,
   Filter,
@@ -49,14 +51,24 @@ type SortOrder = 'asc' | 'desc';
 
 export default function StudentsPage() {
   const router = useRouter();
-  const { students, isLoading, isError, mutate } = useStudents();
+
+  const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+
+  const {
+    students,
+    summary: apiSummary,
+    isLoading,
+    isError,
+    mutate
+  } = useStudents(selectedGroup, selectedStatus);
+
   const { groups } = useGroups();
 
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+
   const [progressRange, setProgressRange] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -206,17 +218,12 @@ export default function StudentsPage() {
     return filtered;
   }, [students, searchQuery, selectedGroup, selectedStatus, selectedModule, progressRange, showOnlyAlerts, sortField, sortOrder, attendanceData]);
 
-  // Calculate statistics
+  // Calculate statistics (mix API global stats and local alert counts)
   const stats = useMemo(() => {
     if (!students) return { total: 0, active: 0, averageProgress: 0, stalledCount: 0, atRiskCount: 0, needsAttention: 0 };
 
-    const totalStudents = students?.length || 0;
-    const activeStudents = students?.filter(s => s.status === 'ACTIVE').length || 0;
-    const averageProgress = students && students.length > 0
-      ? Math.round(students.reduce((sum, s) => sum + (s.progress || 0), 0) / students.length)
-      : 0;
-
-    // Calculate alert statistics
+    // Calculate alert statistics locally (these are still per-page for now,
+    // unless we add them to the summary API)
     let stalledCount = 0;
     let atRiskCount = 0;
 
@@ -227,14 +234,14 @@ export default function StudentsPage() {
     });
 
     return {
-      total: totalStudents,
-      active: activeStudents,
-      averageProgress,
+      total: apiSummary?.total || 0,
+      active: apiSummary?.active || 0,
+      averageProgress: apiSummary?.averageProgress || 0,
       stalledCount,
       atRiskCount,
       needsAttention: stalledCount + atRiskCount
     };
-  }, [students]);
+  }, [students, apiSummary]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -281,8 +288,10 @@ export default function StudentsPage() {
 
       await Promise.all(archivePromises);
 
-      // Refresh the student list
+      // Refresh the student list and invalidate all related caches
       mutate();
+      await invalidateRelatedCache('student:bulk-archive');
+
       setSelectedStudents([]);
     } catch (error) {
       console.error('Failed to archive students:', error);
@@ -374,8 +383,8 @@ export default function StudentsPage() {
     );
   }
 
-    return (
-      <div className="space-y-6">
+  return (
+    <div className="space-y-6">
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -517,526 +526,452 @@ export default function StudentsPage() {
           </div>
         </div>
 
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="p-4 border-b border-slate-200 bg-slate-50">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Group Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Group / Company
-                </label>
-                <select
-                  value={selectedGroup}
-                  onChange={(e) => setSelectedGroup(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                >
-                  <option value="all">All Groups</option>
-                  {groups?.map((group: any) => (
-                    <option key={group.id} value={group.id}>
-                      {formatGroupNameDisplay(group.name)} - {group.company?.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="SUSPENDED">Suspended</option>
-                  <option value="WITHDRAWN">Withdrawn</option>
-                </select>
-              </div>
-
-              {/* Progress Range Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Progress Range
-                </label>
-                <select
-                  value={progressRange}
-                  onChange={(e) => setProgressRange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                >
-                  <option value="all">All Progress</option>
-                  <option value="0-25">0-25%</option>
-                  <option value="26-50">26-50%</option>
-                  <option value="51-75">51-75%</option>
-                  <option value="76-100">76-100%</option>
-                </select>
-              </div>
-
-              {/* Module Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Current Module
-                </label>
-                <select
-                  value={selectedModule}
-                  onChange={(e) => setSelectedModule(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                >
-                  <option value="all">All Modules</option>
-                  {modules.map((m: any) => (
-                    <option key={m.id} value={m.id}>
-                      Module {m.moduleNumber}: {m.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Bulk Actions Banner */}
+        {/* Selected Students Bulk Actions */}
         {selectedStudents.length > 0 && (
-          <div className="p-4 bg-teal-50 border-b border-teal-200">
+          <div className="p-4 bg-emerald-50 border-t border-slate-200">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-teal-900">
-                  {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-emerald-900">
+                  {selectedStudents.length} StudentsSelected
                 </span>
+                <div className="h-4 w-px bg-emerald-200 mx-2" />
                 <button
                   onClick={handleBulkArchive}
-                  className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 flex items-center gap-2 text-sm"
+                  className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
                 >
-                  <Archive className="h-4 w-4" />
+                  <Archive className="h-3.5 w-3.5" />
                   Archive
                 </button>
                 <button
                   onClick={() => setShowBulkAssessmentModal(true)}
-                  className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center gap-2 text-sm"
+                  className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
                 >
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className="h-3.5 w-3.5" />
                   Award Credits
                 </button>
                 <button
                   onClick={handleBulkEmail}
-                  className="px-3 py-1.5 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 flex items-center gap-2 text-sm"
+                  className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 text-xs font-bold transition-all shadow-sm"
                 >
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-3.5 w-3.5" />
                   Send Email
                 </button>
               </div>
               <button
                 onClick={() => setSelectedStudents([])}
-                  className="p-1.5 hover:bg-teal-200 rounded-lg"
+                className="p-1.5 hover:bg-emerald-100 rounded-lg text-emerald-900 transition-colors"
               >
-                <X className="h-5 w-5 text-teal-900 dark:text-teal-100" />
-                                <X className="h-5 w-5 text-teal-900" />
+                <X className="h-5 w-5" />
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+      <div className="flex gap-6 items-start">
+        {/* Side Group Bar as requested */}
+        <div className="hidden lg:block sticky top-24 h-fit">
+          <GroupFilterSidebar
+            selectedGroupId={selectedGroup}
+            onSelectGroup={setSelectedGroup}
+          />
         </div>
-      ) : filteredStudents.length === 0 ? (
-        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-          <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="h-8 w-8 text-slate-400" />
+
+        <div className="flex-1 min-w-0">
+          {/* Content */}
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-slate-200">
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+                <p className="text-sm font-medium text-slate-500 italic">Curating student data...</p>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">
-              No students found
-            </h3>
-            <p className="text-slate-600 mb-4">
-              {searchQuery || selectedGroup !== 'all' || selectedStatus !== 'all' || progressRange !== 'all'
-                ? 'Try adjusting your filters or search query'
-                : 'Get started by adding your first student'}
-            </p>
-            {!searchQuery && selectedGroup === 'all' && selectedStatus === 'all' && progressRange === 'all' && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600"
-              >
-                Add First Student
-              </button>
-            )}
-          </div>
-        </div>
-      ) : viewMode === 'table' ? (
-        // Table View
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                  <th className="px-4 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedStudents.length === filteredStudents.length}
-                      onChange={handleSelectAll}
-                      className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
-                    />
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      onClick={() => handleSort('name')}
-                      className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400"
-                    >
-                      Student
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      onClick={() => handleSort('studentId')}
-                      className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400"
-                    >
-                      Student ID
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Group / Company
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      onClick={() => handleSort('progress')}
-                      className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400"
-                    >
-                      Progress
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      onClick={() => handleSort('attendance')}
-                      className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400"
-                    >
-                      Attendance
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      onClick={() => handleSort('createdAt')}
-                      className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400"
-                    >
-                      Enrolled
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Current Module
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {filteredStudents.map((student) => {
-                  const attendance = getAttendancePercentage(student);
-                  const alert = getStudentAlertData(student);
-                  return (
-                    <tr
-                      key={student.id}
-                      onClick={() => handleViewDetails(student)}
-                      className="hover:bg-slate-50 cursor-pointer"
-                    >
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+          ) : filteredStudents.length === 0 ? (
+            <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  No students found
+                </h3>
+                <p className="text-slate-600 mb-4">
+                  {searchQuery || selectedGroup !== 'all' || selectedStatus !== 'all' || progressRange !== 'all'
+                    ? 'Try adjusting your filters or search query'
+                    : 'Get started by adding your first student'}
+                </p>
+                {!searchQuery && selectedGroup === 'all' && selectedStatus === 'all' && progressRange === 'all' && (
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600"
+                  >
+                    Add First Student
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : viewMode === 'table' ? (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left">
                         <input
                           type="checkbox"
-                          checked={selectedStudents.includes(student.id)}
-                          onChange={() => handleSelectStudent(student.id)}
+                          checked={selectedStudents.length === filteredStudents.length}
+                          onChange={handleSelectAll}
                           className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
                         />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-semibold text-sm">
-                            {getInitials(student.firstName, student.lastName)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900">
-                                {student.firstName} {student.lastName}
-                              </span>
-                              {alert.type !== 'NONE' && (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getAlertColor(alert.severity)}`}>
-                                  {alert.type === 'STALLED' ? '⏸️ Stalled' : '⚠️ At Risk'}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-slate-500">
-                              {student.email}
-                            </div>
-                          </div>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort('name')}
+                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                        >
+                          Student
+                          <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                          Group / Company
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                        {student.studentId}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm">
-                          <div className="font-medium text-slate-900">
-                            {student.group?.name || 'No Group'}
-                          </div>
-                          <div className="text-slate-500">
-                            {student.group?.name || 'N/A'}
-                          </div>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort('progress')}
+                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                        >
+                          Progress %
+                          <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort('attendance')}
+                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                        >
+                          Attendance %
+                          <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                          Status
                         </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
-                            <div
-                              className={`h-full ${getProgressColor(student.progress)}`}
-                              style={{ width: `${student.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium text-slate-700 min-w-[3rem] text-right">
-                            {student.totalCreditsEarned || 0}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedStudentForCredits(student);
-                            }}
-                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-500"
-                            title="Adjust Credits"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </button>
-                        </div>
-
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-slate-700">
-                            {attendance}%
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={student.status || 'ACTIVE'} />
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                        {format(new Date(student.createdAt), 'MMM d, yyyy')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-slate-900">
-                          {student.currentModuleId ? (
-                            `M${modules.find(m => m.id === student.currentModuleId)?.moduleNumber || '?'}`
-                          ) : '-'}
-                        </span>
-                      </td>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleSort('createdAt')}
+                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                        >
+                          Enrolled
+                          <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                        Current Module
+                      </th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        // Grid View
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredStudents.map((student) => {
-            const attendance = getAttendancePercentage(student);
-            return (
-              <div
-                key={student.id}
-                className="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-soft transition-shadow cursor-pointer relative"
-                onClick={() => handleViewDetails(student)}
-              >
-                {/* Checkbox */}
-                <div
-                  className="absolute top-4 right-4"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedStudents.includes(student.id)}
-                    onChange={() => handleSelectStudent(student.id)}
-                    className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
-                  />
-                </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                    {filteredStudents.map((student) => {
+                      const attendance = getAttendancePercentage(student);
+                      const alert = getStudentAlertData(student);
+                      return (
+                        <tr
+                          key={student.id}
+                          onClick={() => handleViewDetails(student)}
+                          className="hover:bg-slate-50 cursor-pointer"
+                        >
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedStudents.includes(student.id)}
+                              onChange={() => handleSelectStudent(student.id)}
+                              className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-semibold text-sm">
+                                {getInitials(student.firstName, student.lastName)}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-slate-900">
+                                    {student.firstName} {student.lastName}
+                                  </span>
+                                  {alert.type !== 'NONE' && (
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getAlertColor(alert.severity)}`}>
+                                      {alert.type === 'STALLED' ? '⏸️ Stalled' : '⚠️ At Risk'}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-slate-500 flex items-center gap-2">
+                                  <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-[11px]">
+                                    {student.studentId}
+                                  </span>
+                                  {student.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm">
+                              <div className="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]">
+                                {student.group?.name || 'No Group'}
+                              </div>
+                              <div className="text-slate-500 text-xs truncate max-w-[180px]">
+                                {(student.group as any)?.company?.name || 'Independent'}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className={`h-full ${getProgressColor(student.progress)}`}
+                                  style={{ width: `${student.progress}%` }}
+                                />
+                              </div>
+                              <span className="text-sm font-medium text-slate-700 min-w-[3rem] text-right">
+                                {student.totalCreditsEarned || 0}
+                              </span>
+                              {/* Credits are now read-only - calculated from assessments only */}
+                            </div>
 
-                {/* Avatar */}
-                <div className="flex justify-center mb-4">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xl">
-                    {getInitials(student.firstName, student.lastName)}
-                  </div>
-                </div>
-
-                {/* Name */}
-                <h3 className="text-lg font-semibold text-slate-900 text-center mb-1">
-                  {student.firstName} {student.lastName}
-                </h3>
-
-                {/* Student ID */}
-                <p className="text-sm text-slate-500 text-center mb-4">
-                  {student.studentId}
-                </p>
-
-                {/* Group */}
-                <div className="mb-4 text-center">
-                  <p className="text-sm font-medium text-slate-900">
-                    {student.group?.name || 'No Group'}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {student.group?.name || 'N/A'}
-                  </p>
-                </div>
-
-                {/* Progress */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-600">
-                      Progress
-                    </span>
-                    <span className="text-sm font-medium text-slate-900">
-                      {student.progress}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                    <div
-                      className={`h-full ${getProgressColor(student.progress)}`}
-                      style={{ width: `${student.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Attendance */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-slate-600">
-                    Attendance
-                  </span>
-                  <span className="text-sm font-medium text-slate-900">
-                    {attendance}%
-                  </span>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">
-                    Status
-                  </span>
-                  <StatusBadge status={student.status || 'ACTIVE'} />
-                </div>
-
-                {/* Enrollment Date */}
-                <div className="mt-4 pt-4 border-t border-slate-200 text-center">
-                  <p className="text-xs text-slate-500">
-                    Enrolled {format(new Date(student.createdAt), 'MMM d, yyyy')}
-                  </p>
-                </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-medium text-slate-700">
+                                {attendance}%
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <StatusBadge status={(student.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'PENDING' | 'BEHIND' | 'ON_TRACK' | 'AHEAD'} />
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                            {format(new Date(student.createdAt), 'MMM d, yyyy')}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                              {(student as any).currentModule ? (
+                                `M${(student as any).currentModule.moduleNumber}`
+                              ) : '-'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            );
-          })}
+            </div>
+          ) : (
+            // Grid View
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredStudents.map((student) => {
+                const attendance = getAttendancePercentage(student);
+                return (
+                  <div
+                    key={student.id}
+                    className="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-soft transition-shadow cursor-pointer relative"
+                    onClick={() => handleViewDetails(student)}
+                  >
+                    {/* Checkbox */}
+                    <div
+                      className="absolute top-4 right-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedStudents.includes(student.id)}
+                        onChange={() => handleSelectStudent(student.id)}
+                        className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
+                      />
+                    </div>
+
+                    {/* Avatar */}
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xl">
+                        {getInitials(student.firstName, student.lastName)}
+                      </div>
+                    </div>
+
+                    {/* Name */}
+                    <h3 className="text-lg font-semibold text-slate-900 text-center mb-1">
+                      {student.firstName} {student.lastName}
+                    </h3>
+
+                    {/* Student ID */}
+                    <p className="text-sm text-slate-500 text-center mb-4">
+                      {student.studentId}
+                    </p>
+
+                    {/* Group */}
+                    <div className="mb-4 text-center">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {student.group?.name || 'No Group'}
+                      </p>
+                      <div className="text-xs text-slate-500 truncate max-w-[180px]">
+                        {(student.group as any)?.Company?.name || 'Independent'}
+                      </div>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-slate-600">
+                          Progress
+                        </span>
+                        <span className="text-sm font-medium text-slate-900">
+                          {student.progress}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full ${getProgressColor(student.progress)}`}
+                          style={{ width: `${student.progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Attendance */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm text-slate-600">
+                        Attendance
+                      </span>
+                      <span className="text-sm font-medium text-slate-900">
+                        {attendance}%
+                      </span>
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-600">
+                        Status
+                      </span>
+                      <StatusBadge status={(student.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'PENDING' | 'BEHIND' | 'ON_TRACK' | 'AHEAD'} />
+                    </div>
+
+                    {/* Enrollment Date */}
+                    <div className="mt-4 pt-4 border-t border-slate-200 text-center">
+                      <p className="text-xs text-slate-500">
+                        Enrolled {format(new Date(student.createdAt), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+          }
+
+          {/* Modals */}
+          {
+            showAddModal && (
+              <AddStudentModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onAdd={async (student) => {
+                  try {
+                    const response = await fetch('/api/students', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        studentId: student.studentId,
+                        firstName: student.firstName,
+                        lastName: student.lastName,
+                        email: student.email || undefined,
+                        phone: student.phone || undefined,
+                        groupId: student.groupId || student.group,
+                        status: student.status || 'ACTIVE',
+                        progress: student.progress || 0,
+                      }),
+                    });
+
+                    console.log('📡 Response status:', response.status);
+
+                    if (response.ok) {
+                      const result = await response.json();
+                      console.log('✅ Success:', result);
+                      alert('Student added successfully!');
+                      setShowAddModal(false);
+                      mutate(); // Revalidate SWR cache
+                      await invalidateRelatedCache('student:add');
+                      router.refresh(); // Refresh server components
+                    } else {
+                      const error = await response.json();
+                      console.error('❌ API Error:', error);
+                      alert(`Failed to add student: ${error.error || error.message || 'Unknown error'}`);
+                    }
+                  } catch (error) {
+                    console.error('❌ Error adding student:', error);
+                    alert('Failed to add student. Please try again.');
+                  }
+                }}
+              />
+            )
+          }
+
+          {
+            showDetailsModal && selectedStudent && (
+              <StudentDetailsModal
+                isOpen={showDetailsModal}
+                onClose={() => {
+                  setShowDetailsModal(false);
+                  setSelectedStudent(null);
+                }}
+                student={selectedStudent}
+                onSave={async (updated) => {
+                  try {
+                    const response = await fetch(`/api/students/${selectedStudent.id}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(updated),
+                    });
+
+                    if (response.ok) {
+                      alert('Student updated successfully!');
+                      setShowDetailsModal(false);
+                      mutate(); // Revalidate SWR cache
+                      await invalidateRelatedCache('student:update');
+                      router.refresh(); // Refresh server components
+                    } else {
+                      const error = await response.json();
+                      alert(`Failed to update student: ${error.error}`);
+                    }
+                  } catch (error) {
+                    console.error('Error updating student:', error);
+                    alert('Failed to update student. Please try again.');
+                  }
+                }}
+              />
+            )
+          }
+          {/* Bulk Assessment Modal */}
+          <BulkAssessmentModal
+            isOpen={showBulkAssessmentModal}
+            onClose={() => setShowBulkAssessmentModal(false)}
+            studentIds={selectedStudents}
+            onSuccess={() => {
+              setSelectedStudents([]);
+              mutate();
+            }}
+          />
+          <CreditAdjustmentModal
+            isOpen={!!selectedStudentForCredits}
+            onClose={() => setSelectedStudentForCredits(null)}
+            student={selectedStudentForCredits}
+            onSuccess={() => {
+              mutate();
+            }}
+          />
         </div>
-      )}
-
-      {/* Modals */}
-      {showAddModal && (
-        <AddStudentModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onAdd={async (student) => {
-            try {
-              const response = await fetch('/api/students', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  studentId: student.studentId,
-                  firstName: student.firstName,
-                  lastName: student.lastName,
-                  email: student.email || undefined,
-                  phone: student.phone || undefined,
-                  groupId: student.groupId || student.group,
-                  status: student.status || 'ACTIVE',
-                  progress: student.progress || 0,
-                }),
-              });
-
-              console.log('📡 Response status:', response.status);
-
-              if (response.ok) {
-                const result = await response.json();
-                console.log('✅ Success:', result);
-                alert('Student added successfully!');
-                setShowAddModal(false);
-                mutate(); // Revalidate SWR cache
-                router.refresh(); // Refresh server components
-              } else {
-                const error = await response.json();
-                console.error('❌ API Error:', error);
-                alert(`Failed to add student: ${error.error || error.message || 'Unknown error'}`);
-              }
-            } catch (error) {
-              console.error('❌ Error adding student:', error);
-              alert('Failed to add student. Please try again.');
-            }
-          }}
-        />
-      )}
-
-      {showDetailsModal && selectedStudent && (
-        <StudentDetailsModal
-          isOpen={showDetailsModal}
-          onClose={() => {
-            setShowDetailsModal(false);
-            setSelectedStudent(null);
-          }}
-          student={selectedStudent}
-          onSave={async (updated) => {
-            try {
-              const response = await fetch(`/api/students/${selectedStudent.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updated),
-              });
-
-              if (response.ok) {
-                alert('Student updated successfully!');
-                setShowDetailsModal(false);
-                mutate(); // Revalidate SWR cache
-                router.refresh(); // Refresh server components
-              } else {
-                const error = await response.json();
-                alert(`Failed to update student: ${error.error}`);
-              }
-            } catch (error) {
-              console.error('Error updating student:', error);
-              alert('Failed to update student. Please try again.');
-            }
-          }}
-        />
-      )}
-      {/* Bulk Assessment Modal */}
-      <BulkAssessmentModal
-        isOpen={showBulkAssessmentModal}
-        onClose={() => setShowBulkAssessmentModal(false)}
-        studentIds={selectedStudents}
-        onSuccess={() => {
-          setSelectedStudents([]);
-          mutate();
-        }}
-      />
-      <CreditAdjustmentModal
-        isOpen={!!selectedStudentForCredits}
-        onClose={() => setSelectedStudentForCredits(null)}
-        student={selectedStudentForCredits}
-        onSuccess={() => {
-          mutate();
-        }}
-      />
+      </div>
     </div>
   );
 }

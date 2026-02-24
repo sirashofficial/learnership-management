@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -25,6 +26,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent duplicate submissions
+    if (isSubmittingRef.current || loading) {
+      console.log('Login already in progress, ignoring duplicate submission');
+      return;
+    }
+    
+    isSubmittingRef.current = true;
     setError('');
     setLoading(true);
 
@@ -34,6 +43,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
 
@@ -50,8 +60,10 @@ export default function LoginPage() {
       router.push('/');
     } catch (err: any) {
       setError(err.message);
+      isSubmittingRef.current = false;
     } finally {
       setLoading(false);
+      // Don't reset ref here if login was successful, as redirect is happening
     }
   };
 

@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
       // Total students (active, attached to non-archived groups)
       prisma.student.count({
         where: {
-          status: 'ACTIVE',
+          status: { notIn: ['ARCHIVED', 'Archived', 'archived'] },
           group: {
-            status: { notIn: ['ARCHIVED', 'Archived'] },
+            status: { notIn: ['ARCHIVED', 'Archived', 'archived'] },
           },
         },
       }),
@@ -46,12 +46,12 @@ export async function GET(request: NextRequest) {
       // Total active groups
       prisma.group.count({
         where: {
-          status: { in: ['ACTIVE', 'Active'] }
+          status: 'ACTIVE'
         }
       }),
       prisma.group.count({
         where: {
-          status: { in: ['ACTIVE', 'Active'] },
+          status: 'ACTIVE',
           createdAt: { lte: thirtyDaysAgo }
         }
       }),
@@ -65,16 +65,16 @@ export async function GET(request: NextRequest) {
         }
       }),
 
-      // Pending assessments
+      // Pending assessments (result is null when not yet graded)
       prisma.assessment.count({
         where: {
-          result: 'PENDING',
+          result: null,
           dueDate: { gte: now },
         },
       }),
       prisma.assessment.count({
         where: {
-          result: 'PENDING',
+          result: null,
           dueDate: { gte: thirtyDaysAgo, lte: now },
         },
       }),

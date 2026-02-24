@@ -6,6 +6,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { TOTAL_CREDITS } from './constants';
 
 const prisma = new PrismaClient();
 
@@ -94,7 +95,7 @@ export async function calculateModuleCredits(
 export async function calculateStudentProgress(
     studentId: string
 ): Promise<ProgressSummary> {
-    const totalCreditsRequired = 137; // NVC Level 2 total
+    const totalCreditsRequired = TOTAL_CREDITS;
 
     // Get all modules
     const modules = await prisma.module.findMany({
@@ -250,6 +251,157 @@ export async function updateProgressFromAssessment(
             updatedAt: new Date()
         }
     });
+}
+
+/**
+ * UNIFIED Progress Update Function for All Contexts
+ * 
+ * This is the SINGLE SOURCE OF TRUTH for updating student progress.
+ * Used by all assessment endpoints (route.ts, [id]/route.ts, bulk/route.ts)
+ * 
+ * @param tx Prisma client - can be main prisma instance OR transaction client
+ * @param studentId Student to update
+ * @param unitStandardId Optional - specific unit standard that was assessed
+ * 
+ * Handles:
+ * 1. Mark unit standard as COMPLETED if assessment was competent
+ * 2. Recalculate all competent assessments (dedup by unit standard)
+ * 3. Update Student.totalCreditsEarned and Student.progress
+ * 4. For each affected module: recalculate and upsert ModuleProgress
+ */
+export async function updateStudentProgressUnified(
+    tx: any,  // Prisma client or transaction
+    studentId: string,
+    unitStandardId?: string | null
+): Promise<void> {
+    try {
+        // 1. Mark Unit Standard as COMPLETED if specified
+        if (unitStandardId) {
+            await tx.unitStandardProgress.upsert({
+                where: {
+                    studentId_unitStandardId: {
+                        studentId,
+                        unitStandardId
+                    }
+                },
+                create: {
+                    studentId,
+                    unitStandardId,
+                    status: 'COMPLETED',
+                    completionDate: new Date(),
+                    summativePassed: true
+                },
+                update: {
+                    status: 'COMPLETED',
+                    completionDate: new Date(),
+                    summativePassed: true
+                }
+            });
+        }
+
+        // 2. Get all competent assessments for this student
+        const approvedAssessments = await tx.assessment.findMany({
+            where: {
+                studentId,
+                result: 'COMPETENT',
+            },
+            include: {
+                unitStandard: true
+            }
+        });
+
+        // 3. Calculate total credits earned (deduplicate by unit standard)
+        const uniqueUnitStandards = new Set<string>();
+        let totalCreditsEarned = 0;
+
+        for (const assessment of approvedAssessments) {
+            if (assessment.unitStandard && !uniqueUnitStandards.has(assessment.unitStandardId!)) {
+                uniqueUnitStandards.add(assessment.unitStandardId!);
+                totalCreditsEarned += assessment.unitStandard.credits || 0;
+            }
+        }
+
+        // 4. Update student record
+        const totalCreditsRequired = TOTAL_CREDITS;
+        const progressPercentage = Math.round((totalCreditsEarned / totalCreditsRequired) * 100);
+
+        await tx.student.update({
+            where: { id: studentId },
+            data: {
+                totalCreditsEarned,
+                progress: progressPercentage
+            }
+        });
+
+        // 5. Update Module Progress for affected modules
+        const affectedModuleIds = new Set<string>();
+        for (const assessment of approvedAssessments) {
+            if (assessment.unitStandard) {
+                affectedModuleIds.add(assessment.unitStandard.moduleId);
+            }
+        }
+
+        for (const moduleId of affectedModuleIds) {
+            const module = await tx.module.findUnique({
+                where: { id: moduleId },
+                include: { unitStandards: true }
+            });
+
+            if (!module) continue;
+
+            // Calculate credits for this module
+            let moduleCreditsEarned = 0;
+            let completedCount = 0;
+
+            for (const us of module.unitStandards) {
+                if (uniqueUnitStandards.has(us.id)) {
+                    moduleCreditsEarned += us.credits;
+                    completedCount++;
+                }
+            }
+
+            const modulePercentage = Math.round((moduleCreditsEarned / module.credits) * 100);
+            const isCompleted = completedCount === module.unitStandards.length;
+
+            await tx.moduleProgress.upsert({
+                where: {
+                    studentId_moduleId: {
+                        studentId,
+                        moduleId
+                    }
+                },
+                create: {
+                    studentId,
+                    moduleId,
+                    creditsEarned: moduleCreditsEarned,
+                    progress: modulePercentage,
+                    status: isCompleted ? 'COMPLETED' : 'IN_PROGRESS',
+                    startDate: new Date(),
+                    completionDate: isCompleted ? new Date() : null
+                },
+                update: {
+                    creditsEarned: moduleCreditsEarned,
+                    progress: modulePercentage,
+                    status: isCompleted ? 'COMPLETED' : 'IN_PROGRESS',
+                    completionDate: isCompleted ? new Date() : null
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error in updateStudentProgressUnified:', error);
+        throw error;
+    }
+}
+
+/**
+ * Wrapper for non-transaction contexts
+ * Used by endpoints that don't need transactional atomicity
+ */
+export async function updateStudentProgress(
+    studentId: string,
+    unitStandardId?: string | null
+): Promise<void> {
+    return updateStudentProgressUnified(prisma, studentId, unitStandardId);
 }
 
 /**

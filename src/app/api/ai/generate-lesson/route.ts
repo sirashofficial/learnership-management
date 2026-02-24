@@ -1,13 +1,74 @@
 import { NextRequest } from 'next/server';
-import { successResponse, handleApiError } from '@/lib/api-utils';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import { searchDocuments } from '@/lib/ai/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
+type GenerationType = 'LESSON_PLAN' | 'ACTIVITIES' | 'AI_CONTENT';
+
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
+
+const TEMPLATES_FILE = path.join(process.cwd(), 'data', 'lesson-templates.json');
+
+async function readTemplates(): Promise<any[]> {
+  try {
+    const text = await fs.readFile(TEMPLATES_FILE, 'utf8');
+    return JSON.parse(text);
+  } catch {
+    return [];
+  }
+}
+
+async function writeTemplates(templates: any[]): Promise<void> {
+  await fs.mkdir(path.dirname(TEMPLATES_FILE), { recursive: true });
+  await fs.writeFile(TEMPLATES_FILE, JSON.stringify(templates, null, 2));
+}
+
+// ── GET /api/ai/generate-lesson?templateId=xxx ──────────────────────────────
+// Returns a saved lesson template
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const templateId = searchParams.get('templateId');
+    const listAll = searchParams.get('list') === 'true';
+
+    if (listAll) {
+      const templates = await readTemplates();
+      return successResponse({ templates });
+    }
+
+    if (!templateId) return errorResponse('templateId or list=true required', 400);
+
+    const templates = await readTemplates();
+    const template = templates.find((t) => t.id === templateId);
+
+    if (!template) return errorResponse('Template not found', 404);
+    return successResponse({ template });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+// ── DELETE /api/ai/generate-lesson?templateId=xxx ────────────────────────────
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const templateId = searchParams.get('templateId');
+    if (!templateId) return errorResponse('templateId required', 400);
+
+    const templates = await readTemplates();
+    const updated = templates.filter((t) => t.id !== templateId);
+    await writeTemplates(updated);
+    return successResponse({ deleted: true });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,13 +79,31 @@ export async function POST(request: NextRequest) {
             learningOutcomes,
             notes,
             groupId,
+            generationType = 'LESSON_PLAN' as GenerationType,
+            saveAsTemplate = false,
+            templateName,
         } = body;
 
         if (!unitStandardId) {
-            return Response.json(
-                { success: false, error: 'Unit Standard ID is required' },
-                { status: 400 }
-            );
+            return errorResponse('Unit Standard ID is required', 400);
+        }
+
+        // ── Save template support ─────────────────────────────────────────────
+        // If saveAsTemplate is set, save the current prompt config as a template
+        if (saveAsTemplate && templateName) {
+          const templates = await readTemplates();
+          const newTemplate = {
+            id: `tpl-${Date.now()}`,
+            name: templateName,
+            unitStandardId,
+            duration,
+            learningOutcomes,
+            notes,
+            generationType,
+            createdAt: new Date().toISOString(),
+          };
+          templates.push(newTemplate);
+          await writeTemplates(templates);
         }
 
         // Step 1: Load the unit standard details
@@ -36,10 +115,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!unitStandard) {
-            return Response.json(
-                { success: false, error: 'Unit Standard not found' },
-                { status: 404 }
-            );
+            return errorResponse('Unit Standard not found', 404);
         }
 
         // Step 2: Search documents for relevant content
@@ -61,6 +137,46 @@ export async function POST(request: NextRequest) {
 
         const sourceDocuments = relevantDocs.map(doc => doc.metadata.filename);
 
+        // ── Route by generationType ────────────────────────────────────────────
+        if (generationType === 'ACTIVITIES') {
+          // Delegate to activities-style prompt embedded here
+          const activitiesPrompt = `
+You are a South African vocational training expert creating practical learning activities.
+UNIT STANDARD: ${unitStandard.title} | CODE: ${unitStandard.code} | NQF LEVEL: ${unitStandard.level}
+${documentContext !== 'No curriculum documents available. Use general training knowledge.' ? 'CURRICULUM CONTEXT:\n' + documentContext : ''}
+${notes ? 'FACILITATOR NOTES: ' + notes : ''}
+
+Create 5 varied learning activities covering STARTER, CORE, and EXTENSION levels.
+Return ONLY a JSON array: [{"id":"act-1","title":"...","type":"GROUP","duration":20,"level":"CORE","description":"...","materials":[],"steps":[],"differentiation":"...","assessmentLink":"..."}]
+`;
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const result = await model.generateContent(activitiesPrompt);
+          const raw = result.response.text().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          const activities = JSON.parse(raw);
+          return successResponse({ activities, sourceDocuments, generationType });
+        }
+
+        if (generationType === 'AI_CONTENT') {
+          // Generate enriched AI content / explanation for self-study
+          const contentPrompt = `
+You are a subject matter expert for South African learnership programmes.
+Write comprehensive self-study content for:
+UNIT STANDARD: ${unitStandard.title} (${unitStandard.code}) - NQF Level ${unitStandard.level}
+${documentContext !== 'No curriculum documents available. Use general training knowledge.' ? 'CURRICULUM CONTENT:\n' + documentContext : ''}
+${learningOutcomes ? 'KEY OUTCOMES: ' + learningOutcomes : ''}
+
+Produce content structured as:
+{"title":"...","introduction":"...","sections":[{"heading":"...","content":"...","keyPoints":[]}],"glossary":[{"term":"...","definition":"..."}],"selfAssessmentQuestions":["..."],"furtherReading":["..."]}
+Return ONLY JSON.
+`;
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const result = await model.generateContent(contentPrompt);
+          const raw = result.response.text().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          const content = JSON.parse(raw);
+          return successResponse({ content, sourceDocuments, generationType });
+        }
+
+        // Default: LESSON_PLAN
         // Step 4: Build AI prompt
         const prompt = `
 You are creating a detailed lesson plan for a South African learnership programme (NQF Level 2).

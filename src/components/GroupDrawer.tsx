@@ -61,7 +61,7 @@ export default function GroupDrawer({
   );
 
   const { data: assessmentsData, mutate: mutateAssessments } = useSWR(
-    isOpen && group?.id ? `/api/assessments?groupId=${group.id}` : null,
+    isOpen && group?.id ? `/api/assessments?groupId=${group.id}&all=true` : null,
     fetcher
   );
   const assessments = useMemo(() => {
@@ -257,7 +257,7 @@ export default function GroupDrawer({
         }
 
         mutateAssessments();
-        globalMutate("/api/assessments");
+        globalMutate((key) => typeof key === "string" && key.startsWith("/api/assessments?"));
         globalMutate("/api/students");
         globalMutate("/api/groups");
         globalMutate("/api/groups/progress");
@@ -300,7 +300,7 @@ export default function GroupDrawer({
       );
 
       mutateAssessments();
-      globalMutate("/api/assessments");
+      globalMutate((key) => typeof key === "string" && key.startsWith("/api/assessments?"));
       globalMutate("/api/students");
       globalMutate("/api/groups");
       globalMutate("/api/groups/progress");
@@ -360,6 +360,19 @@ export default function GroupDrawer({
 
   const [attendanceChanges, setAttendanceChanges] = useState<Map<string, AttendanceStatus>>(new Map());
   const [savingAttendance, setSavingAttendance] = useState(false);
+  const [draftSessions, setDraftSessions] = useState<
+    Array<{ dateKey: string; date: Date; sessionTitle: string; records: Map<string, any> }>
+  >([]);
+  const [attendanceDate, setAttendanceDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [attendanceTitle, setAttendanceTitle] = useState("Session");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDraftSessions([]);
+      setAttendanceDate(format(new Date(), "yyyy-MM-dd"));
+      setAttendanceTitle("Session");
+    }
+  }, [isOpen, group?.id]);
 
   const attendanceByDate = useMemo(() => {
     const map = new Map<
@@ -384,14 +397,25 @@ export default function GroupDrawer({
     return Array.from(map.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [attendanceRecords]);
 
+  const attendanceSessions = useMemo(() => {
+    const map = new Map<string, { dateKey: string; date: Date; sessionTitle: string; records: Map<string, any> }>();
+    attendanceByDate.forEach((entry) => map.set(entry.dateKey, entry));
+    draftSessions.forEach((entry) => {
+      if (!map.has(entry.dateKey)) {
+        map.set(entry.dateKey, entry);
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [attendanceByDate, draftSessions]);
+
   const getAttendanceStatus = useCallback(
     (dateKey: string, studentId: string) => {
-      const entry = attendanceByDate.find((item) => item.dateKey === dateKey);
+      const entry = attendanceSessions.find((item) => item.dateKey === dateKey);
       const record = entry?.records.get(studentId);
       const override = attendanceChanges.get(`${dateKey}|${studentId}`);
       return override || record?.status || "";
     },
-    [attendanceByDate, attendanceChanges]
+    [attendanceSessions, attendanceChanges]
   );
 
   const updateAttendanceStatus = useCallback(
@@ -438,6 +462,7 @@ export default function GroupDrawer({
       }
 
       setAttendanceChanges(new Map());
+      setDraftSessions([]);
       mutateAttendance();
       globalMutate("/api/attendance");
       globalMutate("/api/students");
@@ -451,6 +476,24 @@ export default function GroupDrawer({
     }
   }, [attendanceChanges, group?.id, mutateAttendance, showToast]);
 
+  const handleAddDraftSession = useCallback(() => {
+    if (!attendanceDate) return;
+    const dateKey = attendanceDate;
+    if (attendanceSessions.some((entry) => entry.dateKey === dateKey)) {
+      showToast("Session already exists for this date", "error");
+      return;
+    }
+    setDraftSessions((prev) => [
+      {
+        dateKey,
+        date: new Date(dateKey),
+        sessionTitle: attendanceTitle.trim() || "Session",
+        records: new Map(),
+      },
+      ...prev,
+    ]);
+  }, [attendanceDate, attendanceSessions, attendanceTitle, showToast]);
+
   if (!isOpen || !group) return null;
 
   const avgPercent = actualProgress?.avgPercent || 0;
@@ -459,7 +502,7 @@ export default function GroupDrawer({
     <>
       <div className="fixed inset-0 z-50">
         <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-        <aside className="absolute right-0 top-0 h-full w-full sm:max-w-[60vw] bg-white shadow-2xl flex flex-col">
+        <aside className="absolute right-0 top-0 h-full w-full sm:max-w-[60vw] bg-white shadow-2xl flex flex-col overflow-y-auto">
           <header className="p-5 border-b border-slate-200 flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">{formatGroupNameDisplay(group.name)}</h2>
@@ -500,16 +543,16 @@ export default function GroupDrawer({
             )}
           </div>
 
-          <div className="flex gap-2 px-5 py-3 border-b border-slate-200">
+          <div className="flex gap-2 px-5 py-3 border-b border-slate-200 bg-slate-50">
             {["students", "assessments", "attendance"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as DrawerTab)}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-semibold",
+                  "px-4 py-2 rounded-lg text-sm font-semibold border transition",
                   activeTab === tab
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                    : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-100"
                 )}
               >
                 {tab === "students" && "Students"}
@@ -519,7 +562,7 @@ export default function GroupDrawer({
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="p-5">
             {activeTab === "students" && (
               <div className="space-y-3">
                 {students.length === 0 && (
@@ -557,229 +600,250 @@ export default function GroupDrawer({
 
             {activeTab === "assessments" && (
               <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  {["FORMATIVE", "SUMMATIVE", "WORKPLACE"].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setAssessmentType(tab as AssessmentType)}
-                      className={cn(
-                        "px-3 py-2 rounded-lg text-sm font-semibold",
-                        assessmentType === tab
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-100 text-slate-700"
-                      )}
-                    >
-                      {tab}
-                    </button>
-                  ))}
+                <div className="-mx-5 px-5 py-3 bg-white border-b border-slate-200 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {["FORMATIVE", "SUMMATIVE", "WORKPLACE"].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setAssessmentType(tab as AssessmentType)}
+                        className={cn(
+                          "px-3 py-2 rounded-lg text-sm font-semibold",
+                          assessmentType === tab
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-100 text-slate-700"
+                        )}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                      {assessmentType} progress: {progressSummary.competentCount}/{progressSummary.total}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                      Module: {selectedModule?.moduleNumber ?? "-"}
+                    </span>
+                    {assessmentType !== "WORKPLACE" && selectedUnit && (
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                        {selectedUnit.code}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Select Module</div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {groupModules.length === 0 && (
-                        <div className="text-sm text-slate-500">No modules linked to this group.</div>
-                      )}
-                      {groupModules.map((module: any) => {
-                        const label = `Module ${module.moduleNumber} - ${module.name}`;
-                        const isSelected = module.id === selectedModuleId;
-                        return (
+                <div className="grid gap-4 lg:grid-cols-[minmax(240px,320px)_1fr]">
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500">Select Module</div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {groupModules.length === 0 && (
+                            <div className="text-sm text-slate-500">No modules linked to this group.</div>
+                          )}
+                          {groupModules.map((module: any) => {
+                            const label = `Module ${module.moduleNumber} - ${module.name}`;
+                            const isSelected = module.id === selectedModuleId;
+                            return (
+                              <button
+                                key={module.id}
+                                onClick={() => setSelectedModuleId(module.id)}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                                  isSelected
+                                    ? "bg-green-600 text-white"
+                                    : "border border-gray-300 text-gray-700 hover:border-green-500"
+                                )}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {assessmentType !== "WORKPLACE" && (
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Unit Standards</div>
+                        )}
+
+                        {assessmentType === "WORKPLACE" ? (
                           <button
-                            key={module.id}
-                            onClick={() => setSelectedModuleId(module.id)}
+                            type="button"
                             className={cn(
-                              "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                              isSelected
-                                ? "bg-green-600 text-white"
-                                : "border border-gray-300 text-gray-700 hover:border-green-500"
+                              "w-full text-left bg-white rounded border p-3 hover:border-green-400",
+                              "border-green-600 bg-green-50"
                             )}
                           >
-                            {label}
+                            <div className="text-sm font-semibold text-slate-900">
+                              Workplace Activity - {selectedModule?.name || "Module"}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">
+                              This covers all {moduleUnitStandards.length} unit standards in this module
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">
+                              Marking workplace passes the module-level collection assessment
+                            </div>
                           </button>
-                        );
-                      })}
+                        ) : (
+                          <div className="space-y-2">
+                            {moduleUnitStandards.length === 0 && (
+                              <div className="text-sm text-slate-500">Select a module to view unit standards.</div>
+                            )}
+                            {moduleUnitStandards.map((unit: any) => {
+                              const isSelected = selectedUnitId === unit.id;
+                              const progress = unitProgressMap.get(unit.id) || {
+                                FORMATIVE: 0,
+                                SUMMATIVE: 0,
+                                WORKPLACE: 0,
+                              };
+                              return (
+                                <button
+                                  key={unit.id}
+                                  onClick={() => setSelectedUnitId(unit.id)}
+                                  className={cn(
+                                    "w-full text-left bg-white rounded border p-3 hover:border-green-400",
+                                    isSelected ? "border-green-600 bg-green-50" : "border-slate-200"
+                                  )}
+                                >
+                                  <div className="text-sm font-semibold text-slate-900">
+                                    {unit.code} - {unit.title}
+                                  </div>
+                                  <div className="text-xs text-slate-500 mt-1">
+                                    {unit.credits} credits - Level {unit.level}
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 text-xs text-slate-600 mt-2">
+                                    <span className="inline-flex items-center gap-1">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                      Formative: {progress.FORMATIVE}/{students.length}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1">
+                                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                      Summative: {progress.SUMMATIVE}/{students.length}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                      Workplace: {progress.WORKPLACE}/{students.length}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    {assessmentType !== "WORKPLACE" && (
-                      <div className="text-xs uppercase tracking-wide text-gray-500">Unit Standards</div>
+                  <div className="space-y-3">
+                    {!activeUnitId && (
+                      <div className="text-sm text-slate-500">Select a unit standard to view assessments.</div>
                     )}
 
-                    {assessmentType === "WORKPLACE" ? (
-                      <button
-                        type="button"
-                        className={cn(
-                          "w-full text-left bg-white rounded border p-3 hover:border-green-400",
-                          "border-green-600 bg-green-50"
+                    {activeUnitId && (
+                      <div className="space-y-3">
+                        <div className="bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between">
+                          <div className="text-sm text-slate-600">
+                            {assessmentType}: {progressSummary.competentCount}/{progressSummary.total} Passed
+                          </div>
+                          <button
+                            onClick={() => setShowBulkConfirm(true)}
+                            className="px-3 py-1.5 text-sm font-semibold border border-green-600 text-green-700 rounded-lg hover:bg-green-50"
+                          >
+                            ✓ Mark All as Passed
+                          </button>
+                        </div>
+
+                        {showBulkConfirm && (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
+                            <div className="text-sm text-green-800">
+                              Mark all {students.length} students as PASSED for {assessmentType === "WORKPLACE"
+                                ? `Workplace Activity - ${selectedModule?.name || "Module"}`
+                                : `${selectedUnit?.code} - ${selectedUnit?.title}`}?
+                              You can still update individual students after.
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <button
+                                onClick={() => setShowBulkConfirm(false)}
+                                className="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-600"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={handleBulkPass}
+                                disabled={bulkPassing}
+                                className="px-3 py-1.5 text-sm rounded bg-green-600 text-white disabled:opacity-50"
+                              >
+                                {bulkPassing ? "Working..." : "Confirm"}
+                              </button>
+                            </div>
+                          </div>
                         )}
-                      >
-                        <div className="text-sm font-semibold text-slate-900">
-                          Workplace Activity - {selectedModule?.name || "Module"}
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                          This covers all {moduleUnitStandards.length} unit standards in this module
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                          Marking workplace passes the module-level collection assessment
-                        </div>
-                      </button>
-                    ) : (
-                      <div className="space-y-2">
-                        {moduleUnitStandards.length === 0 && (
-                          <div className="text-sm text-slate-500">Select a module to view unit standards.</div>
-                        )}
-                        {moduleUnitStandards.map((unit: any) => {
-                          const isSelected = selectedUnitId === unit.id;
-                          const progress = unitProgressMap.get(unit.id) || {
-                            FORMATIVE: 0,
-                            SUMMATIVE: 0,
-                            WORKPLACE: 0,
-                          };
-                          return (
-                            <button
-                              key={unit.id}
-                              onClick={() => setSelectedUnitId(unit.id)}
-                              className={cn(
-                                "w-full text-left bg-white rounded border p-3 hover:border-green-400",
-                                isSelected ? "border-green-600 bg-green-50" : "border-slate-200"
-                              )}
-                            >
-                              <div className="text-sm font-semibold text-slate-900">
-                                {unit.code} - {unit.title}
+
+                        <div className="space-y-2">
+                          {students.map((student: any) => {
+                            const assessment = getAssessmentForStudent(student.id);
+                            const result = assessment?.result || "PENDING";
+
+                            return (
+                              <div
+                                key={student.id}
+                                className="bg-white p-3 rounded border border-slate-200 flex items-center justify-between"
+                              >
+                                <div>
+                                  <div className="font-semibold text-sm text-slate-900">
+                                    {student.firstName} {student.lastName}
+                                  </div>
+                                  <div className="text-xs text-slate-500">{student.studentId}</div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={cn(
+                                      "text-xs font-medium px-2 py-0.5 rounded",
+                                      result === "COMPETENT"
+                                        ? "bg-green-100 text-green-700"
+                                        : result === "NOT_YET_COMPETENT"
+                                        ? "bg-red-100 text-red-700"
+                                        : "bg-gray-100 text-gray-500"
+                                    )}
+                                  >
+                                    {result === "COMPETENT"
+                                      ? "Passed"
+                                      : result === "NOT_YET_COMPETENT"
+                                      ? "NYC"
+                                      : "Not marked"}
+                                  </span>
+                                  <button
+                                    onClick={() => handleAssessmentToggle(student.id, "COMPETENT")}
+                                    className={cn(
+                                      "px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all",
+                                      result === "COMPETENT"
+                                        ? "bg-green-600 text-white border-green-600"
+                                        : "bg-white text-gray-500 border-gray-300"
+                                    )}
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    onClick={() => handleAssessmentToggle(student.id, "NOT_YET_COMPETENT")}
+                                    className={cn(
+                                      "px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all",
+                                      result === "NOT_YET_COMPETENT"
+                                        ? "bg-red-600 text-white border-red-600"
+                                        : "bg-white text-gray-500 border-gray-300"
+                                    )}
+                                  >
+                                    ✗
+                                  </button>
+                                </div>
                               </div>
-                              <div className="text-xs text-slate-500 mt-1">
-                                {unit.credits} credits - Level {unit.level}
-                              </div>
-                              <div className="flex flex-wrap gap-2 text-xs text-slate-600 mt-2">
-                                <span className="inline-flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                  Formative: {progress.FORMATIVE}/{students.length}
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                                  Summative: {progress.SUMMATIVE}/{students.length}
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-blue-500" />
-                                  Workplace: {progress.WORKPLACE}/{students.length}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
-
-                {activeUnitId && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between">
-                    <div className="text-sm font-semibold text-slate-700">
-                      {assessmentType}: {progressSummary.competentCount}/{progressSummary.total} Passed
-                    </div>
-                    <button
-                      onClick={() => setShowBulkConfirm(true)}
-                      className="px-3 py-1.5 text-sm font-semibold border border-green-600 text-green-700 rounded-lg hover:bg-green-50"
-                    >
-                      ✓ Mark All as Passed
-                    </button>
-                  </div>
-                )}
-
-                {showBulkConfirm && activeUnitId && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
-                    <div className="text-sm text-green-800">
-                      Mark all {students.length} students as PASSED for {assessmentType === "WORKPLACE"
-                        ? `Workplace Activity - ${selectedModule?.name || "Module"}`
-                        : `${selectedUnit?.code} - ${selectedUnit?.title}`}?
-                      You can still update individual students after.
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => setShowBulkConfirm(false)}
-                        className="px-3 py-1.5 text-sm rounded border border-slate-300 text-slate-600"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleBulkPass}
-                        disabled={bulkPassing}
-                        className="px-3 py-1.5 text-sm rounded bg-green-600 text-white disabled:opacity-50"
-                      >
-                        {bulkPassing ? "Working..." : "Confirm"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {!activeUnitId && (
-                  <div className="text-sm text-slate-500">Select a unit standard to view assessments.</div>
-                )}
-
-                {activeUnitId && (
-                  <div className="space-y-2">
-                    {students.map((student: any) => {
-                      const assessment = getAssessmentForStudent(student.id);
-                      const result = assessment?.result || "PENDING";
-
-                      return (
-                        <div
-                          key={student.id}
-                          className="bg-white p-3 rounded border border-slate-200 flex items-center justify-between"
-                        >
-                          <div>
-                            <div className="font-semibold text-sm text-slate-900">
-                              {student.firstName} {student.lastName}
-                            </div>
-                            <div className="text-xs text-slate-500">{student.studentId}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "text-xs font-medium px-2 py-0.5 rounded",
-                                result === "COMPETENT"
-                                  ? "bg-green-100 text-green-700"
-                                  : result === "NOT_YET_COMPETENT"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-gray-100 text-gray-500"
-                              )}
-                            >
-                              {result === "COMPETENT"
-                                ? "Passed"
-                                : result === "NOT_YET_COMPETENT"
-                                ? "NYC"
-                                : "Not marked"}
-                            </span>
-                            <button
-                              onClick={() => handleAssessmentToggle(student.id, "COMPETENT")}
-                              className={cn(
-                                "px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all",
-                                result === "COMPETENT"
-                                  ? "bg-green-600 text-white border-green-600"
-                                  : "bg-white text-gray-500 border-gray-300"
-                              )}
-                            >
-                              ✓
-                            </button>
-                            <button
-                              onClick={() => handleAssessmentToggle(student.id, "NOT_YET_COMPETENT")}
-                              className={cn(
-                                "px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all",
-                                result === "NOT_YET_COMPETENT"
-                                  ? "bg-red-600 text-white border-red-600"
-                                  : "bg-white text-gray-500 border-gray-300"
-                              )}
-                            >
-                              ✗
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             )}
 
@@ -787,6 +851,34 @@ export default function GroupDrawer({
               <div className="space-y-4">
                 <div className="text-sm text-slate-600">
                   Update attendance per session and save changes in one batch.
+                </div>
+
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex flex-wrap items-end gap-3">
+                  <div className="min-w-[160px]">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</label>
+                    <input
+                      type="date"
+                      value={attendanceDate}
+                      onChange={(event) => setAttendanceDate(event.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="min-w-[180px] flex-1">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Session</label>
+                    <input
+                      type="text"
+                      value={attendanceTitle}
+                      onChange={(event) => setAttendanceTitle(event.target.value)}
+                      placeholder="Session name"
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={handleAddDraftSession}
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                  >
+                    Add Session Row
+                  </button>
                 </div>
 
                 <div className="overflow-x-auto border border-slate-200 rounded-lg">
@@ -803,7 +895,7 @@ export default function GroupDrawer({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      {attendanceByDate.map((entry) => (
+                      {attendanceSessions.map((entry) => (
                         <tr key={entry.dateKey}>
                           <td className="px-3 py-3 text-slate-700">
                             {format(entry.date, "MMM d, yyyy")}
@@ -833,7 +925,7 @@ export default function GroupDrawer({
                           ))}
                         </tr>
                       ))}
-                      {attendanceByDate.length === 0 && (
+                      {attendanceSessions.length === 0 && (
                         <tr>
                           <td colSpan={students.length + 2} className="px-3 py-6 text-center text-slate-500">
                             No attendance sessions recorded for this group.

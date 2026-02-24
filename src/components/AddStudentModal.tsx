@@ -26,8 +26,6 @@ interface AddStudentModalProps {
 }
 
 export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, groupName }: AddStudentModalProps) {
-  if (!isOpen) return null;
-  
   const { groups } = useGroups();
   const modalRef = useFocusTrap(isOpen);
   
@@ -44,6 +42,8 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
+
+  if (!isOpen) return null;
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -120,7 +120,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
         aria-modal="true"
       >
         {/* Error announcement for screen readers */}
-        {submitError && <AriaLiveRegion message={submitError} priority="assertive" />}
+        {submitError && <AriaLiveRegion message={submitError} type="assertive" />}
         
         {/* Header */}
         <div className="p-6 border-b border-slate-200 sticky top-0 bg-white">
@@ -271,7 +271,6 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 <p id="email-error" className="mt-1 text-sm text-red-600">{errors.email}</p>
               )}
             </div>
-            </div>
 
             {/* Disability Support */}
             <div className="md:col-span-2">
@@ -308,7 +307,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 />
               )}
             </div>
-          </div>
+          </div>  {/* end grid */}
 
           {/* Info Note */}
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -338,5 +337,6 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
           </div>
         </form>
       </div>
+    </div>
   );
 }

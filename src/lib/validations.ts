@@ -99,7 +99,7 @@ export const createStudentSchema = z.object({
   ),
   status: z.enum(['ACTIVE', 'AT_RISK', 'COMPLETED', 'WITHDRAWN', 'ARCHIVED']).default('ACTIVE'),
   progress: z.number().min(0).max(100).optional(),
-  totalCreditsEarned: z.number().min(0).optional(),
+  // totalCreditsEarned is READ-ONLY - calculated from assessments only
 });
 
 export const updateStudentSchema = createStudentSchema.partial().refine(

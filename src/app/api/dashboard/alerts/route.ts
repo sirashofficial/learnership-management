@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     // 1. Assessment deadlines (due in next 3 days)
     const upcomingAssessments = await prisma.assessment.findMany({
       where: {
-        result: 'PENDING',
+        result: null,  // Pending = not yet graded
         dueDate: {
           gte: now,
           lte: threeDaysFromNow,
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     const pendingModeration = await prisma.assessment.findMany({
       where: {
         moderationStatus: 'PENDING',
-        result: { not: 'PENDING' },
+        result: { not: null },  // Has been graded but awaiting moderation
       },
       include: {
         student: {
