@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { 
-  successPaginatedResponse, 
-  successResponse, 
-  errorResponse, 
+import {
+  successPaginatedResponse,
+  successResponse,
+  errorResponse,
   handleApiError,
   getPaginationParams,
   createPagination,
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const groupId = searchParams.get('groupId');
     const status = searchParams.get('status');
     const format = searchParams.get('format'); // csv or json
-    
+
     // Extract pagination parameters
     const { page, pageSize, skip } = getPaginationParams(request);
 
@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
     const students = await prisma.student.findMany({
       where,
       include: {
-        group: {},
+        group: {
+          include: { Company: true }
+        },
         facilitator: {
           select: { id: true, name: true, email: true },
         },
@@ -76,8 +78,42 @@ export async function GET(request: NextRequest) {
     }
 
     const pagination = createPagination(page, pageSize, total);
-    console.log('GET /api/students success:', students.length, 'students');
-    return successPaginatedResponse(students, pagination);
+
+    // Return students WITHOUT loading all assessments
+    // The summary fields (progress, totalCreditsEarned, status) are now kept in sync
+    // currentModuleId is already stored in the database if needed
+    const studentsWithModule = students.map((student: any) => ({
+      ...student,
+      company: (student.group as any)?.Company?.name || 'Independent'
+    }));
+
+    // Get summary stats for the filtered set
+    const statsResult = await prisma.student.aggregate({
+      where,
+      _count: {
+        id: true,
+        status: true,
+      },
+      _avg: {
+        progress: true,
+      }
+    });
+
+    const activeCount = await prisma.student.count({
+      where: {
+        ...where,
+        status: 'ACTIVE'
+      }
+    });
+
+    const summary = {
+      total: statsResult._count.id,
+      active: activeCount,
+      averageProgress: Math.round(statsResult._avg.progress || 0)
+    };
+
+    console.log('GET /api/students success:', studentsWithModule.length, 'students, Total:', summary.total);
+    return successPaginatedResponse(studentsWithModule, pagination, summary);
   } catch (error) {
     console.error('GET /api/students error:', error);
     return handleApiError(error);
