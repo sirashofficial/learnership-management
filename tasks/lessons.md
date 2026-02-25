@@ -2,6 +2,25 @@
 
 - Always read CLAUDE.md at the start of each session and before any significant work, then confirm in the response.
 
+## Be Careful with Git Staging (Feb 26)
+**Rule:** Never use `git add .` blindly. Always verify what you're staging before committing.
+
+**Context:** Used `git add .` in commit 734f6c8 which re-added the entire `_organization` folder (200+ files) that was previously removed. This broke the Vercel build again.
+
+**Why it happened:** Trying to move fast, didn't check staged changes before committing.
+
+**Correct Pattern:**
+1. Use `git status` to see what changed
+2. Use `git add <specific-files>` for targeted staging
+3. Or use `git add .` but then `git status` to review before committing
+4. Check for unwanted files (especially directories like _organization, node_modules, build outputs)
+
+**Prevention:** Before ANY commit, run `git status` and review the staged changes.
+
+**Files:** .gitignore needs _organization/ entry to prevent accidental re-adding.
+
+---
+
 ## STOP and Re-plan When Fixes Fail (Feb 26)
 **Rule:** Never push multiple "fixes" without verifying they work. STOP and re-plan when a fix doesn't solve the problem.
 
