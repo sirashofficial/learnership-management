@@ -2,6 +2,51 @@
 
 - Always read CLAUDE.md at the start of each session and before any significant work, then confirm in the response.
 
+## STOP and Re-plan When Fixes Fail (Feb 26)
+**Rule:** Never push multiple "fixes" without verifying they work. STOP and re-plan when a fix doesn't solve the problem.
+
+**CLAUDE.md Violation:** Kept pushing patches (3 failed commits) instead of:
+1. STOPPING after first failure
+2. Finding ROOT CAUSE (module-level imports execute at build time)
+3. Implementing ELEGANT solution (conditional serverless checks)
+4. VERIFYING locally before pushing
+
+**Correct Pattern:**
+1. Identify root cause completely
+2. Test fix locally with clean build
+3. Only push after verification proves it works
+4. Document lesson learned
+
+**Anti-Pattern:** Trial-and-error pushing hoping something sticks.
+
+**Files:** Backup routes - needed serverless detection before require() calls, not dynamic imports.
+
+---
+
+## Serverless Environment Constraints (Feb 26)
+**Rule:** Node.js module imports (fs, path, child_process) at module scope fail in serverless builds (Vercel).
+
+**Solution:** 
+1. Detect environment: `const IS_SERVERLESS = process.env.VERCEL || process.env.AWS_LAMBDA`
+2. Return early from handlers if serverless
+3. Only `require()` modules inside handler functions after serverless check
+4. Never at module/top level
+
+**Example:**
+```typescript
+export async function GET() {
+  if (IS_SERVERLESS) {
+    return NextResponse.json({ error: 'Not supported' }, { status: 501 });
+  }
+  const fs = require('fs'); // Safe - only executes at runtime
+  // ... use fs
+}
+```
+
+**Files:** `src/app/api/admin/backup/**/*.ts` - File operations disabled in Vercel.
+
+---
+
 ## Critical Data Integrity Rule (Feb 24)
 **Rule:** A prompt must not mess with the data or make any changes that will mess up the data.
 
