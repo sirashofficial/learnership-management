@@ -500,6 +500,7 @@ export default function SessionAttendanceModal({
           </div>
         </div>
       </div>
+    </div>
     </>
   );
 }

@@ -129,10 +129,8 @@ export async function updateSyncMetadata(
 export async function getPendingAttendance(
   synced: boolean = false
 ): Promise<PendingAttendanceRecord[]> {
-  return offlineDB.pendingAttendance
-    .where('synced')
-    .equals(synced)
-    .toArray();
+  const allRecords = await offlineDB.pendingAttendance.toArray();
+  return allRecords.filter(record => record.synced === synced);
 }
 
 /**
@@ -141,10 +139,8 @@ export async function getPendingAttendance(
 export async function getPendingAssessments(
   synced: boolean = false
 ): Promise<PendingAssessmentRecord[]> {
-  return offlineDB.pendingAssessments
-    .where('synced')
-    .equals(synced)
-    .toArray();
+  const allRecords = await offlineDB.pendingAssessments.toArray();
+  return allRecords.filter(record => record.synced === synced);
 }
 
 /**

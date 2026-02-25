@@ -255,8 +255,12 @@ async function handleConflicts(
 
     if (!localRecord) continue;
 
+    const localTimestamp = 'markedAt' in localRecord 
+      ? localRecord.markedAt 
+      : localRecord.recordedAt;
+
     const resolution = resolveConflict(
-      localRecord.markedAt || localRecord.recordedAt || 0,
+      localTimestamp || 0,
       conflict.serverTimestamp || 0
     );
 
@@ -315,9 +319,9 @@ function resolveConflict(
 /**
  * Group records by group ID for batch processing
  */
-function groupRecordsByGroupId(
-  records: (PendingAttendanceRecord | PendingAssessmentRecord)[]
-): Record<string, (PendingAttendanceRecord | PendingAssessmentRecord)[]> {
+function groupRecordsByGroupId<T extends { groupId: string }>(
+  records: T[]
+): Record<string, T[]> {
   return records.reduce(
     (acc, record) => {
       const groupId = record.groupId;
@@ -327,7 +331,7 @@ function groupRecordsByGroupId(
       acc[groupId].push(record);
       return acc;
     },
-    {} as Record<string, (PendingAttendanceRecord | PendingAssessmentRecord)[]>
+    {} as Record<string, T[]>
   );
 }
 
@@ -369,8 +373,8 @@ export async function registerBackgroundSync(): Promise<boolean> {
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    if (registration.sync) {
-      await registration.sync.register('sync-pending-records');
+    if ((registration as any).sync) {
+      await (registration as any).sync.register('sync-pending-records');
       console.log('[Sync] Background sync registered');
       return true;
     }

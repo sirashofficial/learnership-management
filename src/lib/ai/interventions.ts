@@ -368,9 +368,10 @@ export async function trackInterventionEffectiveness(
 
   const riskOrder = { LOW: 0, MEDIUM: 1, HIGH: 2 };
   const improved =
-    profileAfter &&
-    riskOrder[profileAfter.riskLevel as keyof typeof riskOrder] <
-      riskOrder[profileBefore.riskLevel as keyof typeof riskOrder];
+    profileAfter
+      ? riskOrder[profileAfter.riskLevel as keyof typeof riskOrder] <
+        riskOrder[profileBefore.riskLevel as keyof typeof riskOrder]
+      : false;
 
   return {
     riskBefore: profileBefore.riskLevel,

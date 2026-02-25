@@ -30,7 +30,7 @@ async function runRiskAnalysisHandler(request: NextRequest): Promise<NextRespons
       return errorResponse('Admin access required', 403);
     }
 
-    console.log(`[API] Manual risk analysis triggered by ${authContext.user.name}`);
+    console.log(`[API] Manual risk analysis triggered by ${authContext.user.email}`);
 
     // Run the analysis job
     const results = await runWeeklyRiskAnalysis();
@@ -40,7 +40,7 @@ async function runRiskAnalysisHandler(request: NextRequest): Promise<NextRespons
       ...results,
     });
   } catch (error) {
-    return handleApiError(error, 'Failed to run risk analysis');
+    return handleApiError(error);
   }
 }
 

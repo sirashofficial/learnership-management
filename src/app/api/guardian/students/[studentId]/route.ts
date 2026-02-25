@@ -151,7 +151,7 @@ async function getStudentDetailHandler(
       (a) => a.dueDate > now && !a.assessedDate
     );
     const completedAssessments = assessments.filter(
-      (a) => a.assessedDate || a.assessedDate <= now
+      (a) => a.assessedDate !== null
     );
 
     // Fetch unit standard progress

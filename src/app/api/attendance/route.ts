@@ -194,8 +194,8 @@ async function createAttendanceHandler(request: NextRequest) {
               groupId: finalGroupId,
               status,
               date: attendanceDate.toISOString(),
-              markedBy: authContext?.user?.id || markedBy || 'unknown',
-              markedByName: authContext?.user?.name || authContext?.user?.email || 'Unknown User',
+              markedBy: authContext?.user?.userId || markedBy || 'unknown',
+              markedByName: authContext?.user?.email || 'Unknown User',
               timestamp: Date.now(),
             };
             broadcastAttendanceUpdate((global as any).io, sessionId, wsUpdate);
@@ -350,8 +350,8 @@ async function createAttendanceHandler(request: NextRequest) {
         groupId: finalGroupId,
         status,
         date: attendanceDate.toISOString(),
-        markedBy: authContext?.user?.id || markedBy || 'unknown',
-        markedByName: authContext?.user?.name || authContext?.user?.email || 'Unknown User',
+        markedBy: authContext?.user?.userId || markedBy || 'unknown',
+        markedByName: authContext?.user?.email || 'Unknown User',
         timestamp: Date.now(),
       };
       broadcastAttendanceUpdate((global as any).io, sessionId, wsUpdate);
