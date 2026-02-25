@@ -11,8 +11,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import * as fs from 'fs';
-import * as path from 'path';
+
+// Runtime-only imports to avoid build-time issues in serverless
+const fs = typeof window === 'undefined' ? require('fs') : null;
+const path = typeof window === 'undefined' ? require('path') : null;
+
+// Force dynamic rendering (no static generation)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Backup metadata interface
 interface BackupMetadata {
@@ -30,7 +36,7 @@ interface BackupMetadata {
   error?: string;
 }
 
-const BACKUP_DIR = path.join(process.cwd(), 'backups', 'postgresql');
+const BACKUP_DIR = path ? path.join(process.cwd(), 'backups', 'postgresql') : '/tmp/backups';
 
 // ============================================
 // AUTHORIZATION CHECK
@@ -72,6 +78,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Check if running in serverless environment
+    if (process.env.VERCEL || !fs || !path) {
+      return NextResponse.json({
+        backups: [],
+        total: 0,
+        message: 'File-based backups are not supported in serverless deployments',
+        recommendation: 'Use your database provider\'s backup features (e.g., Supabase automatic backups)'
+      });
+    }
+
     const indexPath = path.join(BACKUP_DIR, 'backup-index.json');
     
     if (!fs.existsSync(indexPath)) {
@@ -137,10 +153,33 @@ export async function POST(request: NextRequest) {
     console.log(`[BACKUP] Manual backup triggered by ${auth.user?.email || 'admin'}`);
     console.log(`[BACKUP] Type: ${backupType}`);
 
-  // Perform backup (this may take several minutes)
-  // Dynamic import to avoid module resolution issues
-  const backupModule = await import(path.join(process.cwd(), 'scripts', 'backup-automated'));
-  const metadata = await backupModule.performBackup(backupType);
+    // Check if running in serverless environment (Vercel)
+    if (process.env.VERCEL || !fs || !path) {
+      return NextResponse.json({
+        success: false,
+        error: 'File-based backups are not supported in serverless deployments',
+        message: 'Please use database provider backup tools or configure external backup storage',
+        recommendation: 'Use Supabase automatic backups or configure AWS S3 backup integration'
+      }, { status: 501 });
+    }
+
+    // Perform backup (this may take several minutes)
+    // Only import when not in serverless environment
+    let performBackup;
+    try {
+      // Dynamic require to avoid webpack bundling issues
+      const backupModule = require(path.join(process.cwd(), 'scripts', 'backup-automated.js'));
+      performBackup = backupModule.performBackup;
+    } catch (importError) {
+      console.error('Failed to load backup module:', importError);
+      return NextResponse.json({
+        success: false,
+        error: 'Backup module not available in this environment',
+        details: 'File system backups require a persistent storage environment'
+      }, { status: 501 });
+    }
+
+    const metadata = await performBackup(backupType);
 
     // Generate download link
     const downloadUrl = `/api/admin/backup/${metadata.filename}`;
