@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // GET /api/poe - Get POE checklist for all students or a specific student
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/poe - Create POE checklist for a student
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT /api/poe - Update POE checklist
-export async function PUT(request: NextRequest) {
+async function handlePut(request: NextRequest) {
   try {
     const body = await request.json();
     const { id, studentId, ...data } = body;
@@ -118,7 +119,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // DELETE /api/poe
-export async function DELETE(request: NextRequest) {
+async function handleDelete(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -136,3 +137,8 @@ export async function DELETE(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(withRateLimit(handlePut, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'strict'), ['ADMIN', 'FACILITATOR']);

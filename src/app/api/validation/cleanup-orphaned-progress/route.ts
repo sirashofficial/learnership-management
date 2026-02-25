@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +10,8 @@ export const dynamic = 'force-dynamic';
  * Removes UnitStandardProgress records that don't have matching assessments
  * for the student and unit standard combination
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { dryRun = false } = body;
@@ -75,3 +73,5 @@ export async function POST(request: NextRequest) {
     return errorResponse('Failed to cleanup orphaned progress', 500);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN']);

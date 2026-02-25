@@ -3,11 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth';
 import { loginSchema } from '@/lib/validations';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { rateLimit } from '@/lib/rate-limit';
 import { sanitizeEmail, sanitizeString } from '@/lib/input-sanitizer';
+import { withAuth, withRateLimit, withValidation } from '@/middleware/apiAuth';
 import bcrypt from 'bcryptjs';
 
-export async function POST(request: NextRequest) {
+async function loginHandler(request: NextRequest) {
   // Apply rate limiting: 10 login attempts per minute
   // TEMPORARILY DISABLED for testing
   // const rateLimitResult = await rateLimit({ interval: 60000, maxRequests: 10 })(request);
@@ -90,3 +90,8 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(
+  withRateLimit(withValidation(loginHandler, loginSchema), 'strict'),
+  ['PUBLIC']
+);

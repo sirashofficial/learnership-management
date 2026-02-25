@@ -3,6 +3,7 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils'
 import prisma from '@/lib/prisma';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { addDays, format, isWeekend, parseISO } from 'date-fns';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ function addWorkingDays(from: Date, daysNeeded: number): Date {
  * Body: { groupId, startDate?, weeksToSchedule?, hoursPerDay? }
  * Returns a structured weekly lesson schedule for a group.
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const {
@@ -180,3 +181,5 @@ Return ONLY the JSON array.
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

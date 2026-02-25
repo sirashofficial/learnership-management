@@ -1,22 +1,24 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 import { isAfter } from 'date-fns';
 
 // POST /api/undo/[id] — execute undo (revert changes)
-export async function POST(
+async function handlePost(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
+    const authContext = getAuthContext(request);
+    if (!authContext) {
+      return errorResponse('Unauthorized', 401);
+    }
 
     const record = await prisma.undoHistory.findUnique({ where: { id: params.id } });
 
     if (!record) return errorResponse('Undo record not found', 404);
-    if (record.userId !== user!.id) return errorResponse('Forbidden', 403);
+    if (record.userId !== authContext.user.userId) return errorResponse('Forbidden', 403);
     if (!record.canUndo) return errorResponse('This action has already been undone', 400);
     if (isAfter(new Date(), record.expiresAt)) {
       return errorResponse('Undo window has expired', 400);
@@ -77,3 +79,5 @@ export async function POST(
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

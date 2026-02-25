@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 // GET /api/users - Get all users (Admin only)
-export async function GET(request: NextRequest) {
+async function getUsersHandler(request: NextRequest) {
   try {
     // Only admins can list all users
 const users = await prisma.user.findMany({
@@ -30,7 +31,7 @@ const users = await prisma.user.findMany({
 }
 
 // POST /api/users - Create a new user (Admin only)
-export async function POST(request: NextRequest) {
+async function createUserHandler(request: NextRequest) {
   try {
     // Only admins can create users
 const body = await request.json();
@@ -76,3 +77,6 @@ const body = await request.json();
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getUsersHandler, 'moderate'), ['ADMIN']);
+export const POST = withAuth(withRateLimit(createUserHandler, 'moderate'), ['ADMIN']);

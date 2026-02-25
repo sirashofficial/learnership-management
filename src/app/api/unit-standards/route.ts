@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // GET /api/unit-standards - List all unit standards
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const moduleId = searchParams.get('moduleId');
@@ -34,10 +34,8 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/unit-standards - Create new unit standard
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { code, title, credits, level, type, moduleId, content } = body;
@@ -76,3 +74,6 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR', 'STUDENT']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

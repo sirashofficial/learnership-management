@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,11 +20,24 @@ interface Alert {
  * Returns all alerts filtered by severity for role
  * Includes: At-risk groups, overdue assessments, low attendance warnings
  */
-export async function GET(request: NextRequest) {
+async function getEnhancedAlertsHandler(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const severity = searchParams.get('severity') || 'ALL'
     const role = searchParams.get('role') || 'ADMIN'
+
+    const authContext = getAuthContext(request)
+    const allowedGroupIds = authContext?.user.role === 'FACILITATOR'
+      ? authContext.allowedGroupIds
+      : null
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return NextResponse.json({
+        alerts: [],
+        count: { critical: 0, warning: 0, info: 0 },
+        timestamp: new Date().toISOString()
+      })
+    }
 
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -32,7 +46,10 @@ export async function GET(request: NextRequest) {
 
     // Get all active groups with student data (limit to prevent performance issues)
     const groups = await prisma.group.findMany({
-      where: { status: 'ACTIVE' },
+      where: {
+        status: 'ACTIVE',
+        ...(allowedGroupIds ? { id: { in: allowedGroupIds } } : {})
+      },
       include: {
         students: {
           include: {
@@ -173,7 +190,8 @@ export async function GET(request: NextRequest) {
     const overdueAssessments = await prisma.assessment.findMany({
       where: {
         result: null,  // Pending = not yet graded
-        dueDate: { lt: new Date() }
+        dueDate: { lt: new Date() },
+        ...(allowedGroupIds ? { student: { groupId: { in: allowedGroupIds } } } : {})
       },
       include: { student: true, unitStandard: true },
       orderBy: { dueDate: 'asc' },
@@ -225,3 +243,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+export const GET = withAuth(withRateLimit(getEnhancedAlertsHandler, 'generous'), ['ADMIN', 'FACILITATOR'])

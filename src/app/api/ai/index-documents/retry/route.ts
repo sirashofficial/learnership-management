@@ -1,18 +1,19 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import { upsertDocuments } from '@/lib/ai/pinecone';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
 // POST: Retry indexing a failed document
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const { documentId } = body;
 
         if (!documentId) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Document ID is required' },
                 { status: 400 }
             );
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (chunks.length === 0) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Document not found' },
                 { status: 404 }
             );
@@ -59,3 +60,5 @@ export async function POST(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'moderate'), ['ADMIN']);

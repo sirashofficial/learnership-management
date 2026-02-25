@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
  * Returns: Full assessment records with 50 per page
  * Performance: ~200ms per page request
  */
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
         unitStandard: {
           select: {
             id: true,
-            name: true,
+            title: true,
             credits: true,
             module: { select: { id: true, name: true } }
           }
@@ -80,3 +81,8 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(
+  withRateLimit(handleGet, 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);

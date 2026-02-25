@@ -1,8 +1,9 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { startOfDay, endOfDay } from 'date-fns';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const from = searchParams.get('from');
@@ -46,17 +47,17 @@ export async function GET(request: NextRequest) {
       orderBy: { date: 'asc' },
     });
 
-    return Response.json({ data: lessons });
+    return NextResponse.json({ data: lessons });
   } catch (error) {
     console.error('Error fetching lesson plans:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch lesson plans' },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     
@@ -100,12 +101,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return Response.json({ data: lesson }, { status: 201 });
+    return NextResponse.json({ data: lesson }, { status: 201 });
   } catch (error) {
     console.error('Error creating lesson plan:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to create lesson plan' },
       { status: 500 }
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

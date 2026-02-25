@@ -3,7 +3,7 @@
 import { format, parseISO } from 'date-fns';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { Calendar, MapPin, Trash2, Users, X } from 'lucide-react';
+import { Calendar, MapPin, Archive, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { useSWRConfig } from 'swr';
 import { fetcher } from '@/lib/swr-config';
@@ -194,16 +194,16 @@ export default function SessionDetailPanel({
           onClick={() => setShowDeleteConfirm(true)}
           className="inline-flex items-center gap-2 text-xs font-semibold text-rose-600 hover:text-rose-700"
         >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete this session
+          <Archive className="h-3.5 w-3.5" />
+          Archive this session
         </button>
       </div>
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-            <p className="text-sm font-semibold text-slate-900">Delete this session?</p>
-            <p className="mt-2 text-xs text-slate-500">This cannot be undone.</p>
+            <p className="text-sm font-semibold text-slate-900">Archive this session?</p>
+            <p className="mt-2 text-xs text-slate-500">This data will be archived and can be restored within 30 days.</p>
             <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 type="button"

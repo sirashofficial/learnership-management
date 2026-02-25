@@ -3,9 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { requireAuth } from '@/lib/middleware';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
+import { softDelete } from '@/lib/softDelete';
+import { broadcastAttendanceUpdate } from '@/lib/realtime/attendanceRoom';
+import type { AttendanceUpdate } from '@/lib/realtime/attendanceRoom';
+import { emitEvent } from '@/lib/events/eventBus';
 
 // GET /api/attendance
-export async function GET(request: NextRequest) {
+async function getAttendanceHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -16,11 +21,24 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date');
     const status = searchParams.get('status');
 
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR') {
+      if (groupId) {
+        const accessError = enforceGroupAccess(groupId, authContext);
+        if (accessError) return accessError;
+      } else if (authContext.allowedGroupIds.length === 0) {
+        return successResponse([]);
+      }
+    }
+
     const attendance = await prisma.attendance.findMany({
       where: {
         ...(sessionId && { sessionId }),
         ...(studentId && { studentId }),
         ...(groupId && { groupId }),
+        ...(authContext?.user.role === 'FACILITATOR' && !groupId
+          ? { groupId: { in: authContext.allowedGroupIds } }
+          : {}),
         ...(status && { status }),
         ...(date && { date: new Date(date) }),
       },
@@ -65,11 +83,13 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/attendance
-export async function POST(request: NextRequest) {
+async function createAttendanceHandler(request: NextRequest) {
   console.log('🔵 [ATTENDANCE POST] Handler called - method:', request.method);
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
+
+    const authContext = getAuthContext(request);
 
     const body = await request.json();
     console.log('🔵 [ATTENDANCE POST] Parsed body, records count:', body.records?.length);
@@ -127,6 +147,12 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
+          const accessError = enforceGroupAccess(finalGroupId, authContext);
+          if (accessError) {
+            errors.push({ record, error: 'Forbidden' });
+            continue;
+          }
+
           // Create or update attendance using student's UUID
           const attendance = await prisma.attendance.upsert({
             where: {
@@ -159,6 +185,30 @@ export async function POST(request: NextRequest) {
 
           results.push(attendance);
           console.log('✅ Successfully saved attendance for:', student.studentId);
+
+          // Broadcast real-time update to WebSocket room
+          if (sessionId && (global as any).io) {
+            const wsUpdate: AttendanceUpdate = {
+              studentId: student.id,
+              sessionId,
+              groupId: finalGroupId,
+              status,
+              date: attendanceDate.toISOString(),
+              markedBy: authContext?.user?.id || markedBy || 'unknown',
+              markedByName: authContext?.user?.name || authContext?.user?.email || 'Unknown User',
+              timestamp: Date.now(),
+            };
+            broadcastAttendanceUpdate((global as any).io, sessionId, wsUpdate);
+          }
+
+          // Emit event to existing event system for cache invalidation
+          emitEvent('attendance:bulk-marked', {
+            groupId: finalGroupId,
+            date: attendanceDate.toISOString(),
+            count: 1,
+            recordIds: [attendance.id],
+            status: status as 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED',
+          });
 
           // Check if we need to create an alert for absences
           if (status === 'ABSENT') {
@@ -241,13 +291,17 @@ export async function POST(request: NextRequest) {
       return errorResponse(`Student not found: ${studentId}`, 404);
     }
 
+    const finalGroupId = groupId || student.groupId || null;
+    const accessError = enforceGroupAccess(finalGroupId, authContext);
+    if (accessError) return accessError;
+
     // Use upsert to handle existing records
     const attendance = await prisma.attendance.upsert({
       where: {
         studentId_date_groupId: {
           studentId: student.id,
           date: attendanceDate,
-          groupId: groupId || student.groupId || null,
+          groupId: finalGroupId,
         },
       },
       update: {
@@ -261,7 +315,7 @@ export async function POST(request: NextRequest) {
       create: {
         studentId: student.id,
         sessionId: sessionId || null,
-        groupId: groupId || student.groupId || null,
+        groupId: finalGroupId,
         status,
         date: attendanceDate,
         notes,
@@ -286,6 +340,30 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    // Broadcast real-time update to WebSocket room
+    if (sessionId && (global as any).io) {
+      const wsUpdate: AttendanceUpdate = {
+        studentId: student.id,
+        sessionId,
+        groupId: finalGroupId,
+        status,
+        date: attendanceDate.toISOString(),
+        markedBy: authContext?.user?.id || markedBy || 'unknown',
+        markedByName: authContext?.user?.name || authContext?.user?.email || 'Unknown User',
+        timestamp: Date.now(),
+      };
+      broadcastAttendanceUpdate((global as any).io, sessionId, wsUpdate);
+    }
+
+    // Emit event to existing event system for cache invalidation
+    emitEvent('attendance:bulk-marked', {
+      groupId: finalGroupId,
+      date: attendanceDate.toISOString(),
+      count: 1,
+      recordIds: [attendance.id],
+      status: status as 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED',
     });
 
     // Check if we need to create an alert
@@ -324,7 +402,7 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT /api/attendance - Update existing attendance
-export async function PUT(request: NextRequest) {
+async function updateAttendanceHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -335,6 +413,15 @@ export async function PUT(request: NextRequest) {
     if (!id || !status) {
       return errorResponse('Attendance ID and status are required', 400);
     }
+
+    const existing = await prisma.attendance.findUnique({
+      where: { id },
+      select: { groupId: true, student: { select: { groupId: true } } },
+    });
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(existing?.groupId ?? existing?.student?.groupId, authContext);
+    if (accessError) return accessError;
 
     const attendance = await prisma.attendance.update({
       where: { id },
@@ -357,7 +444,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // DELETE /api/attendance - Delete attendance record
-export async function DELETE(request: NextRequest) {
+async function deleteAttendanceHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -369,12 +456,25 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('Attendance ID is required', 400);
     }
 
-    await prisma.attendance.delete({
+    const existing = await prisma.attendance.findUnique({
       where: { id },
+      select: { groupId: true, student: { select: { groupId: true } } },
     });
 
-    return successResponse(null, 'Attendance deleted successfully');
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(existing?.groupId ?? existing?.student?.groupId, authContext);
+    if (accessError) return accessError;
+
+    // Soft delete the attendance record
+    await softDelete('attendance', id);
+
+    return successResponse(null, 'Attendance archived successfully. Can be restored within 30 days.');
   } catch (error) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getAttendanceHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(createAttendanceHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(withRateLimit(updateAttendanceHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(deleteAttendanceHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

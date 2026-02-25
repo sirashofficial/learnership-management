@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { updateProgressFromAssessment } from '@/lib/progress-calculator';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 /**
  * PUT /api/assessments/bulk-update
  * Update multiple assessments at once (mark as complete)
  */
-export async function PUT(request: NextRequest) {
+async function handlePut(request: NextRequest) {
     try {
         const body = await request.json();
         const { assessmentIds, result, assessedDate } = body;
@@ -66,3 +67,8 @@ export async function PUT(request: NextRequest) {
         );
     }
 }
+
+export const PUT = withAuth(
+    withRateLimit(handlePut, 'strict'),
+    ['ADMIN', 'FACILITATOR']
+);

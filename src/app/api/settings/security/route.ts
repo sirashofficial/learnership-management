@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 const prisma = new PrismaClient();
 
 // POST - Change password
-export async function POST(request: NextRequest) {
+async function updateSecurityHandler(request: NextRequest) {
   try {
     const body = await request.json();
     const { currentPassword, newPassword, confirmPassword } = body;
+    const authContext = getAuthContext(request);
+    const userId = authContext?.user.userId;
 
-    // In a real app, get userId from session/auth
-    const userId = request.headers.get('x-user-id') || 'default-user-id';
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Get security settings
-export async function GET(request: NextRequest) {
+async function getSecuritySettingsHandler(request: NextRequest) {
   try {
     // Return security status (without sensitive data)
     return NextResponse.json({
@@ -97,3 +101,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAuth(withRateLimit(updateSecurityHandler, 'moderate'), []);
+export const GET = withAuth(withRateLimit(getSecuritySettingsHandler, 'moderate'), []);

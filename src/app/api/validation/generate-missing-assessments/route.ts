@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,10 +9,8 @@ export const dynamic = 'force-dynamic';
  * POST /api/validation/generate-missing-assessments
  * Generates missing assessments for students based on their group's rollout plan
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { studentIds, groupId, dryRun = false } = body;
@@ -125,3 +123,5 @@ export async function POST(request: NextRequest) {
     return errorResponse(err.message || 'Generation failed', 500);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN']);

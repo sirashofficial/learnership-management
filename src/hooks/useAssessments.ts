@@ -16,6 +16,7 @@ interface UseAssessmentsOptions {
 export function useAssessments(options: UseAssessmentsOptions = {}) {
   const params = new URLSearchParams();
   if (options.studentId) params.append('studentId', options.studentId);
+  if (options.groupId) params.append('groupId', options.groupId);
   if (options.result) params.append('result', options.result);
   if (options.type) params.append('type', options.type);
   if (options.method) params.append('method', options.method);

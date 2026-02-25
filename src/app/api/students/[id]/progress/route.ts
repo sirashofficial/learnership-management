@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // Helper functions
 function successResponse(data: any, status = 200) {
@@ -19,7 +20,7 @@ function handleApiError(error: any) {
 }
 
 // GET /api/students/[id]/progress - Get student's module progress
-export async function GET(
+async function getStudentProgressHandler(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -37,6 +38,10 @@ export async function GET(
         if (!student) {
             return errorResponse('Student not found', 404);
         }
+
+        const authContext = getAuthContext(request);
+        const accessError = enforceGroupAccess(student.groupId, authContext);
+        if (accessError) return accessError;
 
         // Get all module progress for this student
         const moduleProgress = await prisma.moduleProgress.findMany({
@@ -108,7 +113,7 @@ export async function GET(
 }
 
 // POST /api/students/[id]/progress - Update student's module progress
-export async function POST(
+async function updateStudentProgressHandler(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -128,6 +133,10 @@ export async function POST(
         if (!student) {
             return errorResponse('Student not found', 404);
         }
+
+        const authContext = getAuthContext(request);
+        const accessError = enforceGroupAccess(student.groupId, authContext);
+        if (accessError) return accessError;
 
         const module = await prisma.module.findUnique({
             where: { id: moduleId },
@@ -208,3 +217,6 @@ export async function POST(
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(getStudentProgressHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(updateStudentProgressHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

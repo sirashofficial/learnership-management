@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) {
-      return error;
+    const authContext = getAuthContext(request);
+    if (!authContext) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const user = authContext.user;
     const body = await request.json();
     const {
       emailRemindersEnabled,
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Find or create reminder preference for user
     const existingPreference = await prisma.reminderPreference.findUnique({
-      where: { userId: user!.userId },
+      where: { userId: user.userId },
     });
 
     let preference;
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (existingPreference) {
       // Update existing preference
       preference = await prisma.reminderPreference.update({
-        where: { userId: user!.userId },
+        where: { userId: user.userId },
         data: {
           emailRemindersEnabled,
           browserNotificationsEnabled,
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       // Create new preference
       preference = await prisma.reminderPreference.create({
         data: {
-          userId: user!.userId,
+          userId: user.userId,
           emailRemindersEnabled,
           browserNotificationsEnabled,
           quietHoursStart,
@@ -70,15 +71,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) {
-      return error;
+    const authContext = getAuthContext(request);
+    if (!authContext) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const user = authContext.user;
     const preference = await prisma.reminderPreference.findUnique({
-      where: { userId: user!.userId },
+      where: { userId: user.userId },
     });
 
     if (!preference) {
@@ -107,3 +109,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'moderate'), ['ADMIN', 'FACILITATOR', 'STUDENT']);
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR', 'STUDENT']);

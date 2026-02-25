@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { updateStudentProgress } from '@/lib/progress-calculator';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 const bulkAssessmentSchema = z.object({
   studentIds: z.array(z.string()),
@@ -16,10 +16,8 @@ const bulkAssessmentSchema = z.object({
 });
 
 // POST /api/assessments/bulk - Mass award credits/results
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error, user: currentUser } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const validatedData = bulkAssessmentSchema.parse(body);

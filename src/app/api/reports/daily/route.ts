@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { startOfDay, endOfDay } from 'date-fns';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function POST(request: NextRequest) {
+async function createDailyReportHandler(request: NextRequest) {
     try {
         const body = await request.json();
         const { date, groupIds, facilitator, groupTrainingData, observations, challengesFaced } = body;
@@ -19,6 +20,14 @@ export async function POST(request: NextRequest) {
                 { success: false, error: 'Maximum 10 groups can be selected' },
                 { status: 400 }
             );
+        }
+
+        const authContext = getAuthContext(request);
+        if (authContext?.user.role === 'FACILITATOR') {
+            for (const groupId of groupIds) {
+                const accessError = enforceGroupAccess(groupId, authContext);
+                if (accessError) return accessError;
+            }
         }
 
         const reportDate = new Date(date);
@@ -152,3 +161,5 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export const POST = withAuth(withRateLimit(createDailyReportHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

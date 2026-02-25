@@ -1,10 +1,11 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import { upsertDocuments } from '@/lib/ai/pinecone';
 const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
 import { generateEmbedding } from '@/lib/ai/cohere';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,7 +75,7 @@ async function extractText(buffer: Buffer, filename: string): Promise<string> {
 }
 
 // POST: Upload and index documents
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const formData = await request.formData();
         const files = formData.getAll('files') as File[];
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
         const description = formData.get('description') as string || '';
 
         if (!files || files.length === 0) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'No files provided' },
                 { status: 400 }
             );
@@ -169,3 +170,5 @@ export async function POST(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN']);

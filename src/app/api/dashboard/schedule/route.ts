@@ -2,19 +2,30 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function GET(request: NextRequest) {
+async function getDashboardScheduleHandler(request: NextRequest) {
   try {
     const now = new Date();
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     // Get all lesson plans for the next 7 days
+    const authContext = getAuthContext(request);
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {};
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return successResponse({ schedule: [] });
+    }
+
     const lessonPlans = await prisma.lessonPlan.findMany({
       where: {
         date: {
           gte: now,
           lte: sevenDaysFromNow,
         },
+        ...groupFilter,
       },
       include: {
         module: {
@@ -54,6 +65,7 @@ export async function GET(request: NextRequest) {
           gte: now,
           lte: sevenDaysFromNow,
         },
+        ...groupFilter,
       },
       include: {
         facilitator: {
@@ -138,3 +150,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getDashboardScheduleHandler, 'generous'), ['ADMIN', 'FACILITATOR']);

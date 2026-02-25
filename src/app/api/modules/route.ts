@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // Helper functions
 function successResponse(data: any, status = 200) {
@@ -20,7 +21,7 @@ function handleApiError(error: any) {
 
 // GET /api/modules - List all modules
 export const dynamic = 'force-dynamic';
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const includeUnitStandards = searchParams.get('includeUnitStandards') === 'true';
@@ -46,3 +47,5 @@ export async function GET(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR', 'STUDENT']);

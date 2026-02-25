@@ -4,11 +4,12 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils'
 import { requireAuth } from '@/lib/middleware';
 import { addDays } from 'date-fns';
 import { enrichRolloutPlansWithStatus } from '@/lib/rollout-status';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/rollout?groupId=xxx — fetch rollout plan for a group
-export async function GET(request: NextRequest) {
+async function getRolloutHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -17,6 +18,10 @@ export async function GET(request: NextRequest) {
     const groupId = searchParams.get('groupId');
 
     if (!groupId) return errorResponse('groupId is required', 400);
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(groupId, authContext);
+    if (accessError) return accessError;
 
     const plans = await prisma.rolloutPlan.findMany({
       where: { groupId },
@@ -38,7 +43,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/rollout/generate — auto-generate rollout plan for a group
-export async function POST(request: NextRequest) {
+async function createRolloutHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -52,6 +57,10 @@ export async function POST(request: NextRequest) {
 
     if (!groupId) return errorResponse('groupId is required', 400);
     if (!startDateStr) return errorResponse('startDate is required', 400);
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(groupId, authContext);
+    if (accessError) return accessError;
 
     const group = await prisma.group.findUnique({
       where: { id: groupId },
@@ -110,3 +119,6 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getRolloutHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(createRolloutHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

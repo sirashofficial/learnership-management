@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +10,8 @@ export const dynamic = 'force-dynamic';
  * Comprehensive data integrity validation endpoint
  * Returns list of data quality issues found in the system
  */
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     const issues: Array<{
       severity: 'critical' | 'warning' | 'info';
@@ -258,3 +256,5 @@ export async function GET(request: NextRequest) {
     return errorResponse(err.message || 'Validation failed', 500);
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN']);

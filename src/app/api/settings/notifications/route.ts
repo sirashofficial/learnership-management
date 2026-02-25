@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // Using file-based storage for notification preferences
 // In production, this should be in a database
@@ -33,7 +34,7 @@ async function ensureSettingsFile() {
 }
 
 // GET - Fetch notification settings
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     await ensureSettingsFile();
     
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT - Update notification settings
-export async function PUT(request: NextRequest) {
+async function handlePut(request: NextRequest) {
   try {
     const body = await request.json();
     
@@ -82,3 +83,6 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR', 'STUDENT']);
+export const PUT = withAuth(withRateLimit(handlePut, 'moderate'), ['ADMIN', 'FACILITATOR', 'STUDENT']);

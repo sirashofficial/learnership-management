@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Image from "next/image";
-import { User, Calendar, TrendingUp, AlertCircle, Edit, Trash2, FileText } from "lucide-react";
+import { User, Calendar, TrendingUp, AlertCircle, Edit, Archive, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StudentCardProps {
@@ -125,10 +125,10 @@ function StudentCard({
               <button
                 onClick={onDelete}
                 className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete student"
-                aria-label="Delete student"
+                title="Archive student (recoverable for 30 days)"
+                aria-label="Archive student"
               >
-                <Trash2 className="w-4 h-4 text-red-600" />
+                <Archive className="w-4 h-4 text-red-600" />
               </button>
             </div>
           </div>

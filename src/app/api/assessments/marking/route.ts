@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
+import { emitEvent } from '@/lib/events/eventBus';
 
 // POST - Create assessments for a student (auto-add to assessments)
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const { studentId, groupId, action } = body;
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT - Mark/grade an assessment
-export async function PUT(request: NextRequest) {
+async function handlePut(request: NextRequest) {
   try {
     const body = await request.json();
     const {
@@ -141,7 +143,7 @@ export async function PUT(request: NextRequest) {
             moderationStatus: result === 'COMPETENT' ? 'APPROVED' : 'PENDING'
           },
           include: {
-            student: { select: { id: true, firstName: true, lastName: true } },
+            student: { select: { id: true, firstName: true, lastName: true, groupId: true } },
             unitStandard: { select: { code: true, title: true, credits: true, id: true } }
           }
         });
@@ -194,6 +196,22 @@ export async function PUT(request: NextRequest) {
         return updated;
     });
 
+    // Emit event for cache invalidation (event-driven updates)
+    // This triggers cache invalidation across all affected endpoints:
+    // - /api/assessments/* (all assessment lists)
+    // - /api/students/{studentId} (student progress)
+    // - /api/groups/{groupId} (group metrics)
+    // - /api/dashboard/* (dashboard stats)
+    emitEvent('assessment:marked', {
+      assessmentId: assessment.id,
+      studentId: assessment.studentId,
+      groupId: assessment.student.groupId || undefined,
+      unitStandardId: assessment.unitStandardId || undefined,
+      result: (result as 'COMPETENT' | 'NOT_YET_COMPETENT' | 'PENDING') || 'PENDING',
+      score: assessment.score || undefined,
+      feedback: assessment.feedback || undefined,
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Assessment marked successfully',
@@ -218,7 +236,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // GET - Fetch assessments for marking
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const groupId = searchParams.get('groupId');
@@ -293,3 +311,18 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAuth(
+  withRateLimit(handlePost, 'strict'),
+  ['ADMIN', 'FACILITATOR']
+);
+
+export const PUT = withAuth(
+  withRateLimit(handlePut, 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);
+
+export const GET = withAuth(
+  withRateLimit(handleGet, 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);

@@ -26,6 +26,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { calculateGroupAttendance } from '@/lib/calculateAttendance';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
+import { successResponse, handleApiError } from '@/lib/api-utils';
 
 interface BulkStatsRequest {
   groupIds?: string[];
@@ -42,7 +44,7 @@ interface AttendanceStats {
   late: number;
 }
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const body: BulkStatsRequest = await req.json();
     const { groupIds = [], studentIds = [], startDate, endDate } = body;
@@ -197,3 +199,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'moderate'), ['ADMIN', 'FACILITATOR']);

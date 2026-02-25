@@ -229,7 +229,9 @@ export default function DashboardAlerts() {
 
           {/* Alert List */}
           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-            {visibleAlerts.slice(0, 8).map((alert: any) => {
+            {visibleAlerts.filter((alert: any) => 
+              alert && typeof alert === 'object' && 'id' in alert
+            ).slice(0, 8).map((alert: any) => {
               const styles = getPriorityStyles(alert.priority);
               return (
                 <div

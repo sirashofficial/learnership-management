@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YEHA - Offline</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+                "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+                sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #64748b;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: #fef3c7;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        h1 {
+            color: #0f172a;
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .status {
+            color: #92400e;
+            background: #fef3c7;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .message {
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+
+        .content-section {
+            text-align: left;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .content-section h2 {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .content-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content-section li {
+            padding: 6px 0;
+            color: #64748b;
+            font-size: 14px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .content-section li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .loading {
+            margin-top: 20px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📡</div>
+        <h1>No Connection</h1>
+
+        <div class="status">
+            ⚠️ You are currently offline
+        </div>
+
+        <p class="message">
+            Don't worry! YEHA works offline. Your changes are automatically saved and will sync
+            when your connection is restored.
+        </p>
+
+        <div class="content-section">
+            <h2>✨ What you can do offline:</h2>
+            <ul>
+                <li>View student rosters (previously downloaded)</li>
+                <li>Mark attendance</li>
+                <li>Record assessments</li>
+                <li>View your pending changes</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <h2>ℹ️ What requires connection:</h2>
+            <ul>
+                <li>AI features & suggestions</li>
+                <li>Report generation & downloads</li>
+                <li>Real-time collaboration</li>
+                <li>Uploading new documents</li>
+            </ul>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-secondary" onclick="location.reload()">
+                🔄 Retry Connection
+            </button>
+            <button class="btn-primary" onclick="goToDashboard()">
+                📱 Go to App
+            </button>
+        </div>
+
+        <div id="sync-info" class="loading" style="display: none;">
+            <p>Checking for synced data...</p>
+            <div class="spinner"></div>
+        </div>
+
+        <div class="footer">
+            <p>YEHA v1.0.0 • Offline-First Progressive Web App</p>
+        </div>
+    </div>
+
+    <script>
+        function goToDashboard() {
+            // Try to go back or go to home
+            if (document.referrer) {
+                window.history.back();
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        // Show sync info if offline storage has data
+        async function checkOfflineData() {
+            try {
+                if ('indexedDB' in window) {
+                    const db = await new Promise((resolve, reject) => {
+                        const openRequest = indexedDB.open('YEHAOfflineDB');
+                        openRequest.onsuccess = () => resolve(openRequest.result);
+                        openRequest.onerror = () => reject(openRequest.error);
+                    });
+
+                    // Check for pending records
+                    const tx = db.transaction('pendingAttendance', 'readonly');
+                    const store = tx.objectStore('pendingAttendance');
+                    const countRequest = store.count();
+
+                    countRequest.onsuccess = () => {
+                        const count = countRequest.result;
+                        if (count > 0) {
+                            document.getElementById('sync-info').style.display = 'block';
+                            document.querySelector('#sync-info p').textContent =
+                                `You have ${count} pending attendance records cached.`;
+                        }
+                    };
+                }
+            } catch (err) {
+                console.log('IndexedDB check failed:', err);
+            }
+        }
+
+        checkOfflineData();
+    </script>
+</body>
+</html>

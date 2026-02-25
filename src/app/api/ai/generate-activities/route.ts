@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ export interface ActivityIdea {
  * Body: { unitStandardId, count?, difficulty?, sessionType? }
  * Returns a list of creative activity ideas for the given unit standard.
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const {
@@ -108,3 +109,5 @@ Return ONLY the JSON array, no markdown, no additional text.
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

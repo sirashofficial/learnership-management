@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
  * 
  * Performance: Typically under 200ms (using indexes on Student.status, progress)
  */
-export async function GET(request: NextRequest) {
+async function getLiteSummaryHandler(request: NextRequest) {
   try {
     // Use aggregate queries instead of loading all records
     const [
@@ -60,3 +61,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getLiteSummaryHandler, 'generous'), ['ADMIN', 'FACILITATOR']);

@@ -10,19 +10,21 @@
  * - GroupsContext (src/contexts/GroupsContext.tsx)
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import {
   calculateGroupMetrics,
   calculateMultipleGroupMetrics,
-  getGroupProgress,
-  getGroupHealthStatus,
-  getCurrentAssessmentModule,
-} from '@/lib/group-metrics';
+  calculateAttendanceRate,
+} from '@/lib/calculations/unifiedMetrics';
+import { getGroupHealthStatus, getCurrentAssessmentModule } from '@/lib/group-metrics';
 import { calculatePerformanceStatus } from '@/lib/statusUtils';
 import { PlanStatus } from '@/types/rollout';
 import { startOfMonth } from 'date-fns';
 import { TOTAL_CREDITS } from '@/lib/constants';
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export interface UnifiedGroupData {
   id: string;
@@ -89,13 +91,43 @@ async function calculateTotalCreditsRequired(groupId: string): Promise<number> {
  * GET /api/data/groups
  * Returns unified group data with consistent metrics
  */
-export async function GET(request: NextRequest): Promise<NextResponse<UnifiedResponse>> {
+async function getUnifiedGroupsHandler(request: NextRequest): Promise<NextResponse<UnifiedResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('activeOnly') === 'true';
 
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          groups: [],
+          summary: {
+            totalGroups: 0,
+            totalStudents: 0,
+            totalCreditsEarned: 0,
+            averageProgress: 0,
+          },
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+
+    const allowedGroupIds = authContext?.user.role === 'FACILITATOR'
+      ? authContext.allowedGroupIds
+      : null;
+
     // Fetch all groups
+    const baseWhere: Record<string, any> = {};
+    if (activeOnly) {
+      baseWhere.status = 'ACTIVE';
+    }
+    if (allowedGroupIds) {
+      baseWhere.id = { in: allowedGroupIds };
+    }
+
     let groupsQuery = prisma.group.findMany({
+      where: baseWhere,
       select: {
         id: true,
         name: true,
@@ -116,34 +148,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnifiedRes
         },
       },
     });
-
-    // If activeOnly is explicitly requested, filter to active groups only
-    if (activeOnly) {
-      groupsQuery = prisma.group.findMany({
-        where: {
-          status: 'ACTIVE',
-        },
-        select: {
-          id: true,
-          name: true,
-          location: true,
-          createdAt: true,
-          startDate: true,
-          endDate: true,
-          status: true,
-          rolloutPlan: true,
-          unitStandardRollouts: {
-            include: {
-              unitStandard: {
-                include: {
-                  module: true
-                }
-              },
-            },
-          },
-        },
-      });
-    }
 
     const groups = await groupsQuery;
 
@@ -180,56 +184,26 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnifiedRes
       TOTAL_CREDITS
     );
 
-    // Get attendance data for all groups for the CURRENT MONTH only
-    const startOfCurrentMonth = startOfMonth(new Date());
-
-    const attendanceData = await prisma.attendance.findMany({
-      where: {
-        groupId: { in: groupIds },
-        date: { gte: startOfCurrentMonth },
-      },
-      select: {
-        groupId: true,
-        studentId: true,
-        status: true,
-      },
-    });
-
-    // Group attendance by groupId
-    const attendanceMap = new Map<string, any[]>();
-    attendanceData.forEach(record => {
-      const gid = record.groupId || '';
-      if (!attendanceMap.has(gid)) attendanceMap.set(gid, []);
-      attendanceMap.get(gid)!.push(record);
-    });
-
-    // Calculate attendance rate per group
+    // Calculate attendance rates using unified metrics function
+    const attendanceRatesPromises = groupIds.map(groupId =>
+      calculateAttendanceRate(groupId, 'GROUP')
+    );
+    const attendanceResults = await Promise.all(attendanceRatesPromises);
+    
     const groupAttendanceRates = new Map<string, number>();
-    for (const [gid, records] of attendanceMap.entries()) {
-      // Use shared utility for average per-student attendance rate
-      const studentMap = new Map<string, any[]>();
-      records.forEach(r => {
-        if (!studentMap.has(r.studentId)) studentMap.set(r.studentId, []);
-        studentMap.get(r.studentId)!.push(r);
-      });
-
-      let subtotalRates = 0;
-      studentMap.forEach(studentRecords => {
-        const presentCount = studentRecords.filter(r => r.status === 'PRESENT').length;
-        const lateCount = studentRecords.filter(r => r.status === 'LATE').length;
-        subtotalRates += (studentRecords.length > 0 ? ((presentCount + lateCount) / studentRecords.length) * 100 : 0);
-      });
-
-      groupAttendanceRates.set(gid, studentMap.size > 0 ? subtotalRates / studentMap.size : 0);
+    const groupAttendanceRecordCounts = new Map<string, number>();
+    for (const result of attendanceResults) {
+      groupAttendanceRates.set(result.entityId, result.attendanceRate);
+      groupAttendanceRecordCounts.set(result.entityId, result.totalRecords);
     }
 
     // Get total student count across all groups
     const totalStudents = await prisma.student.count({
       where: {
         groupId: {
-          in: groupIds,
-        },
-      },
+          in: groupIds
+        }
+      }
     });
 
     // Build unified response
@@ -249,7 +223,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnifiedRes
         : 0;
 
       const attendanceRate = Math.round(groupAttendanceRates.get(group.id) || 0);
-      const totalRecorded = (attendanceMap.get(group.id) || []).length;
+      const totalRecorded = groupAttendanceRecordCounts.get(group.id) || 0;
 
       // Facilitator-centric: Group is at the highest module ANY student has reached
       const currentAssessmentModule = await getCurrentAssessmentModule(group.id);
@@ -303,6 +277,27 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnifiedRes
         dateStatus
       );
 
+      // Serialize unitStandardRollouts without circular references
+      const serializedRollouts = (group.unitStandardRollouts || []).map((rollout: any) => ({
+        id: rollout.id,
+        startDate: rollout.startDate ? new Date(rollout.startDate).toISOString() : null,
+        endDate: rollout.endDate ? new Date(rollout.endDate).toISOString() : null,
+        summativeDate: rollout.summativeDate ? new Date(rollout.summativeDate).toISOString() : null,
+        assessingDate: rollout.assessingDate ? new Date(rollout.assessingDate).toISOString() : null,
+        facilitated: rollout.facilitated,
+        unitStandard: rollout.unitStandard ? {
+          id: rollout.unitStandard.id,
+          code: rollout.unitStandard.code,
+          title: rollout.unitStandard.title,
+          credits: rollout.unitStandard.credits,
+          module: rollout.unitStandard.module ? {
+            id: rollout.unitStandard.module.id,
+            moduleNumber: rollout.unitStandard.module.moduleNumber,
+            name: rollout.unitStandard.module.name,
+          } : null,
+        } : null,
+      }));
+
       return {
         id: group.id,
         name: group.name,
@@ -312,9 +307,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnifiedRes
         startDate: group.startDate?.toISOString(),
         endDate: group.endDate?.toISOString(),
         status: group.status,
-        // Don't include rolloutPlan and unitStandardRollouts to avoid serialization issues unnecessarily
         rolloutPlan: null,
-        unitStandardRollouts: [],
+        unitStandardRollouts: serializedRollouts,
         currentAssessmentModule: currentAssessmentModule || 0,
         metrics: {
           avgCreditsPerStudent: metrics.avgCreditsPerStudent,
@@ -376,11 +370,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<UnifiedRes
   }
 }
 
+export const GET = withAuth(withRateLimit(getUnifiedGroupsHandler, 'generous'), ['ADMIN', 'FACILITATOR']);
+
 /**
  * GET /api/data/groups/{groupId}
  * Returns unified data for a specific group, including all student progress
  */
-export async function GET_BY_ID(groupId: string): Promise<UnifiedGroupData | null> {
+async function GET_BY_ID(groupId: string): Promise<UnifiedGroupData | null> {
   try {
     const group = await prisma.group.findUnique({
       where: { id: groupId },

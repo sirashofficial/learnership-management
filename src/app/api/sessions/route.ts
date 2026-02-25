@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-utils';
 import { startOfDay, endOfDay } from 'date-fns';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 /**
  * GET /api/sessions
@@ -14,7 +15,7 @@ import { startOfDay, endOfDay } from 'date-fns';
  *   - to: End date range
  *   - facilitatorId: Filter by facilitator
  */
-export async function GET(request: NextRequest) {
+async function getSessionsHandler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const groupId = searchParams.get('groupId');
@@ -24,6 +25,18 @@ export async function GET(request: NextRequest) {
     const facilitatorId = searchParams.get('facilitatorId');
 
     const where: any = {};
+
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR') {
+      if (groupId) {
+        const accessError = enforceGroupAccess(groupId, authContext);
+        if (accessError) return accessError;
+      } else if (authContext.allowedGroupIds.length === 0) {
+        return successResponse([], 'Found 0 sessions');
+      } else {
+        where.groupId = { in: authContext.allowedGroupIds };
+      }
+    }
 
     // Filter by group
     if (groupId) {
@@ -131,7 +144,7 @@ export async function GET(request: NextRequest) {
  *   notes?: string
  * }
  */
-export async function POST(request: NextRequest) {
+async function createSessionHandler(request: NextRequest) {
   try {
     const body = await request.json();
 
@@ -141,6 +154,10 @@ export async function POST(request: NextRequest) {
     if (!title || !module || !date || !startTime || !endTime || !groupId || !facilitatorId) {
       return errorResponse('Missing required fields', 400);
     }
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(groupId, authContext);
+    if (accessError) return accessError;
 
     // Create session
     const session = await prisma.session.create({
@@ -185,13 +202,26 @@ export async function POST(request: NextRequest) {
  *   ids: string[]
  * }
  */
-export async function DELETE(request: NextRequest) {
+async function deleteSessionsHandler(request: NextRequest) {
   try {
     const body = await request.json();
     const { ids } = body;
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return errorResponse('ids array is required', 400);
+    }
+
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR') {
+      const sessions = await prisma.session.findMany({
+        where: { id: { in: ids } },
+        select: { groupId: true },
+      });
+
+      for (const session of sessions) {
+        const accessError = enforceGroupAccess(session.groupId, authContext);
+        if (accessError) return accessError;
+      }
     }
 
     // Delete sessions
@@ -212,3 +242,7 @@ export async function DELETE(request: NextRequest) {
     return errorResponse('Failed to delete sessions', 500);
   }
 }
+
+export const GET = withAuth(withRateLimit(getSessionsHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(createSessionHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(deleteSessionsHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

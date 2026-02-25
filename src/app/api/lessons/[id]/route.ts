@@ -1,8 +1,9 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // GET single lesson
-export async function GET(
+async function handleGet(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -34,18 +35,18 @@ export async function GET(
         });
 
         if (!lesson) {
-            return Response.json({ error: 'Lesson not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
         }
 
-        return Response.json({ data: lesson });
+        return NextResponse.json({ data: lesson });
     } catch (error) {
         console.error('Error fetching lesson:', error);
-        return Response.json({ error: 'Failed to fetch lesson' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch lesson' }, { status: 500 });
     }
 }
 
 // PUT - Update lesson
-export async function PUT(
+async function handlePut(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -58,7 +59,7 @@ export async function PUT(
         });
 
         if (!existing) {
-            return Response.json({ error: 'Lesson not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
         }
 
         const lesson = await prisma.lessonPlan.update({
@@ -101,15 +102,15 @@ export async function PUT(
             },
         });
 
-        return Response.json({ data: lesson });
+        return NextResponse.json({ data: lesson });
     } catch (error) {
         console.error('Error updating lesson:', error);
-        return Response.json({ error: 'Failed to update lesson' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to update lesson' }, { status: 500 });
     }
 }
 
 // DELETE - Delete lesson
-export async function DELETE(
+async function handleDelete(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -120,16 +121,20 @@ export async function DELETE(
         });
 
         if (!existing) {
-            return Response.json({ error: 'Lesson not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
         }
 
         await prisma.lessonPlan.delete({
             where: { id: params.id },
         });
 
-        return Response.json({ success: true, message: 'Lesson deleted' });
+        return NextResponse.json({ success: true, message: 'Lesson deleted' });
     } catch (error) {
         console.error('Error deleting lesson:', error);
-        return Response.json({ error: 'Failed to delete lesson' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to delete lesson' }, { status: 500 });
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(withRateLimit(handlePut, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'strict'), ['ADMIN', 'FACILITATOR']);

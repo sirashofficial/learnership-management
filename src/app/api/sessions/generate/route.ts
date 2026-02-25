@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 import { addDays, addWeeks, differenceInDays, getDay, format } from 'date-fns';
 
 // NVC L2 Module structure with unit standards and durations
@@ -65,10 +65,8 @@ function getNextBusinessDay(date: Date): Date {
 }
 
 // POST /api/sessions/generate - Generate sessions for a group based on rollout plan
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { groupId } = body;
@@ -188,10 +186,8 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/sessions/weekly - Get weekly schedule (Mon-Fri)
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const weekStartStr = searchParams.get('weekStart'); // ISO string
@@ -261,3 +257,6 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);

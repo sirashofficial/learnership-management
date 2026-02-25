@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 const SETTINGS_DIR = path.join(process.cwd(), 'data');
 const SETTINGS_FILE = path.join(SETTINGS_DIR, 'system-settings.json');
@@ -33,7 +34,7 @@ async function ensureSettingsFile() {
 }
 
 // GET - Fetch system settings
-export async function GET(request: NextRequest) {
+async function getSystemSettingsHandler(request: NextRequest) {
   try {
     await ensureSettingsFile();
     
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT - Update system settings
-export async function PUT(request: NextRequest) {
+async function updateSystemSettingsHandler(request: NextRequest) {
   try {
     const body = await request.json();
     
@@ -103,3 +104,6 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(getSystemSettingsHandler, 'moderate'), ['ADMIN']);
+export const PUT = withAuth(withRateLimit(updateSystemSettingsHandler, 'moderate'), ['ADMIN']);

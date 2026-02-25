@@ -1,20 +1,23 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 import { addMinutes } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/undo — list recent undo-able actions for current user
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
+    const authContext = getAuthContext(request);
+    if (!authContext) {
+      return errorResponse('Unauthorized', 401);
+    }
 
+    const user = authContext.user;
     const records = await prisma.undoHistory.findMany({
       where: {
-        userId: user!.id,
+        userId: user.userId,
         canUndo: true,
         expiresAt: { gt: new Date() },
       },
@@ -29,11 +32,14 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/undo — create a new undo checkpoint
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
+    const authContext = getAuthContext(request);
+    if (!authContext) {
+      return errorResponse('Unauthorized', 401);
+    }
 
+    const user = authContext.user;
     const body = await request.json();
     const { action, entityType, entityIds, previousState, newState, description, windowMinutes = 30 } = body as {
       action: string;
@@ -51,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const record = await prisma.undoHistory.create({
       data: {
-        userId: user!.id,
+        userId: user.userId,
         action,
         entityType,
         entityIds: JSON.stringify(entityIds),
@@ -68,3 +74,6 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR', 'STUDENT']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

@@ -3,15 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth';
 import { registerSchema } from '@/lib/validations';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { rateLimit } from '@/lib/rate-limit';
 import { sanitizeEmail, sanitizeString } from '@/lib/input-sanitizer';
+import { withAuth, withRateLimit, withValidation } from '@/middleware/apiAuth';
 import bcrypt from 'bcryptjs';
 
-export async function POST(request: NextRequest) {
-  // Apply rate limiting: 3 registration attempts per hour
-  const rateLimitResult = await rateLimit({ interval: 3600000, maxRequests: 3 })(request);
-  if (rateLimitResult) return rateLimitResult;
-
+async function registerHandler(request: NextRequest) {
   try {
     const body = await request.json();
 
@@ -74,3 +70,8 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(
+  withRateLimit(withValidation(registerHandler, registerSchema), 'strict'),
+  ['PUBLIC']
+);

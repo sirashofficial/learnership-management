@@ -1,18 +1,23 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // GET /api/reports/group-progress?groupId=xxx&format=csv
 export const dynamic = 'force-dynamic';
-export async function GET(request: NextRequest) {
+async function getGroupProgressReportHandler(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const groupId = searchParams.get('groupId');
         const format = searchParams.get('format') || 'csv';
 
         if (!groupId) {
-            return new Response('Group ID is required', { status: 400 });
+            return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
         }
+
+        const authContext = getAuthContext(request);
+        const accessError = enforceGroupAccess(groupId, authContext);
+        if (accessError) return accessError;
 
         // Fetch group with students and their progress
         const group = await prisma.group.findUnique({
@@ -40,7 +45,7 @@ export async function GET(request: NextRequest) {
         });
 
         if (!group) {
-            return new Response('Group not found', { status: 404 });
+            return NextResponse.json({ error: 'Group not found' }, { status: 404 });
         }
 
         // Get all modules for header
@@ -95,7 +100,8 @@ export async function GET(request: NextRequest) {
 
             const csv = Papa.unparse(csvData);
 
-            return new Response(csv, {
+            return new NextResponse(csv, {
+                status: 200,
                 headers: {
                     'Content-Type': 'text/csv',
                     'Content-Disposition': `attachment; filename="group-${group.name.replace(/[^a-z0-9]/gi, '_')}-progress-${new Date().toISOString().split('T')[0]}.csv"`
@@ -122,3 +128,5 @@ export async function GET(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(getGroupProgressReportHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

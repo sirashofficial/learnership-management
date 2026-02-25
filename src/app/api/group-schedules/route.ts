@@ -1,8 +1,8 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { z } from 'zod';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // Validation schema for assigning a template to a group
 const assignmentSchema = z.object({
@@ -12,7 +12,7 @@ const assignmentSchema = z.object({
     endDate: z.string().optional().transform(str => str ? new Date(str) : undefined),
 });
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const groupId = searchParams.get('groupId');
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const validatedData = assignmentSchema.parse(body);
@@ -61,3 +61,6 @@ export async function POST(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

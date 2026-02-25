@@ -3,16 +3,22 @@ import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { requireAuth } from '@/lib/middleware';
 import { format, startOfDay, endOfDay, isSameDay } from 'date-fns';
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // Mark as dynamic since we check request headers for auth
 export const dynamic = 'force-dynamic';
 
 // GET /api/dashboard/today-classes
 // Returns today's classes with module progress and rollout status
-export async function GET(request: NextRequest) {
+async function getTodayClassesHandler(request: NextRequest) {
   try {
     const { error, user } = await requireAuth(request);
     if (error) return error;
+
+    const authContext = getAuthContext(request);
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {};
 
     const today = new Date();
     const todayStart = startOfDay(today);
@@ -25,6 +31,7 @@ export async function GET(request: NextRequest) {
           gte: todayStart,
           lte: todayEnd,
         },
+        ...groupFilter,
       },
       include: {
         group: {
@@ -155,3 +162,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getTodayClassesHandler, 'generous'), ['ADMIN', 'FACILITATOR']);

@@ -4,8 +4,9 @@ import { addWorkingDays } from '@/lib/rolloutUtils';
 import { isWeekend, startOfDay, format, addDays } from 'date-fns';
 import fs from 'fs';
 import path from 'path';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
-export async function POST(
+async function handlePost(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -197,3 +198,5 @@ export async function POST(
         return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

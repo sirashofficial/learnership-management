@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import CreditAdjustmentModal from '@/components/CreditAdjustmentModal';
 import { format } from 'date-fns';
+import ErrorCatcher from '@/components/ErrorCatcher';
 
 // Attendance data type from the API
 interface AttendanceStats {
@@ -384,595 +385,597 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <ErrorCatcher>
+      <div className="space-y-6">
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">
-              Total Students
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="bg-white rounded-lg border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-slate-600">
+                Total Students
+              </p>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">
+              {stats.total}
             </p>
           </div>
-          <p className="text-2xl font-bold text-slate-900">
-            {stats.total}
-          </p>
-        </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">
-              Active Students
+          <div className="bg-white rounded-lg border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-slate-600">
+                Active Students
+              </p>
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">
+              {stats.active}
             </p>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">
-            {stats.active}
-          </p>
-        </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">
-              Avg Progress
+          <div className="bg-white rounded-lg border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-slate-600">
+                Avg Progress
+              </p>
+            </div>
+            <p className="text-2xl font-bold text-cyan-600">
+              {stats.averageProgress}%
             </p>
           </div>
-          <p className="text-2xl font-bold text-cyan-600">
-            {stats.averageProgress}%
-          </p>
-        </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">
-              Needs Attention
+          <div className="bg-white rounded-lg border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-slate-600">
+                Needs Attention
+              </p>
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+            </div>
+            <p className="text-2xl font-bold text-amber-600">
+              {stats.needsAttention}
             </p>
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-          </div>
-          <p className="text-2xl font-bold text-amber-600">
-            {stats.needsAttention}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            {stats.stalledCount} stalled, {stats.atRiskCount} at risk
-          </p>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="bg-white rounded-lg border border-slate-200 mb-6">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search by name, ID, email, or ID number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg ${viewMode === 'table'
-                  ? 'bg-teal-500 text-white'
-                  : 'bg-slate-100 text-slate-600'
-                  }`}
-              >
-                <List className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg ${viewMode === 'grid'
-                  ? 'bg-teal-500 text-white'
-                  : 'bg-slate-100 text-slate-600'
-                  }`}
-              >
-                <Grid3x3 className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showFilters
-                ? 'bg-teal-500 text-white'
-                : 'bg-slate-100 text-slate-600'
-                }`}
-            >
-              <Filter className="h-5 w-5" />
-              Filters
-              {(selectedGroup !== 'all' || selectedStatus !== 'all' || selectedModule !== 'all' || progressRange !== 'all') && (
-                <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-xs">
-                  {[selectedGroup !== 'all', selectedStatus !== 'all', selectedModule !== 'all', progressRange !== 'all'].filter(Boolean).length}
-                </span>
-              )}
-            </button>
-
-            {/* Alert Filter Toggle */}
-            <button
-              onClick={() => setShowOnlyAlerts(!showOnlyAlerts)}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showOnlyAlerts
-                ? 'bg-amber-500 text-white'
-                : 'bg-slate-100 text-slate-600'
-                }`}
-            >
-              <AlertTriangle className="h-5 w-5" />
-              {showOnlyAlerts ? 'Show All' : 'At Risk Only'}
-            </button>
-
-            {/* Export CSV */}
-            <button
-              onClick={handleExportCSV}
-              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 flex items-center gap-2"
-            >
-              <Download className="h-5 w-5" />
-              Export
-            </button>
-
-            {/* Add Student */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 flex items-center gap-2 shadow-soft"
-            >
-              <UserPlus className="h-5 w-5" />
-              Add Student
-            </button>
+            <p className="text-xs text-slate-500 mt-1">
+              {stats.stalledCount} stalled, {stats.atRiskCount} at risk
+            </p>
           </div>
         </div>
 
-        {/* Selected Students Bulk Actions */}
-        {selectedStudents.length > 0 && (
-          <div className="p-4 bg-emerald-50 border-t border-slate-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-emerald-900">
-                  {selectedStudents.length} StudentsSelected
-                </span>
-                <div className="h-4 w-px bg-emerald-200 mx-2" />
-                <button
-                  onClick={handleBulkArchive}
-                  className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
-                >
-                  <Archive className="h-3.5 w-3.5" />
-                  Archive
-                </button>
-                <button
-                  onClick={() => setShowBulkAssessmentModal(true)}
-                  className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
-                >
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Award Credits
-                </button>
-                <button
-                  onClick={handleBulkEmail}
-                  className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 text-xs font-bold transition-all shadow-sm"
-                >
-                  <Mail className="h-3.5 w-3.5" />
-                  Send Email
-                </button>
-              </div>
-              <button
-                onClick={() => setSelectedStudents([])}
-                className="p-1.5 hover:bg-emerald-100 rounded-lg text-emerald-900 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex gap-6 items-start">
-        {/* Side Group Bar as requested */}
-        <div className="hidden lg:block sticky top-24 h-fit">
-          <GroupFilterSidebar
-            selectedGroupId={selectedGroup}
-            onSelectGroup={setSelectedGroup}
-          />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          {/* Content */}
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-slate-200">
-              <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
-                <p className="text-sm font-medium text-slate-500 italic">Curating student data...</p>
-              </div>
-            </div>
-          ) : filteredStudents.length === 0 ? (
-            <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-              <div className="max-w-md mx-auto">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="h-8 w-8 text-slate-400" />
+        {/* Controls */}
+        <div className="bg-white rounded-lg border border-slate-200 mb-6">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Search */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, ID, email, or ID number..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                  No students found
-                </h3>
-                <p className="text-slate-600 mb-4">
-                  {searchQuery || selectedGroup !== 'all' || selectedStatus !== 'all' || progressRange !== 'all'
-                    ? 'Try adjusting your filters or search query'
-                    : 'Get started by adding your first student'}
-                </p>
-                {!searchQuery && selectedGroup === 'all' && selectedStatus === 'all' && progressRange === 'all' && (
-                  <button
-                    onClick={() => setShowAddModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600"
-                  >
-                    Add First Student
-                  </button>
+              </div>
+
+              {/* View Toggle */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 rounded-lg ${viewMode === 'table'
+                    ? 'bg-teal-500 text-white'
+                    : 'bg-slate-100 text-slate-600'
+                    }`}
+                >
+                  <List className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg ${viewMode === 'grid'
+                    ? 'bg-teal-500 text-white'
+                    : 'bg-slate-100 text-slate-600'
+                    }`}
+                >
+                  <Grid3x3 className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Filter Toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showFilters
+                  ? 'bg-teal-500 text-white'
+                  : 'bg-slate-100 text-slate-600'
+                  }`}
+              >
+                <Filter className="h-5 w-5" />
+                Filters
+                {(selectedGroup !== 'all' || selectedStatus !== 'all' || selectedModule !== 'all' || progressRange !== 'all') && (
+                  <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-xs">
+                    {[selectedGroup !== 'all', selectedStatus !== 'all', selectedModule !== 'all', progressRange !== 'all'].filter(Boolean).length}
+                  </span>
                 )}
+              </button>
+
+              {/* Alert Filter Toggle */}
+              <button
+                onClick={() => setShowOnlyAlerts(!showOnlyAlerts)}
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showOnlyAlerts
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-slate-100 text-slate-600'
+                  }`}
+              >
+                <AlertTriangle className="h-5 w-5" />
+                {showOnlyAlerts ? 'Show All' : 'At Risk Only'}
+              </button>
+
+              {/* Export CSV */}
+              <button
+                onClick={handleExportCSV}
+                className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 flex items-center gap-2"
+              >
+                <Download className="h-5 w-5" />
+                Export
+              </button>
+
+              {/* Add Student */}
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 flex items-center gap-2 shadow-soft"
+              >
+                <UserPlus className="h-5 w-5" />
+                Add Student
+              </button>
+            </div>
+          </div>
+
+          {/* Selected Students Bulk Actions */}
+          {selectedStudents.length > 0 && (
+            <div className="p-4 bg-emerald-50 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-emerald-900">
+                    {selectedStudents.length} StudentsSelected
+                  </span>
+                  <div className="h-4 w-px bg-emerald-200 mx-2" />
+                  <button
+                    onClick={handleBulkArchive}
+                    className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
+                  >
+                    <Archive className="h-3.5 w-3.5" />
+                    Archive
+                  </button>
+                  <button
+                    onClick={() => setShowBulkAssessmentModal(true)}
+                    className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Award Credits
+                  </button>
+                  <button
+                    onClick={handleBulkEmail}
+                    className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 text-xs font-bold transition-all shadow-sm"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    Send Email
+                  </button>
+                </div>
+                <button
+                  onClick={() => setSelectedStudents([])}
+                  className="p-1.5 hover:bg-emerald-100 rounded-lg text-emerald-900 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
             </div>
-          ) : viewMode === 'table' ? (
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                    <tr>
-                      <th className="px-4 py-3 text-left">
+          )}
+        </div>
+
+        <div className="flex gap-6 items-start">
+          {/* Side Group Bar as requested */}
+          <div className="hidden lg:block sticky top-24 h-fit">
+            <GroupFilterSidebar
+              selectedGroupId={selectedGroup}
+              onSelectGroup={setSelectedGroup}
+            />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* Content */}
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-slate-200">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+                  <p className="text-sm font-medium text-slate-500 italic">Curating student data...</p>
+                </div>
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    No students found
+                  </h3>
+                  <p className="text-slate-600 mb-4">
+                    {searchQuery || selectedGroup !== 'all' || selectedStatus !== 'all' || progressRange !== 'all'
+                      ? 'Try adjusting your filters or search query'
+                      : 'Get started by adding your first student'}
+                  </p>
+                  {!searchQuery && selectedGroup === 'all' && selectedStatus === 'all' && progressRange === 'all' && (
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600"
+                    >
+                      Add First Student
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : viewMode === 'table' ? (
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                      <tr>
+                        <th className="px-4 py-3 text-left">
+                          <input
+                            type="checkbox"
+                            checked={selectedStudents.length === filteredStudents.length}
+                            onChange={handleSelectAll}
+                            className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
+                          />
+                        </th>
+                        <th className="px-4 py-3 text-left">
+                          <button
+                            onClick={() => handleSort('name')}
+                            className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                          >
+                            Student
+                            <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 text-left">
+                          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            Group / Company
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left">
+                          <button
+                            onClick={() => handleSort('progress')}
+                            className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                          >
+                            Progress %
+                            <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 text-left">
+                          <button
+                            onClick={() => handleSort('attendance')}
+                            className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                          >
+                            Attendance %
+                            <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 text-left">
+                          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            Status
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left">
+                          <button
+                            onClick={() => handleSort('createdAt')}
+                            className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
+                          >
+                            Enrolled
+                            <ArrowUpDown className="h-4 w-4" />
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                          Current Module
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                      {filteredStudents.map((student) => {
+                        const attendance = getAttendancePercentage(student);
+                        const alert = getStudentAlertData(student);
+                        return (
+                          <tr
+                            key={student.id}
+                            onClick={() => handleViewDetails(student)}
+                            className="hover:bg-slate-50 cursor-pointer"
+                          >
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedStudents.includes(student.id)}
+                                onChange={() => handleSelectStudent(student.id)}
+                                className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-semibold text-sm">
+                                  {getInitials(student.firstName, student.lastName)}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-slate-900">
+                                      {student.firstName} {student.lastName}
+                                    </span>
+                                    {alert.type !== 'NONE' && (
+                                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getAlertColor(alert.severity)}`}>
+                                        {alert.type === 'STALLED' ? '⏸️ Stalled' : '⚠️ At Risk'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-sm text-slate-500 flex items-center gap-2">
+                                    <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-[11px]">
+                                      {student.studentId}
+                                    </span>
+                                    {student.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm">
+                                <div className="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]">
+                                  {student.group?.name || 'No Group'}
+                                </div>
+                                <div className="text-slate-500 text-xs truncate max-w-[180px]">
+                                  {(student.group as any)?.company?.name || 'Independent'}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className={`h-full ${getProgressColor(student.progress)}`}
+                                    style={{ width: `${student.progress}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-medium text-slate-700 min-w-[3rem] text-right">
+                                  {student.totalCreditsEarned || 0}
+                                </span>
+                                {/* Credits are now read-only - calculated from assessments only */}
+                              </div>
+
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-medium text-slate-700">
+                                  {attendance}%
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <StatusBadge status={(student.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'PENDING' | 'BEHIND' | 'ON_TRACK' | 'AHEAD'} />
+                            </td>
+                            <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                              {format(new Date(student.createdAt), 'MMM d, yyyy')}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                                {(student as any).currentModule ? (
+                                  `M${(student as any).currentModule.moduleNumber}`
+                                ) : '-'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              // Grid View
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredStudents.map((student) => {
+                  const attendance = getAttendancePercentage(student);
+                  return (
+                    <div
+                      key={student.id}
+                      className="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-soft transition-shadow cursor-pointer relative"
+                      onClick={() => handleViewDetails(student)}
+                    >
+                      {/* Checkbox */}
+                      <div
+                        className="absolute top-4 right-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <input
                           type="checkbox"
-                          checked={selectedStudents.length === filteredStudents.length}
-                          onChange={handleSelectAll}
+                          checked={selectedStudents.includes(student.id)}
+                          onChange={() => handleSelectStudent(student.id)}
                           className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
                         />
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <button
-                          onClick={() => handleSort('name')}
-                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
-                        >
-                          Student
-                          <ArrowUpDown className="h-4 w-4" />
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                          Group / Company
-                        </div>
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <button
-                          onClick={() => handleSort('progress')}
-                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
-                        >
-                          Progress %
-                          <ArrowUpDown className="h-4 w-4" />
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <button
-                          onClick={() => handleSort('attendance')}
-                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
-                        >
-                          Attendance %
-                          <ArrowUpDown className="h-4 w-4" />
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                          Status
-                        </div>
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <button
-                          onClick={() => handleSort('createdAt')}
-                          className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 whitespace-nowrap"
-                        >
-                          Enrolled
-                          <ArrowUpDown className="h-4 w-4" />
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                        Current Module
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {filteredStudents.map((student) => {
-                      const attendance = getAttendancePercentage(student);
-                      const alert = getStudentAlertData(student);
-                      return (
-                        <tr
-                          key={student.id}
-                          onClick={() => handleViewDetails(student)}
-                          className="hover:bg-slate-50 cursor-pointer"
-                        >
-                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              checked={selectedStudents.includes(student.id)}
-                              onChange={() => handleSelectStudent(student.id)}
-                              className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-semibold text-sm">
-                                {getInitials(student.firstName, student.lastName)}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-slate-900">
-                                    {student.firstName} {student.lastName}
-                                  </span>
-                                  {alert.type !== 'NONE' && (
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getAlertColor(alert.severity)}`}>
-                                      {alert.type === 'STALLED' ? '⏸️ Stalled' : '⚠️ At Risk'}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-sm text-slate-500 flex items-center gap-2">
-                                  <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-[11px]">
-                                    {student.studentId}
-                                  </span>
-                                  {student.email}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="text-sm">
-                              <div className="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]">
-                                {student.group?.name || 'No Group'}
-                              </div>
-                              <div className="text-slate-500 text-xs truncate max-w-[180px]">
-                                {(student.group as any)?.company?.name || 'Independent'}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
-                                <div
-                                  className={`h-full ${getProgressColor(student.progress)}`}
-                                  style={{ width: `${student.progress}%` }}
-                                />
-                              </div>
-                              <span className="text-sm font-medium text-slate-700 min-w-[3rem] text-right">
-                                {student.totalCreditsEarned || 0}
-                              </span>
-                              {/* Credits are now read-only - calculated from assessments only */}
-                            </div>
-
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium text-slate-700">
-                                {attendance}%
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <StatusBadge status={(student.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'PENDING' | 'BEHIND' | 'ON_TRACK' | 'AHEAD'} />
-                          </td>
-                          <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                            {format(new Date(student.createdAt), 'MMM d, yyyy')}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded">
-                              {(student as any).currentModule ? (
-                                `M${(student as any).currentModule.moduleNumber}`
-                              ) : '-'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            // Grid View
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredStudents.map((student) => {
-                const attendance = getAttendancePercentage(student);
-                return (
-                  <div
-                    key={student.id}
-                    className="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-soft transition-shadow cursor-pointer relative"
-                    onClick={() => handleViewDetails(student)}
-                  >
-                    {/* Checkbox */}
-                    <div
-                      className="absolute top-4 right-4"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedStudents.includes(student.id)}
-                        onChange={() => handleSelectStudent(student.id)}
-                        className="rounded border-slate-300 text-teal-500 focus:ring-teal-500"
-                      />
-                    </div>
-
-                    {/* Avatar */}
-                    <div className="flex justify-center mb-4">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xl">
-                        {getInitials(student.firstName, student.lastName)}
                       </div>
-                    </div>
 
-                    {/* Name */}
-                    <h3 className="text-lg font-semibold text-slate-900 text-center mb-1">
-                      {student.firstName} {student.lastName}
-                    </h3>
+                      {/* Avatar */}
+                      <div className="flex justify-center mb-4">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xl">
+                          {getInitials(student.firstName, student.lastName)}
+                        </div>
+                      </div>
 
-                    {/* Student ID */}
-                    <p className="text-sm text-slate-500 text-center mb-4">
-                      {student.studentId}
-                    </p>
+                      {/* Name */}
+                      <h3 className="text-lg font-semibold text-slate-900 text-center mb-1">
+                        {student.firstName} {student.lastName}
+                      </h3>
 
-                    {/* Group */}
-                    <div className="mb-4 text-center">
-                      <p className="text-sm font-semibold text-slate-900 truncate">
-                        {student.group?.name || 'No Group'}
+                      {/* Student ID */}
+                      <p className="text-sm text-slate-500 text-center mb-4">
+                        {student.studentId}
                       </p>
-                      <div className="text-xs text-slate-500 truncate max-w-[180px]">
-                        {(student.group as any)?.Company?.name || 'Independent'}
-                      </div>
-                    </div>
 
-                    {/* Progress */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
+                      {/* Group */}
+                      <div className="mb-4 text-center">
+                        <p className="text-sm font-semibold text-slate-900 truncate">
+                          {student.group?.name || 'No Group'}
+                        </p>
+                        <div className="text-xs text-slate-500 truncate max-w-[180px]">
+                          {(student.group as any)?.Company?.name || 'Independent'}
+                        </div>
+                      </div>
+
+                      {/* Progress */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-slate-600">
+                            Progress
+                          </span>
+                          <span className="text-sm font-medium text-slate-900">
+                            {student.progress}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-full ${getProgressColor(student.progress)}`}
+                            style={{ width: `${student.progress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Attendance */}
+                      <div className="flex items-center justify-between mb-4">
                         <span className="text-sm text-slate-600">
-                          Progress
+                          Attendance
                         </span>
                         <span className="text-sm font-medium text-slate-900">
-                          {student.progress}%
+                          {attendance}%
                         </span>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div
-                          className={`h-full ${getProgressColor(student.progress)}`}
-                          style={{ width: `${student.progress}%` }}
-                        />
+
+                      {/* Status */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">
+                          Status
+                        </span>
+                        <StatusBadge status={(student.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'PENDING' | 'BEHIND' | 'ON_TRACK' | 'AHEAD'} />
+                      </div>
+
+                      {/* Enrollment Date */}
+                      <div className="mt-4 pt-4 border-t border-slate-200 text-center">
+                        <p className="text-xs text-slate-500">
+                          Enrolled {format(new Date(student.createdAt), 'MMM d, yyyy')}
+                        </p>
                       </div>
                     </div>
-
-                    {/* Attendance */}
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm text-slate-600">
-                        Attendance
-                      </span>
-                      <span className="text-sm font-medium text-slate-900">
-                        {attendance}%
-                      </span>
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600">
-                        Status
-                      </span>
-                      <StatusBadge status={(student.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'PENDING' | 'BEHIND' | 'ON_TRACK' | 'AHEAD'} />
-                    </div>
-
-                    {/* Enrollment Date */}
-                    <div className="mt-4 pt-4 border-t border-slate-200 text-center">
-                      <p className="text-xs text-slate-500">
-                        Enrolled {format(new Date(student.createdAt), 'MMM d, yyyy')}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )
-          }
-
-          {/* Modals */}
-          {
-            showAddModal && (
-              <AddStudentModal
-                isOpen={showAddModal}
-                onClose={() => setShowAddModal(false)}
-                onAdd={async (student) => {
-                  try {
-                    const response = await fetch('/api/students', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        studentId: student.studentId,
-                        firstName: student.firstName,
-                        lastName: student.lastName,
-                        email: student.email || undefined,
-                        phone: student.phone || undefined,
-                        groupId: student.groupId || student.group,
-                        status: student.status || 'ACTIVE',
-                        progress: student.progress || 0,
-                      }),
-                    });
-
-                    console.log('📡 Response status:', response.status);
-
-                    if (response.ok) {
-                      const result = await response.json();
-                      console.log('✅ Success:', result);
-                      alert('Student added successfully!');
-                      setShowAddModal(false);
-                      mutate(); // Revalidate SWR cache
-                      await invalidateRelatedCache('student:add');
-                      router.refresh(); // Refresh server components
-                    } else {
-                      const error = await response.json();
-                      console.error('❌ API Error:', error);
-                      alert(`Failed to add student: ${error.error || error.message || 'Unknown error'}`);
-                    }
-                  } catch (error) {
-                    console.error('❌ Error adding student:', error);
-                    alert('Failed to add student. Please try again.');
-                  }
-                }}
-              />
+                  );
+                })}
+              </div>
             )
-          }
+            }
 
-          {
-            showDetailsModal && selectedStudent && (
-              <StudentDetailsModal
-                isOpen={showDetailsModal}
-                onClose={() => {
-                  setShowDetailsModal(false);
-                  setSelectedStudent(null);
-                }}
-                student={selectedStudent}
-                onSave={async (updated) => {
-                  try {
-                    const response = await fetch(`/api/students/${selectedStudent.id}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(updated),
-                    });
+            {/* Modals */}
+            {
+              showAddModal && (
+                <AddStudentModal
+                  isOpen={showAddModal}
+                  onClose={() => setShowAddModal(false)}
+                  onAdd={async (student) => {
+                    try {
+                      const response = await fetch('/api/students', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          studentId: student.studentId,
+                          firstName: student.firstName,
+                          lastName: student.lastName,
+                          email: student.email || undefined,
+                          phone: student.phone || undefined,
+                          groupId: student.groupId || student.group,
+                          status: student.status || 'ACTIVE',
+                          progress: student.progress || 0,
+                        }),
+                      });
 
-                    if (response.ok) {
-                      alert('Student updated successfully!');
-                      setShowDetailsModal(false);
-                      mutate(); // Revalidate SWR cache
-                      await invalidateRelatedCache('student:update');
-                      router.refresh(); // Refresh server components
-                    } else {
-                      const error = await response.json();
-                      alert(`Failed to update student: ${error.error}`);
+                      console.log('📡 Response status:', response.status);
+
+                      if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Success:', result);
+                        alert('Student added successfully!');
+                        setShowAddModal(false);
+                        mutate(); // Revalidate SWR cache
+                        await invalidateRelatedCache('student:add');
+                        router.refresh(); // Refresh server components
+                      } else {
+                        const error = await response.json();
+                        console.error('❌ API Error:', error);
+                        alert(`Failed to add student: ${error.error || error.message || 'Unknown error'}`);
+                      }
+                    } catch (error) {
+                      console.error('❌ Error adding student:', error);
+                      alert('Failed to add student. Please try again.');
                     }
-                  } catch (error) {
-                    console.error('Error updating student:', error);
-                    alert('Failed to update student. Please try again.');
-                  }
-                }}
-              />
-            )
-          }
-          {/* Bulk Assessment Modal */}
-          <BulkAssessmentModal
-            isOpen={showBulkAssessmentModal}
-            onClose={() => setShowBulkAssessmentModal(false)}
-            studentIds={selectedStudents}
-            onSuccess={() => {
-              setSelectedStudents([]);
-              mutate();
-            }}
-          />
-          <CreditAdjustmentModal
-            isOpen={!!selectedStudentForCredits}
-            onClose={() => setSelectedStudentForCredits(null)}
-            student={selectedStudentForCredits}
-            onSuccess={() => {
-              mutate();
-            }}
-          />
+                  }}
+                />
+              )
+            }
+
+            {
+              showDetailsModal && selectedStudent && (
+                <StudentDetailsModal
+                  isOpen={showDetailsModal}
+                  onClose={() => {
+                    setShowDetailsModal(false);
+                    setSelectedStudent(null);
+                  }}
+                  student={selectedStudent}
+                  onSave={async (updated) => {
+                    try {
+                      const response = await fetch(`/api/students/${selectedStudent.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updated),
+                      });
+
+                      if (response.ok) {
+                        alert('Student updated successfully!');
+                        setShowDetailsModal(false);
+                        mutate(); // Revalidate SWR cache
+                        await invalidateRelatedCache('student:update');
+                        router.refresh(); // Refresh server components
+                      } else {
+                        const error = await response.json();
+                        alert(`Failed to update student: ${error.error}`);
+                      }
+                    } catch (error) {
+                      console.error('Error updating student:', error);
+                      alert('Failed to update student. Please try again.');
+                    }
+                  }}
+                />
+              )
+            }
+            {/* Bulk Assessment Modal */}
+            <BulkAssessmentModal
+              isOpen={showBulkAssessmentModal}
+              onClose={() => setShowBulkAssessmentModal(false)}
+              studentIds={selectedStudents}
+              onSuccess={() => {
+                setSelectedStudents([]);
+                mutate();
+              }}
+            />
+            <CreditAdjustmentModal
+              isOpen={!!selectedStudentForCredits}
+              onClose={() => setSelectedStudentForCredits(null)}
+              student={selectedStudentForCredits}
+              onSuccess={() => {
+                mutate();
+              }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </ErrorCatcher>
   );
 }
 

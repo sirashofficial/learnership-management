@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
     try {
         const body = await req.json();
         const { title, description, dueDate, groupId } = body;
@@ -16,7 +18,6 @@ export async function POST(req: NextRequest) {
                 description,
                 dueDate: new Date(dueDate),
                 groupId,
-                status: 'PENDING',
             },
         });
 
@@ -27,10 +28,10 @@ export async function POST(req: NextRequest) {
     }
 }
 
-export async function PATCH(req: NextRequest) {
+async function handlePatch(req: NextRequest) {
     try {
         const body = await req.json();
-        const { taskId, status } = body;
+        const { taskId, completed } = body;
 
         if (!taskId) {
             return NextResponse.json({ error: 'TaskId is required' }, { status: 400 });
@@ -39,8 +40,8 @@ export async function PATCH(req: NextRequest) {
         const task = await prisma.facilitatorTask.update({
             where: { id: taskId },
             data: {
-                status,
-                completedAt: status === 'COMPLETED' ? new Date() : null,
+                completed: Boolean(completed),
+                completedAt: completed ? new Date() : null,
             },
         });
 
@@ -50,3 +51,6 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const PATCH = withAuth(withRateLimit(handlePatch, 'moderate'), ['ADMIN', 'FACILITATOR']);

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +10,8 @@ export const dynamic = 'force-dynamic';
  * Recalculates and fixes student totalCreditsEarned based on competent assessments
  * Uses atomic transaction to ensure consistency
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { studentIds, dryRun = false } = body;
@@ -123,3 +121,5 @@ export async function POST(request: NextRequest) {
     return errorResponse(err.message || 'Fix failed', 500);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN']);

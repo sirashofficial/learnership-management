@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // Admin-only endpoint to cleanup old data
-export async function POST(request: NextRequest) {
+async function cleanupHandler(request: NextRequest) {
   try {
-    // Check for admin authorization
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.includes('Bearer')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { action, groupsToKeep = [] } = body;
 
@@ -120,3 +112,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAuth(withRateLimit(cleanupHandler, 'moderate'), ['ADMIN']);

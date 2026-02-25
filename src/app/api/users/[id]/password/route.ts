@@ -2,25 +2,14 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import bcrypt from 'bcryptjs';
-import { getUserFromRequest } from '@/lib/auth';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // PUT /api/users/[id]/password - Change user password
-export async function PUT(
+async function updatePasswordHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await getUserFromRequest(request);
-
-    if (!user) {
-      return errorResponse('Unauthorized', 401);
-    }
-
-    // Only allow users to change their own password
-    if (user.userId !== params.id) {
-      return errorResponse('Forbidden', 403);
-    }
-
     const body = await request.json();
     const { currentPassword, newPassword } = body;
 
@@ -62,3 +51,5 @@ export async function PUT(
     return handleApiError(error);
   }
 }
+
+export const PUT = withAuth(withRateLimit(updatePasswordHandler, 'moderate'), ['ADMIN']);

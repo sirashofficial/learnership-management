@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 const SETTINGS_DIR = path.join(process.cwd(), 'data');
 const SETTINGS_FILE = path.join(SETTINGS_DIR, 'appearance-settings.json');
@@ -29,7 +30,7 @@ async function ensureSettingsFile() {
 }
 
 // GET - Fetch appearance settings
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     await ensureSettingsFile();
     
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT - Update appearance settings
-export async function PUT(request: NextRequest) {
+async function handlePut(request: NextRequest) {
   try {
     const body = await request.json();
     
@@ -94,3 +95,6 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR', 'STUDENT']);
+export const PUT = withAuth(withRateLimit(handlePut, 'moderate'), ['ADMIN', 'FACILITATOR', 'STUDENT']);

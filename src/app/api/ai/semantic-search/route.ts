@@ -1,10 +1,11 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { searchDocuments, SearchResult } from '@/lib/ai/pinecone';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
         } = body;
 
         if (!query || typeof query !== 'string') {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Query is required' },
                 { status: 400 }
             );
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const query = searchParams.get('q') || '';
@@ -101,3 +102,6 @@ export async function GET(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);

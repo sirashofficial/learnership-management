@@ -3,8 +3,11 @@ import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { updateStudentSchema } from '@/lib/validations';
 import { requireAuth } from '@/lib/middleware';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit, withValidation } from '@/middleware/apiAuth';
+import { softDelete } from '@/lib/softDelete';
+import { emitEvent } from '@/lib/events/eventBus';
 // GET /api/students/[id] - Get single student
-export async function GET(
+async function getStudentHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -31,6 +34,10 @@ export async function GET(
       return errorResponse('Student not found', 404);
     }
 
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(student.groupId, authContext);
+    if (accessError) return accessError;
+
     return successResponse(student);
   } catch (error) {
     return handleApiError(error);
@@ -38,7 +45,7 @@ export async function GET(
 }
 
 // PUT /api/students/[id] - Update student
-export async function PUT(
+async function updateStudentHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -48,6 +55,10 @@ export async function PUT(
 
     const body = await request.json();
     const validatedData = updateStudentSchema.parse(body);
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(validatedData.groupId, authContext);
+    if (accessError) return accessError;
 
     const student = await prisma.student.update({
       where: { id: params.id },
@@ -71,6 +82,20 @@ export async function PUT(
       },
     });
 
+    // Emit event for cache invalidation (event-driven updates)
+    // This triggers cache invalidation across all affected endpoints:
+    // - /api/students/* (student lists and details)
+    // - /api/groups/{groupId} (group member lists)
+    // - /api/dashboard/* (dashboard stats)
+    emitEvent('student:updated', {
+      studentId: student.id,
+      groupId: student.groupId || undefined,
+      action: 'updated',
+      firstName: student.firstName,
+      lastName: student.lastName,
+      email: student.email || undefined,
+    });
+
     return successResponse(student, 'Student updated successfully');
   } catch (error) {
     return handleApiError(error);
@@ -78,17 +103,44 @@ export async function PUT(
 }
 
 // DELETE /api/students/[id] - Delete student
-export async function DELETE(
+async function deleteStudentHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.student.delete({
+    const student = await prisma.student.findUnique({
       where: { id: params.id },
+      select: { groupId: true },
     });
 
-    return successResponse(null, 'Student deleted successfully');
+    if (!student) {
+      return errorResponse('Student not found', 404);
+    }
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(student.groupId, authContext);
+    if (accessError) return accessError;
+
+    // Soft delete the student
+    await softDelete('student', params.id);
+
+    // Emit event for cache invalidation (event-driven updates)
+    // This triggers cache invalidation on student deletion
+    emitEvent('student:updated', {
+      studentId: params.id,
+      groupId: student.groupId || undefined,
+      action: 'deleted',
+    });
+
+    return successResponse(null, 'Student archived successfully. Can be restored within 30 days.');
   } catch (error) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getStudentHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(
+  withRateLimit(withValidation(updateStudentHandler, updateStudentSchema), 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);
+export const DELETE = withAuth(withRateLimit(deleteStudentHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

@@ -1,6 +1,13 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+
+function getResend() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 interface ReminderEmailParams {
   to: string;
@@ -56,7 +63,13 @@ export async function sendReminderEmail(params: ReminderEmailParams) {
   `;
 
   try {
-    const result = await resend.emails.send({
+    const client = getResend();
+    if (!client) {
+      console.warn('Resend API not configured. Email not sent.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    const result = await client.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'noreply@learnership.com',
       to,
       subject: `Reminder: ${reminderTitle}`,
@@ -106,4 +119,61 @@ export async function sendPendingReminderEmails(
   }
 
   return results;
+}
+
+interface DataIntegrityAlertParams {
+  to: string[];
+  criticalCount: number;
+  warningCount: number;
+  issues: Array<{ description: string; severity: string }>;
+  dashboardUrl: string;
+}
+
+export async function sendDataIntegrityAlert(params: DataIntegrityAlertParams) {
+  const { to, criticalCount, warningCount, issues, dashboardUrl } = params;
+
+  const issueList = issues
+    .slice(0, 10)
+    .map((issue) => `<li><strong>${issue.severity.toUpperCase()}:</strong> ${issue.description}</li>`)
+    .join('');
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #0f172a; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Data Integrity Alert</h2>
+      </div>
+      <div style="padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px;">
+        <p style="margin: 0 0 12px 0;">
+          Critical issues: <strong>${criticalCount}</strong><br />
+          Warnings: <strong>${warningCount}</strong>
+        </p>
+        <ul style="padding-left: 18px; margin: 0 0 16px 0;">
+          ${issueList || '<li>No detailed issues available.</li>'}
+        </ul>
+        <a href="${dashboardUrl}" style="display: inline-block; background: #0f766e; color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+          Review Data Health
+        </a>
+      </div>
+    </div>
+  `;
+
+  try {
+    const client = getResend();
+    if (!client) {
+      console.warn('Resend API not configured. Email not sent.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    const result = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@learnership.com',
+      to,
+      subject: 'Data Integrity Alert',
+      html: htmlContent,
+    });
+
+    return { success: true, messageId: result.data?.id || 'sent' };
+  } catch (error) {
+    console.error('Error sending data integrity alert:', error);
+    throw error;
+  }
 }

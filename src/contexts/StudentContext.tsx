@@ -92,9 +92,8 @@ interface StudentContextType {
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
 const fetcher = (url: string) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   return fetch(url, {
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    credentials: 'include',
   }).then((res) => res.json()).then((data) => {
     // Transform data to include computed name field
     const students = (data.data || data || []).map((student: any) => ({
@@ -115,7 +114,6 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
   const addStudent = async (studentData: any) => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
       const currentUser = userStr ? JSON.parse(userStr) : null;
 
@@ -133,13 +131,11 @@ export function StudentProvider({ children }: { children: ReactNode }) {
         progress: studentData.progress || 0,
       };
 
-
-
       const response = await fetch('/api/students', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify(apiData),
       });
@@ -162,7 +158,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       mutate('/api/dashboard/stats');
       
       // Refresh groups (student count changes) and group progress
-      globalMutate('/api/groups');
+      globalMutate('/api/data/groups');
       globalMutate('/api/groups/progress');
       globalMutate('/api/dashboard/alerts');
     } catch (error) {
@@ -173,13 +169,11 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
   const updateStudent = async (id: string, updates: Partial<Student>) => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
       const response = await fetch(`/api/students/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify(updates),
       });
@@ -190,7 +184,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       mutate('/api/dashboard/stats');
       
       // Refresh groups and group progress
-      globalMutate('/api/groups');
+      globalMutate('/api/data/groups');
       globalMutate('/api/groups/progress');
       globalMutate('/api/dashboard/alerts');
     } catch (error) {
@@ -201,11 +195,9 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
   const deleteStudent = async (id: string) => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
       const response = await fetch(`/api/students/${id}`, {
         method: 'DELETE',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Failed to delete student');
@@ -214,7 +206,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       mutate('/api/dashboard/stats');
       
       // Refresh groups and group progress
-      globalMutate('/api/groups');
+      globalMutate('/api/data/groups');
       globalMutate('/api/groups/progress');
       globalMutate('/api/dashboard/alerts');
     } catch (error) {

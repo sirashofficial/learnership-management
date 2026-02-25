@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import mammoth from 'mammoth';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // @ts-ignore
 const pdf = require('pdf-parse');
@@ -122,7 +123,7 @@ function organizeUnitsByModule(unitStandards: any[]): Map<number, any[]> {
     return moduleMap;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const formData = await request.formData();
         const file = formData.get('file') as File;
@@ -311,3 +312,5 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

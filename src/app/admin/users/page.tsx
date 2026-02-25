@@ -52,7 +52,7 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!confirm('Archive this user?\n\nThis user will be archived and can be restored within 30 days. After 30 days, the user will be permanently deleted.')) return;
 
     try {
       const response = await fetch(`/api/users/${userId}`, {
@@ -64,11 +64,11 @@ export default function AdminUsersPage() {
         fetchUsers();
       } else {
         const data = await response.json();
-        alert(data.error || 'Failed to delete user');
+        alert(data.error || 'Failed to archive user');
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Failed to delete user');
+      console.error('Error archiving user:', error);
+      alert('Failed to archive user');
     }
   };
 

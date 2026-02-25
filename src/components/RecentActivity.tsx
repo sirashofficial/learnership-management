@@ -49,27 +49,34 @@ export default function RecentActivity() {
           </div>
         ) : (
           <div className="space-y-1">
-            {activities.map((activity: any) => (
-              <div
-                key={activity.id}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors duration-150"
-              >
-                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-slate-500" />
+            {(Array.isArray(activities) ? activities : []).map((activity: any) => {
+              // Safety check: ensure activity is an object with id
+              if (!activity || typeof activity !== 'object' || !('id' in activity)) {
+                return null;
+              }
+              
+              return (
+                <div
+                  key={activity.id}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors duration-150"
+                >
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {String(activity.data?.studentName || activity.title || 'Student')}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {String(activity.data?.groupName || 'New enrollment')}
+                    </p>
+                  </div>
+                  <span className="text-xs text-slate-400 flex-shrink-0">
+                    {formatTimestamp(activity.timestamp)}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">
-                    {activity.data?.studentName || activity.title || 'Student'}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {activity.data?.groupName || 'New enrollment'}
-                  </p>
-                </div>
-                <span className="text-xs text-slate-400 flex-shrink-0">
-                  {formatTimestamp(activity.timestamp)}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

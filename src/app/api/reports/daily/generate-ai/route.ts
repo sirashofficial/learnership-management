@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchDocuments } from '@/lib/ai/pinecone';
 import { chatWithContext } from '@/lib/ai/cohere';
 import { handleApiError, successResponse } from '@/lib/api-utils';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
+async function generateDailyReportHandler(request: NextRequest) {
     try {
         const body = await request.json();
         const {
@@ -23,6 +24,14 @@ export async function POST(request: NextRequest) {
                 { success: false, error: 'Group IDs array is required' },
                 { status: 400 }
             );
+        }
+
+        const authContext = getAuthContext(request);
+        if (authContext?.user.role === 'FACILITATOR') {
+            for (const groupId of groupIds) {
+                const accessError = enforceGroupAccess(groupId, authContext);
+                if (accessError) return accessError;
+            }
         }
 
         // 1. Search for the Exemplar in Pinecone
@@ -111,3 +120,5 @@ Generate a report with clear sections for each group, reflecting their specific 
         return handleApiError(error);
     }
 }
+
+export const POST = withAuth(withRateLimit(generateDailyReportHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

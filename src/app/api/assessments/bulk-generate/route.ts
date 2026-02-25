@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 /**
  * POST /api/assessments/bulk-generate
  * Generate all required assessments for a student
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const { studentId } = body;
@@ -104,3 +105,8 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export const POST = withAuth(
+  withRateLimit(handlePost, 'strict'),
+  ['ADMIN', 'FACILITATOR']
+);

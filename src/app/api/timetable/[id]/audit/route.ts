@@ -1,8 +1,10 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
+
+async function handleGet(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  return Response.json({ data: [] });
+  return NextResponse.json({ data: [] });
 }

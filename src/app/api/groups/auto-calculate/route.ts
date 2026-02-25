@@ -3,8 +3,9 @@ import { NextRequest } from 'next/server';
 import { successResponse, handleApiError, errorResponse } from '@/lib/api-utils';
 import { format } from 'date-fns';
 import { calculateDetailedRolloutPlan } from '@/lib/rolloutUtils';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const { groupName, numberOfLearners, startDate, inductionDate } = body;
@@ -91,3 +92,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'moderate'), ['ADMIN', 'FACILITATOR']);

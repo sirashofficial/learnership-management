@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 import { addMinutes } from 'date-fns';
+import { emitEvent } from '@/lib/events/eventBus';
 
 // POST /api/attendance/bulk - Mark attendance for multiple students
 // Supports two body formats:
 //   1. Per-student: { records: [{ studentId, groupId, date, status, notes }], sessionType }
 //   2. Same-status: { studentIds, sessionId, groupId, date, status, markedBy, notes }
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   // Extract authenticated user (best-effort — bulk also works unauthenticated)
-  let authUserId = 'system';
-  try {
-    const authResult = await requireAuth(request);
-    if (!(authResult instanceof NextResponse)) authUserId = (authResult as any).userId ?? 'system';
-  } catch {}
+  const authUserId = 'system';
   try {
     const body = await request.json();
 
@@ -87,6 +84,21 @@ export async function POST(request: NextRequest) {
         undoId = undo.id;
       } catch {}
 
+      // Emit event for cache invalidation (event-driven updates)
+      // This triggers cache invalidation across all affected endpoints:
+      // - /api/attendance/* (all attendance records)
+      // - /api/groups/{groupId} (group attendance rates)
+      // - /api/dashboard/* (dashboard stats and alerts)
+      const firstRecord = records[0];
+      const dateStr = firstRecord.date;
+      emitEvent('attendance:bulk-marked', {
+        groupId: firstRecord.groupId || undefined,
+        date: dateStr,
+        count: savedRecords.length,
+        recordIds: savedRecords.map((r) => r.id),
+        status: (firstRecord.status as 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'),
+      });
+
       return successResponse(
         { count: savedRecords.length, undoId },
         `Marked attendance for ${savedRecords.length} students`
@@ -133,6 +145,15 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    // Emit event for cache invalidation (event-driven updates)
+    emitEvent('attendance:bulk-marked', {
+      groupId: groupId || undefined,
+      date: new Date(attendanceDate).toISOString(),
+      count: attendanceRecords.length,
+      recordIds: attendanceRecords.map((r) => r.id),
+      status: (status as 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'),
+    });
+
     return successResponse(attendanceRecords, `Marked ${attendanceRecords.length} students as ${status}`);
   } catch (error) {
     return handleApiError(error);
@@ -140,7 +161,7 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT /api/attendance/bulk - Copy attendance from a previous session
-export async function PUT(request: NextRequest) {
+async function handlePut(request: NextRequest) {
   try {
     const body = await request.json();
     const { sourceDate, targetDate, groupId } = body;
@@ -183,3 +204,6 @@ export async function PUT(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(withRateLimit(handlePut, 'strict'), ['ADMIN', 'FACILITATOR']);

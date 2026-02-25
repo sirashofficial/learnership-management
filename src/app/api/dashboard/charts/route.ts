@@ -2,13 +2,28 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function getChartsHandler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const timeRange = searchParams.get('range') || '30'; // days: 7, 30, 90, all
+
+    const authContext = getAuthContext(request);
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {};
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return successResponse({
+        attendanceTrend: [],
+        groupDistribution: [],
+        courseProgress: [],
+        timeRange: timeRange === 'all' ? 365 : parseInt(timeRange)
+      });
+    }
     
     const now = new Date();
     const daysAgo = timeRange === 'all' ? 365 : parseInt(timeRange);
@@ -18,6 +33,9 @@ export async function GET(request: NextRequest) {
     const attendanceData = await prisma.attendance.findMany({
       where: {
         date: { gte: startDate },
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { groupId: { in: authContext.allowedGroupIds } }
+          : {})
       },
       select: {
         date: true,
@@ -49,7 +67,12 @@ export async function GET(request: NextRequest) {
 
     // 2. Group Distribution Chart Data (Pie Chart)
     const groupsWithCounts = await prisma.group.findMany({
-      where: { status: 'ACTIVE' },
+      where: {
+        status: 'ACTIVE',
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { id: { in: authContext.allowedGroupIds } }
+          : {})
+      },
       include: {
         _count: {
           select: { students: true },
@@ -88,6 +111,9 @@ export async function GET(request: NextRequest) {
           where: {
             student: {
               status: 'ACTIVE',
+              ...(authContext?.user.role === 'FACILITATOR'
+                ? { groupId: { in: authContext.allowedGroupIds } }
+                : {})
             },
           },
         },
@@ -137,3 +163,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getChartsHandler, 'generous'), ['ADMIN', 'FACILITATOR']);

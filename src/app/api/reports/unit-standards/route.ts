@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // Get unit standards report with multi-group and multi-module selection
-export async function POST(request: NextRequest) {
+async function createUnitStandardsReportHandler(request: NextRequest) {
   try {
     const body = await request.json();
     const { groupIds = [], moduleIds = [] } = body;
@@ -12,6 +13,14 @@ export async function POST(request: NextRequest) {
         { error: 'Please select at least one group and one module' },
         { status: 400 }
       );
+    }
+
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR') {
+      for (const groupId of groupIds) {
+        const accessError = enforceGroupAccess(groupId, authContext);
+        if (accessError) return accessError;
+      }
     }
 
     // Fetch selected groups
@@ -137,15 +146,20 @@ export async function POST(request: NextRequest) {
 }
 
 // Get available groups and modules for selection
-export async function GET(request: NextRequest) {
+async function getUnitStandardsOptionsHandler(request: NextRequest) {
   try {
+    const authContext = getAuthContext(request);
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { id: { in: authContext.allowedGroupIds } }
+      : {};
+
     const groups = await prisma.group.findMany({
       select: {
         id: true,
         name: true,
         _count: { select: { students: true } }
       },
-      where: { status: 'ACTIVE' }
+      where: { status: 'ACTIVE', ...groupFilter }
     });
 
     const modules = await prisma.module.findMany({
@@ -184,3 +198,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAuth(withRateLimit(createUnitStandardsReportHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const GET = withAuth(withRateLimit(getUnitStandardsOptionsHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

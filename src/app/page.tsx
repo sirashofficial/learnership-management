@@ -21,10 +21,12 @@ import { useDashboardLite } from '@/hooks/useSummaryAPIs';
 import { Users, Building2, Calendar, BookOpen, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, X, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import AlertZone from '@/components/AlertZone';
+import DataHealthWidget from '@/components/DataHealthWidget';
 import KanbanView from '@/components/views/KanbanView';
 import TimelineView from '@/components/views/TimelineView';
 import AnalyticsView from '@/components/views/AnalyticsView';
 import CollaborationView from '@/components/views/CollaborationView';
+import ErrorCatcher from '@/components/ErrorCatcher';
 import { calculatePerformanceStatus } from '@/lib/statusUtils';
 import { PlanStatus } from '@/types/rollout';
 
@@ -174,37 +176,28 @@ const getModuleLabel = (group: any) => {
 
 // Render programme health status badge using unified logic
 const renderProgrammeStatus = (attendanceRate: number, hasPlan: boolean, group: any) => {
-  try {
-    // DEFENSIVE: Ensure healthStatus is a string before using it
-    const healthStatus = String(group?.healthStatus || '').trim();
-    
-    if (healthStatus && ['ON_TRACK', 'BEHIND', 'AT_RISK', 'OVERDUE', 'COMPLETE', 'NOT_STARTED'].includes(healthStatus)) {
-      return renderStatusBadge(healthStatus as PlanStatus);
-    }
-
-    // Fallback to calculation if status is missing (legacy compatibility)
-    const status = calculatePerformanceStatus(
-      80,
-      typeof attendanceRate === 'number' ? attendanceRate : 0,
-      hasPlan === true,
-      typeof attendanceRate === 'number' ? attendanceRate : 0,
-      0,
-      0,
-      'ON_TRACK'
-    );
-
-    return renderStatusBadge(status);
-  } catch (error) {
-    console.error('Error in renderProgrammeStatus:', error);
-    return renderStatusBadge('ON_TRACK');
+  // Use pre-calculated status from context/API if available
+  if (group.healthStatus) {
+    return renderStatusBadge(group.healthStatus as PlanStatus);
   }
+
+  // Fallback to calculation if status is missing (legacy compatibility)
+  const status = calculatePerformanceStatus(
+    80,
+    attendanceRate,
+    hasPlan,
+    attendanceRate,
+    0,
+    0,
+    'ON_TRACK'
+  );
+
+  return renderStatusBadge(status);
 };
 
 // Helper to render the actual badge UI
-const renderStatusBadge = (status: PlanStatus | string) => {
-  const safeStatus = String(status || 'ON_TRACK').toUpperCase();
-  
-  switch (safeStatus) {
+const renderStatusBadge = (status: PlanStatus) => {
+  switch (status) {
     case 'ON_TRACK':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
@@ -284,16 +277,19 @@ export default function DashboardPage() {
 
   // Use lightweight API data for faster loading - fallback to old API if needed
   // CRITICAL: Ensure only primitives are passed, never objects
-  const totalStudents = typeof dashboardLite?.totalStudents === 'number' 
-    ? dashboardLite.totalStudents 
-    : typeof dashboardStats?.totalStudents?.value === 'number'
-      ? dashboardStats.totalStudents.value
-      : 0;
-  const totalGroups = typeof dashboardLite?.totalGroups === 'number'
-    ? dashboardLite.totalGroups
-    : typeof dashboardStats?.totalGroups?.value === 'number'
-      ? dashboardStats.totalGroups.value
-      : 0;
+  const totalStudents = (() => {
+    if (typeof dashboardLite?.totalStudents === 'number') return dashboardLite.totalStudents;
+    if (typeof dashboardStats?.totalStudents?.value === 'number') return dashboardStats.totalStudents.value;
+    if (typeof dashboardStats?.totalStudents === 'number') return dashboardStats.totalStudents;
+    return 0;
+  })();
+  
+  const totalGroups = (() => {
+    if (typeof dashboardLite?.totalGroups === 'number') return dashboardLite.totalGroups;
+    if (typeof dashboardStats?.totalGroups?.value === 'number') return dashboardStats.totalGroups.value;
+    if (typeof dashboardStats?.totalGroups === 'number') return dashboardStats.totalGroups;
+    return 0;
+  })();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -307,7 +303,7 @@ export default function DashboardPage() {
       console.log('Already fetching, skipping...');
       return;
     }
-    
+
     isFetchingRef.current = true;
     try {
       // Use unified endpoint (single source of truth)
@@ -376,8 +372,8 @@ export default function DashboardPage() {
 
 
   // Memoize group IDs to avoid infinite loops
-  const groupIds = useMemo(() => 
-    groups?.map((g: any) => g.id).join(',') || '', 
+  const groupIds = useMemo(() =>
+    groups?.map((g: any) => g.id).join(',') || '',
     [groups]
   );
 
@@ -419,7 +415,20 @@ export default function DashboardPage() {
       revalidateOnFocus: true // Refresh when user returns to tab
     }
   );
-  const alerts = alertsData?.data?.alerts || [];
+  
+  // Safely extract alerts array and ensure primitives
+  const alerts = useMemo(() => {
+    try {
+      const rawAlerts = alertsData?.data?.alerts || [];
+      // Ensure all alerts have proper string properties
+      return Array.isArray(rawAlerts) ? rawAlerts.filter((alert: any) => 
+        alert && typeof alert === 'object' && 'id' in alert
+      ) : [];
+    } catch (error) {
+      console.error('Error processing alerts:', error);
+      return [];
+    }
+  }, [alertsData]);
 
   const { data: attendanceData } = useSWR(
     shouldLoad && selectedDay ? `/api/attendance?date=${format(selectedDay, 'yyyy-MM-dd')}` : null,
@@ -559,6 +568,11 @@ export default function DashboardPage() {
             {/* Quick Actions */}
             <QuickActions />
 
+            {/* Data Health */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DataHealthWidget />
+            </div>
+
             {/* PROGRAMME HEALTH TABLE - Pulls from Groups context (same source as Groups page) */}
             <div className="dashboard-card p-6">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">Programme Health</h3>
@@ -580,57 +594,109 @@ export default function DashboardPage() {
                 />
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-700">
-                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Group</th>
-                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Learners</th>
-                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Attendance</th>
-                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Module</th>
-                        <th className="text-left font-semibold text-slate-700 dark:text-slate-300 pb-3 px-3">Status</th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Group Name
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Learners
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Attendance
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Current Module
+                        </th>
+                        <th className="text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider pb-3 px-3">
+                          Status
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                      {!Array.isArray(groups) || groups.filter(g => g && g.status && ['ACTIVE', 'PLANNING'].includes(String(g.status))).length === 0 ? (
+                      {groups.filter(g => g.status === 'ACTIVE' || g.status === 'PLANNING').length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="py-4 px-3 text-center text-slate-500">No active groups</td>
+                          <td colSpan={5} className="py-4 px-3 text-center text-sm text-slate-500">
+                            No active groups
+                          </td>
                         </tr>
                       ) : (
-                        groups
-                          .filter(g => g && g.status && ['ACTIVE', 'PLANNING'].includes(String(g.status)))
-                          .map((group, index) => {
-                            if (!group || typeof group !== 'object')  return null;
+                        groups.filter(g => g.status === 'ACTIVE' || g.status === 'PLANNING').map((group, index) => {
+                          // Helper: Parse group.notes to extract rollout plan structure
+                          const parseGroupRolloutPlan = (notes: string | null | undefined) => {
+                            if (!notes) return null;
                             try {
-                              // DEFENSIVE: Everything converted to primitives before rendering
-                              const gId = String(group.id || '');
-                              const gName = String(group.name || 'Unnamed');
-                              const  gCount = String((group._count?.students ?? group.students?.length ?? 0) || '0');
-                              const gAttendance = String((typeof group.attendanceRate === 'number' ? group.attendanceRate : 0) || '0');
-                              const gModule = String(getModuleLabel(group) || 'No Plan');
-                              const gStatus = String(group.healthStatus || 'On Track');
-
-                              return (
-                                <tr key={gId} className={index % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800/30'}>
-                                  <td className="py-3 px-3">
-                                    <a href={`/groups/${gId}`} className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
-                                      {gName}
-                                    </a>
-                                  </td>
-                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gCount} Learners</td>
-                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gAttendance}%</td>
-                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gModule}</td>
-                                  <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{gStatus}</td>
-                                </tr>
-                              );
-                            } catch (e) {
-                              console.error('Group row error:', e);
-                              return (
-                                <tr key={String(group?.id || 'err')}>
-                                  <td colSpan={5} className="py-3 px-3 text-red-600">Error rendering group</td>
-                                </tr>
-                              );
+                              const parsed = JSON.parse(notes);
+                              return parsed?.rolloutPlan || null;
+                            } catch (error) {
+                              console.warn(`Failed to parse notes for group ${group.id}:`, error);
+                              return null;
                             }
-                          })
+                          };
+
+                          // DEFENSIVE: Ensure all values are primitives
+                          const learnerCount = typeof group._count?.students === 'number' ? group._count.students : typeof group.students?.length === 'number' ? group.students.length : 0;
+                          const rawAttendance = group.attendanceRate ?? group.attendanceRate ?? 0;
+                          const attendance = typeof rawAttendance === 'number' ? rawAttendance : 0;
+                          const totalRecorded = typeof group.totalRecorded === 'number' ? group.totalRecorded : 0;
+
+                          const hasPlan = Boolean(group.unitStandardRollouts?.length);
+
+                          // Use the refined module label logic
+                          const moduleLabel = String(getModuleLabel(group) || 'No Plan');
+
+                          return (
+                            <tr
+                              key={group.id}
+                              className={`transition-colors ${index % 2 === 0
+                                ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                }`}
+                            >
+                              <td className="py-4 px-3">
+                                <Link
+                                  href={`/groups/${group.id}`}
+                                  className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors text-sm"
+                                >
+                                  {formatGroupNameDisplay(group.name || '')}
+                                </Link>
+                              </td>
+                              <td className="py-4 px-3">
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                                    {typeof learnerCount === 'number' ? learnerCount : 0} Learners
+                                  </span>
+                                  {group.actualProgress && typeof group.actualProgress.atRiskCount === 'number' && group.actualProgress.atRiskCount > 0 && (
+                                    <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
+                                      <AlertTriangle className="w-2.5 h-2.5" />
+                                      {group.actualProgress.atRiskCount} At Risk
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-4 px-3">
+                                {typeof attendance === 'number' && attendance === 0 && (typeof totalRecorded === 'number' && totalRecorded === 0 || !totalRecorded) ? (
+                                  <span className="text-sm text-slate-400">—</span>
+                                ) : typeof attendance === 'number' && attendance === 0 ? (
+                                  <span className="text-sm font-semibold text-rose-500">0%</span>
+                                ) : typeof attendance === 'number' ? (
+                                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{attendance.toFixed(0)}%</span>
+                                ) : (
+                                  <span className="text-sm text-slate-400">—</span>
+                                )}
+                              </td>
+                              <td className="py-4 px-3">
+                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                                  {typeof moduleLabel === 'string' ? moduleLabel : 'No Plan'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-3">
+                                {typeof attendance === 'number' && Boolean(hasPlan) ? renderProgrammeStatus(attendance, hasPlan, group) : renderProgrammeStatus(0, false, group)}
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -671,34 +737,36 @@ export default function DashboardPage() {
   };
 
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onViewChange={setCurrentView}
-      alertSidebar={<AlertZone />}
-    >
-      {renderMainContent()}
+    <ErrorCatcher>
+      <DashboardLayout
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        alertSidebar={<AlertZone />}
+      >
+        {renderMainContent()}
 
-      {attendanceSession && (
-        <SessionAttendanceModal
-          isOpen={Boolean(attendanceSession)}
-          session={{
-            id: attendanceSession.id,
-            date: attendanceSession.date,
-            groupId: attendanceSession.groupId,
-            groupName: attendanceSession.group?.name,
-          }}
-          onClose={() => setAttendanceSession(null)}
-          onSaved={(summary) => {
-            showToast(
-              `Attendance saved for ${formatGroupNameDisplay(attendanceSession.group?.name || 'group')} — ${summary.present} present, ${summary.absent} absent`,
-              'success'
-            );
-            setAttendanceSession(null);
-          }}
-        />
-      )}
+        {attendanceSession && (
+          <SessionAttendanceModal
+            isOpen={Boolean(attendanceSession)}
+            session={{
+              id: attendanceSession.id,
+              date: attendanceSession.date,
+              groupId: attendanceSession.groupId,
+              groupName: attendanceSession.group?.name,
+            }}
+            onClose={() => setAttendanceSession(null)}
+            onSaved={(summary) => {
+              showToast(
+                `Attendance saved for ${formatGroupNameDisplay(attendanceSession.group?.name || 'group')} — ${summary.present} present, ${summary.absent} absent`,
+                'success'
+              );
+              setAttendanceSession(null);
+            }}
+          />
+        )}
 
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-    </DashboardLayout>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+      </DashboardLayout>
+    </ErrorCatcher>
   );
 }

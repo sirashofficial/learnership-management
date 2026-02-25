@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +10,8 @@ export const dynamic = 'force-dynamic';
  * Identifies and removes duplicate assessments (same student, unit standard, and type)
  * Keeps the most recent assessment and deletes older duplicates
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { dryRun = false } = body;
@@ -89,3 +87,5 @@ export async function POST(request: NextRequest) {
     return errorResponse('Failed to fix duplicate assessments', 500);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN']);

@@ -1,17 +1,15 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 import { enrichRolloutPlanWithStatus } from '@/lib/rollout-status';
 
 // PATCH /api/rollout/[planId] — update actual dates and status for a rollout plan entry
-export async function PATCH(
+async function handlePatch(
   request: NextRequest,
   { params }: { params: { planId: string } }
 ) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     const { planId } = params;
     const body = await request.json();
@@ -60,13 +58,11 @@ export async function PATCH(
 }
 
 // DELETE /api/rollout/[planId] — delete a rollout plan entry
-export async function DELETE(
+async function handleDelete(
   request: NextRequest,
   { params }: { params: { planId: string } }
 ) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     await prisma.rolloutPlan.delete({ where: { id: params.planId } });
     return successResponse(null, 'Rollout plan entry deleted');
@@ -74,3 +70,6 @@ export async function DELETE(
     return handleApiError(error);
   }
 }
+
+export const PATCH = withAuth(withRateLimit(handlePatch, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'strict'), ['ADMIN', 'FACILITATOR']);

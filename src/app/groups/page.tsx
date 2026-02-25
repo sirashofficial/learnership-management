@@ -33,6 +33,7 @@ import {
 import { TOTAL_CREDITS } from '@/lib/constants';
 import { differenceInDays, format, isAfter, isBefore, startOfMonth } from 'date-fns';
 import { formatGroupNameDisplay } from '@/lib/groupName';
+import { invalidateGroups } from '@/lib/cache-invalidation';
 import {
   buildRolloutPlanFromGroupRollout,
   buildRolloutPlanFromUnitRollouts
@@ -144,28 +145,24 @@ const getUnitStandards = (plan: any) => {
 };
 
 const getGroupStudentCount = (group: any) => {
-  try {
-    const students = Array.isArray(group?.students) ? group.students : [];
-    if (students.length > 0) {
-      const keys = new Set<string>();
-      students.forEach((student: any) => {
-        const first = String(student?.firstName || '').trim().toLowerCase();
-        const last = String(student?.lastName || '').trim().toLowerCase();
-        if (first || last) {
-          keys.add(`name:${first} ${last}`.trim());
-          return;
-        }
+  const students = Array.isArray(group?.students) ? group.students : [];
+  if (students.length > 0) {
+    const keys = new Set<string>();
+    students.forEach((student: any) => {
+      const first = String(student?.firstName || '').trim().toLowerCase();
+      const last = String(student?.lastName || '').trim().toLowerCase();
+      if (first || last) {
+        keys.add(`name:${first} ${last}`.trim());
+        return;
+      }
 
-        const id = student?.id || student?.studentId;
-        if (id) keys.add(`id:${id}`);
-      });
-      return keys.size;
-    }
-
-    return group?._count?.students || 0;
-  } catch (e) {
-    return 0;
+      const id = student?.id || student?.studentId;
+      if (id) keys.add(`id:${id}`);
+    });
+    return keys.size;
   }
+
+  return group?._count?.students || 0;
 };
 
 const getUniqueStudentTotal = (groupList: any[]) => {
@@ -295,33 +292,29 @@ const getPlanStatus = (plan: any): PlanStatus => {
 };
 
 const getCurrentModuleLabel = (plan: any) => {
-  try {
-    if (!plan) return 'No Plan';
-    const standards = getUnitStandards(plan);
-    if (standards.length === 0) return 'No Plan';
+  if (!plan) return 'No Plan';
+  const standards = getUnitStandards(plan);
+  if (standards.length === 0) return 'No Plan';
 
-    const today = normalizeDate(new Date());
-    const firstStart = normalizeDate(standards[0].start);
-    const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
-    const planEndDate = getPlanEndDate(plan);
-    const planEnd = planEndDate ? normalizeDate(planEndDate) : null;
-    const completionBoundary = planEnd && planEnd > lastAssess ? planEnd : lastAssess;
+  const today = normalizeDate(new Date());
+  const firstStart = normalizeDate(standards[0].start);
+  const lastAssess = normalizeDate(standards[standards.length - 1].assessing);
+  const planEndDate = getPlanEndDate(plan);
+  const planEnd = planEndDate ? normalizeDate(planEndDate) : null;
+  const completionBoundary = planEnd && planEnd > lastAssess ? planEnd : lastAssess;
 
-    if (today < firstStart) return 'Not Started';
-    if (today > completionBoundary) return 'Complete';
+  if (today < firstStart) return 'Not Started';
+  if (today > completionBoundary) return 'Complete';
 
-    const active = standards.find((unit: any) => {
-      const start = normalizeDate(unit.start);
-      const end = normalizeDate(unit.end);
-      return start <= today && end >= today;
-    });
+  const active = standards.find((unit: any) => {
+    const start = normalizeDate(unit.start);
+    const end = normalizeDate(unit.end);
+    return start <= today && end >= today;
+  });
 
-    if (active) return `Module ${active.moduleNumber}`;
+  if (active) return `Module ${active.moduleNumber}`;
 
-    return 'Between Modules';
-  } catch (e) {
-    return 'No Plan';
-  }
+  return 'Between Modules';
 };
 
 // Module names and credits for the NVC L2 qualification
@@ -477,32 +470,25 @@ const getPerformanceStatus = (
   attendanceRate: number = 0,
   currentAssessmentModule: number = 0
 ): PlanStatus => {
-  try {
-    if (!hasPlan || !plan) return 'NO_PLAN';
+  if (!hasPlan) return 'NO_PLAN';
 
-    const dateStatus = getPlanStatus(plan);
-    const totalModules = plan?.modules?.length ?? 0;
-    const expectedModule = getExpectedModuleFromPlan(plan);
+  const dateStatus = getPlanStatus(plan);
+  const totalModules = plan?.modules?.length ?? 0;
+  const expectedModule = getExpectedModuleFromPlan(plan);
 
-    return calculatePerformanceStatus(
-      projectedPercent,
-      actualPercent,
-      hasPlan,
-      attendanceRate,
-      currentAssessmentModule,
-      expectedModule,
-      dateStatus
-    );
-  } catch (e) {
-    return 'NO_PLAN';
-  }
+  return calculatePerformanceStatus(
+    projectedPercent,
+    actualPercent,
+    hasPlan,
+    attendanceRate,
+    currentAssessmentModule,
+    expectedModule,
+    dateStatus
+  );
 };
 
-const renderStatusBadge = (status: any): JSX.Element => {
-  // DEFENSIVE: Ensure status is a string
-  const safeStatus = typeof status === 'string' ? status : 'NO_PLAN';
-  
-  switch (safeStatus) {
+const renderStatusBadge = (status: PlanStatus) => {
+  switch (status) {
     case 'ON_TRACK':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
@@ -550,7 +536,7 @@ const renderStatusBadge = (status: any): JSX.Element => {
 
 export default function GroupsPage() {
   const router = useRouter();
-  const { groups, isLoading, deleteGroup, invalidateGroups } = useGroups();
+  const { groups, isLoading, deleteGroup } = useGroups();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [checklistGroup, setChecklistGroup] = useState<{ id: string, name: string } | null>(null);
@@ -572,31 +558,35 @@ export default function GroupsPage() {
   } | null>(null);
 
   // Define Collections (Dynamic)
-  // Get all active groups (not archived)
-  const allActiveGroups = (groups || []).filter((g: any) => g.status !== 'ARCHIVED');
-
-  // Show all active groups in collection (don't filter by name pattern)  
   const montzelityCollection = {
-    name: "All Groups",
-    groups: allActiveGroups
+    name: "Montzelity 2026",
+    groups: (groups || []).filter((g: any) => {
+      if (g.status === 'ARCHIVED') return false;
+      const name = String(g.name || '');
+      const normalizedName = name
+        .toLowerCase()
+        .replace('montazility', 'montzelity')
+        .replace('montezility', 'montzelity');
+      return name.includes("26") || name.includes("2026") || normalizedName.includes('montzelity');
+    })
   };
 
-  // All other groups displayed flat (no company grouping) - now empty since all are above
-  const allOtherGroups: any[] = [];
+  // All other groups displayed flat (no company grouping)
+  const allOtherGroups = (groups || []).filter((g: any) =>
+    g.status !== 'ARCHIVED' && !montzelityCollection.groups.some((mg: any) => mg.id === g.id)
+  );
 
   // Filter groups by search
   const filteredCollection = {
     ...montzelityCollection,
-    groups: montzelityCollection.groups.filter((g: any) => {
-      const groupName = String(g?.name || '').toLowerCase();
-      return groupName.includes(searchQuery.toLowerCase());
-    })
+    groups: montzelityCollection.groups.filter((g: any) =>
+      g.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
   };
 
-  const filteredOtherGroups = allOtherGroups.filter((g: any) => {
-    const groupName = String(g?.name || '').toLowerCase();
-    return groupName.includes(searchQuery.toLowerCase());
-  });
+  const filteredOtherGroups = allOtherGroups.filter((g: any) =>
+    g.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     const handleOpenChecklist = (e: any) => {
@@ -613,67 +603,21 @@ export default function GroupsPage() {
     ? activeGroups.reduce((sum: number, g: any) => sum + (g.attendanceRate ?? 0), 0) / activeGroups.length
     : 0;
   const programmeRows = activeGroups.map((group: any) => {
-    try {
-      const storedPlan = resolveRolloutPlan(group);
-      const creditProgress = getCreditCompletion(storedPlan);
-      const actualProgress = group?.actualProgress;
-      const actualPercent = typeof actualProgress?.avgProgressPercent === 'number' ? actualProgress.avgProgressPercent : 0;
-      const groupAttendance = typeof group?.attendanceRate === 'number' ? group.attendanceRate : 0;
-      const currentAssessmentModule = typeof actualProgress?.currentAssessmentModule === 'number' ? actualProgress.currentAssessmentModule : 0;
-      
-      // Safely get status with fallback
-      let status = 'NO_PLAN';
-      try {
-        const computedStatus = getPerformanceStatus(
-          creditProgress.percentage, 
-          actualPercent, 
-          Boolean(storedPlan), 
-          storedPlan, 
-          groupAttendance, 
-          currentAssessmentModule
-        );
-        status = typeof computedStatus === 'string' ? computedStatus : 'NO_PLAN';
-      } catch (e) {
-        status = 'NO_PLAN';
-      }
-      
-      // Safely get student count
-      let learners = 0;
-      try {
-        const count = getGroupStudentCount(group);
-        learners = typeof count === 'number' ? count : 0;
-      } catch (e) {
-        learners = 0;
-      }
-      
-      // Safely get module label
-      let currentModule = 'No Plan';
-      try {
-        const label = getCurrentModuleLabel(storedPlan);
-        currentModule = typeof label === 'string' ? label : 'No Plan';
-      } catch (e) {
-        currentModule = 'No Plan';
-      }
-      
-      return {
-        id: String(group?.id || 'unknown'),
-        name: String(group?.name || 'Unnamed'),
-        learners: Number(learners) || 0,
-        attendance: Number(groupAttendance) || 0,
-        currentModule: String(currentModule),
-        status: String(status),
-      };
-    } catch (err) {
-      // Fallback row for any unmapped group
-      return {
-        id: String(group?.id || 'error'),
-        name: String(group?.name || 'Error'),
-        learners: 0,
-        attendance: 0,
-        currentModule: 'Error',
-        status: 'NO_PLAN',
-      };
-    }
+    const storedPlan = resolveRolloutPlan(group);
+    const creditProgress = getCreditCompletion(storedPlan);
+    const actualProgress = group.actualProgress;
+    const actualPercent = actualProgress?.avgPercent || 0;
+    const groupAttendance = group.attendanceRate;
+    const currentAssessmentModule = actualProgress?.currentAssessmentModule;
+    const status = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(storedPlan), storedPlan, groupAttendance, currentAssessmentModule);
+    return {
+      id: group.id,
+      name: group.name,
+      learners: getGroupStudentCount(group),
+      attendance: group.attendanceRate ?? 0,
+      currentModule: getCurrentModuleLabel(storedPlan),
+      status,
+    };
   });
   const onTrackCount = programmeRows.filter((row) => row.status === 'ON_TRACK').length;
   const behindCount = programmeRows.filter((row) => row.status === 'BEHIND').length;
@@ -924,9 +868,9 @@ export default function GroupsPage() {
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {String(filteredCollection.groups.length)} group{filteredCollection.groups.length !== 1 ? 's' : ''} • {
-                      String(filteredCollection.groups.reduce((sum: number, g: any) => sum + (typeof g?._count?.students === 'number' ? g._count.students : 0), 0))
-                    } student{filteredCollection.groups.reduce((sum: number, g: any) => sum + (typeof g?._count?.students === 'number' ? g._count.students : 0), 0) !== 1 ? 's' : ''}
+                    {filteredCollection.groups.length} group{filteredCollection.groups.length !== 1 ? 's' : ''} • {
+                      filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0)
+                    } student{filteredCollection.groups.reduce((sum: number, g: any) => sum + (g._count?.students || 0), 0) !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
@@ -1121,39 +1065,29 @@ export default function GroupsPage() {
               </thead>
               {/* GROUPS TABLE REDESIGN: Alternating row colors + improved badges */}
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {programmeRows.map((row, index) => {
-                  // Defensive rendering: ensure all row properties are primitives
-                  const safeId = typeof row.id === 'string' ? row.id : String(row.id || 'unknown');
-                  const safeName = typeof row.name === 'string' ? row.name : String(row.name || '');
-                  const safeLearners = typeof row.learners === 'number' ? row.learners : Number(row.learners) || 0;
-                  const safeAttendance = typeof row.attendance === 'number' ? row.attendance : Number(row.attendance) || 0;
-                  const safeModule = typeof row.currentModule === 'string' ? row.currentModule : String(row.currentModule || 'No Plan');
-                  const safeStatus = typeof row.status === 'string' ? row.status : String(row.status || 'NO_PLAN');
-                  
-                  return (
-                    <tr
-                      key={safeId}
-                      className={`transition-colors ${index % 2 === 0
-                        ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                        : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{formatGroupNameDisplay(safeName)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{String(safeLearners)}</td>
-                      {/* ATTENDANCE COLUMN REDESIGN: Show "No data" instead of 0% */}
-                      <td className="px-4 py-3 text-sm">
-                        {safeAttendance === 0 || safeAttendance === undefined ? (
-                          <span className="text-slate-400 dark:text-slate-500 text-xs">No data</span>
-                        ) : (
-                          <span className="text-slate-600 dark:text-slate-400 font-semibold">{safeAttendance.toFixed(0)}%</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{String(safeModule)}</td>
-                      {/* STATUS BADGES: Solid colored pills with proper styling */}
-                      <td className="px-4 py-3 text-sm">{renderStatusBadge(safeStatus)}</td>
-                    </tr>
-                  );
-                })}
+                {programmeRows.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    className={`transition-colors ${index % 2 === 0
+                      ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      : 'bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{formatGroupNameDisplay(row.name || '')}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{row.learners}</td>
+                    {/* ATTENDANCE COLUMN REDESIGN: Show "No data" instead of 0% */}
+                    <td className="px-4 py-3 text-sm">
+                      {row.attendance === 0 || row.attendance === undefined ? (
+                        <span className="text-slate-400 dark:text-slate-500 text-xs">No data</span>
+                      ) : (
+                        <span className="text-slate-600 dark:text-slate-400 font-semibold">{row.attendance.toFixed(0)}%</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{row.currentModule}</td>
+                    {/* STATUS BADGES: Solid colored pills with proper styling */}
+                    <td className="px-4 py-3 text-sm">{renderStatusBadge(row.status)}</td>
+                  </tr>
+                ))}
                 {programmeRows.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -1296,6 +1230,22 @@ interface GroupCardProps {
 
 function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, onQuickView, isSelected, onSelect, actualProgress }: GroupCardProps) {
   const router = useRouter();
+  const studentCount = getGroupStudentCount(group);
+  const attendanceRate = group.attendanceRate || 0;
+  const displayName = formatGroupNameDisplay(group.name || '');
+
+  // Extract rollout plan from notes
+  const rolloutPlan = resolveRolloutPlan(group);
+  const rolloutStartDate = getPlanStartDate(rolloutPlan, group.startDate);
+  const rolloutEndDate = getPlanEndDate(rolloutPlan, group.endDate);
+  const hasLegacyRolloutPlan = Boolean(group?.rolloutPlan);
+
+  // Get current module info and credit completion
+  const currentModule = getCurrentModuleInfo(rolloutPlan);
+  const creditProgress = getCreditCompletion(rolloutPlan);
+  const resolvedActualProgress = actualProgress || group.actualProgress;
+  const actualPercent = resolvedActualProgress?.avgPercent || 0;
+  const performanceStatus = getPerformanceStatus(creditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
 
   const handleExportReport = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1320,87 +1270,47 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
     }
   };
 
-  try {
-    // DEFENSIVE: Validate group is an object with required properties
-    if (!group || typeof group !== 'object') {
-      return (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">Invalid group data</p>
-        </div>
-      );
-    }
-
-    const studentCount = getGroupStudentCount(group);
-    const attendanceRate = typeof group.attendanceRate === 'number' ? group.attendanceRate : 0;
-    const displayName = formatGroupNameDisplay(String(group.name || 'Unnamed'));
-
-    // Extract rollout plan from notes
-    const rolloutPlan = resolveRolloutPlan(group);
-    const rolloutStartDate = getPlanStartDate(rolloutPlan, group.startDate);
-    const rolloutEndDate = getPlanEndDate(rolloutPlan, group.endDate);
-    const hasLegacyRolloutPlan = Boolean(group?.rolloutPlan);
-
-    // Get current module info and credit completion
-    const currentModule = getCurrentModuleInfo(rolloutPlan);
-    // DEFENSIVE: Ensure currentModule is safe
-    const safeCurrentModule = (currentModule && typeof currentModule === 'object' && typeof currentModule.label === 'string') 
-      ? currentModule 
-      : { label: '', moduleNumber: null };
-    
-    const creditProgress = getCreditCompletion(rolloutPlan);
-    // DEFENSIVE: Ensure creditProgress is safe
-    const safeCreditProgress = (creditProgress && typeof creditProgress === 'object' && typeof creditProgress.percentage === 'number' && typeof creditProgress.completed === 'number')
-      ? creditProgress
-      : { percentage: 0, completed: 0 };
-    
-    const resolvedActualProgress = actualProgress || group.actualProgress;
-    const actualPercent = typeof resolvedActualProgress?.avgPercent === 'number' ? resolvedActualProgress.avgPercent : 0;
-    const performanceStatus = getPerformanceStatus(safeCreditProgress.percentage, actualPercent, Boolean(rolloutPlan), rolloutPlan, attendanceRate, resolvedActualProgress?.currentAssessmentModule);
-    
-    // DEFENSIVE: Ensure performanceStatus is a string
-    const safePerformanceStatus = typeof performanceStatus === 'string' ? performanceStatus : 'NO_PLAN';
-
-    if (viewMode === 'list') {
-      return (
-        <div
-          className={`flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-slate-200'}`}
-        >
-          {onSelect && (
-            <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={onSelect}
-                className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
-              />
-            </div>
-          )}
-          <div className="flex items-center gap-4 flex-1" onClick={onView}>
-            <div className="p-3 bg-teal-100 text-teal-600 rounded-lg">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-slate-900">{String(displayName)}</h4>
-                {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
-                  null
-                ) : (
-                  <span
-                    className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onView();
-                    }}
-                  >
-                    ⚠️ No rollout plan
-                  </span>
-                )}
-              </div>
-              {group.facilitator && typeof group.facilitator === 'object' && group.facilitator.name && (
-                <p className="text-sm text-slate-600">Facilitator: {String(group.facilitator.name)}</p>
+  if (viewMode === 'list') {
+    return (
+      <div
+        className={`flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-slate-200'}`}
+      >
+        {onSelect && (
+          <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onSelect}
+              className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+            />
+          </div>
+        )}
+        <div className="flex items-center gap-4 flex-1" onClick={onView}>
+          <div className="p-3 bg-teal-100 text-teal-600 rounded-lg">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h4>
+              {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
+                null
+              ) : (
+                <span
+                  className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full px-2 py-0.5 text-xs cursor-pointer hover:bg-yellow-200 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onView();
+                  }}
+                >
+                  ⚠️ No rollout plan
+                </span>
               )}
             </div>
+            {group.facilitator && (
+              <p className="text-sm text-slate-600">Facilitator: {group.facilitator.name}</p>
+            )}
           </div>
+        </div>
 
         <div className="flex items-center gap-6">
           <div className="text-center">
@@ -1415,9 +1325,9 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           {/* Dual Progress Bars (Projected + Actual) */}
           <div className="flex flex-col gap-1.5 flex-1 max-w-xs">
             {/* Current Module Label */}
-            {rolloutPlan && safeCurrentModule.label && (
+            {rolloutPlan && currentModule.label && (
               <p className="text-xs font-medium text-slate-700">
-                {safeCurrentModule.label}
+                {currentModule.label}
               </p>
             )}
 
@@ -1426,10 +1336,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><Calendar className="w-3 h-3" /> Proj</span>
                 <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all" style={{ width: `${safeCreditProgress.percentage}%` }} />
+                  <div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all" style={{ width: `${creditProgress.percentage}%` }} />
                 </div>
                 <span className="text-[10px] font-semibold text-teal-700 whitespace-nowrap w-20 text-right">
-                  {safeCreditProgress.percentage}% ({safeCreditProgress.completed}/{TOTAL_CREDITS})
+                  {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
                 </span>
               </div>
             )}
@@ -1438,10 +1348,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3" /> Real</span>
               <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all" style={{ width: `${String(actualPercent)}%` }} />
+                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all" style={{ width: `${actualProgress?.avgPercent || 0}%` }} />
               </div>
               <span className="text-[10px] font-semibold text-blue-700 whitespace-nowrap w-20 text-right">
-                {String(actualPercent)}% ({String(typeof resolvedActualProgress?.avgCredits === 'number' ? resolvedActualProgress.avgCredits : 0)}/{String(TOTAL_CREDITS)})
+                {actualPercent}% ({resolvedActualProgress?.avgCredits || 0}/{TOTAL_CREDITS})
               </span>
             </div>
           </div>
@@ -1515,10 +1425,10 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                   className="font-semibold text-slate-900 dark:text-white hover:text-teal-600 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/groups/${String(group.id || '')}`);
+                    router.push(`/groups/${group.id}`);
                   }}
                 >
-                  {String(displayName || 'Unnamed')}
+                  {formatGroupNameDisplay(group.name)}
                 </h4>
                 {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
                   null
@@ -1535,29 +1445,29 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 )}
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                {rolloutStartDate && typeof rolloutStartDate?.toLocaleDateString === 'function' ? `Started ${rolloutStartDate.toLocaleDateString()}` : 'Start date not set'}
-                {rolloutEndDate && typeof rolloutEndDate?.toLocaleDateString === 'function' ? ` • Ends ${rolloutEndDate.toLocaleDateString()}` : ''}
+                {rolloutStartDate ? `Started ${String(rolloutStartDate.toLocaleDateString())}` : 'Start date not set'}
+                {rolloutEndDate ? ` • Ends ${String(rolloutEndDate.toLocaleDateString())}` : ''}
               </p>
               {/* Rollout Status Badge */}
-              {renderStatusBadge(safePerformanceStatus)}
+              {renderStatusBadge(performanceStatus)}
             </div>
           </div>
         </div>
       </div>
 
-      {group.facilitator && typeof group.facilitator === 'object' && group.facilitator.name && (
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-          Facilitator: {String(group.facilitator.name || 'Unknown')}
+      {group.facilitator && typeof group.facilitator === 'object' && group.facilitator.name ? (
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 px-4">
+          Facilitator: {String(group.facilitator.name)}
         </p>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-4 px-4">
         <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{String(typeof studentCount === 'number' ? studentCount : 0)}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{String(studentCount)}</p>
           <p className="text-xs text-slate-600 dark:text-slate-400">Students</p>
         </div>
         <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{String(typeof attendanceRate === 'number' ? attendanceRate : 0)}%</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">{String(attendanceRate)}%</p>
           <p className="text-xs text-slate-600 dark:text-slate-400">Attendance</p>
         </div>
       </div>
@@ -1566,14 +1476,14 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
       <div className="mb-4 space-y-3 px-4">
         {/* Module Label (Actual followed by Projected) */}
         <div className="flex flex-col gap-0.5">
-          {typeof resolvedActualProgress?.currentAssessmentModule === 'number' ? (
+          {resolvedActualProgress?.currentAssessmentModule ? (
             <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
               Module {String(resolvedActualProgress.currentAssessmentModule)} (Actual)
             </p>
           ) : null}
-          {rolloutPlan && safeCurrentModule.label && typeof safeCurrentModule.label === 'string' && (
+          {rolloutPlan && currentModule.label && (
             <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              Projected: {String(safeCurrentModule.label)}
+              Projected: {String(currentModule.label)}
             </p>
           )}
         </div>
@@ -1586,13 +1496,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 <Calendar className="w-3 h-3" /> Projected
               </span>
               <span className="font-semibold text-teal-700 dark:text-teal-300">
-                {String(typeof safeCreditProgress?.percentage === 'number' ? safeCreditProgress.percentage : 0)}% ({String(typeof safeCreditProgress?.completed === 'number' ? safeCreditProgress.completed : 0)}/{String(TOTAL_CREDITS)})
+                {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
               </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-300"
-                style={{ width: `${safeCreditProgress.percentage}%` }}
+                style={{ width: `${creditProgress.percentage}%` }}
               />
             </div>
           </div>
@@ -1605,13 +1515,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <Users className="w-3 h-3 text-emerald-500" /> Facilitator
             </span>
             <span className="font-semibold text-emerald-700 dark:text-teal-300">
-              {String(typeof group.facilitatorMetrics?.facilitatedPercent === 'number' ? group.facilitatorMetrics.facilitatedPercent : 0)}% ({String(typeof group.facilitatorMetrics?.facilitatedUnits === 'number' ? group.facilitatorMetrics.facilitatedUnits : 0)}/{String(typeof group.facilitatorMetrics?.totalUnits === 'number' ? group.facilitatorMetrics.totalUnits : 0)} Units)
+              {group.facilitatorMetrics?.facilitatedPercent || 0}% ({group.facilitatorMetrics?.facilitatedUnits || 0}/{group.facilitatorMetrics?.totalUnits || 0} Units)
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300"
-              style={{ width: `${typeof group.facilitatorMetrics?.facilitatedPercent === 'number' ? group.facilitatorMetrics.facilitatedPercent : 0}%` }}
+              style={{ width: `${group.facilitatorMetrics?.facilitatedPercent || 0}%` }}
             />
           </div>
         </div>
@@ -1623,7 +1533,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <CheckCircle2 className="w-3 h-3 text-blue-500" /> Learner Avg
             </span>
             <span className="font-semibold text-blue-700 dark:text-blue-300">
-              {String(typeof actualPercent === 'number' ? actualPercent : 0)}% ({String(typeof resolvedActualProgress?.avgCreditsPerStudent === 'number' ? resolvedActualProgress.avgCreditsPerStudent : 0)}/{TOTAL_CREDITS})
+              {actualPercent}% ({resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
@@ -1691,25 +1601,6 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
       </div>
     </div>
   );
-  } catch (error: any) {
-    console.error('===== GroupCard RENDER ERROR =====');
-    console.error('Error:', error?.message);
-    console.error('Stack:', error?.stack);
-    console.error('Group data:', { id: group?.id, name: group?.name });
-    if (typeof studentCount !== 'undefined') console.error('studentCount type:', typeof studentCount, 'value:', studentCount);
-    if (typeof displayName !== 'undefined') console.error('displayName type:', typeof displayName, 'value:', displayName);
-    if (typeof attendanceRate !== 'undefined') console.error('attendanceRate type:', typeof attendanceRate, 'value:', attendanceRate);
-    if (typeof performanceStatus !== 'undefined') console.error('performanceStatus type:', typeof performanceStatus, 'Å value:', performanceStatus);
-    if (typeof currentModule !== 'undefined') console.error('currentModule type:', typeof currentModule, 'value:', currentModule);
-    if (typeof creditProgress !== 'undefined') console.error('creditProgress type:', typeof creditProgress, 'value:', creditProgress);
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-        <p className="text-red-700 text-sm font-medium">Error rendering group card</p>
-        <p className="text-red-600 text-xs mt-1">{String(group?.name || 'Unknown')}</p>
-        <p className="text-red-600 text-xs mt-1">Check browser console for details</p>
-      </div>
-    );
-  }
 }
 
 interface MergeGroupsModalProps {

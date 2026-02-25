@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-utils';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 /**
  * POST /api/sessions/create-from-lessons
@@ -11,7 +12,7 @@ import { successResponse, errorResponse } from '@/lib/api-utils';
  *   dryRun?: boolean (default: false - just preview, don't create)
  * }
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const { lessonPlanIds, dryRun = false } = body;
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
  * GET /api/sessions/create-from-lessons
  * Preview what would be converted (dry run)
  */
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const lessonPlans = await prisma.lessonPlan.findMany({
       include: {
@@ -184,3 +185,6 @@ export async function GET(request: NextRequest) {
     return errorResponse('Failed to preview conversion', 500);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);

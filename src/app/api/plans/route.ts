@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/middleware';
 import { startOfDay, endOfDay, parseISO } from 'date-fns';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) {
-      return error;
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -37,13 +33,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) {
-      return error;
-    }
-
     const body = await request.json();
     const {
       title,
@@ -71,3 +62,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

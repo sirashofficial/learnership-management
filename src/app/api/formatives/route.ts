@@ -1,10 +1,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const moduleId = searchParams.get('moduleId');
@@ -42,3 +43,5 @@ export async function GET(request: NextRequest) {
         );
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR', 'STUDENT']);

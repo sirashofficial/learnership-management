@@ -1,7 +1,8 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const modules = await prisma.module.findMany({
       where: {
@@ -23,12 +24,14 @@ export async function GET(request: NextRequest) {
       orderBy: { order: 'asc' },
     });
 
-    return Response.json({ data: modules });
+    return NextResponse.json({ data: modules });
   } catch (error) {
     console.error('Error fetching curriculum:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch curriculum' },
       { status: 500 }
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR']);

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // GET /api/unit-standards/[id] - Get single unit standard
-export async function GET(
+async function handleGet(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -39,13 +39,11 @@ export async function GET(
 }
 
 // PUT /api/unit-standards/[id] - Update unit standard
-export async function PUT(
+async function handlePut(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { title, code, credits, level, type, content } = body;
@@ -91,13 +89,11 @@ export async function PUT(
 }
 
 // DELETE /api/unit-standards/[id] - Delete unit standard
-export async function DELETE(
+async function handleDelete(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
 
     const unitStandard = await prisma.unitStandard.findUnique({
       where: { id: params.id },
@@ -123,3 +119,7 @@ export async function DELETE(
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR', 'STUDENT']);
+export const PUT = withAuth(withRateLimit(handlePut, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'strict'), ['ADMIN', 'FACILITATOR']);

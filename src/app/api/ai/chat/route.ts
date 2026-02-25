@@ -1,8 +1,9 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { chatWithContext, ChatMessage } from '@/lib/ai/zai';
 import { searchDocuments } from '@/lib/ai/pinecone';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,13 +13,13 @@ interface ChatRequest {
     moduleFilter?: number;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body: ChatRequest = await request.json();
         const { messages, studentId, moduleFilter } = body;
 
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Messages array is required' },
                 { status: 400 }
             );
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
         // Get the latest user message for context retrieval
         const latestMessage = messages[messages.length - 1];
         if (latestMessage.role !== 'user') {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Last message must be from user' },
                 { status: 400 }
             );
@@ -103,3 +104,5 @@ export async function POST(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'moderate'), ['ADMIN', 'FACILITATOR']);

@@ -3,15 +3,14 @@ import prisma from '@/lib/prisma';
 import {
     successResponse,
     handleApiError,
+    errorResponse,
 } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
 import { startOfDay, endOfDay, addDays } from 'date-fns';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // GET /api/facilitator/checklist - Get upcoming and current teaching tasks
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
-        const { error, user } = await requireAuth(request);
-        if (error) return error;
 
         const { searchParams } = new URL(request.url);
         const groupId = searchParams.get('groupId');
@@ -91,10 +90,12 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/facilitator/checklist - Mark a unit standard as "Done"
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
-        const { error, user } = await requireAuth(request);
-        if (error) return error;
+        const authContext = getAuthContext(request);
+        if (!authContext) {
+            return errorResponse('Unauthorized', 401);
+        }
 
         const body = await request.json();
         const { rolloutId, facilitated, notes } = body;
@@ -116,3 +117,6 @@ export async function POST(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

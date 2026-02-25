@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 const prisma = new PrismaClient();
 
 export const dynamic = 'force-dynamic';
 
 // GET - Fetch user profile
-export async function GET(request: NextRequest) {
+async function getProfileHandler(request: NextRequest) {
   const { error, user } = await requireAuth(request);
   if (error) return error;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT - Update user profile
-export async function PUT(request: NextRequest) {
+async function updateProfileHandler(request: NextRequest) {
   const { error, user } = await requireAuth(request);
   if (error) return error;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -106,3 +107,6 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(getProfileHandler, 'moderate'), []);
+export const PUT = withAuth(withRateLimit(updateProfileHandler, 'moderate'), []);

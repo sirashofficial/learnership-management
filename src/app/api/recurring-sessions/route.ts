@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 const prisma = new PrismaClient();
 
 // GET - Fetch overrides for a date range
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Create recurring sessions or update an override
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
 }
 
 // DELETE - Remove an override
-export async function DELETE(request: NextRequest) {
+async function handleDelete(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
@@ -204,3 +205,7 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'strict'), ['ADMIN', 'FACILITATOR']);

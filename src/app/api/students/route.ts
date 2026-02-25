@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import {
   successPaginatedResponse,
@@ -9,14 +9,17 @@ import {
   createPagination,
 } from '@/lib/api-utils';
 import { createStudentSchema, updateStudentSchema } from '@/lib/validations';
-import { requireAuth } from '@/lib/middleware';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit, withValidation } from '@/middleware/apiAuth';
+import { emitEvent } from '@/lib/events/eventBus';
 
 // GET /api/students - Get all students or export CSV
-export async function GET(request: NextRequest) {
+async function getStudentsHandler(request: NextRequest): Promise<NextResponse> {
   console.log('API HIT: /api/students');
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
+    const authContext = getAuthContext(request);
+    if (!authContext) {
+      return errorResponse('Unauthorized', 401);
+    }
 
     console.log('GET /api/students called');
     const { searchParams } = new URL(request.url);
@@ -30,6 +33,18 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (groupId) where.groupId = groupId;
     if (status) where.status = status;
+
+    if (authContext.user.role === 'FACILITATOR') {
+      if (groupId) {
+        const accessError = enforceGroupAccess(groupId, authContext);
+        if (accessError) return accessError;
+      } else if (authContext.allowedGroupIds.length === 0) {
+        const pagination = createPagination(page, pageSize, 0);
+        return successPaginatedResponse([], pagination, { total: 0, active: 0, averageProgress: 0 });
+      } else {
+        where.groupId = { in: authContext.allowedGroupIds };
+      }
+    }
 
     // Get total count for pagination
     const total = await prisma.student.count({ where });
@@ -69,7 +84,8 @@ export async function GET(request: NextRequest) {
 
       const csv = Papa.unparse(csvData);
 
-      return new Response(csv, {
+      return new NextResponse(csv, {
+        status: 200,
         headers: {
           'Content-Type': 'text/csv',
           'Content-Disposition': `attachment; filename="students-export-${new Date().toISOString().split('T')[0]}.csv"`,
@@ -121,16 +137,22 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/students - Create a new student
-export async function POST(request: NextRequest) {
+async function createStudentHandler(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
 
+    const authContext = getAuthContext(request);
+    if (!authContext) {
+      return errorResponse('Unauthorized', 401);
+    }
 
-    const { error, user: currentUser } = await requireAuth(request);
-    if (error) return error;
+    const currentUser = authContext.user;
 
     // Validate input
     const validatedData = createStudentSchema.parse(body);
+
+    const accessError = enforceGroupAccess(validatedData.groupId, authContext);
+    if (accessError) return accessError;
 
     // Use facilitatorId from body, or get first user as fallback
     let facilitatorId = validatedData.facilitatorId || body.facilitatorId;
@@ -224,8 +246,28 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Emit event for cache invalidation (event-driven updates)
+    // This triggers cache invalidation across all affected endpoints:
+    // - /api/students/* (student lists)
+    // - /api/groups/{groupId} (group member counts)
+    // - /api/dashboard/* (dashboard stats)
+    emitEvent('student:updated', {
+      studentId: student.id,
+      groupId: student.groupId,
+      action: 'created',
+      firstName: student.firstName,
+      lastName: student.lastName,
+      email: student.email || undefined,
+    });
+
     return successResponse(student, 'Student created successfully');
   } catch (error) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getStudentsHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(
+  withRateLimit(withValidation(createStudentHandler, createStudentSchema), 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);

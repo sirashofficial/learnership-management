@@ -1,8 +1,9 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { generateAssessmentQuestions } from '@/lib/ai/cohere';
 import { searchDocuments } from '@/lib/ai/pinecone';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,20 +14,20 @@ interface GenerateRequest {
     count?: number;
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body: GenerateRequest = await request.json();
         const { unitStandardId, unitStandardCode, type, count = 5 } = body;
 
         if (!unitStandardId && !unitStandardCode) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Unit standard ID or code is required' },
                 { status: 400 }
             );
         }
 
         if (!type || (type !== 'formative' && type !== 'summative')) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Assessment type must be "formative" or "summative"' },
                 { status: 400 }
             );
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!unitStandard) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Unit standard not found' },
                 { status: 404 }
             );
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to list available unit standards for assessment generation
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const moduleId = searchParams.get('moduleId');
@@ -159,3 +160,6 @@ export async function GET(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR']);

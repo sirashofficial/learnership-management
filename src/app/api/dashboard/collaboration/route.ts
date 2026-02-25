@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { successResponse, handleApiError, errorResponse } from '@/lib/api-utils'
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth'
+import { getUnreadCount } from '@/lib/collaboration'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +43,7 @@ interface CollaborationData {
   }
 }
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const studentId = request.nextUrl.searchParams.get('studentId')
     const groupId = request.nextUrl.searchParams.get('groupId')
@@ -168,7 +171,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json()
     const { studentId, commentText, mentions } = body
@@ -207,3 +210,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

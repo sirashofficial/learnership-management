@@ -2,16 +2,23 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 import { requireAuth } from '@/lib/middleware';
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function getGroupSummaryHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
 
+    const authContext = getAuthContext(request);
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { id: { in: authContext.allowedGroupIds } }
+      : {};
+
     // Get all groups with student counts and summaries
     const groups = await prisma.group.findMany({
+      where: groupFilter,
       include: {
         _count: { select: { students: true } },
         students: {
@@ -59,3 +66,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getGroupSummaryHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

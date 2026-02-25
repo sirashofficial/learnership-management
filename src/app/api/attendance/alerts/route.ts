@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // GET /api/attendance/alerts - Get attendance alerts
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/attendance/alerts - Create alert
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const { studentId, type, severity, message, details } = body;
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT /api/attendance/alerts/:id - Resolve alert
-export async function PUT(request: NextRequest) {
+async function handlePut(request: NextRequest) {
   try {
     const body = await request.json();
     const { id, resolved, resolvedBy } = body;
@@ -81,7 +82,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // DELETE /api/attendance/alerts/:id - Delete alert
-export async function DELETE(request: NextRequest) {
+async function handleDelete(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -99,3 +100,8 @@ export async function DELETE(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(withRateLimit(handlePut, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'strict'), ['ADMIN']);

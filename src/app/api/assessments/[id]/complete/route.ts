@@ -8,8 +8,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { updateProgressFromAssessment } from '@/lib/progress-calculator';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function POST(
+async function handlePost(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -87,7 +88,7 @@ export async function POST(
  * GET /api/assessments/[id]
  * Get assessment details
  */
-export async function GET(
+async function handleGet(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -130,3 +131,13 @@ export async function GET(
         );
     }
 }
+
+export const POST = withAuth(
+    withRateLimit(handlePost, 'moderate'),
+    ['ADMIN', 'FACILITATOR']
+);
+
+export const GET = withAuth(
+    withRateLimit(handleGet, 'moderate'),
+    ['ADMIN', 'FACILITATOR']
+);

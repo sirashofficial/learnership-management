@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Clock, MapPin, Bell, Edit2, Trash2, ChevronDown } from 'lucide-react';
+import { X, Clock, MapPin, Bell, Edit2, Archive, ChevronDown } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import useSWR from 'swr';
 
@@ -100,7 +100,8 @@ export function EventDetailModal({
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this?')) return;
+    const itemType = event.type === 'lesson' ? 'lesson' : 'plan';
+    if (!confirm(`Archive this ${itemType}?\n\nThis data will be archived and can be restored within 30 days. After 30 days, the data will be permanently deleted.`)) return;
 
     try {
       const response = await fetch(
@@ -283,8 +284,8 @@ export function EventDetailModal({
                 onClick={handleDelete}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900"
               >
-                <Trash2 className="w-5 h-5" />
-                Delete
+                <Archive className="w-5 h-5" />
+                Archive
               </button>
             </div>
           ) : (

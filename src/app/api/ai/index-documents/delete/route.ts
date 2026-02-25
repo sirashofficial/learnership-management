@@ -1,18 +1,19 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import { getPineconeIndex, PINECONE_NAMESPACE } from '@/lib/ai/pinecone';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
 // DELETE: Remove a document and its chunks
-export async function DELETE(request: NextRequest) {
+async function handleDelete(request: NextRequest) {
     try {
         const body = await request.json();
         const { documentId } = body;
 
         if (!documentId) {
-            return Response.json(
+            return NextResponse.json(
                 { success: false, error: 'Document ID is required' },
                 { status: 400 }
             );
@@ -51,3 +52,5 @@ export async function DELETE(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const DELETE = withAuth(withRateLimit(handleDelete, 'moderate'), ['ADMIN']);

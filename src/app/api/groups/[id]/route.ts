@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
+import { cascadeSoftDeleteGroup } from '@/lib/softDelete';
 
 const parsePlanDate = (value?: string | null) => {
   if (!value) return null;
@@ -20,11 +22,15 @@ const logRolloutMismatch = (groupId: string, message: string, details: any) => {
   console.log(`⚠️ Rollout mismatch [${groupId}]: ${message}`, details);
 };
 // GET /api/groups/[id]
-export async function GET(
+async function getGroupHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(params.id, authContext);
+    if (accessError) return accessError;
+
     const group = await prisma.group.findUnique({
       where: { id: params.id },
       include: {
@@ -76,11 +82,15 @@ export async function GET(
 }
 
 // PUT /api/groups/[id]
-export async function PUT(
+async function updateGroupHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(params.id, authContext);
+    if (accessError) return accessError;
+
     const body = await request.json();
 
     let parsedNotes: any = null;
@@ -191,11 +201,15 @@ export async function PUT(
 }
 
 // DELETE /api/groups/[id]
-export async function DELETE(
+async function deleteGroupHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(params.id, authContext);
+    if (accessError) return accessError;
+
     // Get group with student count
     const group = await prisma.group.findUnique({
       where: { id: params.id },
@@ -210,16 +224,18 @@ export async function DELETE(
       return errorResponse('Group not found', 404);
     }
 
-    // Delete the group (students will be disconnected automatically via the relation)
-    await prisma.group.delete({
-      where: { id: params.id },
-    });
+    // Soft delete the group and cascade to students
+    const result = await cascadeSoftDeleteGroup(params.id);
 
     return successResponse(
-      { id: params.id, studentCount: group._count.students },
-      'Group deleted successfully'
+      { id: params.id, studentCount: result.studentsDeleted },
+      `Group and ${result.studentsDeleted} student(s) archived successfully. Can be restored within 30 days.`
     );
   } catch (error) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getGroupHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(withRateLimit(updateGroupHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(deleteGroupHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

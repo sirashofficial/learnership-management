@@ -1,27 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/middleware';
 import { parseISO } from 'date-fns';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 
-export async function PATCH(
+async function handlePatch(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) {
-      return error;
-    }
-
     const { id } = params;
     const body = await request.json();
 
     // Verify ownership
+    const authContext = getAuthContext(request);
     const plan = await prisma.plan.findUnique({
       where: { id },
     });
 
-    if (!plan || plan.facilitatorId !== user!.id) {
+    if (!plan || (authContext && plan.facilitatorId !== authContext.user.userId)) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
@@ -51,24 +48,20 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
+async function handleDelete(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) {
-      return error;
-    }
-
     const { id } = params;
 
     // Verify ownership
+    const authContext = getAuthContext(request);
     const plan = await prisma.plan.findUnique({
       where: { id },
     });
 
-    if (!plan || plan.facilitatorId !== user!.id) {
+    if (!plan || (authContext && plan.facilitatorId !== authContext.user.userId)) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
@@ -90,3 +83,6 @@ export async function DELETE(
     );
   }
 }
+
+export const PATCH = withAuth(withRateLimit(handlePatch, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'strict'), ['ADMIN']);

@@ -306,7 +306,11 @@ export async function updateStudentProgressUnified(
                 result: 'COMPETENT',
             },
             include: {
-                unitStandard: true
+                unitStandard: {
+                    include: {
+                        module: true
+                    }
+                }
             }
         });
 
@@ -321,7 +325,45 @@ export async function updateStudentProgressUnified(
             }
         }
 
-        // 4. Update student record
+        // 4. Calculate current module based on gate-keeping logic
+        // (Highest module where all types: SUMMATIVE, FORMATIVE, WORKPLACE are COMPETENT)
+        const studentModuleTypes = new Map<number, Set<string>>();
+        const REQUIRED_TYPES = new Set(['SUMMATIVE', 'FORMATIVE', 'WORKPLACE']);
+
+        for (const a of approvedAssessments) {
+            const modNum = a.unitStandard?.module?.moduleNumber;
+            if (!modNum) continue;
+
+            if (!studentModuleTypes.has(modNum)) {
+                studentModuleTypes.set(modNum, new Set());
+            }
+            studentModuleTypes.get(modNum)!.add(a.type);
+        }
+
+        let highestComplete = 0;
+        for (const [modNum, types] of studentModuleTypes.entries()) {
+            const allPresent = [...REQUIRED_TYPES].every(t => types.has(t));
+            if (allPresent && modNum > highestComplete) {
+                highestComplete = modNum;
+            }
+        }
+
+        // Current module is the one after highest complete
+        const allModules = await tx.module.findMany({
+            orderBy: { moduleNumber: 'asc' }
+        });
+
+        let currentModuleId = null;
+        if (allModules.length > 0) {
+            // Default to first module if nothing completed
+            const targetModuleNum = highestComplete + 1;
+            const currentMod = allModules.find((m: any) => m.moduleNumber === targetModuleNum) ||
+                allModules.find((m: any) => m.moduleNumber === highestComplete) ||
+                allModules[allModules.length - 1];
+            currentModuleId = currentMod.id;
+        }
+
+        // 5. Update student record
         const totalCreditsRequired = TOTAL_CREDITS;
         const progressPercentage = Math.round((totalCreditsEarned / totalCreditsRequired) * 100);
 
@@ -329,7 +371,8 @@ export async function updateStudentProgressUnified(
             where: { id: studentId },
             data: {
                 totalCreditsEarned,
-                progress: progressPercentage
+                progress: progressPercentage,
+                currentModuleId
             }
         });
 
@@ -445,6 +488,10 @@ export async function recalculateAllProgress(studentId: string): Promise<Progres
             }
         });
     }
+
+    // Update currentModuleId based on recalculated progress
+    // Re-use logic from updateStudentProgressUnified by just calling it (it will re-fetch but ensure consistency)
+    await updateStudentProgress(studentId);
 
     return progressSummary;
 }

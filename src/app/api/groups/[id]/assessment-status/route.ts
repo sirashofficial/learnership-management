@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { extractRolloutPlan, getEarnedCredits } from '@/lib/rolloutUtils';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
-export async function GET(
+async function handleGet(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -165,3 +166,5 @@ export async function GET(
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);

@@ -78,8 +78,16 @@ export async function middleware(request: NextRequest) {
       if (apiLimitResponse) return apiLimitResponse;
     }
 
-    // Check for auth token in cookies
-    const token = request.cookies.get('auth_token')?.value;
+    // Check for auth token in cookies or Authorization header
+    let token = request.cookies.get('auth_token')?.value;
+    
+    // If no cookie, check Authorization header
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
 
     if (!token) {
       console.log(`Middleware: No token found for ${pathname}`);

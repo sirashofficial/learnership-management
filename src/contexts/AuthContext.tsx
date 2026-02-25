@@ -52,9 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Call logout API (optional, for server-side session cleanup)
       await fetch('/api/auth/logout', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
     } catch (error) {
       console.error('Logout error:', error);
@@ -62,6 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear local state
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      
+      // Clear SWR cache to remove any stale authenticated data
+      const { mutate: globalMutate } = await import('swr');
+      globalMutate(() => true, undefined, { revalidate: false });
+      
       setToken(null);
       setUser(null);
       router.push('/login');

@@ -1,15 +1,13 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 import { calculateRolloutPlan } from '@/lib/rolloutUtils';
 
 // POST /api/groups/auto-rollout
 // Generate default 12-month rollout plans for all groups without plans
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { groupIds, overwrite } = body; // groupIds is optional; if not provided, process all
@@ -104,10 +102,8 @@ export async function POST(request: NextRequest) {
 
 // GET /api/groups/auto-rollout
 // Check which groups are missing rollout plans
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
-    const { error, user } = await requireAuth(request);
-    if (error) return error;
 
     const groups = await prisma.group.findMany({
       where: { status: 'ACTIVE' },
@@ -149,3 +145,6 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);

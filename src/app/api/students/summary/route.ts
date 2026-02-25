@@ -2,10 +2,11 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successPaginatedResponse, handleApiError, getPaginationParams, createPagination } from '@/lib/api-utils';
 import { requireAuth } from '@/lib/middleware';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function getStudentSummaryHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -22,6 +23,19 @@ export async function GET(request: NextRequest) {
     }
     if (status && status !== 'all') {
       where.status = status;
+    }
+
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR') {
+      if (groupId && groupId !== 'all') {
+        const accessError = enforceGroupAccess(groupId, authContext);
+        if (accessError) return accessError;
+      } else if (authContext.allowedGroupIds.length === 0) {
+        const pagination = createPagination(page, limit, 0);
+        return successPaginatedResponse([], pagination);
+      } else {
+        where.groupId = { in: authContext.allowedGroupIds };
+      }
     }
 
     // Get total count
@@ -70,3 +84,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getStudentSummaryHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

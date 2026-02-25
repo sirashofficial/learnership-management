@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 /**
  * GET /api/assessments/by-group
@@ -7,7 +8,7 @@ import prisma from '@/lib/prisma';
  */
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const groupId = searchParams.get('groupId');
@@ -140,3 +141,8 @@ export async function GET(request: NextRequest) {
         );
     }
 }
+
+export const GET = withAuth(
+    withRateLimit(handleGet, 'generous'),
+    ['ADMIN', 'FACILITATOR']
+);

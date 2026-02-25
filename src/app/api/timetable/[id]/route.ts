@@ -1,12 +1,15 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getGroupColour } from '@/lib/groupColours';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function GET(
+async function getTimetableEntryHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const authContext = getAuthContext(request);
+
     const session = await prisma.lessonPlan.findUnique({
       where: { id: params.id },
       include: {
@@ -20,10 +23,13 @@ export async function GET(
     });
 
     if (!session) {
-      return Response.json({ error: 'Session not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    return Response.json({
+    const accessError = enforceGroupAccess(session.groupId ?? null, authContext);
+    if (accessError) return accessError;
+
+    return NextResponse.json({
       data: {
         id: session.id,
         title: session.title,
@@ -43,27 +49,32 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching timetable session:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch timetable session' },
       { status: 500 }
     );
   }
 }
 
-export async function PATCH(
+async function updateTimetableEntryHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const body = await request.json();
 
+    const authContext = getAuthContext(request);
+
     const existing = await prisma.lessonPlan.findUnique({
       where: { id: params.id },
     });
 
     if (!existing) {
-      return Response.json({ error: 'Session not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
+
+    const accessError = enforceGroupAccess(existing.groupId ?? null, authContext);
+    if (accessError) return accessError;
 
     const session = await prisma.lessonPlan.update({
       where: { id: params.id },
@@ -87,7 +98,7 @@ export async function PATCH(
       },
     });
 
-    return Response.json({
+    return NextResponse.json({
       data: {
         id: session.id,
         title: session.title,
@@ -107,34 +118,43 @@ export async function PATCH(
     });
   } catch (error) {
     console.error('Error updating timetable session:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to update timetable session' },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(
+async function deleteTimetableEntryHandler(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const authContext = getAuthContext(request);
+
     const existing = await prisma.lessonPlan.findUnique({
       where: { id: params.id },
     });
 
     if (!existing) {
-      return Response.json({ error: 'Session not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
+
+    const accessError = enforceGroupAccess(existing.groupId ?? null, authContext);
+    if (accessError) return accessError;
 
     await prisma.lessonPlan.delete({ where: { id: params.id } });
 
-    return Response.json({ success: true });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting timetable session:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to delete timetable session' },
       { status: 500 }
     );
   }
 }
+
+export const GET = withAuth(withRateLimit(getTimetableEntryHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const PATCH = withAuth(withRateLimit(updateTimetableEntryHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(deleteTimetableEntryHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

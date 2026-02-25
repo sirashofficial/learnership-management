@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import path from 'path';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 const resolveSqlitePath = (databaseUrl?: string) => {
   if (!databaseUrl || !databaseUrl.startsWith('file:')) {
@@ -21,7 +22,7 @@ const resolveSqlitePath = (databaseUrl?: string) => {
 };
 
 // Temporary debug endpoint: GET /api/debug/groups-notes
-export async function GET() {
+async function handleGet(request: NextRequest) {
   try {
     const groups = await prisma.group.findMany({
       select: {
@@ -48,3 +49,5 @@ export async function GET() {
     return NextResponse.json({ success: false, error: 'Failed to fetch group notes' }, { status: 500 });
   }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN']);

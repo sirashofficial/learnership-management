@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,16 +9,35 @@ export const dynamic = 'force-dynamic'
  * Returns all metric cards data for the dashboard
  * Includes: totalStudents, totalGroups, attendanceRate, atRiskCount, completionRate, pendingAssessments
  */
-export async function GET(request: NextRequest) {
+async function getCardsHandler(request: NextRequest) {
   try {
+    const authContext = getAuthContext(request)
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {}
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return NextResponse.json({
+        totalStudents: 0,
+        totalGroups: 0,
+        attendanceRate: 0,
+        atRiskCount: 0,
+        completionRate: 0,
+        pendingAssessments: 0,
+        timestamp: new Date().toISOString()
+      })
+    }
+
     // Total active students
     const totalStudents = await prisma.student.count({
-      where: { status: 'ACTIVE' }
+      where: { status: 'ACTIVE', ...groupFilter }
     })
 
     // Total active groups
     const totalGroups = await prisma.group.count({
-      where: { status: 'ACTIVE' }
+      where: { status: 'ACTIVE', ...(authContext?.user.role === 'FACILITATOR'
+        ? { id: { in: authContext.allowedGroupIds } }
+        : {}) }
     })
 
     // Attendance rate (last 30 days)
@@ -28,7 +48,10 @@ export async function GET(request: NextRequest) {
       by: ['status'],
       where: {
         date: { gte: thirtyDaysAgo },
-        status: { in: ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] }
+        status: { in: ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] },
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { groupId: { in: authContext.allowedGroupIds } }
+          : {})
       },
       _count: true
     })
@@ -48,7 +71,12 @@ export async function GET(request: NextRequest) {
 
     // At-risk count (groups with risk score > 75)
     const groups = await prisma.group.findMany({
-      where: { status: 'ACTIVE' },
+      where: {
+        status: 'ACTIVE',
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { id: { in: authContext.allowedGroupIds } }
+          : {})
+      },
       include: {
         students: {
           include: {
@@ -94,7 +122,10 @@ export async function GET(request: NextRequest) {
       where: {
         moduleProgress: {
           every: { status: 'COMPLETED' }
-        }
+        },
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { groupId: { in: authContext.allowedGroupIds } }
+          : {})
       }
     })
 
@@ -105,7 +136,10 @@ export async function GET(request: NextRequest) {
     const pendingAssessments = await prisma.assessment.count({
       where: {
         result: 'PENDING',
-        dueDate: { gte: new Date() }
+        dueDate: { gte: new Date() },
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { student: { groupId: { in: authContext.allowedGroupIds } } }
+          : {})
       }
     })
 
@@ -126,3 +160,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+export const GET = withAuth(withRateLimit(getCardsHandler, 'generous'), ['ADMIN', 'FACILITATOR'])

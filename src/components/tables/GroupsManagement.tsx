@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Building2, Users, Calendar, MapPin, Phone, Mail, User, Plus, Edit, Trash2, CheckCircle, AlertTriangle, UserPlus } from 'lucide-react';
+import { Building2, Users, Calendar, MapPin, Phone, Mail, User, Plus, Edit, Archive, CheckCircle, AlertTriangle, UserPlus } from 'lucide-react';
 import { useStudents } from '@/hooks/useStudents';
 import { useGroups } from '@/contexts/GroupsContext';
 import { generateRolloutPlan } from '@/lib/rolloutPlanGenerator';
@@ -144,17 +144,16 @@ export default function GroupsManagement() {
     const group = groups.find(g => g.id === groupId);
     const studentCount = group?._count?.students || 0;
 
-    if (studentCount > 0) {
-      alert(`Cannot delete group "${formatGroupNameDisplay(group?.name || '')}". There are ${studentCount} students assigned to this group. Please reassign students first.`);
-      return;
-    }
+    const confirmMessage = studentCount > 0
+      ? `Archive group "${formatGroupNameDisplay(group?.name || '')}" and its ${studentCount} student(s)?\n\nThis data will be archived and can be restored within 30 days. After 30 days, the data will be permanently deleted.`
+      : `Archive group "${formatGroupNameDisplay(group?.name || '')}"?\n\nThis data will be archived and can be restored within 30 days. After 30 days, the data will be permanently deleted.`;
 
-    if (confirm('Are you sure you want to delete this group?')) {
+    if (confirm(confirmMessage)) {
       try {
         await deleteGroup(groupId);
         setSelectedGroup(null);
       } catch (error: any) {
-        alert(error.message || 'Failed to delete group');
+        alert(error.message || 'Failed to archive group');
       }
     }
   };
@@ -332,8 +331,9 @@ export default function GroupsManagement() {
                             handleDelete(group.id);
                           }}
                           className="p-1 text-slate-400 hover:text-red-600"
+                          title="Archive group"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Archive className="h-4 w-4" />
                         </button>
                       </div>
                     </div>

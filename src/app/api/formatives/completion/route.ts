@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 const completionSchema = z.object({
     studentId: z.string(),
@@ -13,7 +14,7 @@ const completionSchema = z.object({
     notes: z.string().optional(),
 });
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const validatedData = completionSchema.parse(body);
@@ -52,3 +53,5 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

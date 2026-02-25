@@ -1,9 +1,10 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getIndexStats, upsertDocuments } from '@/lib/ai/pinecone';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,7 +105,7 @@ function categorizeDocument(filePath: string): { category: string; moduleNumber?
 }
 
 // GET: Get index statistics
-export async function GET() {
+async function handleGet() {
     try {
         const stats = await getIndexStats();
 
@@ -129,7 +130,7 @@ export async function GET() {
 }
 
 // POST: Index documents to Pinecone
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const { action } = body;
@@ -232,7 +233,7 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        return Response.json(
+        return NextResponse.json(
             { success: false, error: 'Invalid action. Use "index-from-db" or "index-sample"' },
             { status: 400 }
         );
@@ -241,3 +242,6 @@ export async function POST(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN']);

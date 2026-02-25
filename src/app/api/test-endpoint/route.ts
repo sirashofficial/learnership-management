@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     return NextResponse.json({ message: 'Test GET works', method: 'GET' });
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     console.log('🟢 TEST POST HANDLER CALLED');
     try {
         const body = await request.json();
@@ -15,3 +16,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'moderate'), ['ADMIN', 'FACILITATOR']);

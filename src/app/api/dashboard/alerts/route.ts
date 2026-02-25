@@ -2,9 +2,18 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function GET(request: NextRequest) {
+async function getDashboardAlertsHandler(request: NextRequest) {
   try {
+    const authContext = getAuthContext(request);
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {};
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return successResponse({ alerts: [] });
+    }
     const now = new Date();
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -20,6 +29,9 @@ export async function GET(request: NextRequest) {
           gte: now,
           lte: threeDaysFromNow,
         },
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { student: { groupId: { in: authContext.allowedGroupIds } } }
+          : {}),
       },
       include: {
         student: {
@@ -53,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     // 2. Students with low attendance (< 75% in last 7 days)
     const allStudents = await prisma.student.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', ...groupFilter },
       include: {
         attendance: {
           where: {
@@ -95,6 +107,9 @@ export async function GET(request: NextRequest) {
       where: {
         moderationStatus: 'PENDING',
         result: { not: null },  // Has been graded but awaiting moderation
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { student: { groupId: { in: authContext.allowedGroupIds } } }
+          : {}),
       },
       include: {
         student: {
@@ -129,6 +144,7 @@ export async function GET(request: NextRequest) {
       where: {
         status: 'ACTIVE',
         progress: { lt: 40 },
+        ...groupFilter,
       },
       include: {
         group: true,
@@ -162,6 +178,9 @@ export async function GET(request: NextRequest) {
           { contractSigned: false },
           { inductionComplete: false },
         ],
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { student: { groupId: { in: authContext.allowedGroupIds } } }
+          : {}),
       },
       include: {
         student: {
@@ -203,6 +222,9 @@ export async function GET(request: NextRequest) {
           gte: now,
           lte: sevenDaysFromNow,
         },
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { id: { in: authContext.allowedGroupIds } }
+          : {}),
       },
       include: {
         _count: {
@@ -245,3 +267,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getDashboardAlertsHandler, 'generous'), ['ADMIN', 'FACILITATOR']);

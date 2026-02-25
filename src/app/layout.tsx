@@ -9,6 +9,7 @@ import { Providers } from "@/components/providers";
 import { AIChat } from "@/components/ai/AIChat";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ThemeInitializer from "@/components/ThemeInitializer";
+import { OfflineInitializer } from "@/components/OfflineInitializer";
 
 // Outfit - Modern, premium, distinctive sans-serif
 const outfit = Outfit({
@@ -34,6 +35,15 @@ export const metadata: Metadata = {
   title: "YEHA - Youth Education & Skills Management",
   description: "Comprehensive SSETA NVC Level 2 Training Management Platform",
   keywords: "SSETA,NVC,training,education,skills development",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "YEHA",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -46,6 +56,7 @@ export default function RootLayout({
       <body className={`${outfit.variable} ${lora.variable} font-sans antialiased bg-white text-slate-900`}>
         <ErrorBoundary>
           <Providers>
+            <OfflineInitializer />
             <ThemeInitializer />
             <MainLayout>
               {children}

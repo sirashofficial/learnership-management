@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { z } from 'zod';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // Validation schema for creating/updating templates
 const templateSchema = z.object({
@@ -12,7 +13,7 @@ const templateSchema = z.object({
     schedule: z.string().min(1, "Schedule definition is required"), // JSON string
 });
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         const templates = await prisma.scheduleTemplate.findMany({
             orderBy: { createdAt: 'desc' },
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const validatedData = templateSchema.parse(body);
@@ -43,3 +44,6 @@ export async function POST(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

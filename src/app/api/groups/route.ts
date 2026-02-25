@@ -10,9 +10,11 @@ import {
 } from '@/lib/api-utils';
 import { normalizeGroupName } from '@/lib/groupNameUtils';
 import { requireAuth } from '@/lib/middleware';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
+import { cascadeSoftDeleteGroup } from '@/lib/softDelete';
 
 // GET /api/groups
-export async function GET(request: NextRequest) {
+async function getGroupsHandler(request: NextRequest) {
   console.log('API HIT: /api/groups');
   try {
     const { error } = await requireAuth(request);
@@ -27,6 +29,15 @@ export async function GET(request: NextRequest) {
 
     const where: any = {};
     if (status) where.status = status;
+
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR') {
+      if (authContext.allowedGroupIds.length === 0) {
+        const pagination = createPagination(page, pageSize, 0);
+        return successPaginatedResponse([], pagination);
+      }
+      where.id = { in: authContext.allowedGroupIds };
+    }
 
     // Get total count for pagination
     const total = await prisma.group.count({ where });
@@ -172,7 +183,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/groups
-export async function POST(request: NextRequest) {
+async function createGroupHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -216,7 +227,7 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT /api/groups
-export async function PUT(request: NextRequest) {
+async function updateGroupHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -227,6 +238,10 @@ export async function PUT(request: NextRequest) {
     if (!id) {
       return errorResponse('Group ID is required', 400);
     }
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(id, authContext);
+    if (accessError) return accessError;
 
     const group = await prisma.group.update({
       where: { id },
@@ -248,7 +263,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // DELETE /api/groups
-export async function DELETE(request: NextRequest) {
+async function deleteGroupHandler(request: NextRequest) {
   try {
     const { error } = await requireAuth(request);
     if (error) return error;
@@ -260,24 +275,23 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('Group ID is required', 400);
     }
 
-    // Check if group has students
-    const studentCount = await prisma.student.count({
-      where: { groupId: id },
-    });
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(id, authContext);
+    if (accessError) return accessError;
 
-    if (studentCount > 0) {
-      return errorResponse(
-        `Cannot delete group. There are ${studentCount} students assigned to this group.`,
-        400
-      );
-    }
+    // Soft delete the group and cascade to students
+    const result = await cascadeSoftDeleteGroup(id);
 
-    await prisma.group.delete({
-      where: { id },
-    });
-
-    return successResponse(null, 'Group deleted successfully');
+    return successResponse(
+      { studentsArchived: result.studentsDeleted },
+      `Group and ${result.studentsDeleted} student(s) archived successfully. Can be restored within 30 days.`
+    );
   } catch (error) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getGroupsHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(createGroupHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const PUT = withAuth(withRateLimit(updateGroupHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(deleteGroupHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

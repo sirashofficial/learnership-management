@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,11 +52,24 @@ interface KanbanData {
   }
 }
 
-export async function GET(request: NextRequest) {
+async function getKanbanHandler(request: NextRequest) {
   try {
+    const authContext = getAuthContext(request)
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {}
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return NextResponse.json({
+        studentPipeline: [],
+        assessmentBoard: [],
+        stats: { totalStudents: 0, totalAssessments: 0, overdueAssessments: 0, avgProgress: 0 }
+      })
+    }
+
     // Get all active students with their group and status info
     const students = await prisma.student.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', ...groupFilter },
       include: {
         group: {
           select: { name: true }
@@ -68,7 +82,10 @@ export async function GET(request: NextRequest) {
     // Get all pending/in-progress assessments
     const assessments = await prisma.assessment.findMany({
       where: {
-        result: null
+        result: null,
+        ...(authContext?.user.role === 'FACILITATOR'
+          ? { student: { groupId: { in: authContext.allowedGroupIds } } }
+          : {})
       },
       include: {
         student: {
@@ -248,3 +265,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+export const GET = withAuth(withRateLimit(getKanbanHandler, 'generous'), ['ADMIN', 'FACILITATOR'])

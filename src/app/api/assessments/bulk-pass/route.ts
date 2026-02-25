@@ -1,17 +1,15 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
-import { requireAuth } from '@/lib/middleware';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 import { updateProgressFromAssessment } from '@/lib/progress-calculator';
 
 const ALLOWED_TYPES = ['FORMATIVE', 'SUMMATIVE', 'WORKPLACE'] as const;
 
 type AssessmentType = typeof ALLOWED_TYPES[number];
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
-    const { error } = await requireAuth(request);
-    if (error) return error;
 
     const body = await request.json();
     const { unitStandardId, assessmentType, groupId, studentIds, result: bodyResult } = body as {
@@ -127,3 +125,8 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withAuth(
+  withRateLimit(handlePost, 'strict'),
+  ['ADMIN', 'FACILITATOR']
+);

@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
 import { successResponse, handleApiError } from '@/lib/api-utils';
 import prisma from '@/lib/prisma';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
 // GET: List all indexed documents
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
     try {
         // Get unique documents from chunks
         const chunks = await prisma.documentChunk.findMany({
@@ -42,3 +43,5 @@ export async function GET(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN']);

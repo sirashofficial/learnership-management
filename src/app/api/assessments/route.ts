@@ -11,6 +11,8 @@ import {
 import { updateStudentProgressUnified } from '@/lib/progress-calculator';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/middleware';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit, withValidation } from '@/middleware/apiAuth';
+import { softDelete } from '@/lib/softDelete';
 
 const createAssessmentSchema = z.object({
   studentId: z.string(),
@@ -25,7 +27,7 @@ const createAssessmentSchema = z.object({
 });
 
 // GET /api/assessments
-export async function GET(request: NextRequest) {
+async function getAssessmentsHandler(request: NextRequest) {
   try {
     const { error, user: currentUser } = await requireAuth(request);
     if (error) return error;
@@ -52,6 +54,24 @@ export async function GET(request: NextRequest) {
     if (type) where.type = type;
     if (method) where.method = method;
     if (moderationStatus) where.moderationStatus = moderationStatus;
+
+    const authContext = getAuthContext(request);
+    if (authContext?.user.role === 'FACILITATOR') {
+      if (groupId) {
+        const accessError = enforceGroupAccess(groupId, authContext);
+        if (accessError) return accessError;
+      }
+
+      if (authContext.allowedGroupIds.length === 0) {
+        const pagination = createPagination(page, limit, 0);
+        return successPaginatedResponse([], pagination);
+      }
+
+      where.student = {
+        ...(where.student || {}),
+        groupId: { in: authContext.allowedGroupIds },
+      };
+    }
 
     // Get total count for pagination
     const total = await prisma.assessment.count({ where });
@@ -113,13 +133,21 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/assessments
-export async function POST(request: NextRequest) {
+async function createAssessmentHandler(request: NextRequest) {
   try {
     const { error, user: currentUser } = await requireAuth(request);
     if (error) return error;
 
     const body = await request.json();
     const validatedData = createAssessmentSchema.parse(body);
+
+    const authContext = getAuthContext(request);
+    const student = await prisma.student.findUnique({
+      where: { id: validatedData.studentId },
+      select: { groupId: true },
+    });
+    const accessError = enforceGroupAccess(student?.groupId, authContext);
+    if (accessError) return accessError;
 
     // @ts-ignore - Prisma types need regeneration after schema migration, but code works at runtime
     const assessment = await prisma.assessment.create({
@@ -156,7 +184,7 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT /api/assessments - Mark/Update Assessment
-export async function PUT(request: NextRequest) {
+async function updateAssessmentHandler(request: NextRequest) {
   try {
     const { error, user: currentUser } = await requireAuth(request);
     if (error) return error;
@@ -167,6 +195,15 @@ export async function PUT(request: NextRequest) {
     if (!id) {
       return errorResponse('Assessment ID required', 400);
     }
+
+    const existingAssessment = await prisma.assessment.findUnique({
+      where: { id },
+      select: { student: { select: { groupId: true } } },
+    });
+
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(existingAssessment?.student?.groupId, authContext);
+    if (accessError) return accessError;
 
     // Validate score if provided
     if (score !== undefined && (score < 0 || score > 100)) {
@@ -229,7 +266,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // DELETE /api/assessments
-export async function DELETE(request: NextRequest) {
+async function deleteAssessmentHandler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -238,12 +275,28 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('Assessment ID is required', 400);
     }
 
-    await prisma.assessment.delete({
+    const existingAssessment = await prisma.assessment.findUnique({
       where: { id },
+      select: { student: { select: { groupId: true } } },
     });
 
-    return successResponse(null, 'Assessment deleted successfully');
+    const authContext = getAuthContext(request);
+    const accessError = enforceGroupAccess(existingAssessment?.student?.groupId, authContext);
+    if (accessError) return accessError;
+
+    // Soft delete the assessment
+    await softDelete('assessment', id);
+
+    return successResponse(null, 'Assessment archived successfully. Can be restored within 30 days.');
   } catch (error) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getAssessmentsHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(
+  withRateLimit(withValidation(createAssessmentHandler, createAssessmentSchema), 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);
+export const PUT = withAuth(withRateLimit(updateAssessmentHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(deleteAssessmentHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -15,11 +16,17 @@ model User {
   role        String       @default("FACILITATOR")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  isDeleted   Boolean      @default(false)
   lessonPlans LessonPlan[]
   sessions    Session[]
   students    Student[]
   plans       Plan[]       @relation("PlanFacilitator")
   reminderPreference ReminderPreference?
+  guardianStudents GuardianStudent[] @relation("GuardianUser")
+
+  @@index([isDeleted])
+  @@index([role])
 }
 
 model Group {
@@ -36,6 +43,8 @@ model Group {
   notes                String?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
+  isDeleted            Boolean               @default(false)
   companyId            String?
   Company              Company?              @relation(fields: [companyId], references: [id])
   courses              GroupCourse[]
@@ -52,6 +61,8 @@ model Group {
   
   // Calendar feature relations
   plans                Plan[]     // Lesson plans for calendar
+
+  @@index([isDeleted])
 }
 
 model GroupRolloutPlan {
@@ -121,6 +132,34 @@ model UndoHistory {
   @@index([canUndo])
 }
 
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String
+  entityType String
+  entityId   String?
+  timestamp  DateTime @default(now())
+  ipAddress  String
+  metadata   String?  // JSON stored as string for SQLite compatibility
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([timestamp])
+}
+
+model DataIntegrityLog {
+  id          String   @id @default(uuid())
+  checkType   String
+  severity    String
+  description String
+  entityId    String?
+  timestamp   DateTime @default(now())
+
+  @@index([checkType])
+  @@index([severity])
+  @@index([timestamp])
+}
+
 model FacilitatorTask {
   id          String   @id @default(uuid())
   title       String
@@ -180,6 +219,8 @@ model Student {
   status               String                 @default("ACTIVE")
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  isDeleted            Boolean                @default(false)
   groupId              String
   facilitatorId        String
   currentModuleId      String?
@@ -190,15 +231,42 @@ model Student {
   moduleProgress       ModuleProgress[]
   poeChecklists        POEChecklist?
   attendanceAlerts     AttendanceAlert[]
+  riskProfiles         StudentRiskProfile[]
+  outcomes             StudentOutcome[]
   currentModule        Module?                @relation(fields: [currentModuleId], references: [id])
   facilitator          User                   @relation(fields: [facilitatorId], references: [id])
   group                Group                  @relation(fields: [groupId], references: [id])
   unitStandardProgress UnitStandardProgress[]
+  guardians            GuardianStudent[]      @relation
 
   @@index([groupId])
   @@index([status])
   @@index([progress])
   @@index([facilitatorId])
+  @@index([groupId, status, progress])
+  @@index([isDeleted])
+}
+
+// Junction table linking guardians (Users with role GUARDIAN) to students they're monitoring
+model GuardianStudent {
+  id                String   @id @default(uuid())
+  guardianId        String
+  studentId         String
+  relationshipType  String   @default("PARENT") // PARENT | GUARDIAN | OTHER
+  verificationCode  String?  // Verification code for linking
+  verifiedAt        DateTime?
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  guardian          User     @relation("GuardianUser", fields: [guardianId], references: [id], onDelete: Cascade)
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([guardianId, studentId])
+  @@index([guardianId])
+  @@index([studentId])
+  @@index([isVerified])
+  @@index([createdAt])
 }
 
 model FormativeAssessment {
@@ -256,6 +324,10 @@ model Session {
   attendance    Attendance[]
   facilitator   User         @relation(fields: [facilitatorId], references: [id])
   group         Group        @relation(fields: [groupId], references: [id])
+
+  @@index([groupId])
+  @@index([facilitatorId])
+  @@index([date])
 }
 
 model Attendance {
@@ -268,6 +340,8 @@ model Attendance {
   qrCodeScan Boolean   @default(false)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  isDeleted  Boolean   @default(false)
   studentId  String
   sessionId  String?
   groupId    String?
@@ -278,6 +352,13 @@ model Attendance {
   @@index([date])
   @@index([studentId, date])
   @@index([groupId, date])
+  @@index([sessionId])
+  @@index([studentId])
+  @@index([status])
+  @@index([groupId, status])
+  @@index([isDeleted])
+  // Performance optimization: combined index for attendance rate calculations
+  @@index([studentId, status, date])
 }
 
 model AttendancePolicy {
@@ -346,6 +427,8 @@ model Assessment {
   attemptNumber    Int          @default(1)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
+  isDeleted        Boolean      @default(false)
   studentId        String
   unitStandardId   String
   unitStandard     UnitStandard @relation(fields: [unitStandardId], references: [id])
@@ -357,6 +440,11 @@ model Assessment {
   @@index([unitStandardId])
   @@index([studentId, unitStandardId])
   @@index([result])
+  @@index([studentId, result])
+  @@index([isDeleted])
+  // Performance optimization indexes for 5000+ students
+  @@index([studentId, unitStandardId, result])
+  @@index([result, assessedDate])
 }
 
 model ModuleProgress {
@@ -505,6 +593,9 @@ model UnitStandard {
   module               Module                 @relation(fields: [moduleId], references: [id])
   progress             UnitStandardProgress[]
   unitStandardRollouts UnitStandardRollout[]
+
+  @@index([moduleId])
+  @@index([moduleId, credits]) // Performance: Fast lookups for curriculum data
 }
 
 model Activity {
@@ -685,4 +776,115 @@ model Company {
   createdAt     DateTime @default(now())
   updatedAt     DateTime
   Group         Group[]
+}
+
+// AI-Powered At-Risk Student Prediction System
+
+// Student risk assessment profile with AI-generated predictions
+model StudentRiskProfile {
+  id                       String   @id @default(uuid())
+  studentId                String
+  riskLevel                String   // LOW | MEDIUM | HIGH
+  riskFactors              String   // JSON array of risk factors with details
+  confidenceScore          Float    // AI model confidence (0-1)
+  calculatedAt             DateTime @default(now())
+  recommendedInterventions String   // JSON array of suggested interventions
+  // Individual risk scores for transparency
+  attendanceRiskScore      Float    @default(0)
+  assessmentRiskScore      Float    @default(0)
+  engagementRiskScore      Float    @default(0)
+  overallRiskScore         Float    @default(0)
+  // Historical tracking
+  previousRiskLevel        String?
+  riskLevelChangedAt       DateTime?
+  // Metadata
+  modelVersion             String   @default("1.0")
+  metadata                 String?  // JSON for additional context
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  
+  student                  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  auditLogs                StudentRiskAuditLog[]
+  
+  @@index([studentId])
+  @@index([riskLevel])
+  @@index([calculatedAt])
+  @@index([studentId, calculatedAt])
+  @@index([riskLevel, calculatedAt])
+}
+
+// Audit log for risk profile access (ethical AI compliance)
+model StudentRiskAuditLog {
+  id          String              @id @default(uuid())
+  profileId   String
+  userId      String
+  action      String              // VIEWED | GENERATED | INTERVENTION_CREATED | EXPORTED
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime            @default(now())
+  metadata    String?             // JSON for additional context
+  
+  profile     StudentRiskProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  @@index([profileId])
+  @@index([userId])
+  @@index([timestamp])
+  @@index([action])
+}
+
+// Tracking actual student outcomes for model improvement
+model StudentOutcome {
+  id              String    @id @default(uuid())
+  studentId       String
+  outcomeType     String    // COMPLETED | DROPPED_OUT | ON_HOLD | TRANSFERRED
+  outcomeDate     DateTime
+  reason          String?
+  notes           String?
+  // Link to risk profile at time of outcome
+  riskLevelAtOutcome String?
+  riskScoreAtOutcome Float?
+  // For model training feedback
+  predictedCorrectly Boolean  @default(false)
+  feedbackProvided   Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([outcomeType])
+  @@index([outcomeDate])
+  @@index([studentId, outcomeDate])
+}
+
+// Materialized view for group-level statistics (computed table)
+// These tables cache expensive aggregations to improve dashboard performance
+model GroupStats {
+  id                   String   @id @default(uuid())
+  groupId              String   @unique
+  totalCreditsEarned   Int      @default(0)
+  avgProgress          Float    @default(0)
+  attendanceRate       Float    @default(0)
+  studentCount         Int      @default(0)
+  atRiskCount          Int      @default(0) // Students with <60% attendance or progress
+  lastCalculatedAt     DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([groupId])
+  @@index([lastCalculatedAt])
+}
+
+// Materialized view for dashboard-level summary metrics
+model DashboardSummary {
+  id        String   @id @default(uuid())
+  metricType String  // TOTAL_STUDENTS | TOTAL_GROUPS | ATTENDANCE_RATE | etc.
+  value     Float
+  timestamp DateTime @default(now())
+  metadata  String?  // JSON string for additional context
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([metricType, timestamp])
+  @@index([timestamp])
 }

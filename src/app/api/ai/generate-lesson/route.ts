@@ -5,6 +5,7 @@ import { searchDocuments } from '@/lib/ai/pinecone';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,7 @@ async function writeTemplates(templates: any[]): Promise<void> {
 
 // ── GET /api/ai/generate-lesson?templateId=xxx ──────────────────────────────
 // Returns a saved lesson template
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const templateId = searchParams.get('templateId');
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
 }
 
 // ── DELETE /api/ai/generate-lesson?templateId=xxx ────────────────────────────
-export async function DELETE(request: NextRequest) {
+async function handleDelete(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const templateId = searchParams.get('templateId');
@@ -70,7 +71,7 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
     try {
         const body = await request.json();
         const {
@@ -276,3 +277,7 @@ IMPORTANT: Return ONLY the JSON object, no markdown formatting, no additional te
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(handleGet, 'generous'), ['ADMIN', 'FACILITATOR']);
+export const DELETE = withAuth(withRateLimit(handleDelete, 'moderate'), ['ADMIN', 'FACILITATOR']);
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

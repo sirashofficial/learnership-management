@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
+import { withAuth, withRateLimit, getAuthContext } from '@/middleware/apiAuth';
 
 // POST /api/groups/[id]/rollout
 // Body: { rolloutPlan: { module1StartDate, module1EndDate, ... } }
-export async function POST(
+async function handlePost(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -55,3 +56,5 @@ export async function POST(
         return handleApiError(error);
     }
 }
+
+export const POST = withAuth(withRateLimit(handlePost, 'strict'), ['ADMIN', 'FACILITATOR']);

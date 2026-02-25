@@ -19,6 +19,11 @@ export interface AuthenticatedRequest extends NextRequest {
  * Returns the authenticated user or an error response
  */
 export async function requireAuth(request: NextRequest) {
+  const cachedUser = (request as unknown as { authUser?: AuthenticatedRequest['user'] }).authUser;
+  if (cachedUser) {
+    return { error: null, user: cachedUser };
+  }
+
   const user = await getUserFromRequest(request);
 
   if (!user) {

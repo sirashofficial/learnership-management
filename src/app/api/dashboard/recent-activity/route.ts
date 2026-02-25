@@ -2,12 +2,22 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
-export async function GET(request: NextRequest) {
+async function getRecentActivityHandler(request: NextRequest) {
   try {
+    const authContext = getAuthContext(request);
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {};
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return successResponse({ activities: [] });
+    }
+
     // Get recently added students (last 5)
     const recentStudents = await prisma.student.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', ...groupFilter },
       include: {
         group: {
           include: {
@@ -46,3 +56,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const GET = withAuth(withRateLimit(getRecentActivityHandler, 'generous'), ['ADMIN', 'FACILITATOR']);

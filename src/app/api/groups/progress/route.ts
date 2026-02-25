@@ -1,19 +1,34 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, handleApiError } from '@/lib/api-utils';
+import { enforceGroupAccess, getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth';
 
 // Force dynamic rendering for this route (requires request.url for query params)
 export const dynamic = 'force-dynamic';
 
 // GET /api/groups/progress — Returns actual assessment progress for each group
 // Used by Group Cards to show Projected vs Actual progress
-export async function GET(request: NextRequest) {
+async function getGroupProgressHandler(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const groupId = searchParams.get('groupId');
 
+        const authContext = getAuthContext(request);
+        if (authContext?.user.role === 'FACILITATOR') {
+            if (groupId) {
+                const accessError = enforceGroupAccess(groupId, authContext);
+                if (accessError) return accessError;
+            } else if (authContext.allowedGroupIds.length === 0) {
+                return successResponse([]);
+            }
+        }
+
         // Build query filter
-        const groupFilter = groupId ? { id: groupId } : { status: { not: 'ARCHIVED' } };
+                const groupFilter = groupId
+                        ? { id: groupId }
+                        : authContext?.user.role === 'FACILITATOR'
+                            ? { id: { in: authContext.allowedGroupIds } }
+                            : { status: { not: 'ARCHIVED' } };
 
         // Fetch all active groups with their students and assessments
         const groups = await prisma.group.findMany({
@@ -110,3 +125,5 @@ export async function GET(request: NextRequest) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(withRateLimit(getGroupProgressHandler, 'moderate'), ['ADMIN', 'FACILITATOR']);

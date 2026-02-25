@@ -2,9 +2,11 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api-utils';
 import { updateStudentProgressUnified } from '@/lib/progress-calculator';
+import { withAuth, withRateLimit, enforceGroupAccess, getAuthContext } from '@/middleware/apiAuth';
+import { softDelete } from '@/lib/softDelete';
 
 // GET /api/assessments/[id]
-export async function GET(
+async function handleGet(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -32,7 +34,7 @@ export async function GET(
 }
 
 // PUT /api/assessments/[id] — Update assessment result (supports 3-state: COMPETENT, NOT_YET_COMPETENT, PENDING/null)
-export async function PUT(
+async function handlePut(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
@@ -97,26 +99,37 @@ export async function PUT(
     }
 }
 
-// PATCH /api/assessments/[id] — Same as PUT for flexibility
-export async function PATCH(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
-    return PUT(request, { params });
-}
-
 // DELETE /api/assessments/[id]
-export async function DELETE(
+async function handleDelete(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
     try {
-        await prisma.assessment.delete({
-            where: { id: params.id },
-        });
+        // Soft delete the assessment
+        await softDelete('assessment', params.id);
 
-        return successResponse(null, 'Assessment deleted successfully');
+        return successResponse(null, 'Assessment archived successfully. Can be restored within 30 days.');
     } catch (error) {
         return handleApiError(error);
     }
 }
+
+export const GET = withAuth(
+  withRateLimit(handleGet, 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);
+
+export const PUT = withAuth(
+  withRateLimit(handlePut, 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);
+
+export const PATCH = withAuth(
+  withRateLimit(handlePut, 'moderate'),
+  ['ADMIN', 'FACILITATOR']
+);
+
+export const DELETE = withAuth(
+  withRateLimit(handleDelete, 'strict'),
+  ['ADMIN']
+);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthContext, withAuth, withRateLimit } from '@/middleware/apiAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,11 +38,24 @@ interface TimelineData {
   }
 }
 
-export async function GET(request: NextRequest) {
+async function getTimelineHandler(request: NextRequest) {
   try {
+    const authContext = getAuthContext(request)
+    const groupFilter = authContext?.user.role === 'FACILITATOR'
+      ? { groupId: { in: authContext.allowedGroupIds } }
+      : {}
+
+    if (authContext?.user.role === 'FACILITATOR' && authContext.allowedGroupIds.length === 0) {
+      return NextResponse.json({
+        studentProgressTimeline: [],
+        taskScheduleGantt: [],
+        stats: { totalEvents: 0, totalTasks: 0, completedTasks: 0, overdueTasks: 0 }
+      })
+    }
+
     // Get student timeline events
     const students = await prisma.student.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', ...groupFilter },
       include: {
         group: { select: { name: true } },
         assessments: {
@@ -105,12 +119,22 @@ export async function GET(request: NextRequest) {
         take: 20
       }),
       prisma.session.findMany({
+        where: {
+          ...(authContext?.user.role === 'FACILITATOR'
+            ? { groupId: { in: authContext.allowedGroupIds } }
+            : {})
+        },
         orderBy: { date: 'asc' },
         include: { group: { select: { name: true } } },
         take: 30
       }),
       prisma.assessment.findMany({
-        where: { result: null },
+        where: {
+          result: null,
+          ...(authContext?.user.role === 'FACILITATOR'
+            ? { student: { groupId: { in: authContext.allowedGroupIds } } }
+            : {})
+        },
         orderBy: { dueDate: 'asc' },
         include: { student: { select: { firstName: true, lastName: true } } },
         take: 30
@@ -201,3 +225,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+export const GET = withAuth(withRateLimit(getTimelineHandler, 'generous'), ['ADMIN', 'FACILITATOR'])

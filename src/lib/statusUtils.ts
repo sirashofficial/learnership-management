@@ -36,10 +36,14 @@ export function calculatePerformanceStatus(
     }
 
     const lag = expectedModule - currentAssessmentModule;
+    const percentLag = projectedPercent - actualPercent;
 
-    // 3. Status Thresholds
-    if (lag >= 2) return 'AT_RISK';
-    if (lag === 1) return 'BEHIND';
+    // 3. Status Thresholds (Combine Module Lag and Percentage Lag)
+    // AT_RISK if behind by 2+ modules OR more than 15% behind
+    if (lag >= 2 || percentLag >= 15) return 'AT_RISK';
+
+    // BEHIND if behind by 1 module OR more than 5% behind
+    if (lag >= 1 || percentLag >= 5) return 'BEHIND';
 
     return 'ON_TRACK';
 }
