@@ -7,18 +7,20 @@
  * - GET /api/admin/backup/[filename] - Download backup
  * 
  * Authorization: ADMIN role required
+ * 
+ * NOTE: File-based backups are disabled in serverless environments (Vercel).
+ * Use your database provider's backup features instead.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
-// Runtime-only imports to avoid build-time issues in serverless
-const fs = typeof window === 'undefined' ? require('fs') : null;
-const path = typeof window === 'undefined' ? require('path') : null;
-
 // Force dynamic rendering (no static generation)
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+// Detect serverless environment
+const IS_SERVERLESS = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY;
 
 // Backup metadata interface
 interface BackupMetadata {
@@ -35,8 +37,6 @@ interface BackupMetadata {
   success: boolean;
   error?: string;
 }
-
-const BACKUP_DIR = path ? path.join(process.cwd(), 'backups', 'postgresql') : '/tmp/backups';
 
 // ============================================
 // AUTHORIZATION CHECK
@@ -77,17 +77,21 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    // Check if running in serverless environment
-    if (process.env.VERCEL || !fs || !path) {
-      return NextResponse.json({
-        backups: [],
-        total: 0,
-        message: 'File-based backups are not supported in serverless deployments',
-        recommendation: 'Use your database provider\'s backup features (e.g., Supabase automatic backups)'
-      });
-    }
+  // Return early if serverless
+  if (IS_SERVERLESS) {
+    return NextResponse.json({
+      backups: [],
+      total: 0,
+      message: 'File-based backups are not supported in serverless deployments',
+      recommendation: 'Use your database provider\'s backup features (e.g., Supabase automatic backups)'
+    });
+  }
 
+  try {
+    // Only require fs/path in non-serverless environment
+    const fs = require('fs');
+    const path = require('path');
+    const BACKUP_DIR = path.join(process.cwd(), 'backups', 'postgresql');
     const indexPath = path.join(BACKUP_DIR, 'backup-index.json');
     
     if (!fs.existsSync(indexPath)) {
@@ -146,6 +150,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Return early if serverless
+  if (IS_SERVERLESS) {
+    return NextResponse.json({
+      success: false,
+      error: 'File-based backups are not supported in serverless deployments',
+      message: 'Please use database provider backup tools or configure external backup storage',
+      recommendation: 'Use Supabase automatic backups or configure AWS S3 backup integration'
+    }, { status: 501 });
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const backupType = body.type === 'monthly' ? 'monthly' : 'daily';
@@ -153,18 +167,10 @@ export async function POST(request: NextRequest) {
     console.log(`[BACKUP] Manual backup triggered by ${auth.user?.email || 'admin'}`);
     console.log(`[BACKUP] Type: ${backupType}`);
 
-    // Check if running in serverless environment (Vercel)
-    if (process.env.VERCEL || !fs || !path) {
-      return NextResponse.json({
-        success: false,
-        error: 'File-based backups are not supported in serverless deployments',
-        message: 'Please use database provider backup tools or configure external backup storage',
-        recommendation: 'Use Supabase automatic backups or configure AWS S3 backup integration'
-      }, { status: 501 });
-    }
-
+    // Only require modules in non-serverless environment
+    const path = require('path');
+    
     // Perform backup (this may take several minutes)
-    // Only import when not in serverless environment
     let performBackup;
     try {
       // Dynamic require to avoid webpack bundling issues
@@ -229,6 +235,14 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  // Return early if serverless
+  if (IS_SERVERLESS) {
+    return NextResponse.json({
+      success: false,
+      error: 'File-based backups are not supported in serverless deployments'
+    }, { status: 501 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('filename');
@@ -248,6 +262,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Only require modules in non-serverless environment
+    const fs = require('fs');
+    const path = require('path');
+    const BACKUP_DIR = path.join(process.cwd(), 'backups', 'postgresql');
     const backupPath = path.join(BACKUP_DIR, filename);
     const metaPath = `${backupPath}.meta.json`;
 

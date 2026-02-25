@@ -4,14 +4,19 @@
  * GET /api/admin/backup/[filename] - Download specific backup file
  * 
  * Authorization: ADMIN role required
+ * 
+ * NOTE: File-based backups are disabled in serverless environments (Vercel).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import * as fs from 'fs';
-import * as path from 'path';
 
-const BACKUP_DIR = path.join(process.cwd(), 'backups', 'postgresql');
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+// Detect serverless environment
+const IS_SERVERLESS = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY;
 
 // ============================================
 // AUTHORIZATION CHECK
@@ -55,6 +60,13 @@ export async function GET(
     );
   }
 
+  // Return early if serverless
+  if (IS_SERVERLESS) {
+    return NextResponse.json({
+      error: 'File-based backups are not supported in serverless deployments'
+    }, { status: 501 });
+  }
+
   try {
     const filename = params.filename;
 
@@ -66,6 +78,10 @@ export async function GET(
       );
     }
 
+    // Only require modules in non-serverless environment
+    const fs = require('fs');
+    const path = require('path');
+    const BACKUP_DIR = path.join(process.cwd(), 'backups', 'postgresql');
     const backupPath = path.join(BACKUP_DIR, filename);
 
     if (!fs.existsSync(backupPath)) {
