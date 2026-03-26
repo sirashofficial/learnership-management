@@ -63,9 +63,11 @@ const adminItems = [
 interface SidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
+    isMobileOpen?: boolean;
+    isMobile?: boolean;
 }
 
-export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ isCollapsed, onToggle, isMobileOpen = false, isMobile = false }: SidebarProps) {
     const [sidebarTheme, setSidebarTheme] = useState<'dark' | 'light'>('dark');
     const pathname = usePathname();
     const { user, logout } = useAuth();
@@ -90,6 +92,13 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         const next = sidebarTheme === 'dark' ? 'light' : 'dark';
         setSidebarTheme(next);
         localStorage.setItem('sidebarTheme', next);
+        // Sync to global dark mode (ThemeInitializer reads 'theme')
+        localStorage.setItem('theme', next);
+        if (next === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     };
 
     const isDark = sidebarTheme === 'dark';
@@ -151,7 +160,9 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <aside
             className={cn(
                 "fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out",
-                isCollapsed ? "w-[var(--sidebar-collapsed)]" : "w-[var(--sidebar-width)]"
+                isMobile
+                    ? cn("w-[var(--sidebar-width)]", isMobileOpen ? "translate-x-0" : "-translate-x-full")
+                    : isCollapsed ? "w-[var(--sidebar-collapsed)]" : "w-[var(--sidebar-width)]"
             )}
         >
             <div className={cn(

@@ -387,7 +387,7 @@ export default function ProgressPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">\n
           <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-lg flex items-center justify-center">
                 <BookOpen className="w-5 h-5" />
               </div>
               <span className="text-2xl font-bold text-text">{totalModules}</span>
@@ -397,7 +397,7 @@ export default function ProgressPage() {
 
           <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-5 h-5" />
               </div>
               <span className="text-2xl font-bold text-text">{completedModules}</span>
@@ -417,7 +417,7 @@ export default function ProgressPage() {
 
           <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-lg flex items-center justify-center">
                 <Award className="w-5 h-5" />
               </div>
               <span className="text-2xl font-bold text-text">

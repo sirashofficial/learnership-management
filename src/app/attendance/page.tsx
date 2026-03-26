@@ -776,8 +776,19 @@ export default function AttendancePage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading students...</div>
+        <div className="dashboard-card p-5">
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 animate-pulse">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0"></div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
+                </div>
+                <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

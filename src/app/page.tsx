@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -38,31 +38,14 @@ const TodaysSchedule = dynamic(() => import('@/components/TodaysSchedule'), { ss
 const StatCard = dynamic(() => import('@/components/StatCard'), { ssr: false });
 const TeachingNotifications = dynamic(() => import('@/components/TeachingNotifications'), { ssr: false });
 
-// Lightweight loading skeleton
-function ComponentSkeleton({ height = 'h-48' }: { height?: string }) {
+function CardSkeleton({ height = 'h-48' }: { height?: string }) {
   return (
-    <div className={`bg-white rounded-xl border border-slate-200 p-6 ${height}`}>
+    <div className={`dashboard-card p-6 ${height}`}>
       <div className="animate-pulse space-y-4">
-        <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
         <div className="space-y-2">
-          <div className="h-3 bg-slate-200 rounded"></div>
-          <div className="h-3 bg-slate-200 rounded w-5/6"></div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Skeleton card component for loading states
-function SkeletonCard({ height = 'h-48' }: { height?: string }) {
-  return (
-    <div className={`bg-white rounded-xl border border-slate-200 p-6 ${height}`}>
-      <div className="animate-pulse space-y-4">
-        <div className="h-5 bg-gray-200 rounded w-1/3"></div>
-        <div className="space-y-3">
-          <div className="h-4 bg-gray-200 rounded"></div>
-          <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-          <div className="h-4 bg-gray-200 rounded w-4/5"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-5/6"></div>
         </div>
       </div>
     </div>
@@ -90,48 +73,10 @@ interface ProgrammeHealth {
   status: 'ON_TRACK' | 'AHEAD' | 'BEHIND';
 }
 
-interface DashboardData {
-  stats: DashboardStats;
-  programmeHealth: ProgrammeHealth[];
-}
-
-function getStatusBadge(status: string, weeksAhead: number) {
-  if (status === 'NO_PLAN') {
-    return (
-      <span className="status-pill bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-        <span className="text-sm">📋</span>
-        No Plan
-      </span>
-    );
-  } else if (status === 'AHEAD') {
-    return (
-      <span className="status-pill bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-        <span className="text-sm">🚀</span>
-        Ahead {Math.abs(weeksAhead)}w
-      </span>
-    );
-  } else if (status === 'BEHIND') {
-    return (
-      <span className="status-pill bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
-        <span className="text-sm">⚠️</span>
-        Behind {Math.abs(weeksAhead)}w
-      </span>
-    );
-  } else if (status === 'AT_RISK') {
-    return (
-      <span className="status-at-risk">
-        <span className="text-sm">🔴</span>
-        At Risk
-      </span>
-    );
-  } else {
-    return (
-      <span className="status-on-track">
-        <span className="text-sm">✅</span>
-        On Track
-      </span>
-    );
-  }
+function getStat(stats: any, key: string): number {
+  if (typeof stats?.[key]?.value === 'number') return stats[key].value;
+  if (typeof stats?.[key] === 'number') return stats[key];
+  return 0;
 }
 
 // Get current module label from rollout plan
@@ -200,49 +145,49 @@ const renderStatusBadge = (status: PlanStatus) => {
   switch (status) {
     case 'ON_TRACK':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
+        <span className="status-on-track">
           <CheckCircle2 className="w-3 h-3" />
           On Track
         </span>
       );
     case 'BEHIND':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700">
+        <span className="status-behind">
           <AlertTriangle className="w-3 h-3" />
           Behind
         </span>
       );
     case 'AT_RISK':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-red-50 text-red-700">
+        <span className="status-at-risk">
           <AlertTriangle className="w-3 h-3" />
           At Risk
         </span>
       );
     case 'OVERDUE':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700">
+        <span className="status-pill bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
           <Clock className="w-3 h-3" />
           Overdue
         </span>
       );
     case 'COMPLETE':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-teal-50 text-teal-700">
+        <span className="status-pill bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">
           <CheckCircle2 className="w-3 h-3" />
           Complete
         </span>
       );
     case 'NOT_STARTED':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+        <span className="status-pill bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
           <Clock className="w-3 h-3" />
           Not Started
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+        <span className="status-pill bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
           <Clock className="w-3 h-3" />
           No Plan
         </span>
@@ -254,8 +199,6 @@ export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const { groups } = useGroups();
   const router = useRouter();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loadingData, setLoadingData] = useState(true);
   const [calendarMonth, setCalendarMonth] = useState(startOfMonth(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [hoverInfo, setHoverInfo] = useState<{ day: Date; top: number; left: number } | null>(null);
@@ -264,8 +207,6 @@ export default function DashboardPage() {
   const dayCardRef = useRef<HTMLDivElement | null>(null);
   const [attendanceSession, setAttendanceSession] = useState<any | null>(null);
   const { toast, showToast, hideToast } = useToast();
-  const isFetchingRef = useRef(false);
-
   // View switching for enhanced dashboard (moved before early returns)
   const [currentView, setCurrentView] = useState<'dashboard' | 'kanban' | 'timeline' | 'collaboration' | 'analytics'>('dashboard');
 
@@ -296,64 +237,6 @@ export default function DashboardPage() {
       router.push('/login');
     }
   }, [user, isLoading, router]);
-
-  const fetchDashboardData = useCallback(async () => {
-    // Prevent duplicate calls
-    if (isFetchingRef.current) {
-      console.log('Already fetching, skipping...');
-      return;
-    }
-
-    isFetchingRef.current = true;
-    try {
-      // Use unified endpoint (single source of truth)
-      const response = await fetch('/api/data/groups', {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const unifiedData = await response.json();
-        // Map unified response to dashboard format
-        if (unifiedData.success && unifiedData.data) {
-          const dashboardData = {
-            stats: {
-              totalStudents: unifiedData.data.summary.totalStudents,
-              totalGroups: unifiedData.data.summary.totalGroups,
-              attendanceRate: 0, // Fetched separately
-              activeCourses: unifiedData.data.summary.totalGroups,
-              completionRate: unifiedData.data.summary.averageProgress,
-              pendingAssessments: 0,
-            },
-            programmeHealth: unifiedData.data.groups.map((group: any) => ({
-              groupId: group.id,
-              groupName: group.name,
-              currentModule: 1,
-              currentModuleName: 'Module 1',
-              projectedCompletionDate: group.endDate || new Date().toISOString(),
-              earnedCredits: group.metrics.avgCreditsPerStudent,
-              totalCredits: group.totalCreditsRequired,
-              weeksAhead: 0,
-              status: group.metrics.healthStatus,
-            })),
-          };
-          setDashboardData(dashboardData);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoadingData(false);
-      isFetchingRef.current = false;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (user && !isFetchingRef.current) {
-      // Data is now fetched via GroupsContext and custom hooks (useDashboardStats, etc.)
-      // No need for manual fetchDashboardData call here
-      // fetchDashboardData();
-      setLoadingData(false);
-    }
-  }, [user, fetchDashboardData]);
 
   useEffect(() => {
     if (!selectedDay) return;
@@ -511,7 +394,7 @@ export default function DashboardPage() {
         return (
           <div className="flex-1 space-y-6">
             {/* Stats Row */}
-            {statsLoading || loadingData ? (
+            {statsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="dashboard-card p-5 animate-pulse">
@@ -520,7 +403,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            ) : (dashboardStats || dashboardData) ? (
+            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <StatCard
                   title="Total Students"
@@ -535,30 +418,30 @@ export default function DashboardPage() {
                 />
                 <StatCard
                   title="Attendance Rate"
-                  value={typeof dashboardStats?.attendanceRate?.value === 'number' ? dashboardStats.attendanceRate.value : typeof dashboardStats?.attendanceRate === 'number' ? dashboardStats.attendanceRate : typeof dashboardData?.stats.attendanceRate === 'number' ? dashboardData.stats.attendanceRate : 0}
+                  value={getStat(dashboardStats, 'attendanceRate')}
                   icon={Calendar}
                   suffix="%"
                   onClick={() => router.push('/attendance')}
                 />
                 <StatCard
                   title="Active Courses"
-                  value={typeof dashboardStats?.activeCourses?.value === 'number' ? dashboardStats.activeCourses.value : typeof dashboardStats?.activeCourses === 'number' ? dashboardStats.activeCourses : typeof dashboardData?.stats.activeCourses === 'number' ? dashboardData.stats.activeCourses : 0}
+                  value={getStat(dashboardStats, 'activeCourses')}
                   icon={BookOpen}
                 />
                 <StatCard
                   title="Completion Rate"
-                  value={typeof dashboardStats?.completionRate?.value === 'number' ? dashboardStats.completionRate.value : typeof dashboardStats?.completionRate === 'number' ? dashboardStats.completionRate : typeof dashboardData?.stats.completionRate === 'number' ? dashboardData.stats.completionRate : 0}
+                  value={getStat(dashboardStats, 'completionRate')}
                   icon={CheckCircle}
                   suffix="%"
                 />
                 <StatCard
                   title="Pending Assessments"
-                  value={typeof dashboardStats?.pendingAssessments?.value === 'number' ? dashboardStats.pendingAssessments.value : typeof dashboardStats?.pendingAssessments === 'number' ? dashboardStats.pendingAssessments : typeof dashboardData?.stats.pendingAssessments === 'number' ? dashboardData.stats.pendingAssessments : 0}
+                  value={getStat(dashboardStats, 'pendingAssessments')}
                   icon={AlertCircle}
                   onClick={() => router.push('/assessments?status=PENDING')}
                 />
               </div>
-            ) : null}
+            )}
 
             {/* Facilitator Teaching Assistant */}
             <div className="mb-6">
@@ -705,29 +588,29 @@ export default function DashboardPage() {
             </div>
 
             {/* Charts */}
-            <Suspense fallback={<ComponentSkeleton height="h-64" />}>
+            <Suspense fallback={<div className="dashboard-card h-64 animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl" />}>
               <DashboardCharts />
             </Suspense>
 
             {/* Activity + Alerts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {activitiesLoading ? (
-                <SkeletonCard />
+                <div className="dashboard-card h-48 animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl" />
               ) : (
-                <Suspense fallback={<ComponentSkeleton />}>
+                <Suspense fallback={<div className="dashboard-card h-48 animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl" />}>
                   <RecentActivity />
                 </Suspense>
               )}
-              <Suspense fallback={<ComponentSkeleton />}>
+              <Suspense fallback={<div className="dashboard-card h-48 animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl" />}>
                 <DashboardAlerts />
               </Suspense>
             </div>
 
             {/* Schedule */}
             {scheduleLoading ? (
-              <SkeletonCard height="h-96" />
+              <div className="dashboard-card h-96 animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl" />
             ) : (
-              <Suspense fallback={<ComponentSkeleton height="h-96" />}>
+              <Suspense fallback={<div className="dashboard-card h-96 animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl" />}>
                 <TodaysSchedule />
               </Suspense>
             )}

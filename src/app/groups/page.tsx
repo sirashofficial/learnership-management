@@ -536,7 +536,7 @@ const renderStatusBadge = (status: PlanStatus) => {
 
 export default function GroupsPage() {
   const router = useRouter();
-  const { groups, isLoading, deleteGroup } = useGroups();
+  const { groups, isLoading, error: groupsError, deleteGroup } = useGroups();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [checklistGroup, setChecklistGroup] = useState<{ id: string, name: string } | null>(null);
@@ -707,8 +707,30 @@ export default function GroupsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+      <div className="space-y-6 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="dashboard-card p-5 animate-pulse">
+              <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-3"></div>
+              <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-2"></div>
+              <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (groupsError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-4">
+          <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Failed to load groups</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {groupsError?.message || 'An unexpected error occurred. Please try refreshing the page.'}
+        </p>
       </div>
     );
   }

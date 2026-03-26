@@ -31,17 +31,21 @@ export default function StatCard({
   onClick,
   loading = false,
 }: StatCardProps) {
-  // Debug: log non-primitive values
-  if (typeof value !== 'number' && typeof value !== 'string') {
-    console.error(`❌ StatCard "${title}" received non-primitive value:`, value, 'Type:', typeof value);
+  if (process.env.NODE_ENV !== 'production') {
+    if (typeof value !== 'number' && typeof value !== 'string') {
+      console.error(`StatCard "${title}" received non-primitive value:`, value);
+    }
   }
-  
+
   const isPositiveTrend = trend && trend > 0;
   const isNegativeTrend = trend && trend < 0;
 
   return (
     <div
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={cn(
         'stat-card',
         onClick && 'cursor-pointer',

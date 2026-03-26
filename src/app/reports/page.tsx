@@ -1288,7 +1288,7 @@ export default function ReportsPage() {
                                                     onClick={() => setActiveGroupTab(groupId)}
                                                     className={`px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${
                                                         isActive
-                                                            ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                                                            ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
                                                             : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
                                                     }`}
                                                 >
