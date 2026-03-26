@@ -82,6 +82,18 @@ def audit():
         print("01 Login page (design)")
         snap(page, "01_login")
 
+        def safe_wait(pg, ms=1500):
+            try:
+                pg.wait_for_timeout(ms)
+            except Exception:
+                pass
+
+        def safe_snap(pg, path_name, full=True):
+            try:
+                pg.screenshot(path=f"{OUT}/{path_name}.png", full_page=full)
+            except Exception as e:
+                print(f"   [snap failed: {e}]")
+
         # --- All main pages ---
         for name, path in PAGES:
             print(f"   {name}")
@@ -90,14 +102,20 @@ def audit():
                 page.wait_for_load_state("networkidle", timeout=45000)
             except Exception:
                 pass  # timeout - capture whatever rendered
-            page.wait_for_timeout(1500)
-            snap(page, f"{name}_desktop")
+            safe_wait(page, 1500)
+            safe_snap(page, f"{name}_desktop")
 
             # Mobile (iPhone 14)
-            page.set_viewport_size({"width": 390, "height": 844})
-            page.wait_for_timeout(400)
-            snap(page, f"{name}_mobile")
-            page.set_viewport_size({"width": 1440, "height": 900})
+            try:
+                page.set_viewport_size({"width": 390, "height": 844})
+            except Exception:
+                pass
+            safe_wait(page, 400)
+            safe_snap(page, f"{name}_mobile")
+            try:
+                page.set_viewport_size({"width": 1440, "height": 900})
+            except Exception:
+                pass
 
         # --- Dark mode multi-page verification ---
         DARK_PAGES = [
@@ -114,11 +132,14 @@ def audit():
             page.wait_for_load_state("networkidle", timeout=45000)
         except Exception:
             pass
-        page.evaluate("""
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        """)
-        page.wait_for_timeout(500)
+        try:
+            page.evaluate("""
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            """)
+        except Exception:
+            pass
+        safe_wait(page, 500)
 
         for name, path in DARK_PAGES:
             print(f"   {name}")
@@ -127,29 +148,40 @@ def audit():
                 page.wait_for_load_state("networkidle", timeout=45000)
             except Exception:
                 pass
-            # Re-apply dark class after navigation (SPA may reset it)
-            page.evaluate("document.documentElement.classList.add('dark')")
-            page.wait_for_timeout(800)
-            snap(page, name)
+            try:
+                page.evaluate("document.documentElement.classList.add('dark')")
+            except Exception:
+                pass
+            safe_wait(page, 800)
+            safe_snap(page, name)
 
         # --- Tablet (iPad) ---
         print("   tablet view")
-        page.set_viewport_size({"width": 768, "height": 1024})
+        try:
+            page.set_viewport_size({"width": 768, "height": 1024})
+        except Exception:
+            pass
         try:
             page.goto(f"{BASE}/", timeout=45000)
             page.wait_for_load_state("networkidle", timeout=45000)
         except Exception:
             pass
-        page.wait_for_timeout(600)
-        snap(page, "dashboard_tablet")
-        page.set_viewport_size({"width": 1440, "height": 900})
+        safe_wait(page, 600)
+        safe_snap(page, "dashboard_tablet")
+        try:
+            page.set_viewport_size({"width": 1440, "height": 900})
+        except Exception:
+            pass
 
         # --- Forms / modals ---
         print("   students with search bar")
-        page.goto(f"{BASE}/students")
-        page.wait_for_load_state("networkidle")
-        page.wait_for_timeout(1000)
-        snap(page, "students_full")
+        try:
+            page.goto(f"{BASE}/students")
+            page.wait_for_load_state("networkidle")
+        except Exception:
+            pass
+        safe_wait(page, 1000)
+        safe_snap(page, "students_full")
 
         browser.close()
         print(f"\nDone -> {OUT}")
