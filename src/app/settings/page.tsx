@@ -399,7 +399,7 @@ export default function SettingsPage() {
                         type="text"
                         value={profileForm.name}
                         onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
 
@@ -412,7 +412,7 @@ export default function SettingsPage() {
                         type="email"
                         value={profileForm.email}
                         onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
 
@@ -425,7 +425,7 @@ export default function SettingsPage() {
                         type="tel"
                         value={profileForm.phone}
                         onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
 
@@ -438,7 +438,7 @@ export default function SettingsPage() {
                         type="text"
                         value={profileForm.organization}
                         onChange={(e) => setProfileForm({...profileForm, organization: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
 
@@ -462,7 +462,7 @@ export default function SettingsPage() {
                         value={profileForm.bio}
                         onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
                         rows={4}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         placeholder="Tell us about yourself..."
                       />
                     </div>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                   {/* Save Button */}
                   <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
-                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
                         <Check className="w-5 h-5" />
                         Saved successfully!
                       </div>
@@ -479,7 +479,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveProfile}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Changes'}
@@ -525,7 +525,7 @@ export default function SettingsPage() {
                           })}
                           className={`relative w-14 h-7 rounded-full transition-colors ${
                             notificationForm[setting.key as keyof typeof notificationForm]
-                              ? 'bg-blue-600'
+                              ? 'bg-emerald-600'
                               : 'bg-slate-300 dark:bg-slate-600'
                           }`}
                         >
@@ -543,7 +543,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
-                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
                         <Check className="w-5 h-5" />
                         Saved successfully!
                       </div>
@@ -551,7 +551,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveNotifications}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Preferences'}
@@ -580,7 +580,7 @@ export default function SettingsPage() {
                         type="text"
                         value={systemForm.organizationName}
                         onChange={(e) => setSystemForm({...systemForm, organizationName: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
 
@@ -592,7 +592,7 @@ export default function SettingsPage() {
                       <select
                         value={systemForm.timezone}
                         onChange={(e) => setSystemForm({...systemForm, timezone: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       >
                         <option value="Africa/Johannesburg">Africa/Johannesburg</option>
                         <option value="UTC">UTC</option>
@@ -609,7 +609,7 @@ export default function SettingsPage() {
                       <select
                         value={systemForm.dateFormat}
                         onChange={(e) => setSystemForm({...systemForm, dateFormat: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       >
                         <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -625,7 +625,7 @@ export default function SettingsPage() {
                       <select
                         value={systemForm.timeFormat}
                         onChange={(e) => setSystemForm({...systemForm, timeFormat: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       >
                         <option value="12h">12-hour</option>
                         <option value="24h">24-hour</option>
@@ -640,7 +640,7 @@ export default function SettingsPage() {
                       <select
                         value={systemForm.language}
                         onChange={(e) => setSystemForm({...systemForm, language: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       >
                         <option value="en">English</option>
                         <option value="af">Afrikaans</option>
@@ -656,7 +656,7 @@ export default function SettingsPage() {
                       <select
                         value={systemForm.currency}
                         onChange={(e) => setSystemForm({...systemForm, currency: e.target.value})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       >
                         <option value="ZAR">ZAR (R)</option>
                         <option value="USD">USD ($)</option>
@@ -676,7 +676,7 @@ export default function SettingsPage() {
                         max="60"
                         value={systemForm.attendanceGracePeriod}
                         onChange={(e) => setSystemForm({...systemForm, attendanceGracePeriod: parseInt(e.target.value)})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
 
@@ -691,7 +691,7 @@ export default function SettingsPage() {
                         max="100"
                         value={systemForm.assessmentPassMark}
                         onChange={(e) => setSystemForm({...systemForm, assessmentPassMark: parseInt(e.target.value)})}
-                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -712,7 +712,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => setSystemForm({...systemForm, autoBackup: !systemForm.autoBackup})}
                           className={`relative w-14 h-7 rounded-full transition-colors ${
-                            systemForm.autoBackup ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+                            systemForm.autoBackup ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
                           }`}
                         >
                           <span
@@ -731,7 +731,7 @@ export default function SettingsPage() {
                           <select
                             value={systemForm.backupFrequency}
                             onChange={(e) => setSystemForm({...systemForm, backupFrequency: e.target.value})}
-                            className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                           >
                             <option value="hourly">Hourly</option>
                             <option value="daily">Daily</option>
@@ -770,7 +770,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
-                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
                         <Check className="w-5 h-5" />
                         Saved successfully!
                       </div>
@@ -778,7 +778,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveSystem}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Settings'}
@@ -838,7 +838,7 @@ export default function SettingsPage() {
                       {[
                         { value: 'blue', color: 'bg-blue-600' },
                         { value: 'purple', color: 'bg-purple-600' },
-                        { value: 'green', color: 'bg-green-600' },
+                        { value: 'green', color: 'bg-emerald-600' },
                         { value: 'orange', color: 'bg-orange-600' },
                         { value: 'red', color: 'bg-red-600' },
                       ].map((scheme) => (
@@ -863,7 +863,7 @@ export default function SettingsPage() {
                     <select
                       value={appearanceForm.fontSize}
                       onChange={(e) => setAppearanceForm({...appearanceForm, fontSize: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     >
                       <option value="small">Small</option>
                       <option value="medium">Medium</option>
@@ -890,7 +890,7 @@ export default function SettingsPage() {
                           })}
                           className={`relative w-14 h-7 rounded-full transition-colors ${
                             appearanceForm[setting.key as keyof typeof appearanceForm]
-                              ? 'bg-blue-600'
+                              ? 'bg-emerald-600'
                               : 'bg-slate-300 dark:bg-slate-600'
                           }`}
                         >
@@ -908,7 +908,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
                     {savedSuccess && (
-                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
                         <Check className="w-5 h-5" />
                         Saved successfully!
                       </div>
@@ -916,7 +916,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveAppearance}
                       disabled={saving}
-                      className="ml-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="ml-auto px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Appearance'}
@@ -949,7 +949,7 @@ export default function SettingsPage() {
                           onChange={(e) => setReminderForm({...reminderForm, emailRemindersEnabled: e.target.checked})}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-blue-600"></div>
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-emerald-600"></div>
                       </label>
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -961,7 +961,7 @@ export default function SettingsPage() {
                   <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-lg">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <Bell className="w-5 h-5 text-green-600" />
+                        <Bell className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Browser Notifications</h4>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -971,7 +971,7 @@ export default function SettingsPage() {
                           onChange={(e) => setReminderForm({...reminderForm, browserNotificationsEnabled: e.target.checked})}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-green-600"></div>
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-500 peer-checked:bg-emerald-600"></div>
                       </label>
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -995,7 +995,7 @@ export default function SettingsPage() {
                           type="time"
                           value={reminderForm.quietHoursStart}
                           onChange={(e) => setReminderForm({...reminderForm, quietHoursStart: e.target.value})}
-                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         />
                       </div>
                       <div>
@@ -1006,7 +1006,7 @@ export default function SettingsPage() {
                           type="time"
                           value={reminderForm.quietHoursEnd}
                           onChange={(e) => setReminderForm({...reminderForm, quietHoursEnd: e.target.value})}
-                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -1021,7 +1021,7 @@ export default function SettingsPage() {
                     <select
                       value={reminderForm.timeZone}
                       onChange={(e) => setReminderForm({...reminderForm, timeZone: e.target.value})}
-                      className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     >
                       <option value="Africa/Johannesburg">South Africa (SAST)</option>
                       <option value="Africa/Cairo">Egypt (EAT)</option>
@@ -1043,7 +1043,7 @@ export default function SettingsPage() {
                   {/* Save Button */}
                   <div className="flex justify-end">
                     {savedSuccess && (
-                      <div className="mr-4 flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <div className="mr-4 flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                         <Check className="w-5 h-5" />
                         <span className="font-medium">Saved successfully!</span>
                       </div>
@@ -1051,7 +1051,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSaveReminders}
                       disabled={saving}
-                      className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                       <Save className="w-5 h-5" />
                       {saving ? 'Saving...' : 'Save Preferences'}
@@ -1087,7 +1087,7 @@ export default function SettingsPage() {
                             type={showCurrentPassword ? "text" : "password"}
                             value={securityForm.currentPassword}
                             onChange={(e) => setSecurityForm({...securityForm, currentPassword: e.target.value})}
-                            className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                           />
                           <button
                             type="button"
@@ -1108,7 +1108,7 @@ export default function SettingsPage() {
                             type={showNewPassword ? "text" : "password"}
                             value={securityForm.newPassword}
                             onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
-                            className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                           />
                           <button
                             type="button"
@@ -1128,14 +1128,14 @@ export default function SettingsPage() {
                           type="password"
                           value={securityForm.confirmPassword}
                           onChange={(e) => setSecurityForm({...securityForm, confirmPassword: e.target.value})}
-                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         />
                       </div>
 
                       <button
                         onClick={handleChangePassword}
                         disabled={saving || !securityForm.currentPassword || !securityForm.newPassword || !securityForm.confirmPassword}
-                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed"
+                        className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:bg-slate-400 disabled:cursor-not-allowed"
                       >
                         {saving ? 'Changing Password...' : 'Change Password'}
                       </button>
@@ -1143,12 +1143,12 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Security Info */}
-                  <div className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                  <div className="p-6 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                    <h4 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100 mb-3">
                       <Shield className="w-5 h-5 inline mr-2" />
                       Password Requirements
                     </h4>
-                    <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                    <ul className="space-y-2 text-sm text-emerald-800 dark:text-emerald-200">
                       <li>• At least 8 characters long</li>
                       <li>• Include uppercase and lowercase letters</li>
                       <li>• Include at least one number</li>
@@ -1157,7 +1157,7 @@ export default function SettingsPage() {
                   </div>
 
                   {savedSuccess && (
-                    <div className="flex items-center gap-2 text-green-600 font-medium p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
                       <Check className="w-5 h-5" />
                       Password changed successfully!
                     </div>

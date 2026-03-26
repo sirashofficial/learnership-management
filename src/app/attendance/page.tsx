@@ -480,8 +480,8 @@ export default function AttendancePage() {
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               status === "PRESENT"
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30"
+                ? "bg-emerald-500 text-white"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
             )}
           >
             Present
@@ -530,7 +530,7 @@ export default function AttendancePage() {
             <select
               value={selectedHistoryGroup || ''}
               onChange={(e) => setSelectedHistoryGroup(e.target.value || null)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             >
               <option value="">All Groups</option>
               {Object.values(groupedStudents).map((group: any) => (
@@ -540,7 +540,7 @@ export default function AttendancePage() {
           </div>
         </div>
         {Object.keys(groupedByDate).length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center border border-slate-200">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center border border-slate-200 dark:border-slate-700">
             <p className="text-lg font-medium text-slate-600 dark:text-slate-400">No attendance records for this week</p>
             <p className="text-sm text-slate-400 mt-2">
               Navigate to a different week or mark attendance on the Mark tab first
@@ -561,7 +561,7 @@ export default function AttendancePage() {
                     {format(new Date(date), 'EEEE, MMMM d, yyyy')}
                   </h3>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-green-600 dark:text-green-400">Present: {stats.present}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">Present: {stats.present}</span>
                     <span className="text-yellow-600 dark:text-yellow-400">Late: {stats.late}</span>
                     <span className="text-red-600 dark:text-red-400">Absent: {stats.absent}</span>
                   </div>
@@ -592,7 +592,7 @@ export default function AttendancePage() {
                           <td className="py-3 px-3">
                             <span className={cn(
                               "px-3 py-1 rounded-full text-sm font-medium",
-                              record.status === 'PRESENT' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                              record.status === 'PRESENT' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
                               record.status === 'LATE' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
                               record.status === 'ABSENT' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                             )}>
@@ -636,7 +636,7 @@ export default function AttendancePage() {
       return (
         <div className="space-y-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Attendance Analytics</h2>
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center border border-slate-200">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center border border-slate-200 dark:border-slate-700">
             <p className="text-lg font-medium text-slate-600 dark:text-slate-400">No data for this period</p>
             <p className="text-sm text-slate-400 mt-2">
               Mark attendance for this week to see analytics
@@ -660,18 +660,18 @@ export default function AttendancePage() {
                   {todayStats?.attendanceRate?.toFixed(1) || '0'}%
                 </p>
               </div>
-              <Calendar className="w-8 h-8 text-blue-500" />
+              <Calendar className="w-8 h-8 text-emerald-500" />
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">This Week</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                   {weekStats?.attendanceRate?.toFixed(1) || '0'}%
                 </p>
               </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
+              <TrendingUp className="w-8 h-8 text-emerald-500" />
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
@@ -730,7 +730,7 @@ export default function AttendancePage() {
                     "p-4 rounded-lg border-l-4",
                     alert.severity === 'CRITICAL' && "bg-red-50 dark:bg-red-900/20 border-red-500",
                     alert.severity === 'WARNING' && "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500",
-                    alert.severity === 'INFO' && "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
+                    alert.severity === 'INFO' && "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500"
                   )}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -752,7 +752,7 @@ export default function AttendancePage() {
                             </span>
                             <button
                               onClick={() => window.alert('Reminder functionality will be implemented in a future update')}
-                              className="text-xs px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                              className="text-xs px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors"
                             >
                               Send Reminder
                             </button>
@@ -804,8 +804,8 @@ export default function AttendancePage() {
             className={cn(
               "px-4 py-2 rounded-lg font-medium transition-colors",
               activeView === 'mark'
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-emerald-600 text-white"
+                : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
             )}
           >
             Mark Attendance
@@ -815,8 +815,8 @@ export default function AttendancePage() {
             className={cn(
               "px-4 py-2 rounded-lg font-medium transition-colors",
               activeView === 'history'
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-emerald-600 text-white"
+                : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
             )}
           >
             History
@@ -826,8 +826,8 @@ export default function AttendancePage() {
             className={cn(
               "px-4 py-2 rounded-lg font-medium transition-colors",
               activeView === 'analytics'
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-emerald-600 text-white"
+                : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
             )}
           >
             <BarChart3 className="w-4 h-4 inline mr-2" />
@@ -837,7 +837,7 @@ export default function AttendancePage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowBulkModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
           >
             <CheckSquare className="w-4 h-4" />
             Bulk Session
@@ -851,17 +851,17 @@ export default function AttendancePage() {
               Export CSV
             </button>
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-2 z-10">
                 <button
                   onClick={() => exportAttendance('csv')}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white transition-colors flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4" />
                   Export as CSV
                 </button>
                 <button
                   onClick={() => exportAttendance('json')}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white transition-colors flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4" />
                   Export as JSON
@@ -874,16 +874,16 @@ export default function AttendancePage() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white rounded-lg p-4 shadow-soft mb-6">
-          <h3 className="font-semibold text-gray-900 mb-3">Filter by Status</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-soft mb-6">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Filter by Status</h3>
           <div className="flex gap-2">
             <button
               onClick={() => setFilterStatus(null)}
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 !filterStatus
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 text-gray-700"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300"
               )}
             >
               All
@@ -893,8 +893,8 @@ export default function AttendancePage() {
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 filterStatus === 'PRESENT'
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-gray-700"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300"
               )}
             >
               Present
@@ -905,7 +905,7 @@ export default function AttendancePage() {
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 filterStatus === 'LATE'
                   ? "bg-yellow-600 text-white"
-                  : "bg-gray-100 text-gray-700"
+                  : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300"
               )}
             >
               Late
@@ -916,7 +916,7 @@ export default function AttendancePage() {
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 filterStatus === 'ABSENT'
                   ? "bg-red-600 text-white"
-                  : "bg-gray-100 text-gray-700"
+                  : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300"
               )}
             >
               Absent
@@ -927,14 +927,14 @@ export default function AttendancePage() {
 
       {/* Bulk Actions */}
       {selectedForBulk.size > 0 && activeView === 'mark' && (
-        <div className="bg-indigo-50 rounded-lg p-4 mb-6 flex items-center justify-between">
-          <p className="text-indigo-900 font-medium">
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 mb-6 flex items-center justify-between">
+          <p className="text-emerald-900 dark:text-emerald-100 font-medium">
             {selectedForBulk.size} student{selectedForBulk.size !== 1 ? 's' : ''} selected
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => handleBulkAction('PRESENT')}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
             >
               Mark All Present
             </button>
@@ -952,7 +952,7 @@ export default function AttendancePage() {
             </button>
             <button
               onClick={() => setSelectedForBulk(new Set())}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-gray-300 dark:bg-slate-600 text-gray-700 dark:text-slate-200 rounded-lg hover:bg-gray-400 dark:hover:bg-slate-500 transition-colors text-sm font-medium"
             >
               Clear
             </button>
@@ -962,21 +962,21 @@ export default function AttendancePage() {
 
       {/* Date Navigation */}
       {activeView === 'mark' && (
-        <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-soft">
+        <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-4 shadow-soft">
           <button
             onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-slate-400" />
           </button>
 
           <div className="flex items-center gap-4">
-            <Calendar className="w-5 h-5 text-indigo-600" />
-            <span className="text-lg font-semibold text-gray-900">
+            <Calendar className="w-5 h-5 text-emerald-600" />
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">
               {format(selectedDate, "EEEE, MMMM d, yyyy")}
             </span>
             {isToday(selectedDate) && (
-              <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
+              <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full">
                 Today
               </span>
             )}
@@ -986,16 +986,16 @@ export default function AttendancePage() {
             {!isToday(selectedDate) && (
               <button
                 onClick={() => setSelectedDate(new Date())}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
               >
                 Today
               </button>
             )}
             <button
               onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <ChevronRightIcon className="w-5 h-5 text-gray-600" />
+              <ChevronRightIcon className="w-5 h-5 text-gray-600 dark:text-slate-400" />
             </button>
           </div>
         </div>
@@ -1005,8 +1005,8 @@ export default function AttendancePage() {
       {activeView === 'mark' && (
         <div className="space-y-6">
           {/* Save Button */}
-          <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-soft">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-4 shadow-soft">
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
               {lastSaved ? (
                 <>
                   <Check className="w-4 h-4 text-green-500" />
@@ -1022,7 +1022,7 @@ export default function AttendancePage() {
             <button
               onClick={saveAttendance}
               disabled={savingAttendance}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
             >
               {savingAttendance ? (
                 <>Saving...</>
@@ -1045,10 +1045,10 @@ export default function AttendancePage() {
             const isExpanded = expandedCollection === collection.id;
 
             return (
-              <div key={collection.id} className="bg-white rounded-lg shadow-soft overflow-hidden">
+              <div key={collection.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-soft overflow-hidden">
                 <button
                   onClick={() => setExpandedCollection(isExpanded ? null : collection.id)}
-                  className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     {isExpanded ? (
@@ -1061,7 +1061,7 @@ export default function AttendancePage() {
                         <Users className="w-5 h-5 text-purple-600" />
                       </div>
                       <div className="text-left">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                           {formatGroupNameDisplay(collection.name)}
                         </h3>
                         <p className="text-sm text-gray-500">
@@ -1073,13 +1073,13 @@ export default function AttendancePage() {
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-gray-200 p-6 space-y-4">
+                  <div className="border-t border-gray-200 dark:border-slate-700 p-6 space-y-4">
                     {subGroups.map((group) => {
                       const stats = calculateGroupStats(group.id);
                       const groupExpanded = expandedGroups.has(group.id);
 
                       return (
-                        <div key={group.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div key={group.id} className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                           <button
                             onClick={() => {
                               const newExpanded = new Set(expandedGroups);
@@ -1090,7 +1090,7 @@ export default function AttendancePage() {
                               }
                               setExpandedGroups(newExpanded);
                             }}
-                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                           >
                             <div className="flex items-center gap-3">
                               {groupExpanded ? (
@@ -1098,14 +1098,14 @@ export default function AttendancePage() {
                               ) : (
                                 <ChevronRight className="w-4 h-4 text-gray-400" />
                               )}
-                              <h4 className="font-medium text-gray-900">{formatGroupNameDisplay(group.name)}</h4>
+                              <h4 className="font-medium text-gray-900 dark:text-white">{formatGroupNameDisplay(group.name)}</h4>
                               <span className="text-sm text-gray-500">
                                 ({group.students.length} students)
                               </span>
                             </div>
 
                             <div className="flex gap-4 text-sm">
-                              <span className="text-green-600">✓ {stats.present}</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">✓ {stats.present}</span>
                               <span className="text-yellow-600">⏰ {stats.late}</span>
                               <span className="text-red-600">✗ {stats.absent}</span>
                               <span className="text-gray-500">— {stats.notMarked}</span>
@@ -1113,11 +1113,11 @@ export default function AttendancePage() {
                           </button>
 
                           {groupExpanded && (
-                            <div className="border-t border-gray-200 p-4 bg-white">
+                            <div className="border-t border-gray-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800">
                               <div className="flex justify-end mb-3">
                                 <button
                                   onClick={() => markAllPresent(group.id)}
-                                  className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                                  className="px-3 py-1 bg-emerald-600 text-white rounded text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2"
                                 >
                                   <CheckSquare className="w-4 h-4" />
                                   Mark All Present
@@ -1139,7 +1139,7 @@ export default function AttendancePage() {
 
           {/* Individual Groups */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-900">Other Groups</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Other Groups</h2>
             {Object.values(groupedStudents)
               .filter(group => !groupCollections.some(c => c.subGroupNames.includes(group.name)))
               .map((group: any) => {
@@ -1147,7 +1147,7 @@ export default function AttendancePage() {
                 const isExpanded = expandedGroups.has(group.id);
 
                 return (
-                  <div key={group.id} className="bg-white rounded-lg shadow-soft overflow-hidden">
+                  <div key={group.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-soft overflow-hidden">
                     <button
                       onClick={() => {
                         const newExpanded = new Set(expandedGroups);
@@ -1158,7 +1158,7 @@ export default function AttendancePage() {
                         }
                         setExpandedGroups(newExpanded);
                       }}
-                      className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         {isExpanded ? (
@@ -1167,11 +1167,11 @@ export default function AttendancePage() {
                           <ChevronRight className="w-5 h-5 text-gray-400" />
                         )}
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-blue-600" />
+                          <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                           </div>
                           <div className="text-left">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                               {formatGroupNameDisplay(group.name)}
                             </h3>
                             <p className="text-sm text-gray-500">
@@ -1182,7 +1182,7 @@ export default function AttendancePage() {
                       </div>
 
                       <div className="flex gap-4 text-sm">
-                        <span className="text-green-600">✓ {stats.present}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">✓ {stats.present}</span>
                         <span className="text-yellow-600">⏰ {stats.late}</span>
                         <span className="text-red-600">✗ {stats.absent}</span>
                         <span className="text-gray-500">— {stats.notMarked}</span>
@@ -1190,11 +1190,11 @@ export default function AttendancePage() {
                     </button>
 
                     {isExpanded && (
-                      <div className="border-t border-gray-200 p-6 bg-white">
+                      <div className="border-t border-gray-200 dark:border-slate-700 p-6 bg-white dark:bg-slate-800">
                         <div className="flex justify-end mb-3">
                           <button
                             onClick={() => markAllPresent(group.id)}
-                            className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                            className="px-3 py-1 bg-emerald-600 text-white rounded text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2"
                           >
                             <CheckSquare className="w-4 h-4" />
                             Mark All Present

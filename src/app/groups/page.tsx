@@ -520,7 +520,7 @@ const renderStatusBadge = (status: PlanStatus) => {
       );
     case 'COMPLETE':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-teal-50 text-teal-700">
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700">
           <CheckCircle2 className="w-3.5 h-3.5" />
           Complete
         </span>
@@ -754,7 +754,7 @@ export default function GroupsPage() {
                 setSelectedGroup(null);
                 setShowGroupModal(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors shadow-sm"
             >
               <Plus className="w-5 h-5" />
               Create Group
@@ -764,9 +764,9 @@ export default function GroupsPage() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-50 p-4 rounded-lg">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-teal-600 text-white rounded-lg">
+              <div className="p-3 bg-emerald-600 text-white rounded-lg">
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
@@ -776,7 +776,7 @@ export default function GroupsPage() {
             </div>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-lg">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-600 text-white rounded-lg">
                 <Users className="w-6 h-6" />
@@ -788,9 +788,9 @@ export default function GroupsPage() {
             </div>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-lg">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-cyan-600 text-white rounded-lg">
+              <div className="p-3 bg-emerald-600 text-white rounded-lg">
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div>
@@ -811,20 +811,20 @@ export default function GroupsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search groups or companies..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-slate-800 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:text-white"
           />
         </div>
 
         <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-300 dark:border-slate-600">
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded ${viewMode === 'grid' ? 'bg-teal-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+            className={`p-2 rounded ${viewMode === 'grid' ? 'bg-emerald-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
           >
             <Grid3x3 className="w-5 h-5" />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded ${viewMode === 'list' ? 'bg-teal-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+            className={`p-2 rounded ${viewMode === 'list' ? 'bg-emerald-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
           >
             <List className="w-5 h-5" />
           </button>
@@ -963,20 +963,20 @@ export default function GroupsPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-blue-600 text-white">
+              <div className="p-3 rounded-lg bg-emerald-600 text-white">
                 <Users className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-sm text-slate-600">Total Learners</p>
-                <p className="text-2xl font-semibold text-slate-900">{totalStudents}</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">{totalStudents}</p>
                 <p className="text-xs text-slate-500">{activeGroups.length} active groups</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div
                 className={`p-3 rounded-lg text-white ${attendanceTone === 'emerald'
@@ -990,7 +990,7 @@ export default function GroupsPage() {
               </div>
               <div>
                 <p className="text-sm text-slate-600">Average Attendance</p>
-                <p className="text-2xl font-semibold text-slate-900">
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                   {avgAttendance.toFixed(0)}%
                 </p>
                 <p className="text-xs text-slate-500">This month</p>
@@ -998,27 +998,27 @@ export default function GroupsPage() {
             </div>
           </div>
 
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-lg bg-emerald-600 text-white">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-sm text-slate-600">On Track</p>
-                <p className="text-2xl font-semibold text-slate-900">{onTrackCount}</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">{onTrackCount}</p>
                 <p className="text-xs text-slate-500">of {activeGroups.length} total groups</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-lg bg-amber-500 text-white">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-sm text-slate-600">Behind / At Risk</p>
-                <p className="text-2xl font-semibold text-slate-900">{behindCount + atRiskCount}</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">{behindCount + atRiskCount}</p>
                 <p className="text-xs text-slate-500">Need attention</p>
               </div>
             </div>
@@ -1027,9 +1027,9 @@ export default function GroupsPage() {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-base font-semibold text-slate-900">Group Performance</h4>
+            <h4 className="text-base font-semibold text-slate-900 dark:text-white">Group Performance</h4>
             <div className="relative group">
-              <button className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 px-2.5 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">
+              <button className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 px-2.5 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
                 Status guide
                 <Info className="w-3.5 h-3.5" />
               </button>
@@ -1052,7 +1052,7 @@ export default function GroupsPage() {
                     <span>Plan exists, first unit not started yet.</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 text-teal-700 px-2 py-0.5">Complete</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5">Complete</span>
                     <span>All units are past the assessing date.</span>
                   </div>
                   <div className="flex items-start gap-2">
@@ -1064,7 +1064,7 @@ export default function GroupsPage() {
               </div>
             </div>
           </div>
-          <div className="overflow-x-auto border border-slate-200 rounded-lg">
+          <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-lg">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50 dark:bg-slate-800">
                 <tr>
@@ -1102,7 +1102,7 @@ export default function GroupsPage() {
                       {row.attendance === 0 || row.attendance === undefined ? (
                         <span className="text-slate-400 dark:text-slate-500 text-xs">No data</span>
                       ) : (
-                        <span className="text-slate-600 dark:text-slate-400 font-semibold">{row.attendance.toFixed(0)}%</span>
+                        <span className="text-slate-900 dark:text-white font-semibold">{row.attendance.toFixed(0)}%</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{row.currentModule}</td>
@@ -1295,7 +1295,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
   if (viewMode === 'list') {
     return (
       <div
-        className={`flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-slate-200'}`}
+        className={`flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-slate-200 dark:border-slate-700'}`}
       >
         {onSelect && (
           <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
@@ -1308,12 +1308,12 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           </div>
         )}
         <div className="flex items-center gap-4 flex-1" onClick={onView}>
-          <div className="p-3 bg-teal-100 text-teal-600 rounded-lg">
+          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg">
             <Users className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-slate-900">{formatGroupNameDisplay(group.name)}</h4>
+              <h4 className="font-semibold text-slate-900 dark:text-white">{formatGroupNameDisplay(group.name)}</h4>
               {(hasLegacyRolloutPlan || (group.unitStandardRollouts && group.unitStandardRollouts.length > 0)) ? (
                 null
               ) : (
@@ -1358,9 +1358,9 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><Calendar className="w-3 h-3" /> Proj</span>
                 <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all" style={{ width: `${creditProgress.percentage}%` }} />
+                  <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all" style={{ width: `${creditProgress.percentage}%` }} />
                 </div>
-                <span className="text-[10px] font-semibold text-teal-700 whitespace-nowrap w-20 text-right">
+                <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap w-20 text-right">
                   {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
                 </span>
               </div>
@@ -1370,9 +1370,9 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-slate-500 w-14 flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3" /> Real</span>
               <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all" style={{ width: `${actualProgress?.avgPercent || 0}%` }} />
+                <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all" style={{ width: `${actualProgress?.avgPercent || 0}%` }} />
               </div>
-              <span className="text-[10px] font-semibold text-blue-700 whitespace-nowrap w-20 text-right">
+              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap w-20 text-right">
                 {actualPercent}% ({resolvedActualProgress?.avgCredits || 0}/{TOTAL_CREDITS})
               </span>
             </div>
@@ -1381,7 +1381,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={onAddStudents}
-              className="p-2 hover:bg-teal-100 text-teal-600 rounded-lg transition-colors"
+              className="p-2 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors"
               title="Add Students"
             >
               <UserPlus className="w-5 h-5" />
@@ -1395,7 +1395,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             </button>
             <button
               onClick={onEdit}
-              className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
+              className="p-2 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors"
               title="Edit Group"
             >
               <Edit2 className="w-5 h-5" />
@@ -1438,13 +1438,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
       <div className="p-4 cursor-pointer" onClick={onView}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
               <Users className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h4
-                  className="font-semibold text-slate-900 dark:text-white hover:text-teal-600 cursor-pointer transition-colors"
+                  className="font-semibold text-slate-900 dark:text-white hover:text-emerald-600 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     router.push(`/groups/${group.id}`);
@@ -1499,7 +1499,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
         {/* Module Label (Actual followed by Projected) */}
         <div className="flex flex-col gap-0.5">
           {resolvedActualProgress?.currentAssessmentModule ? (
-            <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
+            <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
               Module {String(resolvedActualProgress.currentAssessmentModule)} (Actual)
             </p>
           ) : null}
@@ -1517,13 +1517,13 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
                 <Calendar className="w-3 h-3" /> Projected
               </span>
-              <span className="font-semibold text-teal-700 dark:text-teal-300">
+              <span className="font-semibold text-emerald-700 dark:text-emerald-300">
                 {creditProgress.percentage}% ({creditProgress.completed}/{TOTAL_CREDITS})
               </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300"
                 style={{ width: `${creditProgress.percentage}%` }}
               />
             </div>
@@ -1536,7 +1536,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <Users className="w-3 h-3 text-emerald-500" /> Facilitator
             </span>
-            <span className="font-semibold text-emerald-700 dark:text-teal-300">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-300">
               {group.facilitatorMetrics?.facilitatedPercent || 0}% ({group.facilitatorMetrics?.facilitatedUnits || 0}/{group.facilitatorMetrics?.totalUnits || 0} Units)
             </span>
           </div>
@@ -1552,15 +1552,15 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-blue-500" /> Learner Avg
+              <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Learner Avg
             </span>
-            <span className="font-semibold text-blue-700 dark:text-blue-300">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-300">
               {actualPercent}% ({resolvedActualProgress?.avgCreditsPerStudent || 0}/{TOTAL_CREDITS})
             </span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300"
               style={{ width: `${actualPercent}%` }}
             />
           </div>
@@ -1582,7 +1582,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
                 detail: { groupId: group.id, groupName: group.name }
               }));
             }}
-            className="p-1.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800 rounded-lg transition-colors"
+            className="p-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors"
             title="Facilitator Checklist"
           >
             <CheckCircle2 className="w-4 h-4" />
@@ -1596,7 +1596,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
           </button>
           <button
             onClick={onEdit}
-            className="p-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors"
+            className="p-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors"
             title="Edit Group"
           >
             <Edit2 className="w-4 h-4" />

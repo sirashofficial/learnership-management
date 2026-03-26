@@ -173,7 +173,7 @@ const renderStatusBadge = (status: PlanStatus) => {
       );
     case 'COMPLETE':
       return (
-        <span className="status-pill bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">
+        <span className="status-pill bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
           <CheckCircle2 className="w-3 h-3" />
           Complete
         </span>

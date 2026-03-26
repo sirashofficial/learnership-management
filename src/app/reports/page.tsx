@@ -637,7 +637,7 @@ export default function ReportsPage() {
                 {reportType === 'daily-attendance' && (
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                            <h2 className="text-lg font-semibold text-slate-900">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Daily Attendance Report
                             </h2>
                             <p className="text-sm text-slate-500">
@@ -655,7 +655,7 @@ export default function ReportsPage() {
                         <div className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         <span className="flex items-center gap-2">
                                             <Calendar className="w-4 h-4" />
                                             Date
@@ -668,11 +668,11 @@ export default function ReportsPage() {
                                             setSelectedDate(e.target.value);
                                             setErrorMessage('');
                                         }}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         <span className="flex items-center gap-2">
                                             <Users className="w-4 h-4" />
                                             Group
@@ -681,7 +681,7 @@ export default function ReportsPage() {
                                     <select
                                         value={selectedGroup}
                                         onChange={(e) => setSelectedGroup(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     >
                                         <option value="">Select a group</option>
                                         {groups.map((group) => (
@@ -697,7 +697,7 @@ export default function ReportsPage() {
                                 <button
                                     onClick={handleGenerateDailyAttendance}
                                     disabled={isLoadingReport}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {isLoadingReport ? (
                                         <>
@@ -735,26 +735,26 @@ export default function ReportsPage() {
                             {/* Display Report Data */}
                             {reportData && (
                                 <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Report Results</h3>
-                                    <div className="bg-slate-50 rounded-lg p-6 space-y-4">
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Report Results</h3>
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 space-y-4">
                                         <div className="grid grid-cols-3 gap-4 text-center">
-                                            <div className="bg-white rounded-lg p-4">
-                                                <div className="text-2xl font-bold text-green-600">
+                                            <div className="bg-white dark:bg-slate-800 rounded-lg p-4">
+                                                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                                     {reportData.data?.attendance?.present?.length || 0}
                                                 </div>
-                                                <div className="text-sm text-slate-600">Present</div>
+                                                <div className="text-sm text-slate-600 dark:text-slate-400">Present</div>
                                             </div>
-                                            <div className="bg-white rounded-lg p-4">
+                                            <div className="bg-white dark:bg-slate-800 rounded-lg p-4">
                                                 <div className="text-2xl font-bold text-red-600">
                                                     {reportData.data?.attendance?.absent?.length || 0}
                                                 </div>
-                                                <div className="text-sm text-slate-600">Absent</div>
+                                                <div className="text-sm text-slate-600 dark:text-slate-400">Absent</div>
                                             </div>
-                                            <div className="bg-white rounded-lg p-4">
+                                            <div className="bg-white dark:bg-slate-800 rounded-lg p-4">
                                                 <div className="text-2xl font-bold text-yellow-600">
                                                     {reportData.data?.attendance?.late?.length || 0}
                                                 </div>
-                                                <div className="text-sm text-slate-600">Late</div>
+                                                <div className="text-sm text-slate-600 dark:text-slate-400">Late</div>
                                             </div>
                                         </div>
                                         
@@ -781,7 +781,7 @@ export default function ReportsPage() {
                 {reportType === 'group-progress' && (
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                            <h2 className="text-lg font-semibold text-slate-900">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Group Progress Report
                             </h2>
                             <p className="text-sm text-slate-500">
@@ -792,13 +792,13 @@ export default function ReportsPage() {
                         <div className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Group
                                     </label>
                                     <select
                                         value={selectedGroup}
                                         onChange={(e) => setSelectedGroup(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     >
                                         <option value="">Select a group</option>
                                         {groups.map((group) => (
@@ -809,25 +809,25 @@ export default function ReportsPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Start Date
                                     </label>
                                     <input
                                         type="date"
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         End Date
                                     </label>
                                     <input
                                         type="date"
                                         value={endDate}
                                         onChange={(e) => setEndDate(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -836,7 +836,7 @@ export default function ReportsPage() {
                                 <button
                                     onClick={handleGenerateGroupProgress}
                                     disabled={isLoadingReport}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {isLoadingReport ? (
                                         <>
@@ -874,15 +874,15 @@ export default function ReportsPage() {
                             {/* Display Report Data */}
                             {reportData && reportData.students && (
                                 <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Student Progress</h3>
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Student Progress</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                                                 <tr>
-                                                    <th className="text-left p-3 font-semibold">Student</th>
-                                                    <th className="text-center p-3 font-semibold">Attendance %</th>
-                                                    <th className="text-center p-3 font-semibold">Assessments</th>
-                                                    <th className="text-center p-3 font-semibold">Overall Progress</th>
+                                                    <th className="text-left p-3 font-semibold text-slate-900 dark:text-white">Student</th>
+                                                    <th className="text-center p-3 font-semibold text-slate-900 dark:text-white">Attendance %</th>
+                                                    <th className="text-center p-3 font-semibold text-slate-900 dark:text-white">Assessments</th>
+                                                    <th className="text-center p-3 font-semibold text-slate-900 dark:text-white">Overall Progress</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -890,13 +890,13 @@ export default function ReportsPage() {
                                                     <tr key={idx} className={`border-b border-slate-100 dark:border-slate-700 ${student.progress < 50 ? 'bg-red-50 dark:bg-red-950/20' : ''}`}>
                                                         <td className="p-3">{student.name}</td>
                                                         <td className="text-center p-3">
-                                                            <span className={`font-semibold ${student.attendanceRate < 80 ? 'text-red-600' : 'text-green-600'}`}>
+                                                            <span className={`font-semibold ${student.attendanceRate < 80 ? 'text-red-600' : 'text-emerald-600'}`}>
                                                                 {student.attendanceRate}%
                                                             </span>
                                                         </td>
                                                         <td className="text-center p-3">{student.assessmentsCompleted || 0}/{student.totalAssessments || 0}</td>
                                                         <td className="text-center p-3">
-                                                            <span className={`font-semibold ${student.progress < 50 ? 'text-red-600' : student.progress < 75 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                                            <span className={`font-semibold ${student.progress < 50 ? 'text-red-600' : student.progress < 75 ? 'text-yellow-600' : 'text-emerald-600'}`}>
                                                                 {student.progress}%
                                                             </span>
                                                         </td>
@@ -915,7 +915,7 @@ export default function ReportsPage() {
                 {reportType === 'assessment-results' && (
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                            <h2 className="text-lg font-semibold text-slate-900">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Assessment Results Report
                             </h2>
                             <p className="text-sm text-slate-500">
@@ -926,13 +926,13 @@ export default function ReportsPage() {
                         <div className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Group
                                     </label>
                                     <select
                                         value={selectedGroup}
                                         onChange={(e) => setSelectedGroup(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     >
                                         <option value="">Select a group</option>
                                         {groups.map((group) => (
@@ -943,25 +943,25 @@ export default function ReportsPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Start Date
                                     </label>
                                     <input
                                         type="date"
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         End Date
                                     </label>
                                     <input
                                         type="date"
                                         value={endDate}
                                         onChange={(e) => setEndDate(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -970,7 +970,7 @@ export default function ReportsPage() {
                                 <button
                                     onClick={handleGenerateAssessmentResults}
                                     disabled={isLoadingReport}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {isLoadingReport ? (
                                         <>
@@ -1008,16 +1008,16 @@ export default function ReportsPage() {
                             {/* Display Report Data */}
                             {reportData && reportData.assessments && (
                                 <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Assessment Results</h3>
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Assessment Results</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                                                 <tr>
-                                                    <th className="text-left p-3 font-semibold">Student</th>
-                                                    <th className="text-left p-3 font-semibold">Assessment</th>
-                                                    <th className="text-center p-3 font-semibold">Result</th>
-                                                    <th className="text-center p-3 font-semibold">Score</th>
-                                                    <th className="text-center p-3 font-semibold">Date</th>
+                                                    <th className="text-left p-3 font-semibold text-slate-900 dark:text-white">Student</th>
+                                                    <th className="text-left p-3 font-semibold text-slate-900 dark:text-white">Assessment</th>
+                                                    <th className="text-center p-3 font-semibold text-slate-900 dark:text-white">Result</th>
+                                                    <th className="text-center p-3 font-semibold text-slate-900 dark:text-white">Score</th>
+                                                    <th className="text-center p-3 font-semibold text-slate-900 dark:text-white">Date</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1028,7 +1028,7 @@ export default function ReportsPage() {
                                                         <td className="text-center p-3">
                                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${
                                                                 assessment.result === 'Competent' 
-                                                                    ? 'bg-green-100 text-green-700' 
+                                                                    ? 'bg-emerald-100 text-emerald-700'
                                                                     : assessment.result === 'Not Yet Competent'
                                                                     ? 'bg-red-100 text-red-700'
                                                                     : 'bg-yellow-100 text-yellow-700'
@@ -1053,7 +1053,7 @@ export default function ReportsPage() {
                 {reportType === 'unit-standards' && (
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                            <h2 className="text-lg font-semibold text-slate-900">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Unit Standards Completion Report
                             </h2>
                             <p className="text-sm text-slate-500">
@@ -1063,13 +1063,13 @@ export default function ReportsPage() {
                         
                         <div className="p-6 space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Group
                                 </label>
                                 <select
                                     value={selectedGroup}
                                     onChange={(e) => setSelectedGroup(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
                                 >
                                     <option value="">Select a group</option>
                                     {groups.map((group) => (
@@ -1084,7 +1084,7 @@ export default function ReportsPage() {
                                 <button
                                     onClick={handleGenerateUnitStandards}
                                     disabled={isLoadingReport}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {isLoadingReport ? (
                                         <>
@@ -1122,36 +1122,36 @@ export default function ReportsPage() {
                             {/* Display Report Data */}
                             {reportData && reportData.matrix && (
                                 <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
-                                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Completion Matrix</h3>
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Completion Matrix</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-xs">
                                             <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                                                 <tr>
-                                                    <th className="text-left p-2 font-semibold sticky left-0 bg-slate-50">Student</th>
+                                                    <th className="text-left p-2 font-semibold text-slate-900 dark:text-white sticky left-0 bg-slate-50 dark:bg-slate-700">Student</th>
                                                     {reportData.unitStandards && reportData.unitStandards.map((us: any, idx: number) => (
-                                                        <th key={idx} className="text-center p-2 font-semibold" title={us.title}>
+                                                        <th key={idx} className="text-center p-2 font-semibold text-slate-900 dark:text-white" title={us.title}>
                                                             {us.code}
                                                         </th>
                                                     ))}
-                                                    <th className="text-center p-2 font-semibold">Total %</th>
+                                                    <th className="text-center p-2 font-semibold text-slate-900 dark:text-white">Total %</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {reportData.matrix.map((row: any, idx: number) => (
                                                     <tr key={idx} className="border-b border-slate-100 dark:border-slate-700">
-                                                        <td className="p-2 sticky left-0 bg-white">{row.studentName}</td>
+                                                        <td className="p-2 sticky left-0 bg-white dark:bg-slate-800">{row.studentName}</td>
                                                         {row.completions && row.completions.map((status: string, usIdx: number) => (
                                                             <td key={usIdx} className="text-center p-2">
                                                                 <div className={`w-8 h-8 mx-auto rounded ${
                                                                     status === 'completed' 
-                                                                        ? 'bg-green-500' 
+                                                                        ? 'bg-emerald-500' 
                                                                         : status === 'in-progress'
                                                                         ? 'bg-yellow-500'
-                                                                        : 'bg-gray-200'
+                                                                        : 'bg-slate-200 dark:bg-slate-700'
                                                                 }`}></div>
                                                             </td>
                                                         ))}
-                                                        <td className="text-center p-2 font-semibold">
+                                                        <td className="text-center p-2 font-semibold text-slate-900 dark:text-white">
                                                             {row.completionPercentage}%
                                                         </td>
                                                     </tr>
@@ -1161,7 +1161,7 @@ export default function ReportsPage() {
                                     </div>
                                     <div className="mt-4 flex gap-4 text-xs">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 rounded bg-green-500"></div>
+                                            <div className="w-4 h-4 rounded bg-emerald-500"></div>
                                             <span>Completed</span>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -1169,7 +1169,7 @@ export default function ReportsPage() {
                                             <span>In Progress</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 rounded bg-gray-200"></div>
+                                            <div className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700"></div>
                                             <span>Not Started</span>
                                         </div>
                                     </div>
@@ -1186,7 +1186,7 @@ export default function ReportsPage() {
 
                     {/* Form Header */}
                     <div className="p-6 border-b border-slate-200 bg-slate-50">
-                        <h2 className="text-lg font-semibold text-slate-900">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                             Report Details (Legacy)
                         </h2>
                         <p className="text-sm text-slate-500">
@@ -1209,7 +1209,7 @@ export default function ReportsPage() {
                                     type="date"
                                     value={selectedDate}
                                     onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                                 />
                             </div>
 
@@ -1227,7 +1227,7 @@ export default function ReportsPage() {
                                         const selected = Array.from(e.target.selectedOptions, option => option.value);
                                         handleGroupSelectionChange(selected);
                                     }}
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                                 >
                                     {groups.map((group) => (
                                         <option key={group.id} value={group.id}>
@@ -1241,11 +1241,11 @@ export default function ReportsPage() {
                                         {selectedGroups.map((groupId) => {
                                             const group = groups.find(g => g.id === groupId);
                                             return (
-                                                <span key={groupId} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded text-xs font-medium">
+                                                <span key={groupId} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded text-xs font-medium">
                                                     {group?.name}
                                                     <button
                                                         onClick={() => handleGroupSelectionChange(selectedGroups.filter(id => id !== groupId))}
-                                                        className="ml-1 hover:text-indigo-900 dark:hover:text-indigo-100"
+                                                        className="ml-1 hover:text-emerald-900 dark:hover:text-emerald-100"
                                                     >
                                                         ×
                                                     </button>
@@ -1265,7 +1265,7 @@ export default function ReportsPage() {
                                     value={facilitatorName}
                                     onChange={(e) => setFacilitatorName(e.target.value)}
                                     placeholder="e.g. John Doe"
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                                 />
                             </div>
                         </div>
@@ -1314,7 +1314,7 @@ export default function ReportsPage() {
                                                             updateGroupTrainingData(activeGroupTab, 'selectedModules', selected);
                                                             updateGroupTrainingData(activeGroupTab, 'topicsCovered', '');
                                                         }}
-                                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                                                     >
                                                         {modules.map((m: any) => (
                                                             <option key={m.id} value={m.name}>
@@ -1331,7 +1331,7 @@ export default function ReportsPage() {
                                                     <select
                                                         value={groupTrainingData[activeGroupTab]?.topicsCovered || ''}
                                                         onChange={(e) => updateGroupTrainingData(activeGroupTab, 'topicsCovered', e.target.value)}
-                                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                                                         disabled={(groupTrainingData[activeGroupTab]?.selectedModules.length || 0) === 0}
                                                     >
                                                         <option value="">Select Unit Standard...</option>
@@ -1422,7 +1422,7 @@ export default function ReportsPage() {
                                 }
                             }}
                             disabled={!selectedGroups.length}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                         >
                             <FileDown className="w-5 h-5" />
                             Export Attendance
@@ -1471,7 +1471,7 @@ export default function ReportsPage() {
                         <button
                             onClick={handleGenerateReport}
                             disabled={isGenerating || isAiGenerating}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                         >
                             {isGenerating ? (
                                 <>
@@ -1489,16 +1489,16 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Info Card */}
-                <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800 flex gap-4">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg h-fit">
-                        <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="mt-8 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-100 dark:border-emerald-800 flex gap-4">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-800/50 rounded-lg h-fit">
+                        <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-blue-900 dark:text-blue-100">Automated Data Inclusion</h4>
-                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">Automated Data Inclusion</h4>
+                        <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
                             The generated report will automatically include:
                         </p>
-                        <ul className="list-disc list-inside text-sm text-blue-700 dark:text-blue-300 mt-2 space-y-1">
+                        <ul className="list-disc list-inside text-sm text-emerald-700 dark:text-emerald-300 mt-2 space-y-1">
                             <li>Attendance records for the selected date</li>
                             <li>Assessments completed on this date</li>
                             <li>Student names and ID numbers</li>
@@ -1549,7 +1549,7 @@ export default function ReportsPage() {
                                 </button>
                                 <button
                                     onClick={downloadAiReport}
-                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium text-sm transition-colors shadow-sm"
+                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg font-medium text-sm transition-colors shadow-sm"
                                 >
                                     <FileDown className="w-4 h-4" />
                                     Download Markdown

@@ -396,7 +396,7 @@ export default function StudentsPage() {
                 Total Students
               </p>
             </div>
-            <p className="text-2xl font-bold text-slate-900">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               {stats.total}
             </p>
           </div>
@@ -407,7 +407,7 @@ export default function StudentsPage() {
                 Active Students
               </p>
             </div>
-            <p className="text-2xl font-bold text-emerald-600">
+            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {stats.active}
             </p>
           </div>
@@ -418,7 +418,7 @@ export default function StudentsPage() {
                 Avg Progress
               </p>
             </div>
-            <p className="text-2xl font-bold text-cyan-600">
+            <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
               {stats.averageProgress}%
             </p>
           </div>
@@ -430,7 +430,7 @@ export default function StudentsPage() {
               </p>
               <AlertTriangle className="h-5 w-5 text-amber-500" />
             </div>
-            <p className="text-2xl font-bold text-amber-600">
+            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
               {stats.needsAttention}
             </p>
             <p className="text-xs text-slate-500 mt-1">
@@ -530,10 +530,10 @@ export default function StudentsPage() {
 
           {/* Selected Students Bulk Actions */}
           {selectedStudents.length > 0 && (
-            <div className="p-4 bg-emerald-50 border-t border-slate-200">
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-t border-slate-200 dark:border-slate-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-emerald-900">
+                  <span className="text-sm font-semibold text-emerald-900 dark:text-emerald-300">
                     {selectedStudents.length} StudentsSelected
                   </span>
                   <div className="h-4 w-px bg-emerald-200 mx-2" />
@@ -591,10 +591,10 @@ export default function StudentsPage() {
             ) : filteredStudents.length === 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
                 <div className="max-w-md mx-auto">
-                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="h-8 w-8 text-slate-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     No students found
                   </h3>
                   <p className="text-slate-600 mb-4">
@@ -702,7 +702,7 @@ export default function StudentsPage() {
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <span className="font-medium text-slate-900">
+                                    <span className="font-medium text-slate-900 dark:text-white">
                                       {student.firstName} {student.lastName}
                                     </span>
                                     {alert.type !== 'NONE' && (
@@ -738,7 +738,7 @@ export default function StudentsPage() {
                                     style={{ width: `${student.progress}%` }}
                                   />
                                 </div>
-                                <span className="text-sm font-medium text-slate-700 min-w-[3rem] text-right">
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 min-w-[3rem] text-right">
                                   {student.totalCreditsEarned || 0}
                                 </span>
                                 {/* Credits are now read-only - calculated from assessments only */}
@@ -747,7 +747,7 @@ export default function StudentsPage() {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <div className="text-sm font-medium text-slate-700">
+                                <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                   {attendance}%
                                 </div>
                               </div>
@@ -804,7 +804,7 @@ export default function StudentsPage() {
                       </div>
 
                       {/* Name */}
-                      <h3 className="text-lg font-semibold text-slate-900 text-center mb-1">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-1">
                         {student.firstName} {student.lastName}
                       </h3>
 
@@ -815,7 +815,7 @@ export default function StudentsPage() {
 
                       {/* Group */}
                       <div className="mb-4 text-center">
-                        <p className="text-sm font-semibold text-slate-900 truncate">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                           {student.group?.name || 'No Group'}
                         </p>
                         <div className="text-xs text-slate-500 truncate max-w-[180px]">
@@ -829,7 +829,7 @@ export default function StudentsPage() {
                           <span className="text-sm text-slate-600">
                             Progress
                           </span>
-                          <span className="text-sm font-medium text-slate-900">
+                          <span className="text-sm font-medium text-slate-900 dark:text-white">
                             {student.progress}%
                           </span>
                         </div>
@@ -846,7 +846,7 @@ export default function StudentsPage() {
                         <span className="text-sm text-slate-600">
                           Attendance
                         </span>
-                        <span className="text-sm font-medium text-slate-900">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
                           {attendance}%
                         </span>
                       </div>
