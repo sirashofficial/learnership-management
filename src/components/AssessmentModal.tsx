@@ -68,7 +68,7 @@ export default function AssessmentModal({
               required
               value={formData.studentId}
               onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Select student...</option>
               {students.map((student) => (
@@ -89,7 +89,7 @@ export default function AssessmentModal({
                 required
                 value={formData.module}
                 onChange={(e) => setFormData({ ...formData, module: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="">Select module...</option>
                 {modules.map((module) => (
@@ -108,7 +108,7 @@ export default function AssessmentModal({
                 required
                 value={formData.unitStandard}
                 onChange={(e) => setFormData({ ...formData, unitStandard: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 disabled={!selectedModule}
               >
                 <option value="">{selectedModule ? 'Select a unit standard...' : 'Select a module first...'}</option>
@@ -131,7 +131,7 @@ export default function AssessmentModal({
                 required
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="FORMATIVE">Formative</option>
                 <option value="SUMMATIVE">Summative</option>
@@ -147,7 +147,7 @@ export default function AssessmentModal({
                 required
                 value={formData.method}
                 onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="KNOWLEDGE">Knowledge Assessment</option>
                 <option value="PRACTICAL">Practical Assessment</option>
@@ -167,7 +167,7 @@ export default function AssessmentModal({
               type="date"
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -185,7 +185,7 @@ export default function AssessmentModal({
                   value={formData.score || ""}
                   onChange={(e) => setFormData({ ...formData, score: e.target.value ? parseInt(e.target.value) : undefined })}
                   placeholder="0-100"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <div>
@@ -195,7 +195,7 @@ export default function AssessmentModal({
                 <select
                   value={formData.result}
                   onChange={(e) => setFormData({ ...formData, result: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="PENDING">Pending</option>
                   <option value="COMPETENT">Competent</option>
@@ -215,7 +215,7 @@ export default function AssessmentModal({
               value={formData.feedback}
               onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
               placeholder="Provide feedback to the student..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
             />
           </div>
 
@@ -229,7 +229,7 @@ export default function AssessmentModal({
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Add any additional notes or instructions..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
             />
           </div>
 

@@ -97,7 +97,7 @@ export default function StudentProfilePage() {
               <div className="text-sm text-slate-600">Assessment Completion</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-1">{overallProgress}%</div>
+              <div className="text-3xl font-bold text-emerald-600 mb-1">{overallProgress}%</div>
               <div className="text-sm text-slate-600">Overall Progress</div>
             </div>
           </div>

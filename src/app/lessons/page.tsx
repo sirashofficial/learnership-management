@@ -405,7 +405,7 @@ export default function LessonsPage() {
                           required
                           value={aiFormData.groupId}
                           onChange={(e) => setAiFormData({...aiFormData, groupId: e.target.value})}
-                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         >
                           <option value="">Select a group</option>
                           {groups?.map(group => (
@@ -429,7 +429,7 @@ export default function LessonsPage() {
                               learningOutcomes: us?.purpose || ''
                             });
                           }}
-                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         >
                           <option value="">Select a unit standard</option>
                           {unitStandards?.map((us: any) => (
@@ -470,7 +470,7 @@ export default function LessonsPage() {
                           value={aiFormData.learningOutcomes}
                           onChange={(e) => setAiFormData({...aiFormData, learningOutcomes: e.target.value})}
                           rows={4}
-                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                           placeholder="What should learners achieve? (Auto-populated from unit standard or customize...)"
                         />
                       </div>
@@ -483,7 +483,7 @@ export default function LessonsPage() {
                           value={aiFormData.notes}
                           onChange={(e) => setAiFormData({...aiFormData, notes: e.target.value})}
                           rows={3}
-                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                           placeholder="Any special requirements, accommodations, or focus areas..."
                         />
                       </div>

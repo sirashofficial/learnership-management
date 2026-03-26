@@ -1458,7 +1458,7 @@ export default function AssessmentsPage() {
             <div className="text-sm text-gray-600 dark:text-slate-400">Not Yet</div>
           </div>
           <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 text-center">
-            <div className="text-3xl font-bold text-purple-600">{competencyRate}%</div>
+            <div className="text-3xl font-bold text-emerald-600">{competencyRate}%</div>
             <div className="text-sm text-gray-600 dark:text-slate-400">Pass Rate</div>
           </div>
         </div>

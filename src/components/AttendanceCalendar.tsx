@@ -214,7 +214,7 @@ export default function AttendanceCalendar({ studentId, studentName, attendance,
                 <select
                   value={selectedReason}
                   onChange={(e) => setSelectedReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
                   <option value="">Select reason...</option>
                   <option value="Sick">Sick</option>

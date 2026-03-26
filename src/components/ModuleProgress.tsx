@@ -234,7 +234,7 @@ export default function ModuleProgress({
                                         value={newActivityText}
                                         onChange={(e) => setNewActivityText(e.target.value)}
                                         placeholder="Activity description..."
-                                        className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                         autoFocus
                                         onKeyPress={(e) => {
                                           if (e.key === "Enter") handleAddActivity(module.id, unit.id);

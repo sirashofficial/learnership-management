@@ -116,7 +116,7 @@ export default function POEPage() {
           <select
             value={selectedGroupFilter}
             onChange={(e) => setSelectedGroupFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary"
+            className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
           >
             <option value="">All Groups</option>
             {uniqueGroups.map((groupId: any) => {

@@ -1303,7 +1303,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
               type="checkbox"
               checked={isSelected}
               onChange={onSelect}
-              className="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+              className="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
             />
           </div>
         )}
@@ -1431,7 +1431,7 @@ function GroupCard({ group, viewMode, onEdit, onArchive, onAddStudents, onView, 
             type="checkbox"
             checked={isSelected}
             onChange={onSelect}
-            className="w-6 h-6 text-purple-600 border-slate-300 rounded focus:ring-purple-500 cursor-pointer"
+            className="w-6 h-6 text-purple-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
           />
         </div>
       )}
@@ -1677,7 +1677,7 @@ function MergeGroupsModal({ selectedGroupIds, groups, onClose, onMerge }: MergeG
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Users className="w-7 h-7 text-purple-600" />
+              <Users className="w-7 h-7 text-emerald-600" />
               Merge Groups
             </h2>
             <button
@@ -1718,7 +1718,7 @@ function MergeGroupsModal({ selectedGroupIds, groups, onClose, onMerge }: MergeG
               value={targetGroupName}
               onChange={(e) => setTargetGroupName(e.target.value)}
               placeholder="Enter name for merged group"
-              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
+              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white"
             />
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
               All students will be moved to this new group. The old groups will be archived.

@@ -264,7 +264,7 @@ export default function ModerationQueue({ assessments, onModerate }: ModerationQ
                   value={moderationNotes}
                   onChange={(e) => setModerationNotes(e.target.value)}
                   placeholder={showOverrideConfirm ? "Required: Explain reason for override..." : "Add notes about your moderation decision..."}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 />
               </div>
 

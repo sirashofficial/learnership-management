@@ -127,7 +127,7 @@ export default function AddNoteModal({ studentName, onClose, onSubmit }: AddNote
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder={`Enter your ${type.toLowerCase()} note about ${studentName}...`}
               required
             />

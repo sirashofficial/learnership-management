@@ -114,7 +114,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div 
         ref={modalRef}
-        className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-labelledby="add-student-title"
         aria-modal="true"
@@ -123,11 +123,11 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
         {submitError && <AriaLiveRegion message={submitError} type="assertive" />}
         
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 sticky top-0 bg-white">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800">
           <div className="flex items-center justify-between">
-            <h2 id="add-student-title" className="text-2xl font-bold text-slate-900">Add New Student</h2>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors" aria-label="Close modal">
-              <X className="w-5 h-5 text-slate-600" />
+            <h2 id="add-student-title" className="text-2xl font-bold text-slate-900 dark:text-white">Add New Student</h2>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" aria-label="Close modal">
+              <X className="w-5 h-5 text-slate-600 dark:text-slate-300" />
             </button>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Full Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -153,7 +153,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
                   errors.name
                     ? 'border-red-300 focus:ring-red-500'
-                    : 'border-slate-300 focus:ring-primary'
+                    : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white'
                 }`}
                 placeholder="e.g., Thabo Mokwena"
                 required
@@ -167,26 +167,26 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
 
             {/* Student ID */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Student ID (Optional)
               </label>
               <input
                 type="text"
                 value={formData.studentId}
                 onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 placeholder="Leave empty for auto-generation (e.g., AZ-01)"
               />
-              <p className="text-xs text-slate-500 mt-1">If left empty, will be auto-generated based on group (e.g., AZ-01, AZ-02, BE-01)</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">If left empty, will be auto-generated based on group (e.g., AZ-01, AZ-02, BE-01)</p>
             </div>
 
             {/* Group */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Training Group <span className="text-red-500">*</span>
               </label>
               {groupId && groupName ? (
-                <div className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-900 font-medium">
+                <div className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white font-medium">
                   {formatGroupNameDisplay(groupName)}
                 </div>
               ) : (
@@ -198,7 +198,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
                       errors.group
                         ? 'border-red-300 focus:ring-red-500'
-                        : 'border-slate-300 focus:ring-primary'
+                        : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white'
                     }`}
                     required
                     aria-invalid={!!errors.group}
@@ -217,7 +217,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 </>
               )}
               {groups.length === 0 && (
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   No groups available. Create a group first in Groups & Companies.
                 </p>
               )}
@@ -225,11 +225,11 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-700 dark:border-slate-600 dark:text-white"
               >
                 <option value="ACTIVE">Active</option>
                 <option value="AT_RISK">At Risk</option>
@@ -240,19 +240,19 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number (Optional)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Phone Number (Optional)</label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 placeholder="+27 11 123 4567"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Email (Optional)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email (Optional)</label>
               <input
                 type="email"
                 value={formData.email}
@@ -261,7 +261,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
                   errors.email
                     ? 'border-red-300 focus:ring-red-500'
-                    : 'border-slate-300 focus:ring-primary'
+                    : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white'
                 }`}
                 placeholder="student@example.com"
                 aria-invalid={!!errors.email}
@@ -274,7 +274,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
 
             {/* Disability Support */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Disability Support Required?</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Disability Support Required?</label>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -302,7 +302,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                   value={formData.disabilityNotes}
                   onChange={(e) => setFormData({ ...formData, disabilityNotes: e.target.value })}
                   placeholder="Describe support requirements..."
-                  className="mt-2 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="mt-2 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                   rows={3}
                 />
               )}

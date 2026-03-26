@@ -192,7 +192,7 @@ export default function ProgressPage() {
                   <select
                     value={selectedGroupId}
                     onChange={(e) => setSelectedGroupId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="">-- Select a group --</option>
                     {groups.map((group) => (
@@ -209,7 +209,7 @@ export default function ProgressPage() {
                   <select
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="30">Last 30 Days</option>
                     <option value="90">Last 90 Days</option>
@@ -226,7 +226,7 @@ export default function ProgressPage() {
                 <select
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="">All Students</option>
                   {students?.map((student: any) => (

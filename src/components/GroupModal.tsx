@@ -93,7 +93,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <Building2 className="w-6 h-6 text-purple-600" />
+                <Building2 className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">
@@ -121,7 +121,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               placeholder="e.g., Azelis SA (2026)"
               required
             />
@@ -139,7 +139,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   placeholder="e.g., Johannesburg"
                 />
               </div>
@@ -154,7 +154,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
                   type="text"
                   value={formData.coordinator}
                   onChange={(e) => setFormData({ ...formData, coordinator: e.target.value })}
-                  className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   placeholder="e.g., John Doe"
                 />
               </div>
@@ -171,7 +171,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => handleStartDateChange(e.target.value)}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <div>
@@ -182,7 +182,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
                 type="date"
                 value={formData.endDate}
                 readOnly
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="ACTIVE">Active</option>
               <option value="COMPLETED">Completed</option>
@@ -212,7 +212,7 @@ export default function GroupModal({ group, onClose, onSave }: GroupModalProps) 
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               placeholder="Additional information about this group..."
             />
           </div>

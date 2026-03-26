@@ -115,7 +115,7 @@ export default function AssessmentResultModal({
                 value={formData.score}
                 onChange={(e) => setFormData({ ...formData, score: e.target.value })}
                 placeholder="0-100"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -128,7 +128,7 @@ export default function AssessmentResultModal({
                 type="date"
                 value={formData.assessedDate}
                 onChange={(e) => setFormData({ ...formData, assessedDate: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function AssessmentResultModal({
               value={formData.feedback}
               onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
               placeholder="Provide detailed feedback on the learner's performance..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
             />
           </div>
 
