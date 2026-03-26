@@ -345,7 +345,7 @@ export default function AssessmentsPage() {
             <h3 className="text-lg font-semibold dark:text-white">Unit Standards Management</h3>
             <button
               onClick={() => setShowNewForm(!showNewForm)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700"
             >
               <Plus size={18} /> New Unit Standard
             </button>
@@ -482,7 +482,7 @@ export default function AssessmentsPage() {
                               setIsEditing(unit.id);
                               setEditData(unit);
                             }}
-                            className="p-2 hover:bg-blue-100 text-blue-600 rounded"
+                            className="p-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded"
                             title="Edit"
                           >
                             <Edit2 size={18} />
@@ -501,7 +501,7 @@ export default function AssessmentsPage() {
                         </button>
 
                         {isEditing === unit.id && (
-                          <div className="bg-blue-50 dark:bg-slate-700 p-4 space-y-3">
+                          <div className="bg-slate-50 dark:bg-slate-700 border-t border-slate-200 dark:border-slate-600 p-4 space-y-3">
                             <input
                               type="text"
                               value={editData?.title || ''}
@@ -609,7 +609,7 @@ export default function AssessmentsPage() {
                 setSelectedStudents(new Set());
               }}
               className={`px-4 py-2 rounded font-semibold transition ${activeTab === tab
-                ? 'bg-blue-600 text-white'
+                ? 'bg-emerald-600 text-white'
                 : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
                 }`}
             >
@@ -620,15 +620,15 @@ export default function AssessmentsPage() {
 
         {/* Bulk actions */}
         {selectedStudents.size > 0 && (
-          <div className="bg-blue-50 p-3 rounded mb-4 flex items-center justify-between">
-            <span className="text-sm font-semibold">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 rounded mb-4 flex items-center justify-between">
+            <span className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
               {selectedStudents.size} student(s) selected
             </span>
             <div className="flex gap-2">
               <button
                 onClick={() => onBulkMark(unitStandard.id, activeTab, 'COMPETENT', selectedStudents)}
                 disabled={loading}
-                className="bg-green-600 text-white px-3 py-1  rounded text-sm hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1"
               >
                 {loading && <Loader2 size={16} className="animate-spin" />}
                 Mark Competent
@@ -666,7 +666,7 @@ export default function AssessmentsPage() {
           <button
             onClick={() => onOpenBulkModal(unitStandard, activeTab, 'COMPETENT')}
             disabled={bulkPassing || students.length === 0}
-            className="px-3 py-1.5 rounded text-sm font-semibold border-2 border-green-600 text-green-700 hover:bg-green-50 disabled:opacity-50"
+            className="px-3 py-1.5 rounded text-sm font-semibold border-2 border-emerald-600 text-emerald-700 dark:text-emerald-400 dark:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-50"
           >
             {bulkPassing ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}
             ✓ Mark All as Passed
@@ -699,7 +699,7 @@ export default function AssessmentsPage() {
                 />
 
                 <div className="flex-1">
-                  <div className="font-semibold text-sm">
+                  <div className="font-semibold text-sm text-slate-900 dark:text-white">
                     {student.firstName} {student.lastName}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-slate-400">{student.studentId}</div>
@@ -724,7 +724,7 @@ export default function AssessmentsPage() {
                     title={status === 'COMPETENT' ? 'Click to reset to unmarked' : 'Mark as Competent'}
                     className={`px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all ${status === 'COMPETENT'
                       ? 'bg-green-600 text-white border-green-600 shadow-sm ring-2 ring-green-200'
-                      : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-300 dark:border-slate-600 hover:border-green-400 hover:text-green-600'
+                      : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-300 dark:border-slate-600 hover:border-emerald-400 hover:text-emerald-600'
                       }`}
                   >
                     ✓
@@ -851,8 +851,8 @@ export default function AssessmentsPage() {
                   key={assessment.id}
                   onClick={() => setSelectedAssessment(assessment)}
                   className={`w-full p-3 rounded border text-left transition ${selectedAssessment?.id === assessment.id
-                    ? 'bg-blue-50 border-blue-300'
-                    : 'bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:border-blue-300'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 dark:border-emerald-600'
+                    : 'bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:border-emerald-300 dark:hover:border-emerald-600'
                     }`}
                 >
                   <div className="font-semibold text-sm dark:text-white">
@@ -1007,13 +1007,13 @@ export default function AssessmentsPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <div className="font-semibold text-sm">
+                      <div className="font-semibold text-sm text-slate-900 dark:text-white">
                         {student.firstName} {student.lastName}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-slate-400">{student.studentId}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-sm">
+                      <div className="font-semibold text-sm text-slate-900 dark:text-white">
                         {progress.competent}/{progress.total}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-slate-400">{progress.percentage}%</div>
