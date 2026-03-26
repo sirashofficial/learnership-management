@@ -261,7 +261,7 @@ export function EventDetailModal({
             <div className="flex gap-2">
               <button
                 onClick={() => setShowReminderForm(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
               >
                 <Bell className="w-5 h-5" />
                 Set Reminder
@@ -374,7 +374,7 @@ export function EventDetailModal({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
                 >
                   Create
                 </button>

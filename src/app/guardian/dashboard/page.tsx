@@ -138,7 +138,7 @@ export default function GuardianDashboard() {
         <div className="mb-8">
           <button
             onClick={() => setShowLinkModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium"
           >
             + Link Student
           </button>
@@ -159,7 +159,7 @@ export default function GuardianDashboard() {
             </p>
             <button
               onClick={() => setShowLinkModal(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium"
             >
               Link Your First Student
             </button>
@@ -201,7 +201,7 @@ export default function GuardianDashboard() {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all"
+                          className="bg-emerald-500 h-2 rounded-full transition-all"
                           style={{ width: `${student.progress}%` }}
                         ></div>
                       </div>
@@ -434,7 +434,7 @@ function LinkStudentModal({ onClose, onSuccess, token }: LinkStudentModalProps) 
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-md font-medium transition"
+                className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-md font-medium transition"
               >
                 {loading ? 'Linking...' : 'Link Student'}
               </button>

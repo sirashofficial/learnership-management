@@ -240,7 +240,7 @@ export default function StudentDetailsModal({ isOpen, student, onClose, onSave }
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
                   >
                     <Edit2 className="w-4 h-4" />
                     Edit Info
@@ -909,7 +909,7 @@ function InlineAttendanceEditor({
                           status === 'PRESENT' ? 'bg-green-600 text-white border-green-600' :
                             status === 'LATE' ? 'bg-amber-500 text-white border-amber-500' :
                               status === 'ABSENT' ? 'bg-red-600 text-white border-red-600' :
-                                'bg-blue-600 text-white border-blue-600'
+                                'bg-emerald-600 text-white border-emerald-600'
                         ) : 'bg-white text-slate-500 border-slate-300 hover:bg-slate-50'
                       )}
                     >

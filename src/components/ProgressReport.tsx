@@ -126,7 +126,7 @@ export default function ProgressReport({ groups }: ProgressReportProps) {
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all" 
+                      className="bg-emerald-500 h-2 rounded-full transition-all"
                       style={{ width: `${group.overallProgress}%` }}
                     ></div>
                   </div>

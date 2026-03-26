@@ -205,7 +205,7 @@ export default function StudentCard({
       <div className="mt-4">
         <div className="bg-gray-200 rounded-full h-1.5 overflow-hidden">
           <div
-            className="bg-blue-600 rounded-full h-1.5 transition-all duration-300"
+            className="bg-emerald-500 rounded-full h-1.5 transition-all duration-300"
             style={{ width: `${student.progress}%` }}
           />
         </div>

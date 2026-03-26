@@ -246,7 +246,7 @@ export default function LessonsPage() {
           <div className="p-6 border-b border-slate-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-600 rounded-xl">
+                <div className="p-3 bg-emerald-600 rounded-xl">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -260,7 +260,7 @@ export default function LessonsPage() {
                 onClick={() => setActiveTab('list')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === 'list'
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -271,7 +271,7 @@ export default function LessonsPage() {
                 onClick={() => setActiveTab('ai')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === 'ai'
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -282,7 +282,7 @@ export default function LessonsPage() {
                 onClick={() => setActiveTab('manual')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === 'manual'
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-emerald-600 text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -665,14 +665,14 @@ export default function LessonsPage() {
                     <button
                       onClick={() => handleSaveGenerated('published')}
                       disabled={saving}
-                      className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-slate-400 flex items-center justify-center gap-2"
+                      className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-slate-400 flex items-center justify-center gap-2"
                     >
                       <CheckCircle className="w-5 h-5" />
                       {saving ? 'Publishing...' : 'Save & Publish'}
                     </button>
                     <button
                       onClick={() => alert('Add to Timetable functionality coming soon')}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-2"
                     >
                       <CalendarPlus className="w-5 h-5" />
                       Add to Timetable
@@ -864,7 +864,7 @@ export default function LessonsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Save className="w-5 h-5" />
                 {saving ? 'Creating...' : 'Create Lesson Plan'}

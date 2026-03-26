@@ -161,7 +161,7 @@ export default function RolloutPlanTable({ groupId, groupName, groupStartDate }:
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-semibold disabled:opacity-50"
         >
           {generating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
           {plans.length === 0 ? 'Generate Plan' : 'Regenerate Plan'}

@@ -133,7 +133,7 @@ export default function MarkAssessmentModal({
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Save className="w-4 h-4" />
               {isLoading ? "Saving..." : "Save Mark"}

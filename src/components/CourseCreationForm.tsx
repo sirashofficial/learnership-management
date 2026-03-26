@@ -368,7 +368,7 @@ export default function CourseCreationForm() {
         <button
           onClick={submitCourse}
           disabled={isSubmitting || !courseName || modules.length === 0}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md disabled:bg-slate-400 flex items-center gap-2"
+          className="px-6 py-2 bg-emerald-600 text-white rounded-md disabled:bg-slate-400 flex items-center gap-2"
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Create Course

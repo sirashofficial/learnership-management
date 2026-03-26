@@ -212,7 +212,7 @@ export default function CurriculumPage() {
               <h2 className="text-xl font-semibold">Available Curricula</h2>
               <button
                 onClick={() => setActiveTab('ai-upload')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 flex items-center gap-2"
               >
                 <Upload className="w-4 h-4" />
                 Upload New Curriculum
@@ -404,7 +404,7 @@ export default function CurriculumPage() {
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
                       <div
-                        className="bg-blue-600 h-3 transition-all duration-300"
+                        className="bg-emerald-500 h-3 transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       />
                     </div>

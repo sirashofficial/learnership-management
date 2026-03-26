@@ -112,7 +112,7 @@ export default function StudentProfilePage() {
                 className={cn(
                   "px-4 py-2 rounded-lg font-medium transition-colors",
                   activeTab === 'progress'
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-emerald-600 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 )}
               >
@@ -124,7 +124,7 @@ export default function StudentProfilePage() {
                 className={cn(
                   "px-4 py-2 rounded-lg font-medium transition-colors",
                   activeTab === 'attendance'
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-emerald-600 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 )}
               >
@@ -136,7 +136,7 @@ export default function StudentProfilePage() {
                 className={cn(
                   "px-4 py-2 rounded-lg font-medium transition-colors",
                   activeTab === 'assessments'
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-emerald-600 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 )}
               >
@@ -148,7 +148,7 @@ export default function StudentProfilePage() {
                 className={cn(
                   "px-4 py-2 rounded-lg font-medium transition-colors",
                   activeTab === 'poe'
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-emerald-600 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 )}
               >
@@ -180,7 +180,7 @@ export default function StudentProfilePage() {
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-2">
                           <div
-                            className="bg-indigo-600 h-2 rounded-full"
+                            className="bg-emerald-500 h-2 rounded-full"
                             style={{ width: `${us.completion || 0}%` }}
                           />
                         </div>
@@ -347,7 +347,7 @@ export default function StudentProfilePage() {
           <div className="flex gap-3">
             <button
               onClick={() => alert('Progress report generation coming soon')}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2"
+              className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Generate Progress Report

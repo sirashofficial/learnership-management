@@ -78,7 +78,7 @@ export default function CreditAdjustmentModal({
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full">
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center">
                             <Edit2 className="h-6 w-6 text-white" />
                         </div>
                         <div>
@@ -132,7 +132,7 @@ export default function CreditAdjustmentModal({
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 font-medium"
+                            className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 font-medium"
                         >
                             {loading ? 'Saving...' : 'Save Changes'}
                         </button>

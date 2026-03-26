@@ -225,7 +225,7 @@ export default function BulkAttendanceModal({
                   onClick={() => toggleGroup(g.id)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition ${
                     selectedGroupIds.includes(g.id)
-                      ? 'bg-blue-600 text-white border-blue-600'
+                      ? 'bg-emerald-600 text-white border-emerald-600'
                       : 'border-gray-300 text-gray-700 hover:border-blue-400'
                   }`}
                 >
@@ -238,7 +238,7 @@ export default function BulkAttendanceModal({
           <button
             onClick={loadStudents}
             disabled={selectedGroupIds.length === 0 || loadingStudents}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50"
           >
             {loadingStudents ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
             Load Students

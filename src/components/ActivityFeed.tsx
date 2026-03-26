@@ -234,8 +234,8 @@ export default function ActivityFeed({ activities, isLoading, onAction }: Activi
                         onClick={() => handleFollow(activity.id, activity.actorId, isFollowing)}
                         className={`flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors ${
                           isFollowing
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-blue-50'
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50'
                         }`}
                       >
                         <UserPlus className="w-4 h-4" />

@@ -406,7 +406,7 @@ export default function AssessmentsPage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleAddUnitStandard}
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                  className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 flex items-center gap-2"
                 >
                   <Check size={18} /> Add
                 </button>
@@ -519,7 +519,7 @@ export default function AssessmentsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleUpdateUnitStandard(unit.id)}
-                                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                                className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 flex items-center gap-2"
                               >
                                 <Save size={18} /> Save
                               </button>
@@ -576,7 +576,7 @@ export default function AssessmentsPage() {
     };
 
     const getStatusColor = (status: string) => {
-      if (status === 'COMPETENT') return 'bg-green-100 border-green-300 text-green-700';
+      if (status === 'COMPETENT') return 'bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-400';
       if (status === 'NOT_YET_COMPETENT') return 'bg-red-100 border-red-300 text-red-700';
       return 'bg-gray-100 border-gray-300 text-gray-700';
     };
@@ -593,7 +593,7 @@ export default function AssessmentsPage() {
 
     const getCompletionColor = (completed: number, total: number) => {
       if (completed === 0) return 'text-gray-500'; // None done
-      if (completed === total) return 'text-green-600'; // All done
+      if (completed === total) return 'text-emerald-600'; // All done
       return 'text-orange-600'; // Some done
     };
 
@@ -707,8 +707,8 @@ export default function AssessmentsPage() {
 
                 <div className="flex items-center gap-2">
                   {/* Current state indicator */}
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded ${status === 'COMPETENT' ? 'bg-green-100 text-green-700' :
-                    status === 'NOT_YET_COMPETENT' ? 'bg-red-100 text-red-700' :
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded ${status === 'COMPETENT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                    status === 'NOT_YET_COMPETENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                       'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                     }`}>
                     {status === 'COMPETENT' ? 'Passed' : status === 'NOT_YET_COMPETENT' ? 'NYC' : 'Not marked'}
@@ -723,7 +723,7 @@ export default function AssessmentsPage() {
                     )}
                     title={status === 'COMPETENT' ? 'Click to reset to unmarked' : 'Mark as Competent'}
                     className={`px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all ${status === 'COMPETENT'
-                      ? 'bg-green-600 text-white border-green-600 shadow-sm ring-2 ring-green-200'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-200'
                       : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-300 dark:border-slate-600 hover:border-emerald-400 hover:text-emerald-600'
                       }`}
                   >
@@ -900,7 +900,7 @@ export default function AssessmentsPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => handleApprove(selectedAssessment.id)}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 flex items-center gap-2"
               >
                 <Check size={18} /> Approve
               </button>
@@ -983,7 +983,7 @@ export default function AssessmentsPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-green-600 h-2 rounded-full transition"
+                      className="bg-emerald-500 h-2 rounded-full transition"
                       style={{ width: `${modProg.percentage}%` }}
                     />
                   </div>
@@ -1022,7 +1022,7 @@ export default function AssessmentsPage() {
 
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-green-600 h-2 rounded-full transition"
+                      className="bg-emerald-500 h-2 rounded-full transition"
                       style={{ width: `${progress.percentage}%` }}
                     />
                   </div>
@@ -1067,7 +1067,7 @@ export default function AssessmentsPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold dark:text-white">Overall Compliance</span>
-              <span className="text-2xl font-bold text-green-600">{getCompliancePercentage()}%</span>
+              <span className="text-2xl font-bold text-emerald-600">{getCompliancePercentage()}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4">
               <div
@@ -1247,7 +1247,7 @@ export default function AssessmentsPage() {
             <button
               onClick={handleBulkMark}
               disabled={loading || selectedUnits.size === 0 || selectedStudents.size === 0}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
+              className="w-full bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
             >
               {loading && <Loader2 size={18} className="animate-spin" />}
               Mark {selectedUnits.size * selectedStudents.size} Assessment(s)
@@ -1373,7 +1373,7 @@ export default function AssessmentsPage() {
           <button
             onClick={handleExport}
             disabled={isExporting || (exportScope === 'student' && !selectedStudentForExport) || (exportScope === 'group' && !selectedGroupForExport)}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
+            className="w-full bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
           >
             {isExporting ? (
               <>
@@ -1450,7 +1450,7 @@ export default function AssessmentsPage() {
             <div className="text-sm text-gray-600 dark:text-slate-400">Total Assessments</div>
           </div>
           <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 text-center">
-            <div className="text-3xl font-bold text-green-600">{competentCount}</div>
+            <div className="text-3xl font-bold text-emerald-600">{competentCount}</div>
             <div className="text-sm text-gray-600 dark:text-slate-400">Competent</div>
           </div>
           <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 text-center">
@@ -1517,7 +1517,7 @@ export default function AssessmentsPage() {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-blue-600 h-2 rounded-full"
+                    className="bg-emerald-500 h-2 rounded-full"
                     style={{ width: `${stat.rate}%` }}
                   />
                 </div>

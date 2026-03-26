@@ -197,7 +197,7 @@ export default function CurriculumBuilderPage() {
                         <button
                             type="submit"
                             disabled={isSearching}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium"
+                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-medium"
                         >
                             {isSearching ? 'Searching...' : 'Find'}
                         </button>
@@ -370,7 +370,7 @@ export default function CurriculumBuilderPage() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium shadow-sm transition-colors"
+                                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-medium shadow-sm transition-colors"
                             >
                                 {isSubmitting ? (
                                     'Saving...'

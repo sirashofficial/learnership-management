@@ -166,7 +166,7 @@ export default function Comments({ comments, onCommentSubmit, isLoading }: Comme
           <button
             type="submit"
             disabled={!newComment.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-4 h-4" />
             Post Comment

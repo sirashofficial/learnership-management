@@ -166,7 +166,7 @@ export default function StatDetailsModal({ statType, isOpen, onClose }: StatDeta
               onClick={() => {
                 window.location.href = `/${statType}`;
               }}
-              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+              className="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg transition-colors"
             >
               View All
             </button>

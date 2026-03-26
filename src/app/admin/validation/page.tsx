@@ -296,7 +296,7 @@ export default function ValidationPage() {
             <button
               onClick={() => fixCredits(false)}
               disabled={fixingCredits}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <PlayCircle className="w-4 h-4" />
               Apply Fixes

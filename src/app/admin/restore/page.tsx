@@ -252,7 +252,7 @@ export default function RestoreArchivedPage() {
                   <button
                     onClick={() => handleRestore(record.id)}
                     disabled={restoring === record.id}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {restoring === record.id ? (
                       <>

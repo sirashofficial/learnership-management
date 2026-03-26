@@ -171,7 +171,7 @@ export default function GuardianLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition duration-200 mt-6"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition duration-200 mt-6"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>

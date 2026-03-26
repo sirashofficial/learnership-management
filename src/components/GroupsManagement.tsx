@@ -203,7 +203,7 @@ export default function GroupsManagement() {
         </div>
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
         >
           <Plus className="h-4 w-4" />
           Create New Group
@@ -307,7 +307,7 @@ export default function GroupsManagement() {
                             </div>
                             <div className="w-full bg-slate-200 rounded-full h-2">
                               <div
-                                className="bg-blue-600 h-2 rounded-full transition-all"
+                                className="bg-emerald-500 h-2 rounded-full transition-all"
                                 style={{ width: `${calculateProgress(group)}%` }}
                               ></div>
                             </div>
@@ -607,7 +607,7 @@ export default function GroupsManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
                 >
                   {editingGroup ? 'Update Group' : 'Create Group'}
                 </button>

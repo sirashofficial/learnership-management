@@ -672,7 +672,7 @@ export default function SSETAReportsPage() {
               <button
                 onClick={handleGenerateReport}
                 disabled={generating}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 {generating ? (
                   <>

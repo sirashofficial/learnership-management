@@ -478,7 +478,7 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                             <button
                                 onClick={() => planSummary && downloadRolloutDocx(planSummary)}
                                 disabled={!planSummary}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium shadow-sm shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Download className="w-4 h-4" />
                                 Download PDF
@@ -684,7 +684,7 @@ export default function GroupDetailPage({ params }: GroupDetailProps) {
                                         const [y, m, d] = startDateInput.split('-');
                                         generateAndPersistPlan(`${d}/${m}/${y}`);
                                     }}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm shadow-indigo-200 transition-all"
+                                    className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm shadow-emerald-200 transition-all"
                                 >
                                     Generate Plan
                                 </button>
@@ -1080,7 +1080,7 @@ function InlineMarkingPanel({
                         type="button"
                         onClick={() => unitStandardId && onBulkPass(unitStandardId, activeTab, students.map((s) => s.id))}
                         disabled={!unitStandardId || students.length === 0}
-                        className="px-3 py-1.5 text-xs font-semibold border border-green-600 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs font-semibold border border-emerald-600 text-emerald-700 rounded-lg hover:bg-emerald-50 disabled:opacity-50"
                     >
                         ✓ Mark All as Passed
                     </button>
@@ -1117,7 +1117,7 @@ function InlineMarkingPanel({
                                         className={cn(
                                             "px-3 py-1.5 rounded text-xs font-semibold border-2 transition-all",
                                             result === 'COMPETENT'
-                                                ? 'bg-green-600 text-white border-green-600'
+                                                ? 'bg-emerald-600 text-white border-emerald-600'
                                                 : 'bg-white text-gray-500 border-gray-300'
                                         )}
                                     >

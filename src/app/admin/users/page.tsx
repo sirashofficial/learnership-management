@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
           >
             <Plus className="w-5 h-5" />
             Add User
@@ -141,7 +141,7 @@ export default function AdminUsersPage() {
               <tr key={u.id} className="hover:bg-slate-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <div className="flex-shrink-0 h-10 w-10 bg-emerald-600 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold">
                         {u.name.charAt(0).toUpperCase()}
                       </span>
@@ -330,7 +330,7 @@ function UserModal({ user, onClose, onSave }: { user: User | null; onClose: () =
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
             >
               {loading ? 'Saving...' : user ? 'Update' : 'Create'}
             </button>

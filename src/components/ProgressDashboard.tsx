@@ -283,7 +283,7 @@ export default function ProgressDashboard({ groupId, groupName, refreshKey = 0 }
           <button
             key={s}
             onClick={() => setSortBy(s)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${sortBy === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${sortBy === s ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
             {s.charAt(0).toUpperCase() + s.slice(1)}

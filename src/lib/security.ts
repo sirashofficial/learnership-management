@@ -222,7 +222,7 @@ export const globalRateLimiter = new RateLimiter();
  */
 export const rateLimitPresets = {
   strict: { limit: 10, windowMs: 60 * 1000 }, // 10 requests per minute
-  moderate: { limit: 150, windowMs: 60 * 1000 }, // 150 requests per minute
+  moderate: { limit: 600, windowMs: 60 * 1000 }, // 600 requests per minute
   relaxed: { limit: 100, windowMs: 60 * 1000 }, // 100 requests per minute
   auth: { limit: 5, windowMs: 15 * 60 * 1000 }, // 5 requests per 15 minutes
   upload: { limit: 20, windowMs: 60 * 60 * 1000 }, // 20 uploads per hour
@@ -265,10 +265,16 @@ export function createRateLimitMiddleware(
  * Get client identifier for rate limiting
  */
 function getClientIdentifier(request: NextRequest): string {
-  // Try to get from auth token first (authenticated users)
+  // Try to get user ID from auth header (stable per-user key, not per-token)
   const authHeader = request.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
-    return `auth:${authHeader.substring(7)}`;
+    try {
+      // Decode JWT payload to get userId (no verification needed — just for key)
+      const payload = JSON.parse(atob(authHeader.substring(7).split('.')[1]));
+      if (payload.userId) return `user:${payload.userId}`;
+    } catch {
+      // Fall through to IP-based identification
+    }
   }
 
   // Fall back to IP address
@@ -277,7 +283,7 @@ function getClientIdentifier(request: NextRequest): string {
     forwardedFor?.split(',')[0].trim() ||
     request.headers.get('x-real-ip') ||
     request.ip ||
-    'unknown';
+    '127.0.0.1';
 
   return `ip:${ip}`;
 }

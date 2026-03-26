@@ -609,7 +609,7 @@ export default function GroupDrawer({
                         className={cn(
                           "px-3 py-2 rounded-lg text-sm font-semibold",
                           assessmentType === tab
-                            ? "bg-blue-600 text-white"
+                            ? "bg-emerald-600 text-white"
                             : "bg-slate-100 text-slate-700"
                         )}
                       >

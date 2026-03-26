@@ -297,7 +297,7 @@ export default function CompliancePage() {
                     alert('Failed to download report');
                   }
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
                 <Eye className="w-4 h-4" />
                 View Unit Standards Report

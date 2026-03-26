@@ -223,7 +223,7 @@ export function SyncStatusWidget() {
             <button
               onClick={handleManualSync}
               disabled={status.syncing || !isOnline}
-              className="w-full mt-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full mt-2 px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {status.syncing ? 'Syncing...' : 'Sync Now'}
             </button>
