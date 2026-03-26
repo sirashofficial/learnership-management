@@ -8,7 +8,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='repla
 from playwright.sync_api import sync_playwright
 import os, json, time, hmac, hashlib, base64
 
-BASE = "http://localhost:3002"
+BASE = "http://localhost:3000"
 OUT = r"C:\Users\LATITUDE 5400\Downloads\Learnership Management\.claude\worktrees\friendly-franklin\tasks\audit_screenshots"
 os.makedirs(OUT, exist_ok=True)
 
@@ -101,17 +101,23 @@ def audit():
 
         # --- Dark mode dashboard ---
         print("   dashboard dark mode")
-        page.goto(f"{BASE}/")
-        page.wait_for_load_state("networkidle")
+        try:
+            page.goto(f"{BASE}/", timeout=45000)
+            page.wait_for_load_state("networkidle", timeout=45000)
+        except Exception:
+            pass
         page.evaluate("document.documentElement.classList.add('dark')")
-        page.wait_for_timeout(600)
+        page.wait_for_timeout(800)
         snap(page, "dashboard_dark")
 
         # --- Tablet (iPad) ---
         print("   tablet view")
         page.set_viewport_size({"width": 768, "height": 1024})
-        page.goto(f"{BASE}/")
-        page.wait_for_load_state("networkidle")
+        try:
+            page.goto(f"{BASE}/", timeout=45000)
+            page.wait_for_load_state("networkidle", timeout=45000)
+        except Exception:
+            pass
         page.wait_for_timeout(600)
         snap(page, "dashboard_tablet")
         page.set_viewport_size({"width": 1440, "height": 900})

@@ -4,6 +4,7 @@ import useSWR from 'swr';
 // Removed Sidebar and Header imports
 import { useRouter } from 'next/navigation';
 import { useGroups } from '@/contexts/GroupsContext';
+import { ErrorState } from '@/components/ui/EmptyState';
 import GroupModal from '@/components/GroupModal';
 import GroupDrawer from '@/components/GroupDrawer';
 import GroupUploadModal from '@/components/GroupUploadModal';
@@ -723,14 +724,13 @@ export default function GroupsPage() {
 
   if (groupsError) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-4">
-          <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Failed to load groups</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {groupsError?.message || 'An unexpected error occurred. Please try refreshing the page.'}
-        </p>
+      <div className="p-6">
+        <ErrorState
+          icon={AlertTriangle}
+          title="Failed to load groups"
+          description={groupsError?.message || 'An unexpected error occurred. Please try refreshing the page.'}
+          action={{ label: 'Retry', onClick: () => window.location.reload() }}
+        />
       </div>
     );
   }
@@ -738,13 +738,13 @@ export default function GroupsPage() {
   return (
     <div className="space-y-6">
       {/* Top bar */}
-      <div className="bg-white rounded-lg border border-slate-200 p-5">
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
           <div />
           <div className="flex gap-2">
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 rounded-lg transition-colors shadow-sm"
             >
               <Upload className="w-5 h-5" />
               Upload Plan
@@ -956,9 +956,9 @@ export default function GroupsPage() {
       </div>
 
       {/* Programme Overview */}
-      <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-6">
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">Programme Overview</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Programme Overview</h3>
           <p className="text-sm text-slate-500">Live programme health across all active groups.</p>
         </div>
 
@@ -1033,8 +1033,8 @@ export default function GroupsPage() {
                 Status guide
                 <Info className="w-3.5 h-3.5" />
               </button>
-              <div className="absolute right-0 top-9 w-72 rounded-lg bg-white border border-slate-200 shadow-lg p-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
-                <div className="space-y-2 text-xs text-slate-600">
+              <div className="absolute right-0 top-9 w-72 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg p-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+                <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
                   <div className="flex items-start gap-2">
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5">On Track</span>
                     <span>Today falls within a scheduled unit standard.</span>

@@ -556,14 +556,14 @@ export default function ReportsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
 
             <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
                 {/* Page Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                        <FileText className="w-8 h-8 text-indigo-600" />
+                        <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                         Reports
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400 mt-2">
@@ -572,7 +572,7 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Report Type Tabs */}
-                <div className="mb-6 bg-white rounded-lg shadow-sm border border-slate-200 p-2">
+                <div className="mb-6 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-2">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <button
                             onClick={() => {
@@ -581,8 +581,8 @@ export default function ReportsPage() {
                             }}
                             className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
                                 reportType === 'daily-attendance'
-                                    ? 'bg-indigo-600 text-white shadow-md'
-                                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                    ? 'bg-emerald-600 dark:bg-emerald-700 text-white shadow-md'
+                                    : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
                             }`}
                         >
                             <Calendar className="w-5 h-5" />
@@ -595,8 +595,8 @@ export default function ReportsPage() {
                             }}
                             className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
                                 reportType === 'group-progress'
-                                    ? 'bg-indigo-600 text-white shadow-md'
-                                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                    ? 'bg-emerald-600 dark:bg-emerald-700 text-white shadow-md'
+                                    : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
                             }`}
                         >
                             <TrendingUp className="w-5 h-5" />
@@ -609,8 +609,8 @@ export default function ReportsPage() {
                             }}
                             className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
                                 reportType === 'assessment-results'
-                                    ? 'bg-indigo-600 text-white shadow-md'
-                                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                    ? 'bg-emerald-600 dark:bg-emerald-700 text-white shadow-md'
+                                    : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
                             }`}
                         >
                             <Award className="w-5 h-5" />
@@ -623,8 +623,8 @@ export default function ReportsPage() {
                             }}
                             className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
                                 reportType === 'unit-standards'
-                                    ? 'bg-indigo-600 text-white shadow-md'
-                                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                    ? 'bg-emerald-600 dark:bg-emerald-700 text-white shadow-md'
+                                    : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
                             }`}
                         >
                             <BarChart3 className="w-5 h-5" />
@@ -635,8 +635,8 @@ export default function ReportsPage() {
 
                 {/* Daily Attendance Report */}
                 {reportType === 'daily-attendance' && (
-                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-6 border-b border-slate-200 bg-slate-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                             <h2 className="text-lg font-semibold text-slate-900">
                                 Daily Attendance Report
                             </h2>
@@ -734,7 +734,7 @@ export default function ReportsPage() {
                             
                             {/* Display Report Data */}
                             {reportData && (
-                                <div className="mt-6 border-t border-slate-200 pt-6">
+                                <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
                                     <h3 className="text-lg font-semibold text-slate-900 mb-4">Report Results</h3>
                                     <div className="bg-slate-50 rounded-lg p-6 space-y-4">
                                         <div className="grid grid-cols-3 gap-4 text-center">
@@ -779,8 +779,8 @@ export default function ReportsPage() {
 
                 {/* Group Progress Report */}
                 {reportType === 'group-progress' && (
-                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-6 border-b border-slate-200 bg-slate-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                             <h2 className="text-lg font-semibold text-slate-900">
                                 Group Progress Report
                             </h2>
@@ -873,11 +873,11 @@ export default function ReportsPage() {
                             
                             {/* Display Report Data */}
                             {reportData && reportData.students && (
-                                <div className="mt-6 border-t border-slate-200 pt-6">
+                                <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
                                     <h3 className="text-lg font-semibold text-slate-900 mb-4">Student Progress</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
-                                            <thead className="bg-slate-50 border-b border-slate-200">
+                                            <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                                                 <tr>
                                                     <th className="text-left p-3 font-semibold">Student</th>
                                                     <th className="text-center p-3 font-semibold">Attendance %</th>
@@ -887,7 +887,7 @@ export default function ReportsPage() {
                                             </thead>
                                             <tbody>
                                                 {reportData.students.map((student: any, idx: number) => (
-                                                    <tr key={idx} className={`border-b border-slate-100 ${student.progress < 50 ? 'bg-red-50' : ''}`}>
+                                                    <tr key={idx} className={`border-b border-slate-100 dark:border-slate-700 ${student.progress < 50 ? 'bg-red-50 dark:bg-red-950/20' : ''}`}>
                                                         <td className="p-3">{student.name}</td>
                                                         <td className="text-center p-3">
                                                             <span className={`font-semibold ${student.attendanceRate < 80 ? 'text-red-600' : 'text-green-600'}`}>
@@ -913,8 +913,8 @@ export default function ReportsPage() {
 
                 {/* Assessment Results Report */}
                 {reportType === 'assessment-results' && (
-                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-6 border-b border-slate-200 bg-slate-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                             <h2 className="text-lg font-semibold text-slate-900">
                                 Assessment Results Report
                             </h2>
@@ -1007,11 +1007,11 @@ export default function ReportsPage() {
                             
                             {/* Display Report Data */}
                             {reportData && reportData.assessments && (
-                                <div className="mt-6 border-t border-slate-200 pt-6">
+                                <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
                                     <h3 className="text-lg font-semibold text-slate-900 mb-4">Assessment Results</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
-                                            <thead className="bg-slate-50 border-b border-slate-200">
+                                            <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                                                 <tr>
                                                     <th className="text-left p-3 font-semibold">Student</th>
                                                     <th className="text-left p-3 font-semibold">Assessment</th>
@@ -1022,7 +1022,7 @@ export default function ReportsPage() {
                                             </thead>
                                             <tbody>
                                                 {reportData.assessments.map((assessment: any, idx: number) => (
-                                                    <tr key={idx} className="border-b border-slate-100">
+                                                    <tr key={idx} className="border-b border-slate-100 dark:border-slate-700">
                                                         <td className="p-3">{assessment.studentName}</td>
                                                         <td className="p-3">{assessment.assessmentTitle}</td>
                                                         <td className="text-center p-3">
@@ -1051,8 +1051,8 @@ export default function ReportsPage() {
 
                 {/* Unit Standards Completion Report */}
                 {reportType === 'unit-standards' && (
-                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-6 border-b border-slate-200 bg-slate-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                             <h2 className="text-lg font-semibold text-slate-900">
                                 Unit Standards Completion Report
                             </h2>
@@ -1121,11 +1121,11 @@ export default function ReportsPage() {
                             
                             {/* Display Report Data */}
                             {reportData && reportData.matrix && (
-                                <div className="mt-6 border-t border-slate-200 pt-6">
+                                <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
                                     <h3 className="text-lg font-semibold text-slate-900 mb-4">Completion Matrix</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-xs">
-                                            <thead className="bg-slate-50 border-b border-slate-200">
+                                            <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                                                 <tr>
                                                     <th className="text-left p-2 font-semibold sticky left-0 bg-slate-50">Student</th>
                                                     {reportData.unitStandards && reportData.unitStandards.map((us: any, idx: number) => (
@@ -1138,7 +1138,7 @@ export default function ReportsPage() {
                                             </thead>
                                             <tbody>
                                                 {reportData.matrix.map((row: any, idx: number) => (
-                                                    <tr key={idx} className="border-b border-slate-100">
+                                                    <tr key={idx} className="border-b border-slate-100 dark:border-slate-700">
                                                         <td className="p-2 sticky left-0 bg-white">{row.studentName}</td>
                                                         {row.completions && row.completions.map((status: string, usIdx: number) => (
                                                             <td key={usIdx} className="text-center p-2">
