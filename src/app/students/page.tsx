@@ -390,7 +390,7 @@ export default function StudentsPage() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-slate-600">
                 Total Students
@@ -401,7 +401,7 @@ export default function StudentsPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-slate-600">
                 Active Students
@@ -412,7 +412,7 @@ export default function StudentsPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-slate-600">
                 Avg Progress
@@ -423,7 +423,7 @@ export default function StudentsPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-slate-600">
                 Needs Attention
@@ -440,7 +440,7 @@ export default function StudentsPage() {
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-lg border border-slate-200 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 mb-6">
           <div className="p-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Search */}
@@ -452,7 +452,7 @@ export default function StudentsPage() {
                     placeholder="Search by name, ID, email, or ID number..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -463,7 +463,7 @@ export default function StudentsPage() {
                   onClick={() => setViewMode('table')}
                   className={`p-2 rounded-lg ${viewMode === 'table'
                     ? 'bg-teal-500 text-white'
-                    : 'bg-slate-100 text-slate-600'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                 >
                   <List className="h-5 w-5" />
@@ -472,7 +472,7 @@ export default function StudentsPage() {
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-lg ${viewMode === 'grid'
                     ? 'bg-teal-500 text-white'
-                    : 'bg-slate-100 text-slate-600'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                 >
                   <Grid3x3 className="h-5 w-5" />
@@ -484,7 +484,7 @@ export default function StudentsPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showFilters
                   ? 'bg-teal-500 text-white'
-                  : 'bg-slate-100 text-slate-600'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                   }`}
               >
                 <Filter className="h-5 w-5" />
@@ -501,7 +501,7 @@ export default function StudentsPage() {
                 onClick={() => setShowOnlyAlerts(!showOnlyAlerts)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showOnlyAlerts
                   ? 'bg-amber-500 text-white'
-                  : 'bg-slate-100 text-slate-600'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                   }`}
               >
                 <AlertTriangle className="h-5 w-5" />
@@ -511,7 +511,7 @@ export default function StudentsPage() {
               {/* Export CSV */}
               <button
                 onClick={handleExportCSV}
-                className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 flex items-center gap-2"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center gap-2"
               >
                 <Download className="h-5 w-5" />
                 Export
@@ -539,14 +539,14 @@ export default function StudentsPage() {
                   <div className="h-4 w-px bg-emerald-200 mx-2" />
                   <button
                     onClick={handleBulkArchive}
-                    className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
+                    className="px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-xs font-bold transition-all"
                   >
                     <Archive className="h-3.5 w-3.5" />
                     Archive
                   </button>
                   <button
                     onClick={() => setShowBulkAssessmentModal(true)}
-                    className="px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-xs font-bold transition-all"
+                    className="px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-xs font-bold transition-all"
                   >
                     <CheckCircle className="h-3.5 w-3.5" />
                     Award Credits
@@ -582,14 +582,14 @@ export default function StudentsPage() {
           <div className="flex-1 min-w-0">
             {/* Content */}
             {isLoading ? (
-              <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-slate-200">
+              <div className="flex items-center justify-center h-64 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div className="flex flex-col items-center gap-4">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
                   <p className="text-sm font-medium text-slate-500 italic">Curating student data...</p>
                 </div>
               </div>
             ) : filteredStudents.length === 0 ? (
-              <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
+              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-12 text-center">
                 <div className="max-w-md mx-auto">
                   <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="h-8 w-8 text-slate-400" />
@@ -685,7 +685,7 @@ export default function StudentsPage() {
                           <tr
                             key={student.id}
                             onClick={() => handleViewDetails(student)}
-                            className="hover:bg-slate-50 cursor-pointer"
+                            className="hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
                           >
                             <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                               <input
@@ -759,7 +759,7 @@ export default function StudentsPage() {
                               {format(new Date(student.createdAt), 'MMM d, yyyy')}
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-sm font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
                                 {(student as any).currentModule ? (
                                   `M${(student as any).currentModule.moduleNumber}`
                                 ) : '-'}
@@ -780,7 +780,7 @@ export default function StudentsPage() {
                   return (
                     <div
                       key={student.id}
-                      className="bg-white rounded-lg border border-slate-200 p-6 hover:shadow-soft transition-shadow cursor-pointer relative"
+                      className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:shadow-soft transition-shadow cursor-pointer relative"
                       onClick={() => handleViewDetails(student)}
                     >
                       {/* Checkbox */}
@@ -860,7 +860,7 @@ export default function StudentsPage() {
                       </div>
 
                       {/* Enrollment Date */}
-                      <div className="mt-4 pt-4 border-t border-slate-200 text-center">
+                      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center">
                         <p className="text-xs text-slate-500">
                           Enrolled {format(new Date(student.createdAt), 'MMM d, yyyy')}
                         </p>

@@ -340,9 +340,9 @@ export default function AssessmentsPage() {
     return (
       <div className="space-y-6">
         {/* Add new unit standard */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-gray-200 dark:border-slate-700">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Unit Standards Management</h3>
+            <h3 className="text-lg font-semibold dark:text-white">Unit Standards Management</h3>
             <button
               onClick={() => setShowNewForm(!showNewForm)}
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -352,25 +352,25 @@ export default function AssessmentsPage() {
           </div>
 
           {showNewForm && (
-            <div className="bg-gray-50 p-4 rounded mb-4 space-y-3">
+            <div className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded mb-4 space-y-3">
               <input
                 type="text"
                 placeholder="Code (e.g., 119673)"
                 value={newUSData.code}
                 onChange={(e) => setNewUSData({ ...newUSData, code: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
               />
               <input
                 type="text"
                 placeholder="Title"
                 value={newUSData.title}
                 onChange={(e) => setNewUSData({ ...newUSData, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
               />
               <select
                 value={newUSData.moduleId}
                 onChange={(e) => setNewUSData({ ...newUSData, moduleId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
               >
                 <option value="">Select Module</option>
                 {modules.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -382,12 +382,12 @@ export default function AssessmentsPage() {
                   placeholder="Credits"
                   value={newUSData.credits}
                   onChange={(e) => setNewUSData({ ...newUSData, credits: parseInt(e.target.value) })}
-                  className="px-3 py-2 border border-gray-300 rounded"
+                  className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
                 />
                 <select
                   value={newUSData.level}
                   onChange={(e) => setNewUSData({ ...newUSData, level: parseInt(e.target.value) })}
-                  className="px-3 py-2 border border-gray-300 rounded"
+                  className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
                 >
                   <option value={2}>Level 2</option>
                   <option value={3}>Level 3</option>
@@ -395,7 +395,7 @@ export default function AssessmentsPage() {
                 <select
                   value={newUSData.type}
                   onChange={(e) => setNewUSData({ ...newUSData, type: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded"
+                  className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
                 >
                   <option value="Core">Core</option>
                   <option value="Fundamental">Fundamental</option>
@@ -429,7 +429,7 @@ export default function AssessmentsPage() {
           const isModuleExpanded = expandedModules.has(module.id);
 
           return (
-            <div key={module.id} className="bg-white border border-gray-200 rounded-lg">
+            <div key={module.id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg">
               <button
                 onClick={() => {
                   const newSet = new Set(expandedModules);
@@ -440,15 +440,15 @@ export default function AssessmentsPage() {
                   }
                   setExpandedModules(newSet);
                 }}
-                className="w-full p-4 flex items-center gap-2 hover:bg-gray-50 font-semibold text-lg"
+                className="w-full p-4 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 font-semibold text-lg dark:text-white"
               >
                 {isModuleExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 {module.name}
-                <span className="text-gray-500 text-sm ml-auto">({moduleUnits.length} units)</span>
+                <span className="text-gray-500 dark:text-slate-400 text-sm ml-auto">({moduleUnits.length} units)</span>
               </button>
 
               {isModuleExpanded && (
-                <div className="border-t border-gray-200 divide-y divide-gray-200">
+                <div className="border-t border-gray-200 dark:border-slate-700 divide-y divide-gray-200 dark:divide-slate-700">
                   {moduleUnits.map(unit => {
                     const isUnitExpanded = expandedUnits.has(unit.id);
 
@@ -464,14 +464,14 @@ export default function AssessmentsPage() {
                             }
                             setExpandedUnits(newSet);
                           }}
-                          className="w-full p-4 flex items-center gap-3 hover:bg-gray-50 text-left"
+                          className="w-full p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-slate-700 text-left dark:text-white"
                         >
                           {isUnitExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                           <div className="flex-1">
                             <div className="font-semibold">
                               {unit.code} - {unit.title}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-slate-400">
                               Level {unit.level} • {unit.credits} credits • {unit.type}
                             </div>
                           </div>
@@ -501,19 +501,19 @@ export default function AssessmentsPage() {
                         </button>
 
                         {isEditing === unit.id && (
-                          <div className="bg-blue-50 p-4 space-y-3">
+                          <div className="bg-blue-50 dark:bg-slate-700 p-4 space-y-3">
                             <input
                               type="text"
                               value={editData?.title || ''}
                               onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
                               placeholder="Title"
                             />
                             <input
                               type="text"
                               value={editData?.code || ''}
                               onChange={(e) => setEditData({ ...editData, code: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
                               placeholder="Code"
                             />
                             <div className="flex gap-2">
@@ -598,7 +598,7 @@ export default function AssessmentsPage() {
     };
 
     return (
-      <div className="bg-gray-50 border-t p-4">
+      <div className="bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-700 p-4">
         {/* Tab buttons */}
         <div className="flex gap-2 mb-4">
           {['FORMATIVE', 'SUMMATIVE', 'WORKPLACE'].map(tab => (
@@ -610,7 +610,7 @@ export default function AssessmentsPage() {
               }}
               className={`px-4 py-2 rounded font-semibold transition ${activeTab === tab
                 ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
                 }`}
             >
               {tab} Assessment
@@ -645,8 +645,8 @@ export default function AssessmentsPage() {
         )}
 
         {/* Completion Summary */}
-        <div className="bg-white p-4 rounded border border-gray-200 mb-4">
-          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Assessment Progress</div>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 mb-4">
+          <div className="text-xs font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-2">Assessment Progress</div>
           <div className="flex gap-6">
             {getCompletionStats().map(stat => (
               <div key={stat.type} className="flex items-center gap-2">
@@ -660,7 +660,7 @@ export default function AssessmentsPage() {
 
         {/* Students grid */}
         <div className="flex items-center justify-between mb-3">
-          <div className="text-sm font-medium text-gray-700">
+          <div className="text-sm font-medium text-gray-700 dark:text-slate-300">
             {unitStandard.code} — {unitStandard.title}
           </div>
           <button
@@ -681,7 +681,7 @@ export default function AssessmentsPage() {
             return (
               <div
                 key={student.id}
-                className="bg-white p-3 rounded border border-gray-200 flex items-center justify-between hover:shadow-sm"
+                className="bg-white dark:bg-slate-800 p-3 rounded border border-gray-200 dark:border-slate-700 flex items-center justify-between hover:shadow-sm"
               >
                 <input
                   type="checkbox"
@@ -702,14 +702,14 @@ export default function AssessmentsPage() {
                   <div className="font-semibold text-sm">
                     {student.firstName} {student.lastName}
                   </div>
-                  <div className="text-xs text-gray-500">{student.studentId}</div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400">{student.studentId}</div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   {/* Current state indicator */}
                   <span className={`text-xs font-medium px-2 py-0.5 rounded ${status === 'COMPETENT' ? 'bg-green-100 text-green-700' :
                     status === 'NOT_YET_COMPETENT' ? 'bg-red-100 text-red-700' :
-                      'bg-gray-100 text-gray-500'
+                      'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                     }`}>
                     {status === 'COMPETENT' ? 'Passed' : status === 'NOT_YET_COMPETENT' ? 'NYC' : 'Not marked'}
                   </span>
@@ -724,7 +724,7 @@ export default function AssessmentsPage() {
                     title={status === 'COMPETENT' ? 'Click to reset to unmarked' : 'Mark as Competent'}
                     className={`px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all ${status === 'COMPETENT'
                       ? 'bg-green-600 text-white border-green-600 shadow-sm ring-2 ring-green-200'
-                      : 'bg-white text-gray-500 border-gray-300 hover:border-green-400 hover:text-green-600'
+                      : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-300 dark:border-slate-600 hover:border-green-400 hover:text-green-600'
                       }`}
                   >
                     ✓
@@ -740,7 +740,7 @@ export default function AssessmentsPage() {
                     title={status === 'NOT_YET_COMPETENT' ? 'Click to reset to unmarked' : 'Mark as Not Yet Competent'}
                     className={`px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all ${status === 'NOT_YET_COMPETENT'
                       ? 'bg-red-600 text-white border-red-600 shadow-sm ring-2 ring-red-200'
-                      : 'bg-white text-gray-500 border-gray-300 hover:border-red-400 hover:text-red-600'
+                      : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-300 dark:border-slate-600 hover:border-red-400 hover:text-red-600'
                       }`}
                   >
                     ✗
@@ -834,14 +834,14 @@ export default function AssessmentsPage() {
 
     return (
       <div className="space-y-4">
-        <div className="bg-white p-4 rounded border border-gray-200">
-          <h3 className="font-semibold mb-2">Pending Assessments for Moderation</h3>
-          <div className="text-sm text-gray-500 mb-4">
+        <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+          <h3 className="font-semibold mb-2 dark:text-white">Pending Assessments for Moderation</h3>
+          <div className="text-sm text-gray-500 dark:text-slate-400 mb-4">
             {unreviewed.length} assessment(s) waiting for review
           </div>
 
           {unreviewed.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-slate-400">
               ✅ All assessments have been reviewed!
             </div>
           ) : (
@@ -852,13 +852,13 @@ export default function AssessmentsPage() {
                   onClick={() => setSelectedAssessment(assessment)}
                   className={`w-full p-3 rounded border text-left transition ${selectedAssessment?.id === assessment.id
                     ? 'bg-blue-50 border-blue-300'
-                    : 'bg-white border-gray-200 hover:border-blue-300'
+                    : 'bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:border-blue-300'
                     }`}
                 >
-                  <div className="font-semibold text-sm">
+                  <div className="font-semibold text-sm dark:text-white">
                     {assessment.student.firstName} {assessment.student.lastName} - {assessment.type}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-slate-400">
                     Submitted: {assessment.assessedDate ? format(new Date(assessment.assessedDate), 'MMM dd, yyyy') : 'Pending'}
                   </div>
                 </button>
@@ -868,30 +868,30 @@ export default function AssessmentsPage() {
         </div>
 
         {selectedAssessment && (
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h3 className="font-semibold mb-4">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+            <h3 className="font-semibold mb-4 dark:text-white">
               Review: {selectedAssessment.student.firstName} {selectedAssessment.student.lastName}
             </h3>
 
             <div className="space-y-3 mb-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-gray-600">Assessment Type</label>
+                  <label className="text-sm text-gray-600 dark:text-slate-400">Assessment Type</label>
                   <div className="font-semibold">{selectedAssessment.type}</div>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600">Current Result</label>
+                  <label className="text-sm text-gray-600 dark:text-slate-400">Current Result</label>
                   <div className="font-semibold">{selectedAssessment.result}</div>
                 </div>
               </div>
 
               <div>
-                <label className="text-sm text-gray-600">Moderator Notes</label>
+                <label className="text-sm text-gray-600 dark:text-slate-400">Moderator Notes</label>
                 <textarea
                   value={moderationNotes}
                   onChange={(e) => setModerationNotes(e.target.value)}
                   placeholder="Add your feedback and comments..."
-                  className="w-full p-2 border border-gray-300 rounded"
+                  className="w-full p-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-300"
                   rows={4}
                 />
               </div>
@@ -952,8 +952,8 @@ export default function AssessmentsPage() {
 
     return (
       <div className="space-y-4">
-        <div className="bg-white p-4 rounded border border-gray-200">
-          <h3 className="font-semibold mb-4">Module Progress</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+          <h3 className="font-semibold mb-4 dark:text-white">Module Progress</h3>
 
           <div className="space-y-3">
             {modules.map(module => {
@@ -976,10 +976,10 @@ export default function AssessmentsPage() {
               if (!modProg) return null;
 
               return (
-                <div key={module.id} className="bg-gray-50 p-3 rounded">
+                <div key={module.id} className="bg-gray-50 dark:bg-slate-800/50 p-3 rounded">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-sm">{module.name}</span>
-                    <span className="text-sm text-gray-600">{modProg.percentage}%</span>
+                    <span className="font-semibold text-sm dark:text-white">{module.name}</span>
+                    <span className="text-sm text-gray-600 dark:text-slate-400">{modProg.percentage}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
@@ -993,8 +993,8 @@ export default function AssessmentsPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded border border-gray-200">
-          <h3 className="font-semibold mb-4">Student Progress</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+          <h3 className="font-semibold mb-4 dark:text-white">Student Progress</h3>
 
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {scopedStudents.map(student => {
@@ -1003,20 +1003,20 @@ export default function AssessmentsPage() {
                 <button
                   key={student.id}
                   onClick={() => setSelectedStudent(selectedStudent === student.id ? null : student.id)}
-                  className="w-full p-3 rounded border border-gray-200 hover:border-blue-300 text-left transition"
+                  className="w-full p-3 rounded border border-gray-200 dark:border-slate-700 hover:border-blue-300 text-left transition dark:text-white"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <div className="font-semibold text-sm">
                         {student.firstName} {student.lastName}
                       </div>
-                      <div className="text-xs text-gray-500">{student.studentId}</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">{student.studentId}</div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-sm">
                         {progress.competent}/{progress.total}
                       </div>
-                      <div className="text-xs text-gray-500">{progress.percentage}%</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">{progress.percentage}%</div>
                     </div>
                   </div>
 
@@ -1061,12 +1061,12 @@ export default function AssessmentsPage() {
 
     return (
       <div className="space-y-4">
-        <div className="bg-white p-4 rounded border border-gray-200">
-          <h3 className="font-semibold mb-4">Compliance Status</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+          <h3 className="font-semibold mb-4 dark:text-white">Compliance Status</h3>
 
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold">Overall Compliance</span>
+              <span className="font-semibold dark:text-white">Overall Compliance</span>
               <span className="text-2xl font-bold text-green-600">{getCompliancePercentage()}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4">
@@ -1093,11 +1093,11 @@ export default function AssessmentsPage() {
                   });
 
                   return (
-                    <div key={student.id} className="bg-white p-2 rounded text-sm">
-                      <div className="font-semibold">
+                    <div key={student.id} className="bg-white dark:bg-slate-700 p-2 rounded text-sm">
+                      <div className="font-semibold dark:text-white">
                         {student.firstName} {student.lastName}
                       </div>
-                      <div className="text-gray-600">
+                      <div className="text-gray-600 dark:text-slate-400">
                         Missing assessments for {missing.length} unit(s)
                       </div>
                     </div>
@@ -1159,8 +1159,8 @@ export default function AssessmentsPage() {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h3 className="font-semibold mb-4">Select Unit Standards</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+            <h3 className="font-semibold mb-4 dark:text-white">Select Unit Standards</h3>
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {unitStandards.map(unit => (
                 <label key={unit.id} className="flex items-center gap-3 cursor-pointer">
@@ -1179,16 +1179,16 @@ export default function AssessmentsPage() {
                     className="w-4 h-4"
                   />
                   <div className="text-sm">
-                    <div className="font-semibold">{unit.code} - {unit.title}</div>
-                    <div className="text-gray-500 text-xs">{unit.module.name}</div>
+                    <div className="font-semibold dark:text-white">{unit.code} - {unit.title}</div>
+                    <div className="text-gray-500 dark:text-slate-400 text-xs">{unit.module.name}</div>
                   </div>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h3 className="font-semibold mb-4">Select Students</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+            <h3 className="font-semibold mb-4 dark:text-white">Select Students</h3>
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {scopedStudents.map(student => (
                 <label key={student.id} className="flex items-center gap-3 cursor-pointer">
@@ -1207,8 +1207,8 @@ export default function AssessmentsPage() {
                     className="w-4 h-4"
                   />
                   <div className="text-sm">
-                    <div className="font-semibold">{student.firstName} {student.lastName}</div>
-                    <div className="text-gray-500 text-xs">{student.studentId}</div>
+                    <div className="font-semibold dark:text-white">{student.firstName} {student.lastName}</div>
+                    <div className="text-gray-500 dark:text-slate-400 text-xs">{student.studentId}</div>
                   </div>
                 </label>
               ))}
@@ -1216,16 +1216,16 @@ export default function AssessmentsPage() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded border border-gray-200">
-          <h3 className="font-semibold mb-4">Mark As</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+          <h3 className="font-semibold mb-4 dark:text-white">Mark As</h3>
 
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-semibold">Assessment Type</label>
+              <label className="text-sm font-semibold dark:text-slate-300">Assessment Type</label>
               <select
                 value={assessmentType}
                 onChange={(e) => setAssessmentType(e.target.value as 'FORMATIVE' | 'SUMMATIVE')}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
               >
                 <option value="FORMATIVE">Formative</option>
                 <option value="SUMMATIVE">Summative</option>
@@ -1233,11 +1233,11 @@ export default function AssessmentsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Result</label>
+              <label className="text-sm font-semibold dark:text-slate-300">Result</label>
               <select
                 value={markAs}
                 onChange={(e) => setMarkAs(e.target.value as 'COMPETENT' | 'NOT_YET_COMPETENT')}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
               >
                 <option value="COMPETENT">Competent</option>
                 <option value="NOT_YET_COMPETENT">Not Yet Competent</option>
@@ -1305,16 +1305,16 @@ export default function AssessmentsPage() {
     };
 
     return (
-      <div className="bg-white p-6 rounded border border-gray-200 max-w-md mx-auto">
-        <h3 className="font-semibold text-lg mb-6">Export Assessments</h3>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded border border-gray-200 dark:border-slate-700 max-w-md mx-auto">
+        <h3 className="font-semibold text-lg mb-6 dark:text-white">Export Assessments</h3>
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-semibold">Format</label>
+            <label className="text-sm font-semibold dark:text-slate-300">Format</label>
             <select
               value={exportFormat}
               onChange={(e) => setExportFormat(e.target.value as 'PDF' | 'CSV')}
-              className="w-full px-3 py-2 border border-gray-300 rounded"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
             >
               <option value="PDF">PDF Report</option>
               <option value="CSV">CSV Spreadsheet</option>
@@ -1322,11 +1322,11 @@ export default function AssessmentsPage() {
           </div>
 
           <div>
-            <label className="text-sm font-semibold">Scope</label>
+            <label className="text-sm font-semibold dark:text-slate-300">Scope</label>
             <select
               value={exportScope}
               onChange={(e) => setExportScope(e.target.value as 'all' | 'group' | 'student')}
-              className="w-full px-3 py-2 border border-gray-300 rounded"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
             >
               <option value="all">All Data</option>
               <option value="group">By Group</option>
@@ -1336,11 +1336,11 @@ export default function AssessmentsPage() {
 
           {exportScope === 'student' && (
             <div>
-              <label className="text-sm font-semibold">Student</label>
+              <label className="text-sm font-semibold dark:text-slate-300">Student</label>
               <select
                 value={selectedStudentForExport}
                 onChange={(e) => setSelectedStudentForExport(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
               >
                 <option value="">Select student</option>
                 {scopedStudents.map(s => (
@@ -1354,11 +1354,11 @@ export default function AssessmentsPage() {
 
           {exportScope === 'group' && (
             <div>
-              <label className="text-sm font-semibold">Group</label>
+              <label className="text-sm font-semibold dark:text-slate-300">Group</label>
               <select
                 value={selectedGroupForExport}
                 onChange={(e) => setSelectedGroupForExport(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
               >
                 <option value="">Select group</option>
                 {groups.map(g => (
@@ -1445,28 +1445,28 @@ export default function AssessmentsPage() {
       <div className="space-y-6">
         {/* Summary cards */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 text-center">
             <div className="text-3xl font-bold text-blue-600">{totalAssessments}</div>
-            <div className="text-sm text-gray-600">Total Assessments</div>
+            <div className="text-sm text-gray-600 dark:text-slate-400">Total Assessments</div>
           </div>
-          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 text-center">
             <div className="text-3xl font-bold text-green-600">{competentCount}</div>
-            <div className="text-sm text-gray-600">Competent</div>
+            <div className="text-sm text-gray-600 dark:text-slate-400">Competent</div>
           </div>
-          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 text-center">
             <div className="text-3xl font-bold text-red-600">{notYetCount}</div>
-            <div className="text-sm text-gray-600">Not Yet</div>
+            <div className="text-sm text-gray-600 dark:text-slate-400">Not Yet</div>
           </div>
-          <div className="bg-white p-4 rounded border border-gray-200 text-center">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700 text-center">
             <div className="text-3xl font-bold text-purple-600">{competencyRate}%</div>
-            <div className="text-sm text-gray-600">Pass Rate</div>
+            <div className="text-sm text-gray-600 dark:text-slate-400">Pass Rate</div>
           </div>
         </div>
 
         {/* Charts */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h3 className="font-semibold mb-4">Overall Results</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+            <h3 className="font-semibold mb-4 dark:text-white">Overall Results</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
@@ -1488,8 +1488,8 @@ export default function AssessmentsPage() {
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white p-4 rounded border border-gray-200">
-            <h3 className="font-semibold mb-4">By Assessment Type</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+            <h3 className="font-semibold mb-4 dark:text-white">By Assessment Type</h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={typeData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -1506,14 +1506,14 @@ export default function AssessmentsPage() {
         </div>
 
         {/* Unit standard breakdown */}
-        <div className="bg-white p-4 rounded border border-gray-200">
-          <h3 className="font-semibold mb-4">Unit Standard Pass Rates</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded border border-gray-200 dark:border-slate-700">
+          <h3 className="font-semibold mb-4 dark:text-white">Unit Standard Pass Rates</h3>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {unitStandardStats.map(stat => (
-              <div key={stat.unit} className="bg-gray-50 p-3 rounded">
+              <div key={stat.unit} className="bg-gray-50 dark:bg-slate-800/50 p-3 rounded">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-sm">{stat.unit}</span>
-                  <span className="text-sm">{stat.competent}/{stat.total} ({stat.rate}%)</span>
+                  <span className="font-semibold text-sm dark:text-white">{stat.unit}</span>
+                  <span className="text-sm dark:text-slate-300">{stat.competent}/{stat.total} ({stat.rate}%)</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -1533,20 +1533,20 @@ export default function AssessmentsPage() {
   // MAIN RENDER
   // ====================
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-900 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Assessment Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Assessment Management</h1>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4 mb-4">
           <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm font-semibold text-gray-700">Group filter</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">Group filter</label>
             <select
               value={selectedGroup}
               onChange={(e) => setSelectedGroup(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded text-sm"
+              className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded text-sm bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300"
             >
               <option value="">All groups</option>
               {(groups || []).map((group: any) => (
@@ -1568,7 +1568,7 @@ export default function AssessmentsPage() {
               </span>
             </button>
             {selectedGroup && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-slate-400">
                 {scopedStudents.length} students, {scopedAssessments.length} assessments
               </span>
             )}
@@ -1576,7 +1576,7 @@ export default function AssessmentsPage() {
         </div>
 
         {/* View tabs */}
-        <div className="bg-white border-b border-gray-200 rounded-t-lg overflow-x-auto">
+        <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 rounded-t-lg overflow-x-auto">
           <div className="flex gap-0">
             {[
               { id: 'manage', label: 'Manage', icon: CheckCircle },
@@ -1594,7 +1594,7 @@ export default function AssessmentsPage() {
                   onClick={() => setActiveView(tab.id as any)}
                   className={`px-4 py-3 font-semibold flex items-center gap-2 whitespace-nowrap transition ${activeView === tab.id
                     ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-700'
                     }`}
                 >
                   <Icon size={18} />
@@ -1625,7 +1625,7 @@ export default function AssessmentsPage() {
             </button>
           </div>
         )}
-        <div className="bg-white rounded-b-lg p-6 border border-t-0 border-gray-200">
+        <div className="bg-white dark:bg-slate-800 rounded-b-lg p-6 border border-t-0 border-gray-200 dark:border-slate-700">
           {activeView === 'manage' && <ManageView />}
           {activeView === 'moderation' && <ModerationView />}
           {activeView === 'progress' && <ProgressView />}

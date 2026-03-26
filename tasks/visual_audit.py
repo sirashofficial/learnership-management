@@ -99,16 +99,38 @@ def audit():
             snap(page, f"{name}_mobile")
             page.set_viewport_size({"width": 1440, "height": 900})
 
-        # --- Dark mode dashboard ---
-        print("   dashboard dark mode")
+        # --- Dark mode multi-page verification ---
+        DARK_PAGES = [
+            ("dashboard_dark",    "/"),
+            ("assessments_dark",  "/assessments"),
+            ("settings_dark",     "/settings"),
+            ("timetable_dark",    "/timetable"),
+            ("students_dark",     "/students"),
+            ("reports_dark",      "/reports"),
+        ]
+        # Enable dark mode once, persist across navigations via localStorage
         try:
             page.goto(f"{BASE}/", timeout=45000)
             page.wait_for_load_state("networkidle", timeout=45000)
         except Exception:
             pass
-        page.evaluate("document.documentElement.classList.add('dark')")
-        page.wait_for_timeout(800)
-        snap(page, "dashboard_dark")
+        page.evaluate("""
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        """)
+        page.wait_for_timeout(500)
+
+        for name, path in DARK_PAGES:
+            print(f"   {name}")
+            try:
+                page.goto(f"{BASE}{path}", timeout=45000)
+                page.wait_for_load_state("networkidle", timeout=45000)
+            except Exception:
+                pass
+            # Re-apply dark class after navigation (SPA may reset it)
+            page.evaluate("document.documentElement.classList.add('dark')")
+            page.wait_for_timeout(800)
+            snap(page, name)
 
         # --- Tablet (iPad) ---
         print("   tablet view")

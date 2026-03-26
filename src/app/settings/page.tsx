@@ -344,7 +344,7 @@ export default function SettingsPage() {
     <>
       <div className="p-6">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
             {/* Tabs */}
             <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
               <div className="flex overflow-x-auto">
@@ -356,8 +356,8 @@ export default function SettingsPage() {
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 whitespace-nowrap ${
                         activeTab === tab.id
-                          ? "border-blue-600 text-blue-600 bg-white"
-                          : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                          ? "border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-800"
+                          : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -376,13 +376,13 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                   {/* Profile Picture Section */}
                   <div className="flex items-center gap-6 pb-6 border-b border-slate-200 dark:border-slate-700">
-                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-blue-600 text-3xl font-semibold">
+                    <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-3xl font-semibold">
                       {profileForm.name ? profileForm.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AM'}
                     </div>
                     <div>
                       <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Profile Photo</h4>
-                      <p className="text-sm text-slate-600 mb-3">Upload a professional photo</p>
-                      <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Upload a professional photo</p>
+                      <button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm font-medium">
                         Change Photo
                       </button>
                     </div>
@@ -815,12 +815,12 @@ export default function SettingsPage() {
                             onClick={() => handleThemeChange(theme.value)}
                             className={`p-4 border-2 rounded-lg transition-colors ${
                               appearanceForm.theme === theme.value
-                                ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                                ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
                                 : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500'
                             }`}
                           >
                             <Icon className={`w-6 h-6 mx-auto mb-2 ${
-                              appearanceForm.theme === theme.value ? 'text-blue-600' : 'text-slate-600 dark:text-slate-400'
+                              appearanceForm.theme === theme.value ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'
                             }`} />
                             <div className="text-sm font-medium text-slate-900 dark:text-white">{theme.label}</div>
                           </button>
@@ -939,7 +939,7 @@ export default function SettingsPage() {
                   <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-lg">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-blue-600" />
+                        <Mail className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Email Reminders</h4>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">

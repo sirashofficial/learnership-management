@@ -58,11 +58,11 @@ export default function TimetablePage() {
               <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <CalendarIcon className="w-8 h-8 text-emerald-600" />
                       Timetable
                     </h1>
-                    <p className="text-slate-600 mt-2">
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">
                       Training sessions and weekly rotations at a glance.
                     </p>
                   </div>
@@ -75,13 +75,13 @@ export default function TimetablePage() {
                     >
                       + New Session
                     </button>
-                    <label className="text-sm font-medium text-slate-700">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       {groupLabel}:
                     </label>
                     <select
                       value={selectedGroup}
                       onChange={(event) => setSelectedGroup(event.target.value)}
-                      className="px-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                     >
                       <option value="all">All Groups</option>
                       {groups.map((group) => (
@@ -93,13 +93,13 @@ export default function TimetablePage() {
                   </div>
                 </div>
 
-                <div className="mb-6 flex gap-2 bg-white p-2 rounded-xl border border-slate-200 w-fit">
+                <div className="mb-6 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 w-fit">
                   <button
                     type="button"
                     onClick={() => setViewMode('week')}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${viewMode === 'week'
                         ? 'bg-emerald-600 text-white'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                   >
                     Week View
@@ -109,7 +109,7 @@ export default function TimetablePage() {
                     onClick={() => setViewMode('day')}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${viewMode === 'day'
                         ? 'bg-emerald-600 text-white'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                   >
                     Day View
@@ -119,7 +119,7 @@ export default function TimetablePage() {
                     onClick={() => setViewMode('group')}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${viewMode === 'group'
                         ? 'bg-emerald-600 text-white'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                   >
                     Group View
