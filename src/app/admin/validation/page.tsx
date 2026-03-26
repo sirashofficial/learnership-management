@@ -433,9 +433,9 @@ export default function ValidationPage() {
                 {assessmentResults.assessmentsCreated}
               </p>
             </div>
-            <div className="bg-purple-50 rounded p-3 border border-purple-200">
+            <div className="bg-emerald-50 rounded p-3 border border-emerald-200">
               <p className="text-sm text-slate-600">Mode</p>
-              <p className="text-lg font-bold text-purple-600">
+              <p className="text-lg font-bold text-emerald-600">
                 {assessmentResults.dryRun ? 'Preview' : 'Applied'}
               </p>
             </div>

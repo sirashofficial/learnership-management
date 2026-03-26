@@ -313,7 +313,7 @@ export default function SSETAReportsPage() {
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <ClipboardCheck className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+                  <ClipboardCheck className="h-6 w-6 mx-auto mb-2 text-emerald-600" />
                   <div className="text-sm font-medium">Assessment Schedule</div>
                   <div className="text-xs text-gray-600 mt-1">
                     Upcoming Assessments

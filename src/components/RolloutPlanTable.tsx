@@ -128,7 +128,7 @@ export default function RolloutPlanTable({ groupId, groupName, groupStartDate }:
     if (days === null) return null;
     if (days === 0) return <span className="text-green-600 text-xs">On time</span>;
     if (days > 0) return <span className="text-red-600 text-xs">{days}d behind</span>;
-    return <span className="text-purple-600 text-xs">{Math.abs(days)}d ahead</span>;
+    return <span className="text-emerald-600 text-xs">{Math.abs(days)}d ahead</span>;
   };
 
   const overallStats = plans.reduce(

@@ -229,7 +229,7 @@ export default function LessonDetailPage() {
       {displayLesson.activities && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-purple-600" />
+            <Users className="w-5 h-5 text-emerald-600" />
             <h3 className="font-semibold text-slate-900">Activities & Exercises</h3>
           </div>
           {isEditing ? (

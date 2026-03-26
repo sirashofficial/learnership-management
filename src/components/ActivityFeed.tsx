@@ -46,7 +46,7 @@ export default function ActivityFeed({ activities, isLoading, onAction }: Activi
       case 'ASSESSMENT_SUBMITTED':
         return <CheckCircle className="w-5 h-5 text-emerald-600" />
       case 'MODULE_COMPLETED':
-        return <BookOpen className="w-5 h-5 text-purple-600" />
+        return <BookOpen className="w-5 h-5 text-emerald-600" />
       case 'GROUP_JOINED':
         return <Users className="w-5 h-5 text-orange-600" />
       default:
@@ -63,7 +63,7 @@ export default function ActivityFeed({ activities, isLoading, onAction }: Activi
       case 'ASSESSMENT_SUBMITTED':
         return 'bg-emerald-50 border-emerald-200'
       case 'MODULE_COMPLETED':
-        return 'bg-purple-50 border-purple-200'
+        return 'bg-emerald-50 border-emerald-200'
       case 'GROUP_JOINED':
         return 'bg-orange-50 border-orange-200'
       default:
@@ -165,9 +165,9 @@ export default function ActivityFeed({ activities, isLoading, onAction }: Activi
             {activities.filter(a => a.type === 'ASSESSMENT_SUBMITTED').length}
           </p>
         </div>
-        <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-          <p className="text-xs text-purple-600 font-medium">Modules</p>
-          <p className="text-2xl font-bold text-purple-600">
+        <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+          <p className="text-xs text-emerald-600 font-medium">Modules</p>
+          <p className="text-2xl font-bold text-emerald-600">
             {activities.filter(a => a.type === 'MODULE_COMPLETED').length}
           </p>
         </div>
@@ -251,7 +251,7 @@ export default function ActivityFeed({ activities, isLoading, onAction }: Activi
                     )}
 
                     {activity.type === 'MODULE_COMPLETED' && (
-                      <button className="flex items-center gap-1 px-3 py-1 bg-purple-50 border border-purple-200 text-purple-600 rounded text-sm hover:bg-purple-100 transition-colors">
+                      <button className="flex items-center gap-1 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded text-sm hover:bg-emerald-100 transition-colors">
                         <BookOpen className="w-4 h-4" />
                         <span>View</span>
                       </button>

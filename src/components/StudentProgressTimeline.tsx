@@ -43,7 +43,7 @@ export default function StudentProgressTimeline({ events, isLoading }: StudentPr
         return <User className="w-5 h-5 text-blue-600" />
       case 'START_MODULE':
       case 'COMPLETE_MODULE':
-        return <BookOpen className="w-5 h-5 text-purple-600" />
+        return <BookOpen className="w-5 h-5 text-emerald-600" />
       case 'ASSESSMENT':
         return <AlertCircle className="w-5 h-5 text-orange-600" />
       case 'ACHIEVE_CREDIT':
@@ -59,7 +59,7 @@ export default function StudentProgressTimeline({ events, isLoading }: StudentPr
         return 'bg-blue-50 border-blue-200'
       case 'START_MODULE':
       case 'COMPLETE_MODULE':
-        return 'bg-purple-50 border-purple-200'
+        return 'bg-emerald-50 border-emerald-200'
       case 'ASSESSMENT':
         return 'bg-orange-50 border-orange-200'
       case 'ACHIEVE_CREDIT':

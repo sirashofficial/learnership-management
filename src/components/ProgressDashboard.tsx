@@ -257,7 +257,7 @@ export default function ProgressDashboard({ groupId, groupName, refreshKey = 0 }
         {[
           { icon: Users, label: 'Students', value: data.totalStudents, color: 'text-blue-600', bg: 'bg-blue-50' },
           { icon: Award, label: 'Avg Credits', value: data.avgCreditsEarned, color: 'text-green-600', bg: 'bg-green-50' },
-          { icon: TrendingUp, label: 'Avg Progress', value: `${data.avgProgressPercent}%`, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { icon: TrendingUp, label: 'Avg Progress', value: `${data.avgProgressPercent}%`, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           {
             icon: AlertTriangle,
             label: 'At Risk',

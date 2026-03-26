@@ -122,8 +122,8 @@ export default function KanbanBoard() {
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Assessments</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">{stats.totalAssessments}</p>
             </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-purple-600" />
+            <div className="bg-emerald-50 p-3 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-emerald-600" />
             </div>
           </div>
         </div>

@@ -152,9 +152,9 @@ export default function AdminPage() {
                     {indexStats.local?.documentChunks || 0}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-purple-200">
+                <div className="bg-white rounded-lg p-4 border border-emerald-200">
                   <p className="text-sm text-slate-500 mb-1">Pinecone Records</p>
-                  <p className="text-3xl font-bold text-purple-600">
+                  <p className="text-3xl font-bold text-emerald-600">
                     {indexStats.pinecone?.totalRecords || 0}
                   </p>
                 </div>

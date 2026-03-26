@@ -501,13 +501,13 @@ export default function LessonsPage() {
                   <div className="py-12">
                     <div className="max-w-md mx-auto text-center">
                       <div className="relative w-24 h-24 mx-auto mb-6">
-                        <div className="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
-                        <div className="absolute inset-0 border-4 border-purple-600 rounded-full border-t-transparent animate-spin"></div>
-                        <Sparkles className="absolute inset-0 m-auto w-10 h-10 text-purple-600" />
+                        <div className="absolute inset-0 border-4 border-emerald-200 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-emerald-600 rounded-full border-t-transparent animate-spin"></div>
+                        <Sparkles className="absolute inset-0 m-auto w-10 h-10 text-emerald-600" />
                       </div>
                       <h3 className="text-xl font-bold text-slate-900 mb-2">Generating Your Lesson Plan</h3>
                       {currentStep >= 0 && currentStep < GENERATING_STEPS.length && (
-                        <p className="text-purple-600 font-medium animate-pulse">
+                        <p className="text-emerald-600 font-medium animate-pulse">
                           {GENERATING_STEPS[currentStep].title}
                         </p>
                       )}
@@ -516,7 +516,7 @@ export default function LessonsPage() {
                           <div
                             key={idx}
                             className={`h-2 w-12 rounded-full transition-colors ${
-                              idx <= currentStep ? 'bg-purple-600' : 'bg-slate-200'
+                              idx <= currentStep ? 'bg-emerald-600' : 'bg-slate-200'
                             }`}
                           />
                         ))}
@@ -565,7 +565,7 @@ export default function LessonsPage() {
                   <div className="bg-white rounded-lg border border-slate-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-purple-600" />
+                        <Calendar className="w-5 h-5 text-emerald-600" />
                         <h4 className="font-semibold text-slate-900">Introduction / Warm-up</h4>
                         <span className="text-xs bg-slate-100 px-2 py-1 rounded">5-10 min</span>
                       </div>
@@ -810,7 +810,7 @@ export default function LessonsPage() {
             {/* Activities */}
             <div className="space-y-4 pt-4 border-t border-slate-200">
               <h4 className="font-semibold text-slate-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-600" />
+                <Users className="w-5 h-5 text-emerald-600" />
                 Activities & Exercises
               </h4>
               <textarea

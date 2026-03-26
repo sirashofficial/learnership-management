@@ -118,16 +118,16 @@ export default function StudentProgressModal({
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500 text-white rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-emerald-500 text-white rounded-lg flex items-center justify-center">
                       <Award className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-purple-700">
+                      <div className="text-2xl font-bold text-emerald-700">
                         {competentAssessments}/{totalAssessments}
                       </div>
-                      <p className="text-xs text-purple-600">Assessments Passed</p>
+                      <p className="text-xs text-emerald-600">Assessments Passed</p>
                     </div>
                   </div>
                 </div>

@@ -407,7 +407,7 @@ export default function CompliancePage() {
 
           <div className="bg-white rounded-lg border border-background-border p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
                 <Award className="w-5 h-5" />
               </div>
               <span className="text-2xl font-bold text-text">
@@ -550,14 +550,14 @@ export default function CompliancePage() {
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-4">
-            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-purple-900">Formative Assessments</span>
-                <span className="text-2xl font-bold text-purple-600">
+                <span className="text-sm font-medium text-emerald-900">Formative Assessments</span>
+                <span className="text-2xl font-bold text-emerald-600">
                   {assessmentStats?.byType?.formative || 0}
                 </span>
               </div>
-              <p className="text-xs text-purple-700">Ongoing knowledge checks</p>
+              <p className="text-xs text-emerald-700">Ongoing knowledge checks</p>
             </div>
 
             <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">

@@ -450,8 +450,8 @@ export default function CurriculumPage() {
             {/* Features Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white rounded-lg border border-slate-200 p-4">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-                  <BookOpen className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mb-3">
+                  <BookOpen className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h4 className="font-semibold text-slate-900 mb-1">Module Extraction</h4>
                 <p className="text-sm text-slate-600">Automatically identify and structure curriculum modules</p>
