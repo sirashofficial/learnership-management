@@ -150,10 +150,10 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 onBlur={() => validateForm()}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                className={`w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border rounded-lg focus:ring-2 focus:border-transparent ${
                   errors.name
                     ? 'border-red-300 focus:ring-red-500'
-                    : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white'
+                    : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500'
                 }`}
                 placeholder="e.g., Thabo Mokwena"
                 required
@@ -174,7 +174,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 type="text"
                 value={formData.studentId}
                 onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 placeholder="Leave empty for auto-generation (e.g., AZ-01)"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">If left empty, will be auto-generated based on group (e.g., AZ-01, AZ-02, BE-01)</p>
@@ -195,10 +195,10 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                     value={formData.group}
                     onChange={(e) => setFormData({ ...formData, group: e.target.value })}
                     onBlur={() => validateForm()}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    className={`w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border rounded-lg focus:ring-2 focus:border-transparent ${
                       errors.group
                         ? 'border-red-300 focus:ring-red-500'
-                        : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white'
+                        : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500'
                     }`}
                     required
                     aria-invalid={!!errors.group}
@@ -229,7 +229,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               >
                 <option value="ACTIVE">Active</option>
                 <option value="AT_RISK">At Risk</option>
@@ -245,7 +245,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 placeholder="+27 11 123 4567"
               />
             </div>
@@ -258,10 +258,10 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 onBlur={() => validateForm()}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                className={`w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border rounded-lg focus:ring-2 focus:border-transparent ${
                   errors.email
                     ? 'border-red-300 focus:ring-red-500'
-                    : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500 dark:bg-slate-700 dark:text-white'
+                    : 'border-slate-300 dark:border-slate-600 focus:ring-emerald-500'
                 }`}
                 placeholder="student@example.com"
                 aria-invalid={!!errors.email}
@@ -302,7 +302,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, groupId, group
                   value={formData.disabilityNotes}
                   onChange={(e) => setFormData({ ...formData, disabilityNotes: e.target.value })}
                   placeholder="Describe support requirements..."
-                  className="mt-2 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                  className="mt-2 w-full px-3 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   rows={3}
                 />
               )}
