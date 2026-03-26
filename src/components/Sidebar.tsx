@@ -84,8 +84,19 @@ export default function Sidebar({ isCollapsed, onToggle, isMobileOpen = false, i
         0;
 
     useEffect(() => {
-        const saved = localStorage.getItem('sidebarTheme') as 'dark' | 'light' | null;
-        if (saved) setSidebarTheme(saved);
+        // Resolve theme: theme key → sidebarTheme key → default 'dark'
+        const saved = (localStorage.getItem('theme') || localStorage.getItem('sidebarTheme')) as 'dark' | 'light' | null;
+        const resolved: 'dark' | 'light' = saved ?? 'dark';
+        setSidebarTheme(resolved);
+        // Sync html.dark immediately so main content matches sidebar on every load
+        if (resolved === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        // Persist so ThemeInitializer stays in sync on full refreshes
+        localStorage.setItem('sidebarTheme', resolved);
+        localStorage.setItem('theme', resolved);
     }, []);
 
     const toggleTheme = () => {
